@@ -7,9 +7,8 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-08-25
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** *none — the discovery artifacts were still uncommitted when this snapshot
-  was taken.* Commit them in `my-ai-agency` and record the hash here, so this snapshot points at
-  something reproducible.
+- **Source commit:** `5a3c5f3` — *feat(001-luna-crm): complete the discovery pipeline, intake
+  through handoff*. Diff this folder against that commit to see any drift since kickoff.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`.
 
