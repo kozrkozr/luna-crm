@@ -25,8 +25,7 @@ import { register } from '../../src/features/auth/register'
  * is why the email field is not the prototype's «Email або телефон» — that
  * label predates the ADR.
  *
- * Logging back in is US-013 and is deliberately absent, so this screen offers
- * no "already have an account?" link yet.
+ * The "already have an account?" link arrived with US-013.
  */
 export default function RegisterScreen() {
   const router = useRouter()
@@ -173,12 +172,15 @@ export default function RegisterScreen() {
           </Theme>
         ) : null}
 
-        <YStack mt="$4">
+        <YStack gap="$2" mt="$4">
           <Form.Trigger asChild disabled={submitting}>
             <Button theme="accent" size="$4">
               {uk.registerBtn}
             </Button>
           </Form.Trigger>
+          <Button size="$4" chromeless onPress={() => router.replace('/(auth)/login')}>
+            {uk.toLogin}
+          </Button>
         </YStack>
       </Form>
     </ScrollView>

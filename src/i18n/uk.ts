@@ -26,6 +26,7 @@ export const uk = {
   toLogin: 'Вже є акаунт? Увійти',
   toRegister: 'Ще не маєте акаунту? Зареєструватися',
   roleRequired: 'Оберіть роль, щоб зареєструватися',
+  wrongCreds: 'Невірний email або пароль',
   profileTitle: 'Профіль',
   logout: 'Вийти',
   contact: 'Контакт',

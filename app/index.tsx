@@ -28,6 +28,6 @@ export default function Index() {
   return session.status === 'signedIn' ? (
     <Redirect href="/(app)" />
   ) : (
-    <Redirect href="/(auth)/register" />
+    <Redirect href="/(auth)/login" />
   )
 }
