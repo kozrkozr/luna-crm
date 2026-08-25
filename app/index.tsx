@@ -1,12 +1,33 @@
 import { Redirect } from 'expo-router'
+import { Spinner, YStack } from 'tamagui'
+import { useSession } from '../src/features/auth/useSession'
 
 /**
- * Entry point. Which surface a signed-in user lands on is US-013 AC-1, and the
- * rule for choosing between the shoot list and a crew member's own schedule is
- * NOT specified by the backlog — see the open question raised at EP-01. Until
- * it is answered this redirects unconditionally to the creator's surface, which
- * is a placeholder, not a decision.
+ * Entry point: send a signed-in user to the app surface, everyone else to
+ * registration (US-001).
+ *
+ * Note what is NOT decided here. US-013 AC-1 says a returning user lands on
+ * "their shoot list (if a shoot creator) or their own schedule (if a
+ * self-registered crew member)" — but nothing in the data model distinguishes
+ * those two, since `role` is a profession and any registered user may create a
+ * shoot (ADR-001, ADR-002). US-009, which would provide the schedule, is a
+ * `should` and may be cut. So everyone goes to the shoot list until that rule
+ * is specified. Raised in docs/open-questions.md.
  */
 export default function Index() {
-  return <Redirect href="/(app)" />
+  const session = useSession()
+
+  if (session.status === 'loading') {
+    return (
+      <YStack flex={1} bg="$background" items="center" justify="center">
+        <Spinner size="large" />
+      </YStack>
+    )
+  }
+
+  return session.status === 'signedIn' ? (
+    <Redirect href="/(app)" />
+  ) : (
+    <Redirect href="/(auth)/register" />
+  )
 }

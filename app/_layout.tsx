@@ -20,7 +20,13 @@ export default function RootLayout() {
     <TamaguiProvider config={config} defaultTheme="light">
       <Theme name="light">
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerLargeTitle: true }} />
+        {/*
+          headerShown: false — the route groups `(app)` and `(auth)` are
+          organisational, not screens. Left on, the root stack renders a header
+          titled with the literal group name, so registration showed
+          «(auth) Реєстрація». Each group's own layout owns its header.
+        */}
+        <Stack screenOptions={{ headerShown: false }} />
       </Theme>
     </TamaguiProvider>
   )

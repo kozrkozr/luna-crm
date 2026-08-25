@@ -1,8 +1,8 @@
 import type { ExpoConfig } from 'expo/config'
 
 /**
- * Config as TypeScript so secrets come from the environment rather than being
- * committed. `.env` is gitignored; see README for the required keys.
+ * Supabase config is NOT threaded through `extra` — the client reads
+ * EXPO_PUBLIC_* directly, which is what Expo inlines at build time.
  */
 const config: ExpoConfig = {
   name: 'Luna CRM',
@@ -21,10 +21,6 @@ const config: ExpoConfig = {
     bundler: 'metro',
     output: 'static',
     favicon: './assets/favicon.png',
-  },
-  extra: {
-    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
-    supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   },
 }
 

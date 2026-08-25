@@ -1,79 +1,89 @@
 /**
- * Ukrainian UI copy. Every string here is lifted verbatim from the gated
- * prototype's `DICT.uk` (docs/product/prototype/index.html) — no copy is
- * invented in this spike. Link views are Ukrainian-only by decision
- * (EP-05, Out of scope), so the spike ships no switcher.
+ * Ukrainian UI copy — the default for registered accounts (US-014). Strings are
+ * taken from the gated prototype's `DICT.uk`
+ * (docs/product/prototype/index.html); nothing user-facing is invented here.
  *
  * Term discipline: `посилання`, never `лінк` (glossary, 2026-08-25).
  */
 export const uk = {
   brand: 'Luna',
+
+  // EP-01 — registration, login, profile
+  registerTitle: 'Реєстрація',
+  loginTitle: 'Вхід',
+  name: "Ім'я",
+  namePlaceholder: "Ваше ім'я",
+  // The prototype labels this «Email або телефон», which predates ADR-015
+  // (2026-08-25). That ADR made email the credential and phone an optional
+  // profile field, so the label is email-only.
+  email: 'Email',
+  password: 'Пароль',
+  role: 'Ваша роль',
+  rolePlaceholder: 'Оберіть роль…',
+  social: 'Соцмережі (як зв’язатися)',
+  registerBtn: 'Зареєструватися',
+  loginBtn: 'Увійти',
+  toLogin: 'Вже є акаунт? Увійти',
+  toRegister: 'Ще не маєте акаунту? Зареєструватися',
+  roleRequired: 'Оберіть роль, щоб зареєструватися',
+  profileTitle: 'Профіль',
+  logout: 'Вийти',
+  contact: 'Контакт',
+
+  // EP-02 — shoots
   myShoots: 'Мої зйомки',
   newShoot: '+ Нова зйомка',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',
   createFirst: 'Створити першу зйомку',
   references: 'Референси',
-  crew: 'Команда',
-  addCrewMember: '+ Додати учасника',
-  copyLinkTitle: 'Скопіювати посилання',
-  linkCopied: 'Посилання скопійовано (демо):',
-  removeCrewTitle: 'Видалити',
-  statusPending: 'Очікує',
-  statusConfirmed: 'Підтвердив',
-  statusDeclined: 'Відмовився',
+  showAllReferences: 'Показати всі референси',
   statusNew: 'Нова',
   statusFinished: 'Закінчена',
-  markFinished: 'Позначити як «Закінчена»',
-  markNew: 'Позначити як «Нова»',
-  edit: 'Редагувати',
-  deleteShoot: 'Видалити зйомку',
-  locationSection: 'Локація',
-  showAllReferences: 'Показати всі референси',
-  rawFiles: 'Вихідники',
-  finishedPhotos: 'Готові фото',
-  inDevelopment: 'В розробці',
-  files: 'Файли',
-  shootFor: 'Зйомка',
-  confirm: 'Підтвердити',
-  decline: 'Відмовитись',
-  youConfirmed: 'Ви підтвердили участь',
-  youDeclined: 'Ви відмовились',
-  linkInvalidTitle: 'Це посилання більше не діє',
-  linkInvalidSub:
-    'Учасника було видалено зі зйомки, або зйомку видалено. Зверніться до фотографа за новим посиланням.',
-  demoLabel: '(демо)',
-  noAccountView: 'вигляд без акаунту',
-  you: 'Ви',
-  peerDetailsTitle: 'Деталі учасника',
+
+  // EP-03 / EP-04 — crew and link views
+  crew: 'Команда',
   crewName: "Ім'я",
   crewRole: 'Роль',
   crewContact: 'Телефон або email',
   crewInstagram: "Instagram (необов'язково)",
   crewNotes: 'Нотатки',
-  addCrewTitle: 'Додати учасника команди',
-  rolePlaceholder: 'Оберіть роль…',
-  contactRequired: 'Вкажіть телефон або email',
+  shootFor: 'Зйомка',
+  confirm: 'Підтвердити',
+  decline: 'Відмовитись',
+  linkInvalidTitle: 'Це посилання більше не діє',
+  linkInvalidSub:
+    'Учасника було видалено зі зйомки, або зйомку видалено. Зверніться до фотографа за новим посиланням.',
+  rawFiles: 'Вихідники',
+  finishedPhotos: 'Готові фото',
+  inDevelopment: 'В розробці',
+
+  // Shared
   save: 'Зберегти',
   cancel: 'Скасувати',
-  confirmDeleteShoot: 'Видалити цю зйомку? Це незворотньо.',
-  confirmRemoveCrew: 'Видалити цю людину зі зйомки?',
-  attachImageDemo: '+ Зображення (демо)',
-  richTextDemo: '(демо, форматування поки недоступне)',
-} as const
 
-/** Roles as offered by the prototype's registration/crew form. */
-export const ROLES_UK = ['Фотограф', 'Стиліст', 'Гафер', 'Візажист', 'Менеджер зйомок'] as const
+  // NOT from the prototype — the spec gives copy for US-001 AC-2's missing role
+  // and US-013's wrong credentials, but nothing for a registration that fails
+  // for any other reason (duplicate email, weak password, network). Placeholder
+  // pending confirmation; see docs/open-questions.md.
+  registrationFailed: 'Не вдалося зареєструватися. Спробуйте ще раз.',
+} as const
 
 export type CopyKey = keyof typeof uk
 
-export const t = (key: CopyKey): string => uk[key]
+/**
+ * Professional roles offered at registration (US-001). The story defers the
+ * list to "the glossary's confirmed roles as the starting list"; the glossary
+ * confirms makeup artist, stylist, gaffer and shoot manager, and the gated
+ * prototype adds Фотограф and fixes the Ukrainian labels. Stored in Ukrainian
+ * because that is what the prototype offers as values.
+ */
+export const ROLES_UK = [
+  'Фотограф',
+  'Стиліст',
+  'Гафер',
+  'Візажист',
+  'Менеджер зйомок',
+] as const
 
-const MONTHS_UK = [
-  'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
-  'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень',
-]
-
-export const DOW_UK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
-
-export const monthName = (monthIndex: number): string => MONTHS_UK[monthIndex]
+export type Role = (typeof ROLES_UK)[number]
