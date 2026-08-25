@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luna CRM — прототип</title>
+<style>
+  :root {
+    --bg: #f6f5f3;
+    --card: #ffffff;
+    --ink: #1f2430;
+    --muted: #6b7280;
+    --line: #e5e2dc;
+    --accent: #b8562f;
+    --accent-ink: #ffffff;
+    --ok: #2f7d4f;
+    --ok-bg: #e7f4ec;
+    --pending: #a06a1c;
+    --pending-bg: #fbf0dd;
+    --bad: #b23b3b;
+    --bad-bg: #fbeaea;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--card);
+    display: flex;
+    flex-direction: column;
+  }
+  header.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    gap: 10px;
+  }
+  header.topbar .brand { font-weight: 700; font-size: 17px; }
+  header.topbar .right { display: flex; gap: 8px; align-items: center; }
+  header.topbar .icon-btn {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  header.topbar .lang-switch { display: flex; gap: 4px; }
+  header.topbar .lang-switch button {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  header.topbar .lang-switch button.active {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
+  }
+  main { flex: 1; padding: 18px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 18px 0 10px; }
+  h2:first-of-type { margin-top: 0; }
+  p.sub { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+  .fake-tag {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    padding: 0 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+    background: var(--card);
+  }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { border-color: var(--accent); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  label { display: block; font-size: 13px; margin: 12px 0 4px; font-weight: 600; }
+  input, select, textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .field-error {
+    color: var(--bad);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+  .field-error.show { display: block; }
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); width: 100%; }
+  .btn-secondary { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+  .btn-danger { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad-bg); }
+  .btn-ghost { background: transparent; color: var(--accent); padding: 6px 0; font-weight: 600; }
+  .btn-block { width: 100%; margin-top: 8px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn-row .btn { flex: 1; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 8px; }
+  .status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+  .status.pending { background: var(--pending-bg); color: var(--pending); }
+  .status.confirmed { background: var(--ok-bg); color: var(--ok); }
+  .status.declined { background: var(--bad-bg); color: var(--bad); }
+  .status.new { background: var(--pending-bg); color: var(--pending); }
+  .status.finished { background: var(--ok-bg); color: var(--ok); }
+  .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+  .ref-thumb {
+    border-radius: 10px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+    text-align: center;
+    padding: 6px;
+  }
+  .ref-add-row { display: flex; gap: 6px; margin: 10px 0; }
+  .ref-add-row input { flex: 1; }
+  .icon-btn-square {
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 8px;
+    width: 38px;
+    min-width: 38px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .empty-state { text-align: center; padding: 40px 10px; color: var(--muted); }
+  .error-screen { text-align: center; padding: 60px 20px; }
+  .error-screen .icon { font-size: 36px; margin-bottom: 10px; }
+  nav.demo-nav {
+    border-top: 1px solid var(--line);
+    padding: 10px 18px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  nav.demo-nav button {
+    border: 1px dashed var(--line);
+    background: transparent;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--muted);
+  }
+  .crew-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); gap: 8px; }
+  .crew-row:first-child { border-top: none; }
+  .crew-row .crew-main { flex: 1; }
+  .crew-row.clickable { cursor: pointer; }
+  .crew-row.clickable:hover .crew-main strong { color: var(--accent); }
+  .crew-actions { display: flex; gap: 4px; align-items: center; }
+  .crew-actions button { border: none; background: transparent; font-size: 15px; cursor: pointer; padding: 2px 4px; }
+  .chip {
+    display: inline-block;
+    font-size: 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1px 6px;
+    margin-right: 4px;
+  }
+  .rt-toolbar { display: flex; gap: 4px; margin-bottom: 4px; }
+  .rt-toolbar span {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--muted); background: var(--bg);
+  }
+  .file-section {
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 8px;
+    font-size: 13px;
+  }
+  .file-section a { color: var(--accent); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .cal-grid .cal-dow { font-size: 10px; color: var(--muted); padding-bottom: 4px; }
+  .cal-grid .cal-day {
+    font-size: 12px;
+    padding: 6px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+  }
+  .cal-grid .cal-day.empty { cursor: default; }
+  .cal-grid .cal-day.has-shoot { background: var(--pending-bg); font-weight: 700; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .cal-nav button { border: none; background: transparent; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .toast {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity .2s;
+    pointer-events: none;
+    max-width: 90%;
+    text-align: center;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===========================================================================
+   Luna CRM — single-file prototype (US-001..US-025). Fake data only.
+   No build step, no dependencies, no backend. Open this file in a browser.
+   Updated 2026-08-23 after Ilona's review r01 (03-design/reviews/r01-2026-08-23/).
+   =========================================================================== */
+
+const DICT = {
+  uk: {
+    brand: "Luna",
+    loginTitle: "Вхід",
+    registerTitle: "Реєстрація",
+    email: "Email або телефон",
+    password: "Пароль",
+    name: "Ім'я",
+    role: "Ваша роль",
+    rolePlaceholder: "Оберіть роль…",
+    loginBtn: "Увійти",
+    registerBtn: "Зареєструватися",
+    toRegister: "Ще не маєте акаунту? Зареєструватися",
+    toLogin: "Вже є акаунт? Увійти",
+    roleRequired: "Оберіть роль, щоб зареєструватися",
+    wrongCreds: "Невірний email/телефон або пароль",
+    myShoots: "Мої зйомки",
+    newShoot: "+ Нова зйомка",
+    emptyShoots: "У вас ще немає зйомок.",
+    emptyShootsSub: "Створіть першу — це займе хвилину.",
+    createFirst: "Створити першу зйомку",
+    newShootTitle: "Нова зйомка",
+    clientName: "Ім'я клієнта",
+    clientContact: "Контакт клієнта",
+    date: "Дата",
+    save: "Зберегти",
+    dateRequired: "Вкажіть дату зйомки",
+    cancel: "Скасувати",
+    back: "← Назад",
+    references: "Референси",
+    crew: "Команда",
+    addCrewMember: "+ Додати учасника",
+    linkCopied: "Посилання скопійовано (демо):",
+    crewName: "Ім'я",
+    crewRole: "Роль",
+    crewContact: "Телефон або email",
+    crewInstagram: "Instagram (необов'язково)",
+    crewNotes: "Нотатки",
+    richTextDemo: "(демо, форматування поки недоступне)",
+    attachImageDemo: "+ Зображення (демо)",
+    contactRequired: "Вкажіть телефон або email",
+    statusPending: "Очікує",
+    statusConfirmed: "Підтвердив",
+    statusDeclined: "Відмовився",
+    viewAsCrew: "Переглянути як учасник команди (демо)",
+    viewAsClient: "Переглянути як клієнт (демо)",
+    viewBrokenLink: "Показати недійсне посилання (демо)",
+    shootFor: "Зйомка",
+    confirm: "Підтвердити",
+    decline: "Відмовитись",
+    youConfirmed: "Ви підтвердили участь",
+    youDeclined: "Ви відмовились",
+    linkInvalidTitle: "Це посилання більше не діє",
+    linkInvalidSub: "Учасника було видалено зі зйомки, або зйомку видалено. Зверніться до фотографа за новим посиланням.",
+    demoLabel: "(демо)",
+    profileTitle: "Профіль",
+    logout: "Вийти",
+    contact: "Контакт",
+    social: "Соцмережі (як зв'язатися)",
+    edit: "Редагувати",
+    deleteShoot: "Видалити зйомку",
+    confirmDeleteShoot: "Видалити цю зйомку? Це незворотньо.",
+    statusLabel: "Статус",
+    statusNew: "Нова",
+    statusFinished: "Закінчена",
+    markFinished: "Позначити як «Закінчена»",
+    markNew: "Позначити як «Нова»",
+    locationSection: "Локація",
+    address: "Адреса",
+    locationNotes: "Нотатки (як доїхати тощо)",
+    attachVideoDemo: "+ Відео (демо)",
+    refPlaceholder: "Посилання на референс (напр. Pinterest)",
+    addRefBtn: "Додати",
+    pickFromGallery: "🖼",
+    showAllReferences: "Показати всі референси",
+    allReferencesTitle: "Усі референси",
+    removeCrewTitle: "Видалити",
+    confirmRemoveCrew: "Видалити цю людину зі зйомки?",
+    peerDetailsTitle: "Деталі учасника",
+    rawFiles: "Вихідники",
+    finishedPhotos: "Готові фото",
+    inDevelopment: "В розробці",
+    setLinkPlaceholder: "Посилання (напр. fex.net)",
+    copyLinkTitle: "Скопіювати посилання",
+    calDateQuestion: "Що відбувається при кліку на дату — ще відкрите питання (US-004).",
+    editShootTitle: "Редагування зйомки",
+    editFilesTitle: "Файли",
+  },
+  en: {
+    brand: "Luna",
+    loginTitle: "Log in",
+    registerTitle: "Register",
+    email: "Email or phone",
+    password: "Password",
+    name: "Name",
+    role: "Your role",
+    rolePlaceholder: "Select a role…",
+    loginBtn: "Log in",
+    registerBtn: "Register",
+    toRegister: "No account yet? Register",
+    toLogin: "Already have an account? Log in",
+    roleRequired: "Pick a role to register",
+    wrongCreds: "Wrong email/phone or password",
+    myShoots: "My shoots",
+    newShoot: "+ New shoot",
+    emptyShoots: "You don't have any shoots yet.",
+    emptyShootsSub: "Create your first one — it takes a minute.",
+    createFirst: "Create first shoot",
+    newShootTitle: "New shoot",
+    clientName: "Client name",
+    clientContact: "Client contact",
+    date: "Date",
+    save: "Save",
+    dateRequired: "Set the shoot date",
+    cancel: "Cancel",
+    back: "← Back",
+    references: "References",
+    crew: "Crew",
+    addCrewMember: "+ Add crew member",
+    linkCopied: "Link copied (demo):",
+    crewName: "Name",
+    crewRole: "Role",
+    crewContact: "Phone or email",
+    crewInstagram: "Instagram (optional)",
+    crewNotes: "Notes",
+    richTextDemo: "(demo, formatting not yet available)",
+    attachImageDemo: "+ Image (demo)",
+    contactRequired: "Enter a phone number or email",
+    statusPending: "Pending",
+    statusConfirmed: "Confirmed",
+    statusDeclined: "Declined",
+    viewAsCrew: "View as crew member (demo)",
+    viewAsClient: "View as client (demo)",
+    viewBrokenLink: "Show invalid link (demo)",
+    shootFor: "Shoot",
+    confirm: "Confirm",
+    decline: "Decline",
+    youConfirmed: "You confirmed attendance",
+    youDeclined: "You declined",
+    linkInvalidTitle: "This link no longer works",
+    linkInvalidSub: "This person was removed from the shoot, or the shoot was deleted. Ask the photographer for a new link.",
+    demoLabel: "(demo)",
+    profileTitle: "Profile",
+    logout: "Log out",
+    contact: "Contact",
+    social: "Social media (how to reach you)",
+    edit: "Edit",
+    deleteShoot: "Delete shoot",
+    confirmDeleteShoot: "Delete this shoot? This cannot be undone.",
+    statusLabel: "Status",
+    statusNew: "New",
+    statusFinished: "Finished",
+    markFinished: "Mark as Finished",
+    markNew: "Mark as New",
+    locationSection: "Location",
+    address: "Address",
+    locationNotes: "Notes (directions, etc.)",
+    attachVideoDemo: "+ Video (demo)",
+    refPlaceholder: "Reference link (e.g. Pinterest)",
+    addRefBtn: "Add",
+    pickFromGallery: "🖼",
+    showAllReferences: "Show all references",
+    allReferencesTitle: "All references",
+    removeCrewTitle: "Remove",
+    confirmRemoveCrew: "Remove this person from the shoot?",
+    peerDetailsTitle: "Crew member details",
+    rawFiles: "Raw files",
+    finishedPhotos: "Finished photos",
+    inDevelopment: "In development",
+    setLinkPlaceholder: "Link (e.g. fex.net)",
+    copyLinkTitle: "Copy link",
+    calDateQuestion: "What tapping a date does is still an open question (US-004).",
+    editShootTitle: "Edit shoot",
+    editFilesTitle: "Files",
+  }
+};
+
+const ROLES = {
+  uk: ["Фотограф", "Стиліст", "Гафер", "Візажист", "Менеджер зйомок"],
+  en: ["Photographer", "Stylist", "Gaffer", "Makeup artist", "Shoot manager"]
+};
+
+const REF_COLORS = ["#b8562f", "#5b7d8c", "#8a6bb0", "#3e8e6b", "#a06a1c", "#5b7d8c"];
+const REF_DISPLAY_LIMIT = 4;
+
+function t(key) { return DICT[state.lang][key]; }
+function statusLabelKey(s) { return "status" + s.charAt(0).toUpperCase() + s.slice(1); }
+
+let state = {
+  lang: "uk",
+  view: "auth",
+  authMode: "login",
+  authError: "",
+  loggedIn: false,
+  currentUser: null,
+  shoots: [
+    {
+      id: "s1",
+      client: "Марія (демо)",
+      contact: "+380 67 123 45 67",
+      date: "2026-09-05",
+      status: "new",
+      location: { address: "Студія «Світло», Київ (демо)", notes: "", hasImage: false, hasVideo: false },
+      rawFilesLink: "",
+      finishedPhotosLink: "",
+      references: [
+        { id: "r1", label: "Референс 1 (демо)" },
+        { id: "r2", label: "Референс 2 (демо)" },
+        { id: "r3", label: "Референс 3 (демо)" },
+        { id: "r4", label: "Референс 4 (демо)" },
+        { id: "r5", label: "Референс 5 (демо)" },
+      ],
+      crew: [
+        { id: "c1", name: "Оксана (демо)", role: "Візажист", contact: "+380 50 987 65 43", instagram: "@oksana.demo", notes: "Працює швидко, привозить свій набір (демо)", notesHasImage: false, status: "confirmed" },
+        { id: "c2", name: "Ігор (демо)", role: "Гафер", contact: "igor.demo@example.com", instagram: "", notes: "", notesHasImage: false, status: "pending" },
+      ],
+    },
+  ],
+  currentShootId: null,
+  currentCrewId: null,
+  allReferencesReturn: "shootDetail",
+  showEmptyDemo: false,
+  calYear: 2026,
+  calMonth: 8, // September (0-indexed) — matches the demo shoot's date, so it's visible without navigating
+  newCrewNoteHasImage: false,
+};
+
+const ACCOUNT_VIEWS = ["shootList", "newShoot", "shootDetail", "editShoot", "allReferences", "profile"];
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2800);
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function langSwitchHtml() {
+  return `
+    <div class="lang-switch">
+      <button data-action="lang" data-lang="uk" class="${state.lang === "uk" ? "active" : ""}">UA</button>
+      <button data-action="lang" data-lang="en" class="${state.lang === "en" ? "active" : ""}">EN</button>
+    </div>`;
+}
+
+function accountHeader() {
+  return `
+    <header class="topbar">
+      <span class="brand">${t("brand")}</span>
+      <div class="right">
+        <button class="icon-btn" data-action="open-profile" title="${t("profileTitle")}">👤</button>
+        ${langSwitchHtml()}
+      </div>
+    </header>`;
+}
+
+function findShoot(id) { return state.shoots.find(s => s.id === id); }
+
+/* ---------------------------------------------------------------- screens */
+
+function screenAuth() {
+  const isLogin = state.authMode === "login";
+  return `
+    <header class="topbar">
+      <span class="brand">${t("brand")}</span>
+      ${langSwitchHtml()}
+    </header>
+    <main>
+      <h1>${isLogin ? t("loginTitle") : t("registerTitle")}</h1>
+      <p class="sub">US-001 / US-013</p>
+      <form data-form="auth">
+        ${!isLogin ? `<label>${t("name")}</label><input name="name" placeholder="${state.lang === "uk" ? "Ваше ім'я" : "Your name"}">` : ""}
+        <label>${t("email")}</label>
+        <input name="email" placeholder="you@example.com">
+        <label>${t("password")}</label>
+        <input name="password" type="password">
+        ${!isLogin ? `
+          <label>${t("role")}</label>
+          <select name="role">
+            <option value="">${t("rolePlaceholder")}</option>
+            ${ROLES[state.lang].map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join("")}
+          </select>
+          <label>${t("social")}</label>
+          <input name="social" placeholder="@...">
+        ` : ""}
+        <div class="field-error ${state.authError ? "show" : ""}">${esc(state.authError)}</div>
+        <button class="btn btn-primary btn-block" type="submit">${isLogin ? t("loginBtn") : t("registerBtn")}</button>
+      </form>
+      <button class="btn btn-ghost" data-action="toggle-auth">${isLogin ? t("toRegister") : t("toLogin")}</button>
+    </main>`;
+}
+
+function screenProfile() {
+  const u = state.currentUser || { name: "—", email: "—", role: "—", social: "" };
+  return `
+    ${accountHeader()}
+    <main>
+      <button class="btn btn-ghost" data-action="back-to-list">${t("back")}</button>
+      <h1>${t("profileTitle")}</h1>
+      <p class="sub">US-016 / US-017</p>
+      <div class="card">
+        <label>${t("name")}</label>
+        <div>${esc(u.name)}</div>
+        <label>${t("contact")}</label>
+        <div>${esc(u.email)}</div>
+        <label>${t("role")}</label>
+        <div>${esc(u.role)}</div>
+        <label>${t("social")}</label>
+        <div>${u.social ? esc(u.social) : "—"}</div>
+      </div>
+      <button class="btn btn-danger btn-block" data-action="logout">${t("logout")}</button>
+    </main>`;
+}
+
+function calendarHtml() {
+  const y = state.calYear, m = state.calMonth;
+  const first = new Date(y, m, 1);
+  const startDow = (first.getDay() + 6) % 7; // Monday-first
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const shootDates = new Set(state.shoots.map(s => s.date));
+  const dow = state.lang === "uk" ? ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"] : ["Mo","Tu","We","Th","Fr","Sa","Su"];
+  const monthNames = state.lang === "uk"
+    ? ["Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"]
+    : ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  let cells = "";
+  for (let i = 0; i < startDow; i++) cells += `<div class="cal-day empty"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const has = shootDates.has(iso);
+    cells += `<div class="cal-day ${has ? "has-shoot" : ""}" data-action="cal-day-click" data-date="${iso}">${d}</div>`;
+  }
+
+  return `
+    <div class="card">
+      <div class="cal-nav">
+        <button data-action="cal-prev">‹</button>
+        <strong style="font-size:13px;">${monthNames[m]} ${y}</strong>
+        <button data-action="cal-next">›</button>
+      </div>
+      <div class="cal-grid">
+        ${dow.map(d => `<div class="cal-dow">${d}</div>`).join("")}
+        ${cells}
+      </div>
+    </div>`;
+}
+
+function screenShootList() {
+  const isEmpty = state.showEmptyDemo || state.shoots.length === 0;
+  return `
+    ${accountHeader()}
+    <main>
+      <div class="row"><h1>${t("myShoots")}</h1></div>
+      <p class="sub">US-004</p>
+      <button class="btn btn-primary btn-block" data-action="new-shoot">${t("newShoot")}</button>
+      ${calendarHtml()}
+      ${isEmpty ? `
+        <div class="empty-state">
+          <p>${t("emptyShoots")}</p>
+          <p>${t("emptyShootsSub")}</p>
+          <button class="btn btn-primary" data-action="new-shoot">${t("createFirst")}</button>
+        </div>
+      ` : `
+        <div style="margin-top:6px;">
+          ${state.shoots.map(s => `
+            <div class="card clickable" data-action="open-shoot" data-id="${s.id}">
+              <div class="row">
+                <strong>${esc(s.client)}</strong>
+                <span class="status ${s.status}">${t(statusLabelKey(s.status))}</span>
+              </div>
+              <div class="muted">${esc(s.date)}${s.location.address ? " · " + esc(s.location.address) : ""}</div>
+            </div>
+          `).join("")}
+        </div>
+      `}
+    </main>
+    <nav class="demo-nav">
+      <button data-action="toggle-empty-demo">${state.showEmptyDemo ? "← " + (state.lang === "uk" ? "показати список" : "show list") : (state.lang === "uk" ? "Показати порожній стан (демо)" : "Show empty state (demo)")}</button>
+    </nav>`;
+}
+
+function screenNewShoot() {
+  return `
+    ${accountHeader()}
+    <main>
+      <button class="btn btn-ghost" data-action="back-to-list">${t("back")}</button>
+      <h1>${t("newShootTitle")}</h1>
+      <p class="sub">US-002</p>
+      <form data-form="new-shoot">
+        <label>${t("clientName")}</label>
+        <input name="client" placeholder="${state.lang === "uk" ? "напр. Марія" : "e.g. Maria"}">
+        <label>${t("clientContact")}</label>
+        <input name="contact" placeholder="+380…">
+        <label>${t("date")}</label>
+        <input name="date" type="date">
+        <div class="field-error" id="date-error">${t("dateRequired")}</div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" data-action="back-to-list">${t("cancel")}</button>
+          <button type="submit" class="btn btn-primary">${t("save")}</button>
+        </div>
+      </form>
+    </main>`;
+}
+
+function screenEditShoot() {
+  const shoot = findShoot(state.currentShootId);
+  const loc = shoot.location;
+  return `
+    ${accountHeader()}
+    <main>
+      <button class="btn btn-ghost" data-action="open-shoot" data-id="${shoot.id}">${t("back")}</button>
+      <h1>${t("editShootTitle")}</h1>
+      <p class="sub">US-018</p>
+      <form data-form="edit-shoot" data-shoot="${shoot.id}">
+        <label>${t("date")}</label>
+        <input name="date" type="date" value="${esc(shoot.date)}">
+        <div class="field-error" id="edit-date-error">${t("dateRequired")}</div>
+
+        <h2>${t("locationSection")}</h2>
+        <label>${t("address")}</label>
+        <input name="address" value="${esc(loc.address)}" placeholder="${state.lang === "uk" ? "напр. Студія, Київ" : "e.g. Studio, Kyiv"}">
+        <label>${t("locationNotes")}</label>
+        <textarea name="notes" placeholder="${state.lang === "uk" ? "напр. Заїзд з двору, домофон 45" : "e.g. Enter from the courtyard, buzzer 45"}">${esc(loc.notes)}</textarea>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary btn-sm" data-action="toggle-loc-image">${loc.hasImage ? "✓ " : ""}${t("attachImageDemo")}</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="toggle-loc-video">${loc.hasVideo ? "✓ " : ""}${t("attachVideoDemo")}</button>
+        </div>
+
+        <h2>${t("editFilesTitle")}</h2>
+        <p class="sub" style="margin-top:-6px;">US-024 / US-025</p>
+        <label>${t("rawFiles")}</label>
+        <input name="rawFilesLink" value="${esc(shoot.rawFilesLink)}" placeholder="${t("setLinkPlaceholder")}">
+        <label>${t("finishedPhotos")}</label>
+        <input name="finishedPhotosLink" value="${esc(shoot.finishedPhotosLink)}" placeholder="${t("setLinkPlaceholder")}">
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:16px;">${t("save")}</button>
+      </form>
+    </main>`;
+}
+
+function referencesBlock(shoot, opts) {
+  opts = opts || {};
+  const shown = shoot.references.slice(0, REF_DISPLAY_LIMIT);
+  const overflow = shoot.references.length > REF_DISPLAY_LIMIT;
+  let html = `<h2>${t("references")}</h2>`;
+  html += `<div class="ref-grid">`;
+  html += shown.map((r, i) =>
+    `<div class="ref-thumb" style="background:${REF_COLORS[i % REF_COLORS.length]}">${esc(r.label)}</div>`
+  ).join("");
+  html += `</div>`;
+  if (overflow) {
+    html += `<button class="btn btn-secondary btn-block" data-action="show-all-references" data-shoot="${shoot.id}" data-return="${opts.returnView || "shootDetail"}">${t("showAllReferences")} (${shoot.references.length})</button>`;
+  }
+  if (opts.addForm) {
+    html += `
+      <form data-form="add-reference" data-shoot="${shoot.id}" class="ref-add-row">
+        <input name="link" placeholder="${t("refPlaceholder")}">
+        <button type="button" class="icon-btn-square" data-action="pick-gallery" title="${t("pickFromGallery")}">${t("pickFromGallery")}</button>
+        <button type="submit" class="btn btn-secondary btn-sm">${t("addRefBtn")}</button>
+      </form>
+      <input type="file" accept="image/*" id="gallery-input" data-shoot="${shoot.id}" style="display:none;">`;
+  }
+  return html;
+}
+
+function screenAllReferences() {
+  const shoot = findShoot(state.currentShootId);
+  return `
+    <header class="topbar"><span class="brand">${t("brand")}</span></header>
+    <main>
+      <button class="btn btn-ghost" data-action="back-from-all-references">${t("back")}</button>
+      <h1>${t("allReferencesTitle")}</h1>
+      <p class="sub">US-021</p>
+      <div class="ref-grid">
+        ${shoot.references.map((r, i) => `<div class="ref-thumb" style="background:${REF_COLORS[i % REF_COLORS.length]}">${esc(r.label)}</div>`).join("")}
+      </div>
+    </main>`;
+}
+
+function fileSectionHtml(label, link) {
+  return `
+    <div class="file-section">
+      <strong>${label}</strong><br>
+      ${link ? `<a href="#" onclick="return false;">${esc(link)}</a>` : `<span class="muted">${t("inDevelopment")}</span>`}
+    </div>`;
+}
+
+function screenShootDetail() {
+  const shoot = findShoot(state.currentShootId);
+  if (!shoot) return screenShootList();
+  return `
+    ${accountHeader()}
+    <main>
+      <button class="btn btn-ghost" data-action="back-to-list">${t("back")}</button>
+      <div class="row">
+        <h1>${esc(shoot.client)}</h1>
+        <span class="status ${shoot.status}">${t(statusLabelKey(shoot.status))}</span>
+      </div>
+      <p class="sub">${esc(shoot.date)}${shoot.location.address ? " · " + esc(shoot.location.address) : ""} — US-002/003/005/006/018</p>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" data-action="edit-shoot" data-shoot="${shoot.id}">✏️ ${t("edit")}</button>
+        <button class="btn btn-secondary" data-action="toggle-status" data-shoot="${shoot.id}">${shoot.status === "new" ? t("markFinished") : t("markNew")}</button>
+      </div>
+      <button class="btn btn-danger btn-block" data-action="delete-shoot" data-shoot="${shoot.id}">🗑 ${t("deleteShoot")}</button>
+
+      ${shoot.location.notes || shoot.location.hasImage || shoot.location.hasVideo ? `
+        <h2>${t("locationSection")}</h2>
+        <div class="card">
+          ${shoot.location.notes ? `<div>${esc(shoot.location.notes)}</div>` : ""}
+          ${shoot.location.hasImage ? `<span class="chip">🖼 ${t("demoLabel")}</span>` : ""}
+          ${shoot.location.hasVideo ? `<span class="chip">🎞 ${t("demoLabel")}</span>` : ""}
+        </div>
+      ` : ""}
+
+      ${referencesBlock(shoot, { addForm: true, returnView: "shootDetail" })}
+
+      <h2>${t("crew")}</h2>
+      <div class="card">
+        ${shoot.crew.length === 0 ? `<p class="muted">—</p>` : shoot.crew.map(c => `
+          <div class="crew-row">
+            <div class="crew-main">
+              <div><strong>${esc(c.name)}</strong></div>
+              <div class="muted">${esc(c.role)} · ${esc(c.contact)}</div>
+            </div>
+            <span class="status ${c.status}">${t(statusLabelKey(c.status))}</span>
+            <div class="crew-actions">
+              <button data-action="copy-link" data-shoot="${shoot.id}" data-crew="${c.id}" title="${t("copyLinkTitle")}">🔗</button>
+              <button data-action="remove-crew" data-shoot="${shoot.id}" data-crew="${c.id}" title="${t("removeCrewTitle")}">✕</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+      <button class="btn btn-secondary btn-block" data-action="add-crew" data-shoot="${shoot.id}">${t("addCrewMember")}</button>
+
+      <h2>${state.lang === "uk" ? "Файли" : "Files"}</h2>
+      ${fileSectionHtml(t("rawFiles"), shoot.rawFilesLink)}
+      ${fileSectionHtml(t("finishedPhotos"), shoot.finishedPhotosLink)}
+      <p class="sub">US-024 / US-025 — ${state.lang === "uk" ? "редагується через «Редагувати»" : "edit via the Edit button above"}</p>
+    </main>
+    <nav class="demo-nav">
+      <button data-action="view-as-crew" data-shoot="${shoot.id}">${t("viewAsCrew")}</button>
+      <button data-action="view-as-client" data-shoot="${shoot.id}">${t("viewAsClient")}</button>
+      <button data-action="view-broken-link">${t("viewBrokenLink")}</button>
+    </nav>`;
+}
+
+function screenAddCrew() {
+  const shoot = findShoot(state.currentShootId);
+  return `
+    ${accountHeader()}
+    <main>
+      <button class="btn btn-ghost" data-action="open-shoot" data-id="${shoot.id}">${t("back")}</button>
+      <h1>${t("addCrewMember")}</h1>
+      <p class="sub">US-005</p>
+      <form data-form="add-crew" data-shoot="${shoot.id}">
+        <label>${t("crewName")}</label>
+        <input name="name" placeholder="${state.lang === "uk" ? "напр. Наталія" : "e.g. Natalia"}">
+        <label>${t("crewRole")}</label>
+        <select name="role">
+          ${ROLES[state.lang].map(r => `<option value="${esc(r)}">${esc(r)}</option>`).join("")}
+        </select>
+        <label>${t("crewContact")}</label>
+        <input name="contact" placeholder="+380… ${state.lang === "uk" ? "або" : "or"} email">
+        <div class="field-error" id="contact-error">${t("contactRequired")}</div>
+        <label>${t("crewInstagram")}</label>
+        <input name="instagram" placeholder="@...">
+        <label>${t("crewNotes")} <span class="muted" style="font-weight:400;">${t("richTextDemo")}</span></label>
+        <div class="rt-toolbar"><span>B</span><span><i>I</i></span>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="toggle-new-crew-image" style="padding:1px 8px;">${state.newCrewNoteHasImage ? "✓ " : ""}🖼</button>
+        </div>
+        <textarea name="notes" placeholder="${state.lang === "uk" ? "напр. привозить свій набір" : "e.g. brings their own kit"}"></textarea>
+        <button class="btn btn-primary btn-block" type="submit">${t("save")}</button>
+      </form>
+    </main>`;
+}
+
+function crewDetailBody(crew, opts) {
+  opts = opts || {};
+  return `
+    <div class="card">
+      <label>${t("crewName")}</label><div><strong>${esc(crew.name)}</strong></div>
+      <label>${t("crewRole")}</label><div>${esc(crew.role)}</div>
+      <label>${t("crewContact")}</label><div>${esc(crew.contact)}</div>
+      <label>${t("crewInstagram")}</label><div>${crew.instagram ? esc(crew.instagram) : "—"}</div>
+      ${opts.hideNotes ? "" : `<label>${t("crewNotes")}</label><div>${crew.notes ? esc(crew.notes) : "—"} ${crew.notesHasImage ? `<span class="chip">🖼 ${t("demoLabel")}</span>` : ""}</div>`}
+    </div>`;
+}
+
+function screenCrewPeerDetail() {
+  const shoot = findShoot(state.currentShootId);
+  const crew = shoot.crew.find(c => c.id === state.peerCrewId);
+  const fromClient = state.peerDetailContext === "client";
+  return `
+    <header class="topbar"><span class="brand">${t("brand")}</span></header>
+    <main>
+      <div class="fake-tag">${fromClient ? (state.lang === "uk" ? "вигляд клієнта" : "client view") : (state.lang === "uk" ? "вигляд без акаунту" : "no-account view")}</div>
+      <button class="btn btn-ghost" data-action="${fromClient ? "back-to-client-link" : "back-to-crew-link"}">${t("back")}</button>
+      <h1>${t("peerDetailsTitle")}</h1>
+      <p class="sub">${fromClient ? "US-026" : "US-023"}</p>
+      ${crewDetailBody(crew, { hideNotes: fromClient })}
+    </main>
+    <nav class="demo-nav"><button data-action="back-to-detail">${state.lang === "uk" ? "← Назад до зйомки (як фотограф)" : "← Back to shoot (as photographer)"}</button></nav>`;
+}
+
+function screenCrewLinkView() {
+  const shoot = findShoot(state.currentShootId);
+  const crew = shoot.crew.find(c => c.id === state.currentCrewId) || shoot.crew[shoot.crew.length - 1];
+  return `
+    <header class="topbar"><span class="brand">${t("brand")}</span></header>
+    <main>
+      <div class="fake-tag">${state.lang === "uk" ? "вигляд без акаунту" : "no-account view"}</div>
+      <h1>${t("shootFor")}: ${esc(shoot.date)}</h1>
+      <p class="sub">${esc(shoot.location.address)} — US-007/US-008/US-023</p>
+      <p class="muted">${state.lang === "uk" ? "Ви" : "You"}: <strong>${esc(crew.name)}</strong> (${esc(crew.role)})</p>
+
+      ${referencesBlock(shoot, { returnView: "crewLinkView" })}
+
+      <h2>${t("crew")}</h2>
+      <div class="card">
+        ${shoot.crew.map(c => `
+          <div class="crew-row clickable" data-action="view-peer" data-shoot="${shoot.id}" data-crew="${c.id}">
+            <div class="crew-main"><strong>${esc(c.name)}</strong> · ${esc(c.role)}</div>
+            <span class="status ${c.status}">${t(statusLabelKey(c.status))}</span>
+          </div>
+        `).join("")}
+      </div>
+
+      ${crew.status === "pending" ? `
+        <div class="btn-row">
+          <button class="btn btn-secondary" data-action="crew-respond" data-shoot="${shoot.id}" data-crew="${crew.id}" data-status="declined">${t("decline")}</button>
+          <button class="btn btn-primary" data-action="crew-respond" data-shoot="${shoot.id}" data-crew="${crew.id}" data-status="confirmed">${t("confirm")}</button>
+        </div>
+      ` : `
+        <div class="card" style="text-align:center;">
+          ${crew.status === "confirmed" ? t("youConfirmed") : t("youDeclined")}
+        </div>
+      `}
+    </main>
+    <nav class="demo-nav"><button data-action="back-to-detail">${state.lang === "uk" ? "← Назад до зйомки (як фотограф)" : "← Back to shoot (as photographer)"}</button></nav>`;
+}
+
+function screenClientLinkView() {
+  const shoot = findShoot(state.currentShootId);
+  return `
+    <header class="topbar"><span class="brand">${t("brand")}</span></header>
+    <main>
+      <div class="fake-tag">${state.lang === "uk" ? "вигляд клієнта" : "client view"}</div>
+      <h1>${t("shootFor")}: ${esc(shoot.date)}</h1>
+      <p class="sub">${esc(shoot.location.address)} — US-010/US-024/US-025/US-026</p>
+
+      ${referencesBlock(shoot, { returnView: "clientLinkView" })}
+
+      <h2>${t("crew")}</h2>
+      <div class="card">
+        ${shoot.crew.map(c => `
+          <div class="crew-row clickable" data-action="view-peer-as-client" data-shoot="${shoot.id}" data-crew="${c.id}">
+            <div class="crew-main">${esc(c.name)}</div><span class="muted">${esc(c.role)}</span>
+          </div>
+        `).join("")}
+      </div>
+
+      <h2>${state.lang === "uk" ? "Файли" : "Files"}</h2>
+      ${fileSectionHtml(t("rawFiles"), shoot.rawFilesLink)}
+      ${fileSectionHtml(t("finishedPhotos"), shoot.finishedPhotosLink)}
+    </main>
+    <nav class="demo-nav"><button data-action="back-to-detail">${state.lang === "uk" ? "← Назад до зйомки (як фотограф)" : "← Back to shoot (as photographer)"}</button></nav>`;
+}
+
+function screenBrokenLink() {
+  return `
+    <header class="topbar"><span class="brand">${t("brand")}</span></header>
+    <main>
+      <div class="error-screen">
+        <div class="icon">⚠️</div>
+        <h1>${t("linkInvalidTitle")}</h1>
+        <p class="muted">${t("linkInvalidSub")}</p>
+      </div>
+    </main>
+    <nav class="demo-nav"><button data-action="back-to-detail">${state.lang === "uk" ? "← Назад до зйомки (як фотограф)" : "← Back to shoot (as photographer)"}</button></nav>`;
+}
+
+function render() {
+  if (ACCOUNT_VIEWS.includes(state.view) && !state.loggedIn) {
+    state.view = "auth";
+  }
+  const app = document.getElementById("app");
+  let html;
+  switch (state.view) {
+    case "auth": html = screenAuth(); break;
+    case "profile": html = screenProfile(); break;
+    case "shootList": html = screenShootList(); break;
+    case "newShoot": html = screenNewShoot(); break;
+    case "editShoot": html = screenEditShoot(); break;
+    case "shootDetail": html = screenShootDetail(); break;
+    case "addCrew": html = screenAddCrew(); break;
+    case "allReferences": html = screenAllReferences(); break;
+    case "crewLinkView": html = screenCrewLinkView(); break;
+    case "crewPeerDetail": html = screenCrewPeerDetail(); break;
+    case "clientLinkView": html = screenClientLinkView(); break;
+    case "brokenLink": html = screenBrokenLink(); break;
+    default: html = screenAuth();
+  }
+  app.innerHTML = html;
+}
+
+/* ---------------------------------------------------------------- actions */
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  if (action === "lang") { state.lang = btn.dataset.lang; render(); return; }
+  if (action === "toggle-auth") { state.authMode = state.authMode === "login" ? "register" : "login"; state.authError = ""; render(); return; }
+  if (action === "new-shoot") { state.view = "newShoot"; render(); return; }
+  if (action === "back-to-list") { state.view = "shootList"; render(); return; }
+  if (action === "toggle-empty-demo") { state.showEmptyDemo = !state.showEmptyDemo; render(); return; }
+  if (action === "open-shoot") { state.currentShootId = btn.dataset.id; state.view = "shootDetail"; render(); return; }
+  if (action === "open-profile") { state.view = "profile"; render(); return; }
+  if (action === "logout") {
+    state.loggedIn = false;
+    state.currentUser = null;
+    state.view = "auth";
+    toast(state.lang === "uk" ? "Ви вийшли (US-017)" : "Logged out (US-017)");
+    render();
+    return;
+  }
+  if (action === "add-crew") { state.currentShootId = btn.dataset.shoot; state.view = "addCrew"; render(); return; }
+  if (action === "edit-shoot") { state.currentShootId = btn.dataset.shoot; state.view = "editShoot"; render(); return; }
+  if (action === "toggle-loc-image") {
+    const loc = findShoot(state.currentShootId).location;
+    loc.hasImage = !loc.hasImage;
+    btn.textContent = (loc.hasImage ? "✓ " : "") + t("attachImageDemo");
+    return;
+  }
+  if (action === "toggle-loc-video") {
+    const loc = findShoot(state.currentShootId).location;
+    loc.hasVideo = !loc.hasVideo;
+    btn.textContent = (loc.hasVideo ? "✓ " : "") + t("attachVideoDemo");
+    return;
+  }
+  if (action === "toggle-status") {
+    const shoot = findShoot(btn.dataset.shoot);
+    shoot.status = shoot.status === "new" ? "finished" : "new";
+    render();
+    return;
+  }
+  if (action === "delete-shoot") {
+    if (!confirm(t("confirmDeleteShoot"))) return;
+    state.shoots = state.shoots.filter(s => s.id !== btn.dataset.shoot);
+    state.view = "shootList";
+    render();
+    return;
+  }
+  if (action === "remove-crew") {
+    if (!confirm(t("confirmRemoveCrew"))) return;
+    const shoot = findShoot(btn.dataset.shoot);
+    shoot.crew = shoot.crew.filter(c => c.id !== btn.dataset.crew);
+    render();
+    return;
+  }
+  if (action === "view-as-crew") {
+    state.currentShootId = btn.dataset.shoot;
+    const shoot = findShoot(state.currentShootId);
+    const pending = shoot.crew.find(c => c.status === "pending");
+    state.currentCrewId = pending ? pending.id : (shoot.crew[0] ? shoot.crew[0].id : null);
+    state.view = "crewLinkView"; render(); return;
+  }
+  if (action === "view-peer") {
+    state.peerCrewId = btn.dataset.crew;
+    state.peerDetailContext = "crew";
+    state.view = "crewPeerDetail";
+    render();
+    return;
+  }
+  if (action === "view-peer-as-client") {
+    state.currentShootId = btn.dataset.shoot;
+    state.peerCrewId = btn.dataset.crew;
+    state.peerDetailContext = "client";
+    state.view = "crewPeerDetail";
+    render();
+    return;
+  }
+  if (action === "back-to-crew-link") { state.view = "crewLinkView"; render(); return; }
+  if (action === "back-to-client-link") { state.view = "clientLinkView"; render(); return; }
+  if (action === "view-as-client") { state.currentShootId = btn.dataset.shoot; state.view = "clientLinkView"; render(); return; }
+  if (action === "view-broken-link") { state.view = "brokenLink"; render(); return; }
+  if (action === "back-to-detail") { state.view = "shootDetail"; render(); return; }
+  if (action === "copy-link") {
+    const fake = `https://luna.app/l/${btn.dataset.shoot}-${btn.dataset.crew}`;
+    toast(`${t("linkCopied")} ${fake}`);
+    return;
+  }
+  if (action === "crew-respond") {
+    const shoot = findShoot(btn.dataset.shoot);
+    const crew = shoot.crew.find(c => c.id === btn.dataset.crew);
+    crew.status = btn.dataset.status;
+    render();
+    return;
+  }
+  if (action === "show-all-references") {
+    state.currentShootId = btn.dataset.shoot;
+    state.allReferencesReturn = btn.dataset.return;
+    state.view = "allReferences";
+    render();
+    return;
+  }
+  if (action === "back-from-all-references") { state.view = state.allReferencesReturn; render(); return; }
+  if (action === "pick-gallery") {
+    document.getElementById("gallery-input").click();
+    return;
+  }
+  if (action === "cal-prev") {
+    state.calMonth--; if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+    render(); return;
+  }
+  if (action === "cal-next") {
+    state.calMonth++; if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+    render(); return;
+  }
+  if (action === "cal-day-click") { toast(t("calDateQuestion")); return; }
+  if (action === "toggle-new-crew-image") {
+    state.newCrewNoteHasImage = !state.newCrewNoteHasImage;
+    btn.textContent = (state.newCrewNoteHasImage ? "✓ " : "") + "🖼";
+    return;
+  }
+});
+
+document.addEventListener("change", (e) => {
+  if (e.target.id === "gallery-input" && e.target.files[0]) {
+    const shoot = findShoot(e.target.dataset.shoot);
+    shoot.references.push({ id: "r" + Date.now(), label: e.target.files[0].name + " " + t("demoLabel") });
+    render();
+  }
+});
+
+document.addEventListener("submit", (e) => {
+  const form = e.target.closest("form");
+  if (!form) return;
+  e.preventDefault();
+  const kind = form.dataset.form;
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  if (kind === "auth") {
+    if (state.authMode === "register") {
+      if (!data.role) { state.authError = t("roleRequired"); render(); return; }
+      state.authError = "";
+      state.loggedIn = true;
+      state.currentUser = { name: data.name || (state.lang === "uk" ? "Без імені (демо)" : "Unnamed (demo)"), email: data.email || "—", role: data.role, social: data.social || "" };
+      state.view = "shootList";
+      render();
+      return;
+    } else {
+      if (!data.email || !data.password) { state.authError = t("wrongCreds"); render(); return; }
+      state.authError = "";
+      state.loggedIn = true;
+      state.currentUser = { name: "Ілона (демо)", email: data.email, role: "Фотограф", social: "@ilona.demo" };
+      state.view = "shootList";
+      render();
+      return;
+    }
+  }
+
+  if (kind === "new-shoot") {
+    const errEl = document.getElementById("date-error");
+    if (!data.date) { errEl.classList.add("show"); return; }
+    errEl.classList.remove("show");
+    const id = "s" + (state.shoots.length + 1) + "-" + Date.now();
+    state.shoots.push({
+      id, client: data.client || (state.lang === "uk" ? "Без імені (демо)" : "Unnamed (demo)"),
+      contact: data.contact || "—", date: data.date, status: "new",
+      location: { address: "", notes: "", hasImage: false, hasVideo: false },
+      rawFilesLink: "", finishedPhotosLink: "",
+      references: [], crew: [],
+    });
+    state.currentShootId = id;
+    state.view = "shootDetail";
+    render();
+    return;
+  }
+
+  if (kind === "edit-shoot") {
+    const errEl = document.getElementById("edit-date-error");
+    if (!data.date) { errEl.classList.add("show"); return; }
+    errEl.classList.remove("show");
+    const shoot = findShoot(form.dataset.shoot);
+    shoot.date = data.date;
+    shoot.location.address = data.address || "";
+    shoot.location.notes = data.notes || "";
+    shoot.rawFilesLink = data.rawFilesLink || "";
+    shoot.finishedPhotosLink = data.finishedPhotosLink || "";
+    state.view = "shootDetail";
+    render();
+    return;
+  }
+
+  if (kind === "add-reference") {
+    const shoot = findShoot(form.dataset.shoot);
+    if (data.link) shoot.references.push({ id: "r" + Date.now(), label: data.link + " " + t("demoLabel") });
+    render();
+    return;
+  }
+
+  if (kind === "add-crew") {
+    const errEl = document.getElementById("contact-error");
+    if (!data.contact) { errEl.classList.add("show"); return; }
+    errEl.classList.remove("show");
+    const shoot = findShoot(form.dataset.shoot);
+    shoot.crew.push({ id: "c" + Date.now(), name: data.name || "—", role: data.role, contact: data.contact, instagram: data.instagram || "", notes: data.notes || "", notesHasImage: state.newCrewNoteHasImage, status: "pending" });
+    state.newCrewNoteHasImage = false;
+    state.view = "shootDetail";
+    render();
+    return;
+  }
+});
+
+render();
+</script>
+</body>
+</html>
