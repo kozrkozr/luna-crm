@@ -29,6 +29,9 @@ export const uk = {
   profileTitle: 'Профіль',
   logout: 'Вийти',
   contact: 'Контакт',
+  // ADR-015 makes phone an optional profile field. Registration does not
+  // collect it, so this row appears only if a later story sets one.
+  phone: 'Телефон',
 
   // EP-02 — shoots
   myShoots: 'Мої зйомки',
@@ -62,11 +65,13 @@ export const uk = {
   save: 'Зберегти',
   cancel: 'Скасувати',
 
-  // NOT from the prototype — the spec gives copy for US-001 AC-2's missing role
+  // NOT from the prototype. The spec gives copy for US-001 AC-2's missing role
   // and US-013's wrong credentials, but nothing for a registration that fails
-  // for any other reason (duplicate email, weak password, network). Placeholder
-  // pending confirmation; see docs/open-questions.md.
+  // for another reason (duplicate email, weak password, network), and nothing
+  // for a screen that fails to load its data. Placeholders pending
+  // confirmation; see docs/open-questions.md item 1.
   registrationFailed: 'Не вдалося зареєструватися. Спробуйте ще раз.',
+  somethingWentWrong: 'Щось пішло не так. Спробуйте ще раз.',
 } as const
 
 export type CopyKey = keyof typeof uk
