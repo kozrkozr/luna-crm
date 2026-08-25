@@ -6,6 +6,12 @@ clients who have **no account and no app installed**.
 The specification is in [`docs/product/`](docs/product/) — a frozen, **read-only** snapshot.
 Start with `HANDOFF.md`, then `backlog-order.md`. Build rules are in [`CLAUDE.md`](CLAUDE.md).
 
+**Node 22+ is required** (`engines` in package.json). `@supabase/supabase-js` constructs a
+Realtime client that needs a global `WebSocket`, which Node 20 lacks — on Node 20 both
+`expo export -p web` and `expo start --web` fail with *"Node.js 20 detected without native
+WebSocket support"*. Native bundling is unaffected, so the failure only shows up on the web
+target. `nvm use 22`.
+
 ## Setup
 
 ```bash
