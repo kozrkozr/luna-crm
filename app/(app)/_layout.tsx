@@ -1,10 +1,16 @@
 import { Link, Stack } from 'expo-router'
 import { Button } from 'tamagui'
 import { uk } from '../../src/i18n/uk'
+import { RequireSession } from '../../src/features/auth/RequireSession'
 
-/** The creator's surface. Everything here requires a session (EP-01). */
+/**
+ * The creator's surface. Everything here requires a session (EP-01), enforced
+ * once for the whole group by RequireSession (US-017 AC-2) so that screens
+ * added by later stories are guarded by default.
+ */
 export default function AppLayout() {
   return (
+    <RequireSession>
     <Stack screenOptions={{ headerLargeTitle: true }}>
       <Stack.Screen
         name="index"
@@ -23,5 +29,6 @@ export default function AppLayout() {
       />
       <Stack.Screen name="profile" options={{ title: uk.profileTitle }} />
     </Stack>
+    </RequireSession>
   )
 }

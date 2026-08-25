@@ -1,6 +1,7 @@
 import { Card, Label, Paragraph, ScrollView, SizableText, Spinner, YStack } from 'tamagui'
 import { uk } from '../../src/i18n/uk'
 import { useProfile } from '../../src/features/auth/useProfile'
+import { LogoutButton } from '../../src/features/auth/LogoutButton'
 
 /**
  * US-016 — view own profile. Layout follows the gated prototype's screenProfile:
@@ -14,7 +15,7 @@ import { useProfile } from '../../src/features/auth/useProfile'
  * optional profile field that registration does not collect, so phone is shown
  * only if some later story sets it.
  *
- * Logging out is US-017 and is added to this screen there.
+ * Logging out (US-017) sits here, as it does in the prototype.
  */
 export default function ProfileScreen() {
   const state = useProfile()
@@ -47,6 +48,8 @@ export default function ProfileScreen() {
           <Field label={uk.role} value={profile.role} />
           <Field label={uk.social} value={profile.socialHandle ?? '—'} />
         </Card>
+
+        <LogoutButton />
       </YStack>
     </ScrollView>
   )
