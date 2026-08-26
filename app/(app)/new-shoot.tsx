@@ -26,7 +26,6 @@ export default function NewShootScreen() {
   const [clientName, setClientName] = useState('')
   const [clientContact, setClientContact] = useState('')
   const [date, setDate] = useState<Date | null>(null)
-  const [showPicker, setShowPicker] = useState(false)
 
   const [errors, setErrors] = useState<{ name?: boolean; contact?: boolean; date?: boolean }>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -93,24 +92,36 @@ export default function NewShootScreen() {
         <FieldError show={!!errors.contact} message={uk.clientContactRequired} />
 
         <Label htmlFor="date">{uk.date}</Label>
-        <Button
-          id="date"
-          size="$4"
-          onPress={() => setShowPicker(true)}
-          justify="flex-start"
-        >
-          {date ? toIsoDate(date) : uk.pickDate}
-        </Button>
-        {showPicker ? (
-          <DateTimePicker
-            value={date ?? new Date()}
-            mode="date"
-            display="inline"
-            onChange={(_event, selected) => {
-              if (selected) setDate(selected)
-            }}
-          />
-        ) : null}
+        {/*
+          `compact` is the iOS form idiom: a small date chip that opens a
+          calendar popover on tap. `inline` drops a full month grid into the
+          middle of the form, which is what a date *screen* uses, not a field.
+
+          The field starts as a button rather than a pre-filled picker so the
+          date can genuinely be unset — AC-2's blocked save needs a reachable
+          empty state. Tapping it seeds today and hands over to the picker.
+        */}
+        {date === null ? (
+          <Button
+            id="date"
+            size="$4"
+            justify="flex-start"
+            onPress={() => setDate(new Date())}
+          >
+            {uk.pickDate}
+          </Button>
+        ) : (
+          <XStack items="center">
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="compact"
+              onChange={(_event, selected) => {
+                if (selected) setDate(selected)
+              }}
+            />
+          </XStack>
+        )}
         <FieldError show={!!errors.date} message={uk.dateRequired} />
 
         {formError ? (
