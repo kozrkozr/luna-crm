@@ -72,3 +72,15 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
   (`docs/spikes/S-2-*.md` F-2). Resolve first, then decide.
 - **Soft-delete filters are in the RLS policies**, so the app surface cannot forget them. The
   link gateway runs as service role and bypasses RLS — it must filter explicitly.
+- **Soft-deleting is currently impossible from the app surface, and `US-019`/`US-022` will hit
+  this on their first line.** `update shoots set deleted_at = ...` fails with *"new row violates
+  row-level security policy"*, and so does `removed_at` on `crew_members`. The cause is not the
+  UPDATE policy — adding a `with check` to it changes nothing. Postgres applies the **SELECT**
+  policy to the *new* row, and that policy says `deleted_at is null`, so the row fails its own
+  read policy the instant you mark it deleted. Verified in SQL, 2026-08-26: relax the SELECT
+  policy and the same update succeeds.
+
+  Do **not** fix this by dropping the liveness filter from the SELECT policy — that is exactly
+  the bug class rule 3 exists to prevent. The path that keeps the guarantee is a
+  `security definer` function that checks ownership itself and performs the update outside RLS.
+  That belongs to `US-019`/`US-022`; nothing has been built for it yet.
