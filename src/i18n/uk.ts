@@ -124,3 +124,26 @@ export const ROLES_UK = [
 ] as const
 
 export type Role = (typeof ROLES_UK)[number]
+
+/**
+ * Calendar labels for US-004, verbatim from the prototype's `calendarHtml`.
+ *
+ * Weekdays are **Monday-first**, as there — `(getDay() + 6) % 7` — which is the
+ * Ukrainian convention and not JavaScript's Sunday-first default.
+ */
+export const WEEKDAYS_UK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'] as const
+
+export const MONTHS_UK = [
+  'Січень',
+  'Лютий',
+  'Березень',
+  'Квітень',
+  'Травень',
+  'Червень',
+  'Липень',
+  'Серпень',
+  'Вересень',
+  'Жовтень',
+  'Листопад',
+  'Грудень',
+] as const

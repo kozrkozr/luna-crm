@@ -183,6 +183,31 @@ grey tiles reading `pinterest.com` is the foreseeable end state.
 - **Blocks:** nothing. Bears on `US-007`/`US-010`, where crew and clients read the same
   references.
 
+### 16. The calendar has no month navigation, and the prototype does
+`US-004`'s Out of scope is explicit: *"Month navigation, multi-month view, or any calendar
+behavior beyond marking shoot dates on the current view — not specified; keep it simple until
+asked for more."* So the calendar shows the current month, with no arrows and no tappable days
+(what tapping a date does is also left open, by the same section).
+
+The prototype disagrees with itself here. `calendarHtml` draws `‹` and `›` buttons with working
+`cal-prev`/`cal-next` handlers, and it deliberately opens on September rather than the real
+current month — the comment says so: *"matches the demo shoot's date, so it's visible without
+navigating"*. That is the prototype Ilona reviewed twice.
+
+The consequence of following the story: **a shoot in any month but this one is invisible on the
+calendar.** Today is August; a shoot booked for October marks nothing, and there is no way to
+look. For a photographer booking weeks ahead that is most shoots. The list still shows them, so
+nothing is lost — but the calendar is close to decorative until the month turns.
+
+Followed the story rather than the prototype, because the story states the exclusion in words
+and the prototype only implies the inclusion by having built it. It is recorded rather than
+decided.
+
+- **Raised by:** `US-004`
+- **What shipped:** `src/components/ShootCalendar.tsx` — current month, no navigation, no
+  tappable days
+- **Blocks:** nothing. One arrow pair if the answer is "add it".
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

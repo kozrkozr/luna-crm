@@ -7,6 +7,7 @@ import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { listShoots, type Shoot } from '../../src/features/shoots/api'
 import { StatusPill } from '../../src/components/StatusPill'
+import { ShootCalendar } from '../../src/components/ShootCalendar'
 
 type State =
   | { status: 'loading' }
@@ -14,12 +15,15 @@ type State =
   | { status: 'loaded'; shoots: Shoot[] }
 
 /**
- * The shoot creator's home view.
+ * The shoot creator's home view (US-004).
  *
- * US-002 AC-1 requires a newly created shoot to *appear here*, which is why the
- * list is real rather than a placeholder. The calendar, ordering rules and the
- * empty-state copy in full are US-004; this renders the list and its empty
- * state only.
+ * AC-1 — every shoot, ordered by date, with a calendar below the "new shoot"
+ * button marking the dates that have one. The ordering is the query's
+ * (`listShoots` orders ascending), not this screen's.
+ *
+ * AC-2 — with no shoots, an empty state and an unmarked calendar. Both render;
+ * neither is an error and neither is a blank screen. The calendar deliberately
+ * stays visible when the list is empty, which is what AC-2 describes.
  *
  * Refetches on focus so returning from the creation form shows the new shoot
  * without a manual refresh.
@@ -49,6 +53,14 @@ export default function ShootListScreen() {
           <Text>{uk.newShoot}</Text>
         </Button>
 
+        {/*
+          AC-1 places the calendar below the "new shoot" button, as the
+          prototype does. It is fed the loaded shoots' dates, so during loading
+          and after an error it renders unmarked rather than disappearing —
+          the chrome should not move under the reader.
+        */}
+        <ShootCalendar shootDates={state.status === 'loaded' ? state.shoots.map((s) => s.date) : []} />
+
         {state.status === 'loading' ? (
           <View className="items-center py-8">
             <ActivityIndicator size="large" />
@@ -59,6 +71,10 @@ export default function ShootListScreen() {
           <View className="items-center gap-2 py-8">
             <Text variant="h4">{uk.emptyShoots}</Text>
             <Text className="text-muted-foreground">{uk.emptyShootsSub}</Text>
+            {/* The prototype's empty state offers the action directly. */}
+            <Button className="mt-2" onPress={() => router.push('/(app)/new-shoot')}>
+              <Text>{uk.createFirst}</Text>
+            </Button>
           </View>
         ) : (
           /*
