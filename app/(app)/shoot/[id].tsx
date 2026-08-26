@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, View } from 'react-native'
 import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { Button } from '../../../src/components/ui/button'
@@ -123,6 +123,9 @@ function ReferencesBlock({
   const [link, setLink] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // AC-3 — the full-screen image viewer. Holds the signed URL of the tapped
+  // image; null means closed.
+  const [viewing, setViewing] = useState<string | null>(null)
 
   // AC-2 — on rejection the list is left exactly as it was. Nothing here
   // touches `references`; only a successful add calls onAdded.
@@ -170,7 +173,7 @@ function ReferencesBlock({
       {references.length > 0 ? (
         <View className="flex-row flex-wrap gap-2">
           {references.map((reference) => (
-            <ReferenceThumb key={reference.id} reference={reference} />
+            <ReferenceThumb key={reference.id} reference={reference} onOpenImage={setViewing} />
           ))}
         </View>
       ) : null}
@@ -196,7 +199,37 @@ function ReferencesBlock({
       </View>
 
       {error ? <Text className="text-destructive text-sm">{error}</Text> : null}
+
+      <ImageViewer uri={viewing} onClose={() => setViewing(null)} />
     </View>
+  )
+}
+
+/**
+ * AC-3, the image half — full-screen, dismissible back to where the viewer was.
+ *
+ * React Native's Modal, for the same reason DateField uses one: it needs no
+ * measurement of its content, which is where the previous UI layer's sheet
+ * failed on this project. Tapping anywhere dismisses, and «Готово» is there so
+ * the way out is visible rather than guessed — the same word the date picker
+ * already uses to confirm and close.
+ */
+function ImageViewer({ uri, onClose }: { uri: string | null; onClose: () => void }) {
+  return (
+    <Modal visible={!!uri} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable className="flex-1 bg-black" onPress={onClose}>
+        <View className="flex-1 items-center justify-center">
+          {uri ? (
+            <Image source={{ uri }} className="h-full w-full" resizeMode="contain" />
+          ) : null}
+        </View>
+        <View className="absolute right-4 top-16">
+          <Button variant="secondary" onPress={onClose}>
+            <Text>{uk.done}</Text>
+          </Button>
+        </View>
+      </Pressable>
+    </Modal>
   )
 }
 
@@ -204,8 +237,17 @@ function ReferencesBlock({
  * An image reference renders the image itself; a link renders its host, which
  * is the only label available. The schema has no label column and US-003 does
  * not ask for one, so none is invented.
+ *
+ * AC-3 — tapping opens the reference: a link goes to the phone's browser,
+ * outside the app; an image opens full-screen.
  */
-function ReferenceThumb({ reference }: { reference: Reference }) {
+function ReferenceThumb({
+  reference,
+  onOpenImage,
+}: {
+  reference: Reference
+  onOpenImage: (uri: string) => void
+}) {
   const [uri, setUri] = useState<string | null>(null)
 
   useFocusEffect(
@@ -224,19 +266,51 @@ function ReferenceThumb({ reference }: { reference: Reference }) {
 
   if (reference.kind === 'image') {
     return (
-      <View className="bg-secondary border-border h-24 w-24 overflow-hidden rounded-md border">
+      <Pressable
+        className="bg-secondary border-border h-24 w-24 overflow-hidden rounded-md border active:opacity-70"
+        // Not tappable until the URL is signed: there would be nothing to show,
+        // and the thumbnail is blank at that point anyway.
+        disabled={!uri}
+        onPress={() => uri && onOpenImage(uri)}
+        // Pressable alone renders an unlabelled div on web. RNR's own controls
+        // set a role; these are hand-composed, and ADR-016 made their
+        // accessibility this project's problem rather than a library's.
+        role="button"
+        accessibilityLabel={uk.references}
+      >
         {uri ? <Image source={{ uri }} className="h-full w-full" resizeMode="cover" /> : null}
-      </View>
+      </Pressable>
     )
   }
 
   return (
-    <Pressable className="bg-secondary border-border h-24 w-24 justify-end rounded-md border p-2">
+    <Pressable
+      className="bg-secondary border-border h-24 w-24 justify-end rounded-md border p-2 active:opacity-70"
+      onPress={() => void openLink(reference.urlOrPath)}
+      role="button"
+      accessibilityLabel={hostOf(reference.urlOrPath)}
+    >
       <Text className="text-xs" numberOfLines={3}>
         {hostOf(reference.urlOrPath)}
       </Text>
     </Pressable>
   )
+}
+
+/**
+ * AC-3, the link half — "opens in the phone's browser, outside the app".
+ *
+ * `canOpenURL` first, so a stored link the OS cannot handle fails silently
+ * instead of throwing. Nothing specifies an error state for this, and inventing
+ * one would be inventing a requirement; the links reaching here already passed
+ * AC-2's http(s) check on the way in.
+ */
+async function openLink(url: string) {
+  try {
+    if (await Linking.canOpenURL(url)) await Linking.openURL(url)
+  } catch {
+    /* nothing specified for an unopenable link */
+  }
 }
 
 function hostOf(url: string): string {

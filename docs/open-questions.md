@@ -167,22 +167,32 @@ does not allow.
   фото, щоб додати референс до зйомки.»
 - **Blocks:** nothing. One string, and it only appears once per install.
 
-### 15. What a reference is labelled, and what tapping one does
+### 15. What a reference is labelled *(the tapping half is answered — see below)*
 The data model gives a `Reference` only `kind` and `url_or_path` — no title, no caption. The
 prototype's thumbnails carry a label, but it is demo text (`Референс 1 (демо)`), not a field.
 So an image reference renders as the image, and a link reference renders its host, because that
 is the only text available. Nothing was invented to fill the gap.
 
-Nor does any story say what happens when a reference is tapped — open the link, open a viewer,
-nothing. `US-021` covers seeing them all; opening one is uncovered.
+Still open: whether a link reference should show a preview or thumbnail rather than its bare
+host. That needs either a stored title/preview image or a fetch at render time, so it is a data
+model question, not a styling one. Not raised by the owner; recorded because a wall of identical
+grey tiles reading `pinterest.com` is the foreseeable end state.
 
 - **Raised by:** `US-003`
-- **What shipped:** image thumbnails and host-labelled link tiles in
-  `app/(app)/shoot/[id].tsx`; tapping does nothing yet
+- **What shipped:** host-labelled link tiles in `app/(app)/shoot/[id].tsx`
 - **Blocks:** nothing. Bears on `US-007`/`US-010`, where crew and clients read the same
-  references and the same question will arise.
+  references.
 
 ## Answered by re-reading the spec
+
+### What tapping a reference does — answered by the owner, 2026-08-26
+Raised as the other half of item 15: no story said whether a reference opened, and the
+prototype's thumbnails are inert. The owner tested `US-003` on a device and decided — **a link
+opens in the phone's browser, an image opens full-screen**.
+
+Routed through the discovery repo rather than decided here, per `CLAUDE.md` rule 1: it is now
+`US-003` **AC-3** (review `r03`, source commit `befd916`), generalised in `ux-notes.md` to every
+surface that shows references, so `US-007`, `US-010` and `US-021` inherit it.
 
 ### Email confirmation at registration — resolved, no change needed
 `US-001` AC-1 says the account is created "and they land on their (empty) shoot list". A
