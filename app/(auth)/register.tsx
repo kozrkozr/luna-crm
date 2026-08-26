@@ -136,14 +136,21 @@ export default function RegisterScreen() {
             <Select.Value placeholder={uk.rolePlaceholder} />
           </Select.Trigger>
 
-          <Adapt when="maxMd" platform="touch">
+          {/*
+            `platform="touch"` with no `when`: adapt on every touch device.
+            Gating on `when="maxMd"` did not match on the phone, so Select fell
+            back to its own floating overlay instead of a sheet. Desktop web
+            keeps the dropdown, which is the right split.
+          */}
+          <Adapt platform="touch">
             <Sheet modal dismissOnSnapToBottom snapPointsMode="fit">
+              <Sheet.Overlay bg="$shadowColor" />
               <Sheet.Frame>
+                <Sheet.Handle />
                 <Sheet.ScrollView>
                   <Adapt.Contents />
                 </Sheet.ScrollView>
               </Sheet.Frame>
-              <Sheet.Overlay />
             </Sheet>
           </Adapt>
 
@@ -153,7 +160,9 @@ export default function RegisterScreen() {
                 {ROLES_UK.map((roleName, index) => (
                   <Select.Item key={roleName} index={index} value={roleName}>
                     <Select.ItemText>{roleName}</Select.ItemText>
-                    <Select.ItemIndicator ml="auto">✓</Select.ItemIndicator>
+                    <Select.ItemIndicator ml="auto">
+                      <SizableText size="$4">✓</SizableText>
+                    </Select.ItemIndicator>
                   </Select.Item>
                 ))}
               </Select.Group>

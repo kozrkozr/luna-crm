@@ -27,6 +27,10 @@ export default function AppLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="new-shoot"
+        options={{ title: uk.newShootTitle, headerLargeTitle: false, presentation: 'modal' }}
+      />
       <Stack.Screen name="profile" options={{ title: uk.profileTitle }} />
     </Stack>
     </RequireSession>

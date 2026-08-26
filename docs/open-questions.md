@@ -75,6 +75,25 @@ happens: AC-3 reads as the client's render ("falls back to its placeholder") but
 - **Raised by:** `US-024`, `US-025`
 - **Blocks:** those stories when EP-04 starts.
 
+### 8. Copy for missing client name / client contact on shoot creation
+`US-002` AC-2 requires "the missing field is indicated", and the prototype supplies copy only for
+the date («Вкажіть дату зйомки»). The schema makes `client_name` and `client_contact` NOT NULL,
+and AC-1 lists both as part of creating a shoot, so both are validated — but the wording is
+invented.
+
+- **Raised by:** `US-002`
+- **Placeholders in code:** `clientNameRequired`, `clientContactRequired`, `shootCreateFailed` in
+  `src/i18n/uk.ts`
+- **Blocks:** nothing.
+
+### 9. Date display format
+The prototype renders dates as raw ISO (`2026-09-05`) in the shoot list and detail, so that is
+what is implemented. Nobody has confirmed whether a Ukrainian-facing product should show
+`05.09.2026` instead.
+
+- **Raised by:** `US-002`, `US-004`
+- **Blocks:** nothing, but it is visible on every screen with a shoot on it.
+
 ## Answered by re-reading the spec
 
 ### Email confirmation at registration — resolved, no change needed
