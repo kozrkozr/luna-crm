@@ -1,7 +1,10 @@
 # ADR-010 — React Native with Tamagui as the UI stack
 
 - **Date:** 2026-08-23
-- **Status:** accepted
+- **Status:** **superseded by `ADR-016-*.md`** (2026-08-26), which replaces Tamagui with
+  React Native Reusables. The React Native half of this decision still stands — only the UI
+  layer above it changed. Everything below is left as written: it is the record of what was
+  believed on 2026-08-23, before any code existed.
 - **Phase:** 04-tech (decided early, in a 03-design chat, ahead of that phase formally starting)
 - **Deciders:** owner
 

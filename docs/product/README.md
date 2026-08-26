@@ -5,12 +5,26 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-08-25
+- **Frozen:** 2026-08-26 *(re-frozen; first freeze 2026-08-25)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `5a3c5f3` — *feat(001-luna-crm): complete the discovery pipeline, intake
-  through handoff*. Diff this folder against that commit to see any drift since kickoff.
+- **Source commit:** `93fc02a` — *docs(ADR-016): replace Tamagui with React Native Reusables as
+  the UI layer*. Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
-  see `HANDOFF.md`.
+  see `HANDOFF.md`. The 2026-08-26 re-freeze did **not** reopen that gate: scope, cost and
+  buildability did not move (`04-tech/reviews/r01-2026-08-26/notes.md` in the source repo).
+
+## What moved in the 2026-08-26 re-freeze
+`ADR-016` replaces Tamagui with React Native Reusables as the UI layer. **React Native itself,
+and `ADR-011`–`ADR-015`, are unchanged.** `ADR-010` stays on disk marked superseded.
+
+- `risks.md` **R-1** is rewritten, not renamed: React Native Reusables also *approximates*
+  Apple's controls, so the fidelity risk survives the swap. `ADR-016` neither answered it nor
+  was motivated by it, and **Ilona still has not seen the app on a device.**
+- `risks.md` **R-2** now requires re-verifying the Cloudflare Pages static export. `S-2`
+  verified it for Tamagui; NativeWind produces web output differently, and two of three user
+  flows ride on that export. **Re-verify it before porting any screen.**
+- `backlog-order.md` spike `S-1`, `architecture.md`, `open-questions.md` #1 and `HANDOFF.md`
+  are de-branded or re-sourced. No story, epic, PRD or scope change.
 
 ## Why frozen and not linked
 A dated copy means acceptance criteria cannot shift while a story is being built, this repository
@@ -38,7 +52,7 @@ That commit is the visible record that the specification moved, and why.
 | `data-model.md` | 5 entities and their relationships |
 | `risks.md` | Technical risks, spikes, assumed effort per epic |
 | `open-questions.md` | 4 open, all safe to start without |
-| `decisions/` | `ADR-001`–`ADR-015`. Do not silently overturn any of them |
+| `decisions/` | `ADR-001`–`ADR-016`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
 | `glossary.md` | Ukrainian↔English. **English is canonical for code and entity names** |
 | `personas.md`, `flows.md`, `ux-notes.md` | Who this is for, and the screens |
 | `prototype/index.html` | The reviewed prototype — open in a browser |

@@ -67,7 +67,8 @@ Full reasoning in [`04-tech/backlog-order.md`](04-tech/backlog-order.md). Spikes
 - **ADR-003** — crew are entered manually per shoot. There is no crew directory and no global person table.
 - **ADR-005** (amended by **ADR-008**) — no real file hosting. Raw/finished photos are a placeholder or a pasted external link.
 - **ADR-006**, superseded in part by **ADR-009** — the client does not react to references at all, and never proposed them.
-- **ADR-010** — React Native + Tamagui.
+- **ADR-010**, superseded by **ADR-016** — React Native stays; the UI layer is React Native
+  Reusables, not Tamagui (changed 2026-08-26, six screens into the build).
 - **ADR-011** — Supabase (Postgres, Auth, Storage, Edge Functions).
 - **ADR-012** — Cloudflare Pages for the public link surface. Vercel's free tier forbids commercial use.
 - **ADR-013** — anonymous link payloads are shaped server-side per audience. The client's response must never contain a crew member's `note`.

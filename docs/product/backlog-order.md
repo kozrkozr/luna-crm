@@ -1,7 +1,7 @@
 # Backlog order — Luna CRM v1
 
 - **Subproject:** 001-luna-crm
-- **Date:** 2026-08-25
+- **Date:** 2026-08-25 (spike S-1 and the foundation line revised 2026-08-26 — `ADR-016`)
 - **Derived from:** story `Dependencies` sections under `02-product/epics/`,
   `04-tech/risks.md` (effort and spikes), `04-tech/architecture.md`
 - **Effort figures are assumptions** carried from `risks.md`, not measurements.
@@ -12,13 +12,13 @@ top of them (`risks.md`, Spikes).
 
 | # | Spike | Why first |
 |---|---|---|
-| S-1 | Two real screens in Tamagui on a device, shown to Ilona | `ADR-010` accepted a fidelity gap against the owner's own "authentic Apple look" priority. If it fails her eye, the remedy after the build is a UI-layer rewrite |
+| S-1 | Two real screens on a device, shown to Ilona | `ADR-010`, and now `ADR-016`, accept a fidelity gap against the owner's own "authentic Apple look" priority. **Still open — Ilona has not looked.** If it fails her eye, the remedy after the build is a UI-layer rewrite |
 | S-2 | Static-export one link view via RN Web to Cloudflare Pages | The whole two-surface architecture assumes one codebase serves both. If it does not, a second web app is +2–3 weeks |
 
 ## Then: foundation — mapped to no story
-**Assumed 3–4 weeks.** Supabase project, schema, RLS, Tamagui design system, dual-target
-routing, i18n scaffolding, media pipeline. Roughly a quarter of the build lives here and is
-invisible in a backlog of 24 small-looking stories.
+**Assumed 3–4 weeks.** Supabase project, schema, RLS, the design system (React Native
+Reusables — `ADR-016`), dual-target routing, i18n scaffolding, media pipeline. Roughly a quarter
+of the build lives here and is invisible in a backlog of 24 small-looking stories.
 
 ## Epic order
 

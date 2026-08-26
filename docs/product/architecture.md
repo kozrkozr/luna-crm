@@ -4,7 +4,7 @@
 - **Date:** 2026-08-25
 - **Derived from:** `02-product/prd.md` (Constraints and dependencies), all 24 active stories
   under `02-product/epics/`, `03-design/flows.md`, `03-design/ux-notes.md`,
-  `decisions/ADR-010-*.md` (UI stack, already decided)
+  `decisions/ADR-016-*.md` (UI layer; supersedes `ADR-010`)
 - **Status:** accepted at the phase-04 gate, 2026-08-25 — the choices here are `ADR-011` to `ADR-014`
 
 ## What shapes this
@@ -14,14 +14,16 @@ Two constraints from the PRD decide the whole shape, and neither is negotiable:
    link"** (`prd.md`, Constraints; `00-intake/s01-2026-08-20/transcript.md`, lines 20–26).
    Two of the three flows (`flows.md` Flow 2, Flow 3) belong to people with **no account and
    no install**. That is not a nice-to-have — it is where crew and clients live.
-2. **React Native + Tamagui** (`decisions/ADR-010-*.md`, accepted). Settled; built on, not
-   reopened.
+2. **React Native, with React Native Reusables as the UI layer** (`decisions/ADR-016-*.md`,
+   accepted 2026-08-26; supersedes `ADR-010`, which chose Tamagui). React Native itself is
+   settled and built on. The UI layer above it was replaced once, six screens into the build —
+   nothing in this document depends on which kit it is.
 
 ## Components
 
 | Component | What it is | Serves |
 |---|---|---|
-| **Mobile app** | React Native + Tamagui, Expo Router | Registered users: shoot creator (Flow 1), self-registered crew (`US-009`) |
+| **Mobile app** | React Native + React Native Reusables, Expo Router | Registered users: shoot creator (Flow 1), self-registered crew (`US-009`) |
 | **Link web surface** | The same codebase exported to static web (React Native Web), served as plain URLs | Crew link view (Flow 2), client link view (Flow 3) — no account, no install |
 | **Backend** | Supabase: Postgres, Auth, Storage, Edge Functions | Both surfaces |
 | **Link gateway** | One Edge Function that takes a link token and returns an audience-shaped payload | The link web surface only |
@@ -39,7 +41,7 @@ audience — the client's response never contains a notes value at all. See
 ```mermaid
 flowchart TB
     subgraph acct["Registered — app installed"]
-        A["Mobile app<br/>RN + Tamagui"]
+        A["Mobile app<br/>React Native"]
     end
     subgraph anon["No account, no install"]
         C["Crew link view"]
@@ -96,7 +98,7 @@ One service joins, and only because of who holds the device.
 |---|---|---|
 | Apple Developer Program | **$99/year = $8.25/mo** | TestFlight — required to put a build on someone else's phone. The app is delisted if the membership lapses |
 
-Note for spike S-1 ("build 2 screens in Tamagui, show Ilona"): shown **in person on the
+Note for spike S-1 ("real screens on a device, shown to Ilona"): shown **in person on the
 developer's own device, that spike still costs $0**. Only remote delivery needs the $99.
 
 ### Stage 3 — Production, from the first real shoot: $34.35/month

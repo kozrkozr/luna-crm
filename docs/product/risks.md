@@ -1,7 +1,7 @@
 # Technical risks — Luna CRM v1
 
 - **Subproject:** 001-luna-crm
-- **Date:** 2026-08-25
+- **Date:** 2026-08-25 (R-1 and R-2 revised 2026-08-26 — `ADR-016` replaced the UI layer)
 - **Derived from:** `architecture.md`, `data-model.md`, `02-product/prd.md` (Risks),
   `01-discovery/challenge.md`
 
@@ -26,17 +26,26 @@ reopen it.
 
 ## Risks
 
-### R-1 — Tamagui may not reach the "authentic Apple look" bar *(medium)*
-The owner's stated priority is an authentic Apple look; `ADR-010` chose Tamagui knowing it
-*approximates* Apple's components rather than using them. That gap is accepted on paper and has
-never been seen. If it fails the owner's eye after the app is built, the remedy is a UI-layer
-rewrite. **Spike S-1** — cheap now, expensive later.
+### R-1 — the UI layer may not reach the "authentic Apple look" bar *(medium)*
+The owner's stated priority is an authentic Apple look. Every UI-layer option that keeps React
+Native *approximates* Apple's components rather than using them, and the current one —
+React Native Reusables (`ADR-016`, replacing Tamagui) — is Tailwind classes over unstyled
+primitives, so the gap is the same shape as before. It is still accepted on paper and **still
+has never been seen: Ilona has not looked at a device build.** `ADR-016` did not answer this
+risk and was not motivated by it (its reasons were theming, dependency coupling and
+agent-friendliness). The remedy if it fails her eye is still a UI-layer rewrite — now the
+second one. **Spike S-1**, still open, subject updated.
 
 ### R-2 — One codebase may not serve both the app and the link views *(medium)*
 The architecture assumes React Native Web exports the link views (Flow 2, Flow 3) as static web
-from the same codebase. If that export fights Tamagui or Expo Router, the fallback is a second
+from the same codebase. If that export fights the UI layer or Expo Router, the fallback is a second
 small web app — duplicating the design system and every Ukrainian string. **Assumption:** that
 would add 2–3 weeks. **Spike S-2.**
+
+`S-2` verified this for Tamagui. `ADR-016` replaced the UI layer with NativeWind, whose web
+output is produced differently, so **the export must be re-verified before screens are ported**
+(`ADR-016` open question 1). This is the one place a UI-kit swap can break architecture rather
+than appearance.
 
 ### R-3 — `US-009` is a "should" that a whole user journey depends on *(medium)*
 `prd.md` marks R-08/`US-009` (self-registered crew's cross-shoot schedule) as **should**, and
@@ -82,7 +91,7 @@ in-app function (creation, editing, crew, calendar), so this is unlikely — not
 ## Spikes
 | # | Spike | Retires | Assumed effort |
 |---|---|---|---|
-| S-1 | Build 2 real screens in Tamagui on a device; show Ilona | R-1 | 2–3 days |
+| S-1 | Build 2 real screens on a device; show Ilona | R-1 | 2–3 days |
 | S-2 | Static-export one link view via RN Web to Cloudflare Pages | R-2 | 1–2 days |
 | S-3 | Link gateway: token → audience-shaped payload, notes stripped for client | `ADR-013` | 1 day |
 | S-4 | Upload a phone video, play it in a mobile browser link view; measure bytes; check signed-URL expiry against an idle page | R-4 | 1–2 days |
@@ -94,11 +103,11 @@ are cheap only while nothing is built on top of them.
 ## Effort per epic
 **Every number here is an assumption**, inferred from story count and size in
 `02-product/epics/`, not from measurement or from any statement by the owner. Basis: one person,
-part-time, `ADR-010`'s stack, no prior Tamagui or Supabase familiarity assumed.
+part-time, `ADR-016`'s stack, no prior React Native Reusables or Supabase familiarity assumed.
 
 | Epic | Active stories | Assumed effort | What drives it |
 |---|---|---|---|
-| *(foundation — in no epic)* | — | **3–4 weeks** | Supabase project, schema, RLS, Tamagui design system, dual-target routing, i18n scaffolding, media pipeline |
+| *(foundation — in no epic)* | — | **3–4 weeks** | Supabase project, schema, RLS, the design system, dual-target routing, i18n scaffolding, media pipeline |
 | EP-01 Registration | 4 | 1.5–2 weeks | auth is most of it; R-6 unresolved |
 | EP-02 Shoot + references | 7 | 2–3 weeks | largest epic; calendar and media upload |
 | EP-03 Crew + crew link | 7 | 3–4 weeks | link gateway, matching, `US-009` |

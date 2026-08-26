@@ -1,9 +1,10 @@
 # Open questions — 04-tech
 
 - **Subproject:** 001-luna-crm
-- **Date:** 2026-08-25 (updated the same day — item 5 answered)
+- **Date:** 2026-08-25 (updated the same day — item 5 answered; item 1 re-sourced 2026-08-26)
 - **Carries forward:** `02-product/open-questions.md` items 12–13 (still open, still
-  non-blocking); `decisions/ADR-010-*.md`'s own open question, which is item 1 below.
+  non-blocking); `decisions/ADR-010-*.md`'s own open question, which is item 1 below and now
+  carried by `ADR-016`.
 
 Questions are never deleted or silently reworded — answered, carried, or dropped with a reason.
 Nothing here was resolved by the agent's own reasoning.
@@ -16,11 +17,13 @@ Nothing here was resolved by the agent's own reasoning.
 
 ## Still open
 
-**1. Is this product iOS-only, or does it need Android?** *(carried from `ADR-010`)*
-`ADR-010` chose Tamagui partly *because* it is cross-platform, but nobody has said Android is
-wanted. **Blocks:** whether the more-native, iOS-only options (`ADR-010` Option A/B) should have
-won on the owner's own "authentic Apple look" priority; also $25 one-time for Google Play and a
-doubled build/test matrix. **If iOS-only:** `ADR-010` deserves a second look before code exists.
+**1. Is this product iOS-only, or does it need Android?** *(carried from `ADR-010`, now `ADR-016`)*
+Both UI-layer decisions kept cross-platform capability partly *because* it was free, but nobody
+has said Android is wanted. **Blocks:** whether the more-native, iOS-only options (`ADR-010`
+Option A/B, `ADR-016` Option C) should have won on the owner's own "authentic Apple look"
+priority; also $25 one-time for Google Play and a doubled build/test matrix. **If iOS-only:**
+the UI-layer choice deserves a third look — note that code now exists, so this is no longer free
+to reverse.
 
 **2. Who pays the $34.35/month floor before subscriber #7?**
 Infrastructure costs $34.35/mo from the day the app is live, and the $5/month price point needs
