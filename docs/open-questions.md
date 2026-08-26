@@ -21,11 +21,17 @@ password, or a network failure.
 
 ### 2. Password rules
 Not specified anywhere. Supabase's default minimum of 6 characters is in force
-(`supabase/config.toml`, `minimum_password_length`), and the UI states no rule, so a rejected
-password surfaces through question 1's generic message.
+(`supabase/config.toml`, `minimum_password_length`).
+
+This one drew blood: with no rule shown and a single generic error message, a short password was
+rejected with «Не вдалося зареєструватися. Спробуйте ще раз.» — advice that can never succeed,
+since retrying the same password fails identically. The screen now states the minimum up front
+and names the cause when rejected, but **6 characters is Supabase's default, not a product
+decision**, and the copy is placeholder.
 
 - **Raised by:** `US-001`
-- **Blocks:** nothing, but it is a security decision nobody has made.
+- **Placeholders in code:** `passwordHint`, `passwordTooShort`, `emailTaken` in `src/i18n/uk.ts`
+- **Blocks:** nothing, but the minimum is a security decision nobody has made.
 
 ### 3. Where a returning user lands
 `US-013` AC-1 says "their shoot list (if a shoot creator) or their own schedule (if a

@@ -36,6 +36,13 @@ export const uk = {
 
   // EP-02 — shoots
   myShoots: 'Мої зйомки',
+  newShootTitle: 'Нова зйомка',
+  clientName: "Ім'я клієнта",
+  clientNamePlaceholder: 'напр. Марія',
+  clientContact: 'Контакт клієнта',
+  date: 'Дата',
+  dateRequired: 'Вкажіть дату зйомки',
+  pickDate: 'Обрати дату',
   newShoot: '+ Нова зйомка',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',
@@ -72,7 +79,16 @@ export const uk = {
   // for a screen that fails to load its data. Placeholders pending
   // confirmation; see docs/open-questions.md item 1.
   registrationFailed: 'Не вдалося зареєструватися. Спробуйте ще раз.',
+  passwordTooShort: 'Пароль має містити щонайменше 6 символів',
+  passwordHint: 'Щонайменше 6 символів',
+  emailTaken: 'Акаунт з таким email вже існує',
   somethingWentWrong: 'Щось пішло не так. Спробуйте ще раз.',
+  // US-002 AC-2 requires the missing field to be *indicated*, and the prototype
+  // supplies copy only for the date. These two are placeholders; see
+  // docs/open-questions.md item 8.
+  clientNameRequired: "Вкажіть ім'я клієнта",
+  clientContactRequired: 'Вкажіть контакт клієнта',
+  shootCreateFailed: 'Не вдалося створити зйомку. Спробуйте ще раз.',
 } as const
 
 export type CopyKey = keyof typeof uk

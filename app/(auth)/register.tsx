@@ -14,7 +14,7 @@ import {
   YStack,
 } from 'tamagui'
 import { ROLES_UK, uk, type Role } from '../../src/i18n/uk'
-import { register } from '../../src/features/auth/register'
+import { MIN_PASSWORD_LENGTH, register } from '../../src/features/auth/register'
 
 /**
  * US-001 — register an account and select a professional role.
@@ -63,7 +63,13 @@ export default function RegisterScreen() {
     setSubmitting(false)
 
     if (!result.ok) {
-      setFormError(uk.registrationFailed)
+      setFormError(
+        result.reason === 'weakPassword'
+          ? uk.passwordTooShort
+          : result.reason === 'emailTaken'
+            ? uk.emailTaken
+            : uk.registrationFailed
+      )
       return
     }
 
@@ -108,6 +114,14 @@ export default function RegisterScreen() {
           autoCapitalize="none"
           autoComplete="new-password"
         />
+        {/*
+          The rule is stated up front. Supabase enforces a minimum
+          (config.toml, minimum_password_length) and the backlog specifies none,
+          so a user could otherwise only discover it by being rejected.
+        */}
+        <SizableText size="$1" theme="alt2">
+          {uk.passwordHint}
+        </SizableText>
 
         <Label htmlFor="role">{uk.role}</Label>
         <Select
