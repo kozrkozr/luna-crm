@@ -1,5 +1,5 @@
+import { ActivityIndicator, View } from 'react-native'
 import { Redirect } from 'expo-router'
-import { Spinner, YStack } from 'tamagui'
 import { useSession } from '../src/features/auth/useSession'
 
 /**
@@ -19,9 +19,9 @@ export default function Index() {
 
   if (session.status === 'loading') {
     return (
-      <YStack flex={1} bg="$background" items="center" justify="center">
-        <Spinner size="large" />
-      </YStack>
+      <View className="bg-background flex-1 items-center justify-center">
+        <ActivityIndicator size="large" />
+      </View>
     )
   }
 

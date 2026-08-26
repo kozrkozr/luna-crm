@@ -1,5 +1,6 @@
 import { Link, Stack } from 'expo-router'
-import { Button } from 'tamagui'
+import { Button } from '../../src/components/ui/button'
+import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { RequireSession } from '../../src/features/auth/RequireSession'
 
@@ -20,8 +21,8 @@ export default function AppLayout() {
           // reaches it from a person icon in the account header.
           headerRight: () => (
             <Link href="/(app)/profile" asChild>
-              <Button size="$2" chromeless accessibilityLabel={uk.profileTitle}>
-                👤
+              <Button variant="ghost" size="sm" accessibilityLabel={uk.profileTitle}>
+                <Text>👤</Text>
               </Button>
             </Link>
           ),

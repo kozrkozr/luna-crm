@@ -1,4 +1,7 @@
-import { Card, Label, Paragraph, ScrollView, SizableText, Spinner, YStack } from 'tamagui'
+import { ActivityIndicator, ScrollView, View } from 'react-native'
+import { Card } from '../../src/components/ui/card'
+import { Label } from '../../src/components/ui/label'
+import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { useProfile } from '../../src/features/auth/useProfile'
 import { LogoutButton } from '../../src/features/auth/LogoutButton'
@@ -22,26 +25,29 @@ export default function ProfileScreen() {
 
   if (state.status === 'loading') {
     return (
-      <YStack flex={1} bg="$background" items="center" justify="center">
-        <Spinner size="large" />
-      </YStack>
+      <View className="bg-background flex-1 items-center justify-center">
+        <ActivityIndicator size="large" />
+      </View>
     )
   }
 
   if (state.status === 'error') {
     return (
-      <YStack flex={1} bg="$background" p="$4">
-        <Paragraph theme="alt2">{uk.somethingWentWrong}</Paragraph>
-      </YStack>
+      <View className="bg-background flex-1 p-4">
+        <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
+      </View>
     )
   }
 
   const { profile } = state
 
   return (
-    <ScrollView bg="$background" contentInsetAdjustmentBehavior="automatic">
-      <YStack p="$4" gap="$3">
-        <Card size="$4" borderWidth={1} borderColor="$borderColor" p="$4" gap="$1">
+    <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
+      <View className="gap-3 p-4">
+        {/* RNR's Card ships py-6 and gap-6 for a header/content/footer layout
+            this screen does not use, so both are overridden to the tighter
+            field list the prototype shows. */}
+        <Card className="gap-1 p-4">
           <Field label={uk.name} value={profile.name} />
           <Field label={uk.contact} value={profile.email} />
           {profile.phone ? <Field label={uk.phone} value={profile.phone} /> : null}
@@ -50,7 +56,7 @@ export default function ProfileScreen() {
         </Card>
 
         <LogoutButton />
-      </YStack>
+      </View>
     </ScrollView>
   )
 }
@@ -58,9 +64,9 @@ export default function ProfileScreen() {
 /** Values are text, never inputs — see AC-2 above. */
 function Field({ label, value }: { label: string; value: string }) {
   return (
-    <YStack gap="$1" pt="$2">
+    <View className="gap-1 pt-2">
       <Label>{label}</Label>
-      <SizableText size="$4">{value}</SizableText>
-    </YStack>
+      <Text>{value}</Text>
+    </View>
   )
 }

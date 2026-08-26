@@ -1,20 +1,21 @@
 import { useState } from 'react'
+import { Platform, ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Button } from '../../src/components/ui/button'
+import { Input } from '../../src/components/ui/input'
+import { Label } from '../../src/components/ui/label'
 import {
-  Adapt,
-  Button,
-  Form,
-  Input,
-  Label,
-  ScrollView,
   Select,
-  Sheet,
-  SizableText,
-  Theme,
-  YStack,
-} from 'tamagui'
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../src/components/ui/select'
+import { Text } from '../../src/components/ui/text'
 import { ROLES_UK, uk, type Role } from '../../src/i18n/uk'
-import { MIN_PASSWORD_LENGTH, register } from '../../src/features/auth/register'
+import { register } from '../../src/features/auth/register'
 
 /**
  * US-001 — register an account and select a professional role.
@@ -29,6 +30,7 @@ import { MIN_PASSWORD_LENGTH, register } from '../../src/features/auth/register'
  */
 export default function RegisterScreen() {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -80,11 +82,11 @@ export default function RegisterScreen() {
 
   return (
     <ScrollView
-      bg="$background"
+      className="bg-background"
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
     >
-      <Form onSubmit={submit} p="$4" gap="$2">
+      <View className="gap-2 p-4">
         <Label htmlFor="name">{uk.name}</Label>
         <Input
           id="name"
@@ -119,64 +121,54 @@ export default function RegisterScreen() {
           (config.toml, minimum_password_length) and the backlog specifies none,
           so a user could otherwise only discover it by being rejected.
         */}
-        <SizableText size="$1" theme="alt2">
-          {uk.passwordHint}
-        </SizableText>
+        <Text className="text-muted-foreground text-xs">{uk.passwordHint}</Text>
 
         <Label htmlFor="role">{uk.role}</Label>
+        {/*
+          The role picker is the one control the ADR-016 swap changes visibly.
+
+          Tamagui presented it as a bottom sheet (Select wrapped in
+          <Adapt platform="touch">). RNR has no sheet adapter: its Select renders
+          an anchored popover through @rn-primitives/portal on every platform.
+          Same control, same options, same copy — different presentation, and
+          nothing in US-001 specifies which. Recorded in the ADR-016 port notes
+          rather than worked around, because building a sheet by hand would be a
+          redesign and inventing one is not this task's to make.
+
+          `insets` keeps the popover clear of the notch and home indicator;
+          RNR's Select needs them passed explicitly.
+        */}
         <Select
-          id="role"
-          value={role}
-          onValueChange={(value) => {
-            setRole(value as Role)
+          value={role ? { value: role, label: role } : undefined}
+          onValueChange={(option) => {
+            if (!option) return
+            setRole(option.value as Role)
             setRoleError(false)
           }}
         >
-          <Select.Trigger>
-            <Select.Value placeholder={uk.rolePlaceholder} />
-          </Select.Trigger>
-
-          {/*
-            `platform="touch"` with no `when`: adapt on every touch device.
-            Gating on `when="maxMd"` did not match on the phone, so Select fell
-            back to its own floating overlay instead of a sheet. Desktop web
-            keeps the dropdown, which is the right split.
-          */}
-          <Adapt platform="touch">
-            <Sheet modal dismissOnSnapToBottom snapPointsMode="fit">
-              <Sheet.Overlay bg="$shadowColor" />
-              <Sheet.Frame>
-                <Sheet.Handle />
-                <Sheet.ScrollView>
-                  <Adapt.Contents />
-                </Sheet.ScrollView>
-              </Sheet.Frame>
-            </Sheet>
-          </Adapt>
-
-          <Select.Content>
-            <Select.Viewport>
-              <Select.Group>
-                {ROLES_UK.map((roleName, index) => (
-                  <Select.Item key={roleName} index={index} value={roleName}>
-                    <Select.ItemText>{roleName}</Select.ItemText>
-                    <Select.ItemIndicator ml="auto">
-                      <SizableText size="$4">✓</SizableText>
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
-              </Select.Group>
-            </Select.Viewport>
-          </Select.Content>
+          <SelectTrigger id="role" className="w-full">
+            <SelectValue placeholder={uk.rolePlaceholder} />
+          </SelectTrigger>
+          <SelectContent
+            insets={{
+              top: insets.top,
+              bottom: Platform.select({ ios: insets.bottom, android: insets.bottom + 24 }) ?? 0,
+              left: 12,
+              right: 12,
+            }}
+            className="w-full"
+          >
+            <SelectGroup>
+              {ROLES_UK.map((roleName) => (
+                <SelectItem key={roleName} label={roleName} value={roleName}>
+                  {roleName}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
         </Select>
 
-        {roleError ? (
-          <Theme name="red">
-            <SizableText size="$2" color="$color11">
-              {uk.roleRequired}
-            </SizableText>
-          </Theme>
-        ) : null}
+        {roleError ? <Text className="text-destructive text-sm">{uk.roleRequired}</Text> : null}
 
         <Label htmlFor="social">{uk.social}</Label>
         <Input
@@ -187,25 +179,17 @@ export default function RegisterScreen() {
           placeholder="@..."
         />
 
-        {formError ? (
-          <Theme name="red">
-            <SizableText size="$2" color="$color11">
-              {formError}
-            </SizableText>
-          </Theme>
-        ) : null}
+        {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 
-        <YStack gap="$2" mt="$4">
-          <Form.Trigger asChild disabled={submitting}>
-            <Button theme="accent" size="$4">
-              {uk.registerBtn}
-            </Button>
-          </Form.Trigger>
-          <Button size="$4" chromeless onPress={() => router.replace('/(auth)/login')}>
-            {uk.toLogin}
+        <View className="mt-4 gap-2">
+          <Button disabled={submitting} onPress={submit}>
+            <Text>{uk.registerBtn}</Text>
           </Button>
-        </YStack>
-      </Form>
+          <Button variant="ghost" onPress={() => router.replace('/(auth)/login')}>
+            <Text>{uk.toLogin}</Text>
+          </Button>
+        </View>
+      </View>
     </ScrollView>
   )
 }

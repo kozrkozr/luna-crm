@@ -1,6 +1,10 @@
 import { useState } from 'react'
+import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Form, Input, Label, ScrollView, SizableText, Theme, XStack } from 'tamagui'
+import { Button } from '../../src/components/ui/button'
+import { Input } from '../../src/components/ui/input'
+import { Label } from '../../src/components/ui/label'
+import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { createShoot } from '../../src/features/shoots/api'
 import { toIsoDate } from '../../src/features/shoots/date'
@@ -14,10 +18,10 @@ import { DateField } from '../../src/components/DateField'
  * creation form stays minimal.
  *
  * The date is a DateField: an input-shaped field, consistent with the ones
- * above it, that opens the platform picker (UIDatePicker) in a sheet. A date is
- * a platform-shaped interaction, which is where S-1's F-3 says to use the
- * native component rather than an approximation — but the *field* should still
- * look like a field.
+ * above it, that opens the platform picker (UIDatePicker). A date is a
+ * platform-shaped interaction, which is where S-1's F-3 says to use the native
+ * component rather than an approximation — but the *field* should still look
+ * like a field.
  *
  * The date starts unset rather than defaulting to today, so AC-2's "required
  * field left empty" is a state a user can actually reach.
@@ -67,11 +71,11 @@ export default function NewShootScreen() {
 
   return (
     <ScrollView
-      bg="$background"
+      className="bg-background"
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
     >
-      <Form onSubmit={submit} p="$4" gap="$2">
+      <View className="gap-2 p-4">
         <Label htmlFor="client-name">{uk.clientName}</Label>
         <Input
           id="client-name"
@@ -97,36 +101,22 @@ export default function NewShootScreen() {
         <DateField id="date" value={date} onChange={setDate} />
         <FieldError show={!!errors.date} message={uk.dateRequired} />
 
-        {formError ? (
-          <Theme name="red">
-            <SizableText size="$2" color="$color11">
-              {formError}
-            </SizableText>
-          </Theme>
-        ) : null}
+        {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 
-        <XStack gap="$2" mt="$4">
-          <Button flex={1} size="$4" chromeless onPress={() => router.back()}>
-            {uk.cancel}
+        <View className="mt-4 flex-row gap-2">
+          <Button variant="ghost" className="flex-1" onPress={() => router.back()}>
+            <Text>{uk.cancel}</Text>
           </Button>
-          <Form.Trigger asChild disabled={submitting}>
-            <Button flex={1} theme="accent" size="$4">
-              {uk.save}
-            </Button>
-          </Form.Trigger>
-        </XStack>
-      </Form>
+          <Button className="flex-1" disabled={submitting} onPress={submit}>
+            <Text>{uk.save}</Text>
+          </Button>
+        </View>
+      </View>
     </ScrollView>
   )
 }
 
 function FieldError({ show, message }: { show: boolean; message: string }) {
   if (!show) return null
-  return (
-    <Theme name="red">
-      <SizableText size="$2" color="$color11">
-        {message}
-      </SizableText>
-    </Theme>
-  )
+  return <Text className="text-destructive text-sm">{message}</Text>
 }

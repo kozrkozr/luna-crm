@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import { ActivityIndicator, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
-import { H3, Paragraph, SizableText, Spinner, YStack } from 'tamagui'
+import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 
 /**
@@ -50,21 +51,21 @@ export default function LinkView() {
 
   if (resolution.phase === 'resolving') {
     return (
-      <YStack flex={1} bg="$background" items="center" justify="center" py="$10">
-        <Spinner size="large" />
-      </YStack>
+      <View className="bg-background flex-1 items-center justify-center py-10">
+        <ActivityIndicator size="large" />
+      </View>
     )
   }
 
   if (resolution.phase === 'invalid') {
     return (
-      <YStack flex={1} bg="$background" items="center" py="$10" px="$4" gap="$2">
-        <SizableText size="$9">⚠️</SizableText>
-        <H3 text="center">{uk.linkInvalidTitle}</H3>
-        <Paragraph theme="alt2" text="center">
-          {uk.linkInvalidSub}
-        </Paragraph>
-      </YStack>
+      <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
+        <Text className="text-5xl">⚠️</Text>
+        <Text variant="h3" className="text-center">
+          {uk.linkInvalidTitle}
+        </Text>
+        <Text className="text-muted-foreground text-center">{uk.linkInvalidSub}</Text>
+      </View>
     )
   }
 

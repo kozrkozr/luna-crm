@@ -1,18 +1,9 @@
 import { useCallback, useState } from 'react'
+import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
-import {
-  Button,
-  Card,
-  H4,
-  ListItem,
-  Paragraph,
-  ScrollView,
-  Separator,
-  Spinner,
-  XStack,
-  YGroup,
-  YStack,
-} from 'tamagui'
+import { Button } from '../../src/components/ui/button'
+import { Separator } from '../../src/components/ui/separator'
+import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { listShoots, type Shoot } from '../../src/features/shoots/api'
 import { StatusPill } from '../../src/components/StatusPill'
@@ -52,39 +43,54 @@ export default function ShootListScreen() {
   )
 
   return (
-    <ScrollView bg="$background" contentInsetAdjustmentBehavior="automatic">
-      <YStack p="$4" gap="$3">
-        <Button theme="accent" size="$4" onPress={() => router.push('/(app)/new-shoot')}>
-          {uk.newShoot}
+    <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
+      <View className="gap-3 p-4">
+        <Button onPress={() => router.push('/(app)/new-shoot')}>
+          <Text>{uk.newShoot}</Text>
         </Button>
 
         {state.status === 'loading' ? (
-          <YStack items="center" py="$8">
-            <Spinner size="large" />
-          </YStack>
+          <View className="items-center py-8">
+            <ActivityIndicator size="large" />
+          </View>
         ) : state.status === 'error' ? (
-          <Paragraph theme="alt2">{uk.somethingWentWrong}</Paragraph>
+          <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
         ) : state.shoots.length === 0 ? (
-          <YStack items="center" py="$8" gap="$2">
-            <H4>{uk.emptyShoots}</H4>
-            <Paragraph theme="alt2">{uk.emptyShootsSub}</Paragraph>
-          </YStack>
+          <View className="items-center gap-2 py-8">
+            <Text variant="h4">{uk.emptyShoots}</Text>
+            <Text className="text-muted-foreground">{uk.emptyShootsSub}</Text>
+          </View>
         ) : (
-          <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+          /*
+            Tamagui's YGroup + ListItem have no RNR counterpart, so the grouped
+            list is composed here: a bordered, clipped container, a Separator
+            between rows, and each row a title/subtitle/trailing layout. Same
+            shape, same content — the kit is thinner, not the screen.
+
+            The rows are not pressable. Tamagui's ListItem flashed on press by
+            default, but nothing here had an onPress and nothing navigates off
+            this list yet — the shoot detail screen is a later story, and
+            US-004 does not specify row behaviour. A plain row says that
+            honestly; a Pressable that leads nowhere would not.
+          */
+          <View className="border-border overflow-hidden rounded-lg border">
             {state.shoots.map((shoot, index) => (
-              <YGroup.Item key={shoot.id}>
+              <View key={shoot.id}>
                 {index > 0 ? <Separator /> : null}
-                <ListItem
-                  pressStyle={{ bg: '$color3' }}
-                  title={shoot.clientName}
-                  subTitle={`${shoot.date}${shoot.locationAddress ? ` · ${shoot.locationAddress}` : ''}`}
-                  iconAfter={<StatusPill value={shoot.status} />}
-                />
-              </YGroup.Item>
+                <View className="flex-row items-center gap-3 px-4 py-3">
+                  <View className="flex-1 gap-0.5">
+                    <Text className="font-medium">{shoot.clientName}</Text>
+                    <Text className="text-muted-foreground text-sm">
+                      {`${shoot.date}${shoot.locationAddress ? ` · ${shoot.locationAddress}` : ''}`}
+                    </Text>
+                  </View>
+                  <StatusPill value={shoot.status} />
+                </View>
+              </View>
             ))}
-          </YGroup>
+          </View>
         )}
-      </YStack>
+      </View>
     </ScrollView>
   )
 }

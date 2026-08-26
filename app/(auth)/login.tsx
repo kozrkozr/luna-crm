@@ -1,6 +1,10 @@
 import { useState } from 'react'
+import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Form, Input, Label, ScrollView, SizableText, Theme, YStack } from 'tamagui'
+import { Button } from '../../src/components/ui/button'
+import { Input } from '../../src/components/ui/input'
+import { Label } from '../../src/components/ui/label'
+import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { login } from '../../src/features/auth/login'
 
@@ -41,11 +45,16 @@ export default function LoginScreen() {
 
   return (
     <ScrollView
-      bg="$background"
+      className="bg-background"
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
     >
-      <Form onSubmit={submit} p="$4" gap="$2">
+      {/*
+        Tamagui's Form wrapper carried onSubmit and Form.Trigger. RNR has no
+        form primitive, so submission hangs off the button's onPress — the same
+        single entry point, one indirection fewer.
+      */}
+      <View className="gap-2 p-4">
         <Label htmlFor="email">{uk.email}</Label>
         <Input
           id="email"
@@ -67,25 +76,17 @@ export default function LoginScreen() {
           autoComplete="current-password"
         />
 
-        {error ? (
-          <Theme name="red">
-            <SizableText size="$2" color="$color11">
-              {error}
-            </SizableText>
-          </Theme>
-        ) : null}
+        {error ? <Text className="text-destructive text-sm">{error}</Text> : null}
 
-        <YStack gap="$2" mt="$4">
-          <Form.Trigger asChild disabled={submitting}>
-            <Button theme="accent" size="$4">
-              {uk.loginBtn}
-            </Button>
-          </Form.Trigger>
-          <Button size="$4" chromeless onPress={() => router.replace('/(auth)/register')}>
-            {uk.toRegister}
+        <View className="mt-4 gap-2">
+          <Button disabled={submitting} onPress={submit}>
+            <Text>{uk.loginBtn}</Text>
           </Button>
-        </YStack>
-      </Form>
+          <Button variant="ghost" onPress={() => router.replace('/(auth)/register')}>
+            <Text>{uk.toRegister}</Text>
+          </Button>
+        </View>
+      </View>
     </ScrollView>
   )
 }
