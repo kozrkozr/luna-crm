@@ -9,6 +9,3 @@ android/
 .env.local
 .DS_Store
 
-# Spike artefacts
-spikes/*/dist/
-spikes/*/dist-single/

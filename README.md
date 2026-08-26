@@ -42,7 +42,6 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
 | `supabase/migrations/` | Schema, in git |
 | `supabase/functions/link-gateway/` | Resolves a token, shapes the payload per audience (`ADR-013`) |
 | `docs/spikes/` | S-1 / S-2 findings — **read these before changing the stack or the link routes** |
-| `spikes/s1-s2/` | Throwaway S-1/S-2 project. Delete once S-1 is signed off |
 
 `app/` is Expo Router: folders are URLs. `app/s/[token].tsx` produces `/s/{token}`, the URL
 `architecture.md` commits to — renaming it changes a link crew members already hold.

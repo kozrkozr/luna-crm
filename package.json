@@ -11,7 +11,7 @@
     "ios": "expo run:ios --device",
     "web": "expo start --web",
     "export:web": "expo export -p web",
-    "typecheck": "node --stack-size=6000 node_modules/typescript/lib/tsc.js --noEmit",
+    "typecheck": "tsc --noEmit",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts"
   },
