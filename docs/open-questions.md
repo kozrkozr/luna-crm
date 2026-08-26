@@ -302,6 +302,22 @@ first role rather than blocking — which reproduces the prototype's outcome, bu
 - **What shipped:** an empty-by-default picker with a fallback to `ROLES_UK[0]` on save
 - **Blocks:** nothing. Worth an answer before `US-023`, where a crew member reads another's role.
 
+### 22. Where a shared link points
+`US-006` AC-1 produces a link "ready to share", and `architecture.md` fixes its path as
+`/s/{token}`. Neither says its **origin** — the Cloudflare Pages host that serves the static
+export. There is nothing to derive it from either: the app runs on a phone, and the link surface
+is a different deployment.
+
+It is configuration, `EXPO_PUBLIC_LINK_BASE_URL`, with no default. A link built against a
+guessed origin is one the recipient cannot open, and guessing would ship that silently rather
+than failing where someone can see it. `S-2` F-3's Cloudflare deploy — still unverified — is
+what will settle the actual value.
+
+- **Raised by:** `US-006`
+- **Placeholders in code:** `EXPO_PUBLIC_LINK_BASE_URL` in `.env.example`; `linkNotConfigured`
+  in `src/i18n/uk.ts` for when it is unset
+- **Blocks:** nothing in the build. The first real deploy needs the value.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

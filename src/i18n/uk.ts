@@ -102,6 +102,14 @@ export const uk = {
   responsePending: 'Очікує',
   responseConfirmed: 'Підтвердив',
   responseDeclined: 'Відмовився',
+  // US-006 — the copy affordance next to each crew member. The prototype's
+  // «Посилання скопійовано (демо):» carries a demo marker and a fake URL; the
+  // real one confirms and nothing more.
+  copyLinkTitle: 'Скопіювати посилання',
+  linkCopied: 'Посилання скопійовано',
+  // Shown when EXPO_PUBLIC_LINK_BASE_URL is unset, which is a misconfiguration
+  // rather than a user error. Placeholder; see docs/open-questions.md item 22.
+  linkNotConfigured: 'Адресу для посилань не налаштовано.',
   shootFor: 'Зйомка',
   confirm: 'Підтвердити',
   decline: 'Відмовитись',

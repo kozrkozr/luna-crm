@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
 import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import * as Clipboard from 'expo-clipboard'
 import * as ImagePicker from 'expo-image-picker'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
@@ -29,6 +30,7 @@ import {
   type Reference,
 } from '../../../../src/features/references/api'
 import { listCrew, type CrewMember } from '../../../../src/features/crew/api'
+import { crewLinkToken, crewLinkUrl } from '../../../../src/features/crew/links'
 import {
   attachmentKind,
   signedLocationUrl,
@@ -194,9 +196,13 @@ export default function ShootDetailScreen() {
  * the role and whichever contact was actually stored, as the prototype's
  * crew-row does.
  *
- * Deliberately absent, each its own story: the per-person link icon (US-006),
- * the remove icon (US-022), and opening a person for their full details
- * (US-023). The note is not shown here either — the prototype's row does not
+ * US-006 put each person's link with them, as a copy icon in this block — the
+ * layout change from Ilona's prototype review, rather than a separate "links"
+ * section.
+ *
+ * Deliberately absent, each its own story: the remove icon (US-022) and opening
+ * a person for their full details (US-023). The note is not shown here either —
+ * the prototype's row does not
  * show it, and it is the field ADR-013 exists to keep away from clients, so the
  * fewer places it is rendered the better.
  */
@@ -218,6 +224,7 @@ function CrewSection({ shootId, crew }: { shootId: string; crew: CrewMember[] })
                   </Text>
                 </View>
                 <CrewResponsePill value={member.response} />
+                <CopyCrewLink shootId={shootId} crewMemberId={member.id} />
               </View>
             </View>
           ))}
@@ -230,6 +237,46 @@ function CrewSection({ shootId, crew }: { shootId: string; crew: CrewMember[] })
         </Button>
       </Link>
     </View>
+  )
+}
+
+/**
+ * US-006 AC-1 — the crew member's link, copied to the clipboard.
+ *
+ * The token is created on first tap and reused after that. Re-generating would
+ * silently kill a link the creator had already sent, and AC-2 makes removing
+ * the person the only thing that revokes.
+ *
+ * The delivery mechanism is deliberately just the clipboard: US-006's Out of
+ * scope leaves SMS or anything else unspecified, and the prototype copies too.
+ */
+function CopyCrewLink({ shootId, crewMemberId }: { shootId: string; crewMemberId: string }) {
+  const [state, setState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle')
+
+  const copy = async () => {
+    setState('busy')
+    const token = await crewLinkToken(shootId, crewMemberId)
+    const url = token ? crewLinkUrl(token) : null
+    if (!url) {
+      setState('failed')
+      return
+    }
+    await Clipboard.setStringAsync(url)
+    setState('copied')
+    // Long enough to read, short enough that the row does not stay changed.
+    setTimeout(() => setState('idle'), 2000)
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      disabled={state === 'busy'}
+      onPress={() => void copy()}
+      accessibilityLabel={uk.copyLinkTitle}
+    >
+      <Text>{state === 'copied' ? '✓' : '🔗'}</Text>
+    </Button>
   )
 }
 

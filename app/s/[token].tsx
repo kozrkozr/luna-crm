@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
+import { resolveLink } from '../../src/features/links/gateway'
 
 /**
  * The anonymous link surface (US-007, US-010). Ukrainian only — no switcher
@@ -35,11 +36,11 @@ export default function LinkView() {
     if (token === undefined) return
 
     let cancelled = false
-    // TODO(EP-03): call the link-gateway Edge Function, which resolves the
-    // token and shapes the payload per audience (ADR-013). The client's
-    // response must never contain a crew member's note at any point.
+    // The link gateway resolves the token and shapes the payload per audience
+    // (ADR-013). US-006 needs only its verdict: a token resolves, or access is
+    // denied — which is AC-2. US-007 renders what a crew member reads.
     void (async () => {
-      const payload = null
+      const payload = await resolveLink(token)
       if (cancelled) return
       setResolution(payload ? { phase: 'ready', payload } : { phase: 'invalid' })
     })()
