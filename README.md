@@ -53,6 +53,14 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
   Expo's pinned versions for the SDK. A plain install put the wrong `react-native-worklets` in
   and the failure only surfaced at the native compile step — the web export and Metro bundle
   both succeeded with a broken native tree (`docs/spikes/S-1-*.md` F-7).
+- **`PortalProvider` is required on native, and duplicate copies of
+  `@tamagui/portal` silently break it.** Tamagui's Sheet (what `Select` becomes on touch)
+  renders through a portal. Web has an implicit host in `document.body`, so a missing or
+  mis-resolved provider passes every browser check and fails only on a device with
+  «'PortalDispatchContext' cannot be null». npm nested eight copies of `@tamagui/portal` — all
+  the same version — so the provider and the Sheet held different React contexts; the `overrides`
+  entry in package.json keeps it to one copy. Verify UI on a device or simulator, not only in a
+  browser.
 - **Never infer "invalid link" from a missing token.** Static export prerenders `/s/[token]`
   without one; deciding invalidity there ships the error page for every link
   (`docs/spikes/S-2-*.md` F-2). Resolve first, then decide.
