@@ -42,6 +42,10 @@ export default function AppLayout() {
         name="shoot/[id]/edit"
         options={{ title: uk.editShootTitle, headerLargeTitle: false }}
       />
+      <Stack.Screen
+        name="shoot/[id]/references"
+        options={{ title: uk.allReferencesTitle, headerLargeTitle: false }}
+      />
     </Stack>
     </RequireSession>
   )

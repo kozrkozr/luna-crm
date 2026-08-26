@@ -64,6 +64,7 @@ export const uk = {
   createFirst: 'Створити першу зйомку',
   references: 'Референси',
   showAllReferences: 'Показати всі референси',
+  allReferencesTitle: 'Усі референси',
   // US-003 — the reference field and the gallery icon, from the prototype's
   // referencesBlock. `pickFromGallery` is the icon glyph itself, as there.
   refPlaceholder: 'Посилання на референс (напр. Pinterest)',
