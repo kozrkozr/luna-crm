@@ -1,3 +1,6 @@
+import '../src/theme/global.css'
+
+import { PortalHost } from '@rn-primitives/portal'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { TamaguiProvider, Theme } from 'tamagui'
@@ -34,6 +37,14 @@ export default function RootLayout() {
           «(auth) Реєстрація». Each group's own layout owns its header.
         */}
         <Stack screenOptions={{ headerShown: false }} />
+        {/*
+          React Native Reusables' Select renders through @rn-primitives/portal,
+          which needs one host mounted as the last child of the providers. This
+          is the same provider/consumer-through-context shape that nested copies
+          of @tamagui/portal broke on a device (README, "Things that will bite
+          you") — the library changed, the hazard did not.
+        */}
+        <PortalHost />
       </Theme>
     </TamaguiProvider>
   )
