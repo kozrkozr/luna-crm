@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Pressable } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button, Input, Sheet, View, XStack } from 'tamagui'
 import { uk } from '../i18n/uk'
@@ -39,10 +40,11 @@ export function DateField({ id, value, onChange, placeholder }: Props) {
 
   return (
     <>
-      {/* The Input is presentational; the wrapper takes the tap. pointerEvents
-          none keeps it from focusing and raising a keyboard for a value that
-          cannot be typed. */}
-      <View onPress={openSheet}>
+      {/* React Native's Pressable, not a Tamagui View: a plain View is not a
+          touch target on native, so onPress on one silently does nothing.
+          pointerEvents none on the Input keeps it from focusing and raising a
+          keyboard for a value that cannot be typed. */}
+      <Pressable onPress={openSheet} accessibilityRole="button">
         <View pointerEvents="none">
           <Input
             id={id}
@@ -50,7 +52,7 @@ export function DateField({ id, value, onChange, placeholder }: Props) {
             placeholder={placeholder ?? uk.pickDate}
           />
         </View>
-      </View>
+      </Pressable>
 
       <Sheet
         modal
