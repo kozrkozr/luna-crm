@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
-import { Button } from 'tamagui'
+import { Button } from '../../components/ui/button'
+import { Text } from '../../components/ui/text'
 import { supabase } from '../../lib/supabase/client'
 import { uk } from '../../i18n/uk'
 
@@ -22,8 +23,8 @@ export function LogoutButton() {
   }
 
   return (
-    <Button theme="red" size="$4" disabled={busy} onPress={logOut}>
-      {uk.logout}
+    <Button variant="destructive" disabled={busy} onPress={logOut}>
+      <Text>{uk.logout}</Text>
     </Button>
   )
 }

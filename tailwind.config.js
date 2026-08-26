@@ -48,6 +48,17 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Shoot status tones — see the note in src/theme/global.css.
+        'status-new': {
+          DEFAULT: 'hsl(var(--status-new))',
+          border: 'hsl(var(--status-new-border))',
+          foreground: 'hsl(var(--status-new-foreground))',
+        },
+        'status-finished': {
+          DEFAULT: 'hsl(var(--status-finished))',
+          border: 'hsl(var(--status-finished-border))',
+          foreground: 'hsl(var(--status-finished-foreground))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

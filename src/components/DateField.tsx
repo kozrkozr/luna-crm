@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Modal } from 'react-native'
+import { Modal, Pressable, View } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { Button, SizableText, View, XStack, YStack } from 'tamagui'
+import { Button } from './ui/button'
+import { Text } from './ui/text'
 import { uk } from '../i18n/uk'
 import { toIsoDate } from '../features/shoots/date'
 
@@ -19,12 +20,13 @@ type Props = {
  * A date field: shaped like the Input fields around it, opening the platform
  * picker on tap.
  *
- * Uses React Native's Modal rather than Tamagui's Sheet. The Sheet did not
- * appear here — most likely `snapPointsMode="fit"` measuring the native picker
- * as zero height, since a native view reports no intrinsic size to the
- * measurer. Sheet had already cost two rounds of debugging on this screen, so
- * this takes the path with no measurement guesswork. Worth revisiting for
- * polish, not worth blocking a story on.
+ * Uses React Native's Modal rather than a library sheet. On Tamagui the Sheet
+ * did not appear here — most likely `snapPointsMode="fit"` measuring the native
+ * picker as zero height, since a native view reports no intrinsic size to the
+ * measurer. That cost four commits to settle, so this deliberately keeps the
+ * path with no measurement guesswork. ADR-016 changed the UI library, not this
+ * reasoning: RNR's overlays measure their content too, so the same trap is
+ * available and is not worth re-entering for a story that already works.
  *
  * The trigger is a Button because a plain View is not a touch target on native
  * and an Input swallows the tap. There is deliberately no TextInput: the date is
@@ -39,27 +41,30 @@ export function DateField({ id, value, onChange, placeholder }: Props) {
 
   return (
     <>
+      {/*
+        `variant="outline"` is the field-shaped button: a bordered box on the
+        page background, which is what Input renders as. Justified to the start
+        so the value sits where a field's text would.
+      */}
       <Button
         id={id}
-        size="$4"
-        justify="flex-start"
-        bg="$color3"
-        borderWidth={0}
+        variant="outline"
+        className="w-full justify-start"
         onPress={() => {
           setDraft(value ?? new Date())
           setOpen(true)
         }}
       >
-        <SizableText size="$4" color={value ? '$color' : '$placeholderColor'}>
+        <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
           {value ? toIsoDate(value) : (placeholder ?? uk.pickDate)}
-        </SizableText>
+        </Text>
       </Button>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={close}>
         {/* Dim the page behind, and let a tap outside dismiss. */}
-        <View flex={1} justify="flex-end" bg="rgba(0,0,0,0.4)" onPress={close}>
-          <YStack bg="$background" p="$4" gap="$3" borderTopLeftRadius="$6" borderTopRightRadius="$6">
-            <XStack justify="center" height={PICKER_HEIGHT}>
+        <Pressable className="flex-1 justify-end bg-black/40" onPress={close}>
+          <View className="bg-background gap-3 rounded-t-2xl p-4">
+            <View className="flex-row justify-center" style={{ height: PICKER_HEIGHT }}>
               <DateTimePicker
                 value={draft}
                 mode="date"
@@ -69,25 +74,23 @@ export function DateField({ id, value, onChange, placeholder }: Props) {
                   if (selected) setDraft(selected)
                 }}
               />
-            </XStack>
-            <XStack gap="$2">
-              <Button flex={1} size="$4" chromeless onPress={close}>
-                {uk.cancel}
+            </View>
+            <View className="flex-row gap-2">
+              <Button variant="ghost" className="flex-1" onPress={close}>
+                <Text>{uk.cancel}</Text>
               </Button>
               <Button
-                flex={1}
-                theme="accent"
-                size="$4"
+                className="flex-1"
                 onPress={() => {
                   onChange(draft)
                   close()
                 }}
               >
-                {uk.done}
+                <Text>{uk.done}</Text>
               </Button>
-            </XStack>
-          </YStack>
-        </View>
+            </View>
+          </View>
+        </Pressable>
       </Modal>
     </>
   )

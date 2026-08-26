@@ -41,6 +41,20 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 63%;
     --radius: 0.625rem;
+
+    /*
+     * Shoot status tones (US-020). Not part of RNR's stock set: Tamagui carried
+     * these as colour sub-themes (<Theme name="yellow">), which NativeWind has
+     * no equivalent for, so the two tones become tokens here rather than
+     * palette classes inside StatusPill. That keeps this file the only place a
+     * colour value appears, which is the whole point of the rule.
+     */
+    --status-new: 48 96% 89%;
+    --status-new-border: 46 97% 77%;
+    --status-new-foreground: 23 83% 31%;
+    --status-finished: 152 76% 90%;
+    --status-finished-border: 149 80% 76%;
+    --status-finished-foreground: 163 88% 20%;
   }
 
   .dark:root {
@@ -64,5 +78,12 @@
     --input: 0 0% 14.9%;
     --ring: 300 0% 45%;
     --radius: 0.625rem;
+
+    --status-new: 26 83% 14%;
+    --status-new-border: 26 70% 26%;
+    --status-new-foreground: 48 96% 89%;
+    --status-finished: 166 91% 9%;
+    --status-finished-border: 163 88% 20%;
+    --status-finished-foreground: 152 76% 90%;
   }
 }
