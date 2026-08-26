@@ -7,12 +7,28 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-08-26 *(re-frozen twice; first freeze 2026-08-25)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `c2ea13b` — *docs(review r04): US-004 gains month navigation and date
-  filtering*. Diff this folder against that commit to see any drift since the last freeze.
+- **Source commit:** `8df5a6d` — *docs(review r05): add US-027 — share the client's link*.
+  Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the fifth 2026-08-26 re-freeze (review `r05`)
+**`US-027` is a new story in EP-04 — share the client's link.** The build reached `US-010` and
+found that nothing creates the link it opens: `AccessLink` has modelled a `client` audience
+since 04-tech and the gateway resolves one, but no story let the creator make one.
+
+It is the client's counterpart to `US-006`, and deliberately parallel — one link per shoot
+rather than per person, because the client is a field on the shoot and never an account. It also
+gives `client_name` and `client_contact` their first home on any screen; `US-002` collects both
+and nothing has ever shown them.
+
+`backlog-order.md` puts EP-04 in dependency order — `US-027` first — and notes that `US-010`
+was built before it, so the build's history runs out of order against the backlog.
+
+**IDs continue from the highest ever issued**, so this is `US-027` even though `US-011` and
+`US-012` are retired (`id-conventions` rule 1). Do not read the gap as a free number.
 
 ## What moved in the fourth 2026-08-26 re-freeze (review `r04`)
 **`US-004` gained AC-3 (month navigation) and AC-4 (tapping a date filters the list).** The
@@ -102,7 +118,7 @@ That commit is the visible record that the specification moved, and why.
 | `HANDOFF.md` | Start here — DoD status, known gaps, contradictions, reading order |
 | `backlog-order.md` | **What to build, in order.** Spikes first, then foundation, then EP-01→EP-05 |
 | `prd.md`, `scope.md` | Requirements `R-01`–`R-24`, and what is deliberately out |
-| `epics/` | 5 epics, 24 live stories with Given/When/Then acceptance criteria |
+| `epics/` | 5 epics, 25 live stories with Given/When/Then acceptance criteria |
 | `architecture.md` | Components, data flow, service costs by stage |
 | `data-model.md` | 5 entities and their relationships |
 | `risks.md` | Technical risks, spikes, assumed effort per epic. **R-1 and R-2 retired; R-6 retired earlier** |

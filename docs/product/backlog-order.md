@@ -28,7 +28,7 @@ of the build lives here and is invisible in a backlog of 24 small-looking storie
 | 1 | **EP-01** Registration and role selection | `US-001` → `US-013` → `US-016` → `US-017` | Every other epic depends on an account existing. **Blocked:** `open-questions.md` #5 (login credential, phone-only password reset) must be answered before this starts |
 | 2 | **EP-02** Shoot creation and references | `US-002` → `US-003` → `US-004` → `US-018` → `US-020` → `US-019` → `US-021` | `Shoot` is the record every later epic attaches to. `US-002` first because `US-003`/`US-005`/`US-010` all require a shoot to exist |
 | 3 | **EP-03** Crew management and the crew-facing link | `US-005` → `US-006` → `US-007` → `US-008` → `US-023` → `US-022` → `US-009` | Builds the link gateway (`ADR-013`), which EP-04 then reuses. `US-009` last — it is the only `should`, and `open-questions.md` #3 may remove it |
-| 4 | **EP-04** Client view | `US-010` → `US-026` → `US-024` → `US-025` | ~1 week only because the gateway already exists from EP-03. Reversing 3 and 4 would mean building the gateway twice |
+| 4 | **EP-04** Client view | `US-027` → `US-010` → `US-026` → `US-024` → `US-025` | ~1 week only because the gateway already exists from EP-03. Reversing 3 and 4 would mean building the gateway twice. `US-027` is first by dependency — a link has to be created before anyone can open one — though it was added after `US-010` was already built, which is why it appears out of order in the build's history |
 | 5 | **EP-05** Localization | `US-014` → `US-015` | Full uk+en string coverage across every screen — cheapest once every screen exists. The *scaffolding* is in foundation, so no screen is built untranslatable |
 
 ## Notes on the order
