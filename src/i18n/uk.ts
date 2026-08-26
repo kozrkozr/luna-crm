@@ -43,6 +43,9 @@ export const uk = {
   date: 'Дата',
   dateRequired: 'Вкажіть дату зйомки',
   pickDate: 'Обрати дату',
+  // iOS convention for confirming a picker. Not from the prototype — see
+  // docs/open-questions.md item 1.
+  done: 'Готово',
   newShoot: '+ Нова зйомка',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',

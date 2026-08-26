@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
-import DateTimePicker from '@react-native-community/datetimepicker'
-import { Button, Form, Input, Label, ScrollView, SizableText, Theme, XStack, YStack } from 'tamagui'
+import { Button, Form, Input, Label, ScrollView, SizableText, Theme, XStack } from 'tamagui'
 import { uk } from '../../src/i18n/uk'
 import { createShoot } from '../../src/features/shoots/api'
 import { toIsoDate } from '../../src/features/shoots/date'
+import { DateField } from '../../src/components/DateField'
 
 /**
  * US-002 — create a shoot with the client's contact info and date.
@@ -13,9 +13,11 @@ import { toIsoDate } from '../../src/features/shoots/date'
  * contact, date. Location is deliberately absent — it moved to US-018 so the
  * creation form stays minimal.
  *
- * The date uses the platform picker (UIDatePicker), not a Tamagui control. A
- * date is a platform-shaped interaction, which is where S-1's F-3 says to use a
- * native component rather than an approximation of one.
+ * The date is a DateField: an input-shaped field, consistent with the ones
+ * above it, that opens the platform picker (UIDatePicker) in a sheet. A date is
+ * a platform-shaped interaction, which is where S-1's F-3 says to use the
+ * native component rather than an approximation — but the *field* should still
+ * look like a field.
  *
  * The date starts unset rather than defaulting to today, so AC-2's "required
  * field left empty" is a state a user can actually reach.
@@ -92,36 +94,7 @@ export default function NewShootScreen() {
         <FieldError show={!!errors.contact} message={uk.clientContactRequired} />
 
         <Label htmlFor="date">{uk.date}</Label>
-        {/*
-          `compact` is the iOS form idiom: a small date chip that opens a
-          calendar popover on tap. `inline` drops a full month grid into the
-          middle of the form, which is what a date *screen* uses, not a field.
-
-          The field starts as a button rather than a pre-filled picker so the
-          date can genuinely be unset — AC-2's blocked save needs a reachable
-          empty state. Tapping it seeds today and hands over to the picker.
-        */}
-        {date === null ? (
-          <Button
-            id="date"
-            size="$4"
-            justify="flex-start"
-            onPress={() => setDate(new Date())}
-          >
-            {uk.pickDate}
-          </Button>
-        ) : (
-          <XStack items="center">
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="compact"
-              onChange={(_event, selected) => {
-                if (selected) setDate(selected)
-              }}
-            />
-          </XStack>
-        )}
+        <DateField id="date" value={date} onChange={setDate} />
         <FieldError show={!!errors.date} message={uk.dateRequired} />
 
         {formError ? (
