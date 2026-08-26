@@ -63,10 +63,31 @@ const BUCKET = 'shoot-media'
 
 type Supabase = ReturnType<typeof createClient>
 
+/**
+ * A signed URL, returned ORIGIN-RELATIVE.
+ *
+ * `createSignedUrl` builds its URL from this function's own `SUPABASE_URL`,
+ * which is the address the *server* reaches Supabase at. Locally that is
+ * `http://kong:8000` — a Docker hostname no browser and no phone can resolve,
+ * so every image on the link surface rendered as a blank tile. In production it
+ * would happen to be right, which is exactly the kind of difference that ships.
+ *
+ * Returning the path and letting the caller join it to the base it already
+ * knows removes the question: the client's origin is the one that has to work,
+ * because the client is what fetches it. It also needs no extra configuration
+ * to be correct in both places.
+ */
 const signed = async (supabase: Supabase, path: string | null): Promise<string | null> => {
   if (!path) return null
   const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, MEDIA_TTL_SECONDS)
-  return data?.signedUrl ?? null
+  if (!data?.signedUrl) return null
+  try {
+    const url = new URL(data.signedUrl)
+    return `${url.pathname}${url.search}`
+  } catch {
+    // Already relative, which some client versions return.
+    return data.signedUrl
+  }
 }
 
 type ShootRow = {

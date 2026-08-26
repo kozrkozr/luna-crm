@@ -67,8 +67,29 @@ export async function resolveLink(token: string): Promise<LinkPayload | null> {
     if (!response.ok) return null
     const body = (await response.json()) as { ok?: boolean } & Partial<LinkPayload>
     if (!body?.ok) return null
-    return body as LinkPayload
+    return absolutise(body as LinkPayload, base)
   } catch {
     return null
+  }
+}
+
+/**
+ * Media URLs arrive origin-relative and are joined to the base this client
+ * already uses. See the gateway's `signed()` for why: it cannot know the origin
+ * the reader can reach, and locally the one it would guess is a Docker
+ * hostname. Links keep their own absolute URLs untouched.
+ */
+function absolutise(payload: LinkPayload, base: string): LinkPayload {
+  const origin = base.replace(/\/+$/, '')
+  const join = (url: string | null) => (url && url.startsWith('/') ? `${origin}${url}` : url)
+
+  if (payload.audience !== 'crew') return payload
+  return {
+    ...payload,
+    shoot: {
+      ...payload.shoot,
+      locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl),
+    },
+    references: payload.references.map((reference) => ({ ...reference, url: join(reference.url) })),
   }
 }
