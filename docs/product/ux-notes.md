@@ -29,6 +29,10 @@ Ukrainian by default (`CLAUDE.md`, Product UI language) and uses confirmed gloss
   Ukrainian-only in `02-product/open-questions.md`, item 9.
 - A submitted confirm/decline response is final in this prototype — matches `US-008`'s scope.
 - Every reference is visible to every crew member — no per-role filtering (`prd.md` R-06).
+- **Tapping a reference opens it**: a link in the phone's browser, an image full-screen
+  (`US-003` AC-3, added in review `r03`). The prototype's thumbnails are inert and predate the
+  decision. The behaviour is the same on every surface that shows references — the creator's
+  shoot page, `US-021`'s all-references page, and both link views.
 - Deleting a shoot and removing a crew member both require an explicit confirmation step
   (`US-019`, `US-022`).
 - The client's crew-detail view (`US-026`) is deliberately narrower than crew's own

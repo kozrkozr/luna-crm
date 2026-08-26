@@ -7,12 +7,25 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-08-26 *(re-frozen twice; first freeze 2026-08-25)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `d1c1cf0` — *docs(review r02): retire risks.md R-1 — Ilona approved the app
-  on a device*. Diff this folder against that commit to see any drift since the last freeze.
+- **Source commit:** `befd916` — *docs(review r03): US-003 gains AC-3 — tapping a reference
+  opens it*. Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the third 2026-08-26 re-freeze (review `r03`)
+**`US-003` gained AC-3 — tapping a reference opens it.** A link opens in the phone's browser;
+an image opens full-screen and can be dismissed. The owner decided this after testing the built
+story on his own iPhone, so the criterion is dated and marked as arriving *after* the story was
+built rather than reading as though it was always there.
+
+The prototype's reference thumbnails are inert and predate the decision — do not read them as
+the design. `ux-notes.md` now says so, and states that the behaviour applies on **every**
+surface showing references: the creator's shoot page, `US-021`'s all-references page, and both
+link views. `US-007`, `US-010` and `US-021` gain no criteria of their own; they inherit it.
+
+No other story, epic, PRD or scope change.
 
 ## What moved in the second 2026-08-26 re-freeze (review `r02`)
 **`risks.md` R-1 is retired.** Ilona reviewed the app on a physical iPhone and approved it —
