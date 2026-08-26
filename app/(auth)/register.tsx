@@ -127,13 +127,12 @@ export default function RegisterScreen() {
         {/*
           The role picker is the one control the ADR-016 swap changes visibly.
 
-          Tamagui presented it as a bottom sheet (Select wrapped in
-          <Adapt platform="touch">). RNR has no sheet adapter: its Select renders
-          an anchored popover through @rn-primitives/portal on every platform.
-          Same control, same options, same copy — different presentation, and
-          nothing in US-001 specifies which. Recorded in the ADR-016 port notes
-          rather than worked around, because building a sheet by hand would be a
-          redesign and inventing one is not this task's to make.
+          Before ADR-016 it adapted into a bottom sheet on touch devices. RNR
+          has no sheet adapter: its Select renders an anchored popover through
+          @rn-primitives/portal on every platform. Same control, same options,
+          same copy — different presentation, and nothing in US-001 specifies
+          which. Recorded rather than worked around: building a sheet by hand
+          would be a redesign, and choosing one is not this task's call.
 
           `insets` keeps the popover clear of the notch and home indicator;
           RNR's Select needs them passed explicitly.

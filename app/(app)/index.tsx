@@ -62,16 +62,16 @@ export default function ShootListScreen() {
           </View>
         ) : (
           /*
-            Tamagui's YGroup + ListItem have no RNR counterpart, so the grouped
-            list is composed here: a bordered, clipped container, a Separator
-            between rows, and each row a title/subtitle/trailing layout. Same
-            shape, same content — the kit is thinner, not the screen.
+            The previous UI layer's grouped-list components have no RNR
+            counterpart, so the list is composed here: a bordered, clipped
+            container, a Separator between rows, and each row a
+            title/subtitle/trailing layout. Same shape, same content — the kit
+            is thinner, not the screen.
 
-            The rows are not pressable. Tamagui's ListItem flashed on press by
-            default, but nothing here had an onPress and nothing navigates off
-            this list yet — the shoot detail screen is a later story, and
-            US-004 does not specify row behaviour. A plain row says that
-            honestly; a Pressable that leads nowhere would not.
+            The rows are not pressable. Nothing here had an onPress and nothing
+            navigates off this list yet — the shoot detail screen is a later
+            story, and US-004 does not specify row behaviour. A plain row says
+            that honestly; a Pressable that leads nowhere would not.
           */
           <View className="border-border overflow-hidden rounded-lg border">
             {state.shoots.map((shoot, index) => (

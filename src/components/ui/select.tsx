@@ -3,7 +3,21 @@ import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-vie
 import { TextClassContext } from '@/components/ui/text';
 import { cn } from '@/lib/utils';
 import * as SelectPrimitive from '@rn-primitives/select';
-import { Check, ChevronDown, ChevronDownIcon, ChevronUpIcon } from 'lucide-react-native';
+/**
+ * Deep per-icon imports, not the `lucide-react-native` barrel.
+ *
+ * Expo's Metro does not tree-shake, so the barrel ships all ~2,000 icon
+ * components: it doubled the web bundle from 2.2 MB to 4.4 MB, and that bundle
+ * is what serves the anonymous link surface (ADR-012). S-2 F-5 records the
+ * payload as the number to watch there, because F-2 showed slow JS on that
+ * surface has a correctness cost and not just a patience cost.
+ *
+ * RNR ships this file as editable source precisely so it can be changed here.
+ * Any icon added later must use the same form.
+ */
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
 import * as React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
@@ -204,7 +218,7 @@ function SelectScrollUpButton({
     <SelectPrimitive.ScrollUpButton
       className={cn('flex cursor-default items-center justify-center py-1', className)}
       {...props}>
-      <Icon as={ChevronUpIcon} className="size-4" />
+      <Icon as={ChevronUp} className="size-4" />
     </SelectPrimitive.ScrollUpButton>
   );
 }
@@ -224,7 +238,7 @@ function SelectScrollDownButton({
     <SelectPrimitive.ScrollDownButton
       className={cn('flex cursor-default items-center justify-center py-1', className)}
       {...props}>
-      <Icon as={ChevronDownIcon} className="size-4" />
+      <Icon as={ChevronDown} className="size-4" />
     </SelectPrimitive.ScrollDownButton>
   );
 }

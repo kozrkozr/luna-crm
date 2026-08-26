@@ -20,13 +20,14 @@ type Props = {
  * A date field: shaped like the Input fields around it, opening the platform
  * picker on tap.
  *
- * Uses React Native's Modal rather than a library sheet. On Tamagui the Sheet
- * did not appear here — most likely `snapPointsMode="fit"` measuring the native
- * picker as zero height, since a native view reports no intrinsic size to the
- * measurer. That cost four commits to settle, so this deliberately keeps the
- * path with no measurement guesswork. ADR-016 changed the UI library, not this
- * reasoning: RNR's overlays measure their content too, so the same trap is
- * available and is not worth re-entering for a story that already works.
+ * Uses React Native's Modal rather than a library sheet. The previous UI
+ * layer's sheet did not appear here — most likely its fit-to-content mode
+ * measuring the native picker as zero height, since a native view reports no
+ * intrinsic size to the measurer. That cost four commits to settle, so this
+ * deliberately keeps the path with no measurement guesswork. ADR-016 changed
+ * the library, not this reasoning: RNR's overlays measure their content too, so
+ * the same trap is available and is not worth re-entering for a story that
+ * already works.
  *
  * The trigger is a Button because a plain View is not a touch target on native
  * and an Input swallows the tap. There is deliberately no TextInput: the date is

@@ -19,7 +19,7 @@ import { StatusBar } from 'expo-status-bar'
  * There is no theme provider. NativeWind needs only the stylesheet import above
  * (ADR-016) — the tokens live in src/theme/global.css and reach components as
  * Tailwind classes, so nothing has to be threaded through React context. The
- * app is light-only, as it was on Tamagui: app.config.ts sets
+ * app is light-only, as it was before ADR-016: app.config.ts sets
  * userInterfaceStyle: 'light' and nothing applies the `dark` class.
  */
 export default function RootLayout() {
@@ -37,12 +37,12 @@ export default function RootLayout() {
         React Native Reusables' Select renders through @rn-primitives/portal,
         which needs one host mounted as the last child of the providers.
 
-        This is the same provider/consumer-through-context shape that nested
-        copies of @tamagui/portal broke on a device — the crash was
-        «'PortalDispatchContext' cannot be null» on US-001's role picker, and it
-        passed every browser check first because the DOM has an implicit host
-        that a native tree does not. The library changed with ADR-016; the
-        hazard did not. See README, "Things that will bite you".
+        This is the same provider/consumer-through-context shape that broke
+        US-001's role picker on a device before ADR-016, when npm nested eight
+        copies of the previous UI layer's portal package. It passed every
+        browser check first, because the DOM has an implicit host that a native
+        tree does not. The library changed; the hazard did not. See README,
+        "Things that will bite you".
       */}
       <PortalHost />
     </>

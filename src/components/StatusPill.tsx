@@ -7,8 +7,8 @@ import type { ShootStatus } from '../features/shoots/api'
  * Status colour is named by token, never by value, so the later re-theming task
  * does not have to touch this file.
  *
- * On Tamagui these were colour sub-themes (<Theme name="yellow">). NativeWind
- * has no equivalent, so each tone is a pair of tokens defined in
+ * Before ADR-016 these were the UI kit's own colour sub-themes. NativeWind has
+ * no equivalent, so each tone is a pair of tokens defined in
  * src/theme/global.css and surfaced by tailwind.config.js — same rule, one
  * indirection instead of the other.
  */

@@ -50,9 +50,10 @@ export default function LoginScreen() {
       keyboardShouldPersistTaps="handled"
     >
       {/*
-        Tamagui's Form wrapper carried onSubmit and Form.Trigger. RNR has no
-        form primitive, so submission hangs off the button's onPress — the same
-        single entry point, one indirection fewer.
+        The previous UI layer wrapped these fields in a Form that carried
+        onSubmit and a submit trigger. RNR has no form primitive, so submission
+        hangs off the button's onPress — the same single entry point, one
+        indirection fewer.
       */}
       <View className="gap-2 p-4">
         <Label htmlFor="email">{uk.email}</Label>

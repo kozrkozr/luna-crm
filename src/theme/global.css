@@ -2,8 +2,8 @@
  * The only place a colour value may appear (README, Layout).
  *
  * These are React Native Reusables' stock tokens, unchanged — a neutral
- * grey-and-black system, the NativeWind counterpart of the stock Tamagui theme
- * S-1 F-2 describes. Kept stock deliberately: ADR-016 is a UI-layer port, and
+ * grey-and-black system, the NativeWind counterpart of the stock theme S-1 F-2
+ * describes. Kept stock deliberately: ADR-016 is a UI-layer port, and
  * re-theming to the terracotta palette Ilona approved is a separate task. Doing
  * both at once would make the port's diff unreviewable.
  *
@@ -11,9 +11,9 @@
  * hardcodes a colour; they all name semantic tokens (bg-background, text-muted-
  * foreground, border-border), so swapping the values below re-themes the app.
  *
- * The app runs light-only (app.config.ts sets userInterfaceStyle: 'light', as it did
- * on Tamagui). The `.dark:root` block is RNR stock, left in place and inert — no
- * story asks for a dark theme, so nothing applies the class.
+ * The app runs light-only (app.config.ts sets userInterfaceStyle: 'light', as
+ * it did before ADR-016). The `.dark:root` block is RNR stock, left in place
+ * and inert — no story asks for a dark theme, so nothing applies the class.
  */
 @tailwind base;
 @tailwind components;
@@ -43,8 +43,8 @@
     --radius: 0.625rem;
 
     /*
-     * Shoot status tones (US-020). Not part of RNR's stock set: Tamagui carried
-     * these as colour sub-themes (<Theme name="yellow">), which NativeWind has
+     * Shoot status tones (US-020). Not part of RNR's stock set: the previous
+     * UI layer carried these as its own colour sub-themes, which NativeWind has
      * no equivalent for, so the two tones become tokens here rather than
      * palette classes inside StatusPill. That keeps this file the only place a
      * colour value appears, which is the whole point of the rule.
