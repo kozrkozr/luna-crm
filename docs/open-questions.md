@@ -94,6 +94,45 @@ what is implemented. Nobody has confirmed whether a Ukrainian-facing product sho
 - **Raised by:** `US-002`, `US-004`
 - **Blocks:** nothing, but it is visible on every screen with a shoot on it.
 
+### 10. Should the role picker be a bottom sheet on touch?
+`ADR-016` replaced the UI layer, and this is the one control whose *presentation* changed. The
+previous kit adapted its `Select` into a bottom sheet on touch devices; React Native Reusables
+renders an anchored popover through a portal on every platform, and ships no sheet adapter.
+
+Same control, same five options, same copy — `US-001` specifies none of this, so nothing in the
+backlog is violated either way. It is recorded because a sheet is closer to `UIPickerView`, and
+`S-1` F-3 named the role picker as the place the "authentic Apple look" question (R-1) is
+actually decided. Building a sheet by hand during the port would have been a redesign.
+
+- **Raised by:** the `ADR-016` port
+- **What shipped:** RNR's stock `Select` (anchored popover) in `app/(auth)/register.tsx`
+- **Blocks:** nothing. Bears on R-1, which is open anyway.
+
+### 11. Do shoot list rows respond to touch, and what do they do?
+`US-004` does not say. The previous kit's list rows flashed on press by default, but nothing was
+wired to that press and no screen exists to navigate to — the shoot detail screen is a later
+story. The ported rows are therefore plain, non-pressable rows: a press that leads nowhere is
+not a behaviour anyone specified.
+
+- **Raised by:** the `ADR-016` port
+- **What shipped:** non-pressable rows in `app/(app)/index.tsx`
+- **Blocks:** nothing. Resolves itself when the shoot detail screen arrives.
+
+### 12. The two shoot-status colours are unapproved values
+`US-020`'s statuses are rendered by `StatusPill`. The previous kit supplied these as named
+colour sub-themes, so no value was ever chosen by this project. NativeWind has no equivalent, so
+the port had to write actual values: `--status-new-*` and `--status-finished-*` in
+`src/theme/global.css`, picked to match what was there (a warm tone for «Нова», a green one for
+«Закінчена»).
+
+Nobody has approved them, and they are the only colour values in the repository that did not
+come from React Native Reusables' stock palette. The re-theming task should treat them as
+placeholders, not as decisions.
+
+- **Raised by:** the `ADR-016` port
+- **Placeholders in code:** the six `--status-*` tokens in `src/theme/global.css`
+- **Blocks:** nothing. Belongs to the re-theming task.
+
 ## Answered by re-reading the spec
 
 ### Email confirmation at registration — resolved, no change needed

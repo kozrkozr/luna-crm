@@ -62,6 +62,11 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
   changed with `ADR-016`; the trap did not. `npm ls <pkg>` and a `find` for nested copies is the
   diagnostic, an `overrides` entry is the fix, and **UI is verified on a device or simulator, not
   only in a browser**.
+- **Import icons one file at a time, never from the `lucide-react-native` barrel.** Expo's Metro
+  does not tree-shake, so `import { Check } from 'lucide-react-native'` ships all ~2,000 icon
+  components — it doubled the web bundle to 4.4 MB. Use
+  `import Check from 'lucide-react-native/icons/check'`. That bundle serves the anonymous link
+  views, where `docs/spikes/S-2-*.md` F-2 showed slow JS costs correctness, not just patience.
 - **Never infer "invalid link" from a missing token.** Static export prerenders `/s/[token]`
   without one; deciding invalidity there ships the error page for every link
   (`docs/spikes/S-2-*.md` F-2). Resolve first, then decide.
