@@ -136,6 +136,52 @@ placeholders, not as decisions.
 - **Placeholders in code:** the six `--status-*` tokens in `src/theme/global.css`
 - **Blocks:** nothing. Belongs to the re-theming task.
 
+### 13. Copy and rules for rejecting a reference (`US-003` AC-2)
+AC-2 requires that an unsupported file type or an invalid link be rejected "with a clear
+message". It supplies no message, and the prototype has no rejection copy at all. It also does
+not define either term.
+
+What shipped, all of it a decision this story had to make rather than one the spec made:
+
+- **"Invalid link"** is implemented as: parses as a URL, and the scheme is `http` or `https`.
+  There is deliberately no host allow-list — the placeholder names Pinterest as an example, not
+  a restriction, and `prd.md` R-03 makes references whatever the photographer already has.
+- **"Unsupported file type"** is implemented as an allow-list of the image types iOS actually
+  returns from the photo library (`jpeg`, `png`, `webp`, `heic`, `heif`, `gif`), so it rejects
+  nothing a user could normally pick.
+- **The messages themselves** are invented.
+
+- **Raised by:** `US-003`
+- **Placeholders in code:** `referenceLinkInvalid`, `referenceTypeUnsupported`,
+  `referenceAddFailed` in `src/i18n/uk.ts`; `SUPPORTED_IMAGE_TYPES` and
+  `isValidReferenceLink` in `src/features/references/api.ts`
+- **Blocks:** nothing.
+
+### 14. Ukrainian copy for the iOS photo-library permission prompt
+`US-003`'s gallery picker triggers the system permission dialog, whose text the app supplies.
+No story or prototype covers it, and the library's default is English, which `CLAUDE.md` rule 4
+does not allow.
+
+- **Raised by:** `US-003`
+- **Placeholder in code:** `photosPermission` in `app.config.ts` — «Luna потребує доступу до
+  фото, щоб додати референс до зйомки.»
+- **Blocks:** nothing. One string, and it only appears once per install.
+
+### 15. What a reference is labelled, and what tapping one does
+The data model gives a `Reference` only `kind` and `url_or_path` — no title, no caption. The
+prototype's thumbnails carry a label, but it is demo text (`Референс 1 (демо)`), not a field.
+So an image reference renders as the image, and a link reference renders its host, because that
+is the only text available. Nothing was invented to fill the gap.
+
+Nor does any story say what happens when a reference is tapped — open the link, open a viewer,
+nothing. `US-021` covers seeing them all; opening one is uncovered.
+
+- **Raised by:** `US-003`
+- **What shipped:** image thumbnails and host-labelled link tiles in
+  `app/(app)/shoot/[id].tsx`; tapping does nothing yet
+- **Blocks:** nothing. Bears on `US-007`/`US-010`, where crew and clients read the same
+  references and the same question will arise.
+
 ## Answered by re-reading the spec
 
 ### Email confirmation at registration — resolved, no change needed

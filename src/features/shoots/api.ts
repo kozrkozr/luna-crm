@@ -49,6 +49,30 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
 }
 
 /**
+ * One shoot by id, or null if it is not the caller's or has been soft-deleted —
+ * the RLS policy makes those two cases indistinguishable from here, which is
+ * the point (ADR-014).
+ */
+export async function getShoot(id: string): Promise<Shoot | null> {
+  const { data, error } = await supabase
+    .from('shoots')
+    .select('id, client_name, client_contact, date, status, location_address')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  return {
+    id: data.id,
+    clientName: data.client_name,
+    clientContact: data.client_contact,
+    date: data.date,
+    status: data.status as ShootStatus,
+    locationAddress: data.location_address,
+  }
+}
+
+/**
  * The creator's shoots. No `deleted_at is null` filter is written here and none
  * can be forgotten: the RLS policy carries it (ADR-014, CLAUDE.md rule 3).
  */

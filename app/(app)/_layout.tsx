@@ -33,6 +33,11 @@ export default function AppLayout() {
         options={{ title: uk.newShootTitle, headerLargeTitle: false, presentation: 'modal' }}
       />
       <Stack.Screen name="profile" options={{ title: uk.profileTitle }} />
+      {/*
+        Title comes from the screen itself once the shoot is loaded — the client
+        name is not known until then, and a placeholder would flash.
+      */}
+      <Stack.Screen name="shoot/[id]" options={{ headerLargeTitle: false }} />
     </Stack>
     </RequireSession>
   )

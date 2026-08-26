@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, ScrollView, View } from 'react-native'
-import { useFocusEffect, useRouter } from 'expo-router'
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
+import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { Separator } from '../../src/components/ui/separator'
 import { Text } from '../../src/components/ui/text'
@@ -68,24 +68,24 @@ export default function ShootListScreen() {
             title/subtitle/trailing layout. Same shape, same content — the kit
             is thinner, not the screen.
 
-            The rows are not pressable. Nothing here had an onPress and nothing
-            navigates off this list yet — the shoot detail screen is a later
-            story, and US-004 does not specify row behaviour. A plain row says
-            that honestly; a Pressable that leads nowhere would not.
+            Rows open the shoot detail screen. They were deliberately inert
+            until US-003, which is the story that gave them somewhere to go.
           */
           <View className="border-border overflow-hidden rounded-lg border">
             {state.shoots.map((shoot, index) => (
               <View key={shoot.id}>
                 {index > 0 ? <Separator /> : null}
-                <View className="flex-row items-center gap-3 px-4 py-3">
-                  <View className="flex-1 gap-0.5">
-                    <Text className="font-medium">{shoot.clientName}</Text>
-                    <Text className="text-muted-foreground text-sm">
-                      {`${shoot.date}${shoot.locationAddress ? ` · ${shoot.locationAddress}` : ''}`}
-                    </Text>
-                  </View>
-                  <StatusPill value={shoot.status} />
-                </View>
+                <Link href={`/(app)/shoot/${shoot.id}`} asChild>
+                  <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
+                    <View className="flex-1 gap-0.5">
+                      <Text className="font-medium">{shoot.clientName}</Text>
+                      <Text className="text-muted-foreground text-sm">
+                        {`${shoot.date}${shoot.locationAddress ? ` · ${shoot.locationAddress}` : ''}`}
+                      </Text>
+                    </View>
+                    <StatusPill value={shoot.status} />
+                  </Pressable>
+                </Link>
               </View>
             ))}
           </View>

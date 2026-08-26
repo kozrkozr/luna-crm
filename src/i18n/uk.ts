@@ -52,6 +52,12 @@ export const uk = {
   createFirst: 'Створити першу зйомку',
   references: 'Референси',
   showAllReferences: 'Показати всі референси',
+  // US-003 — the reference field and the gallery icon, from the prototype's
+  // referencesBlock. `pickFromGallery` is the icon glyph itself, as there.
+  refPlaceholder: 'Посилання на референс (напр. Pinterest)',
+  addRefBtn: 'Додати',
+  pickFromGallery: '🖼',
+  back: '← Назад',
   statusNew: 'Нова',
   statusFinished: 'Закінчена',
 
@@ -92,6 +98,12 @@ export const uk = {
   clientNameRequired: "Вкажіть ім'я клієнта",
   clientContactRequired: 'Вкажіть контакт клієнта',
   shootCreateFailed: 'Не вдалося створити зйомку. Спробуйте ще раз.',
+  // US-003 AC-2 requires "a clear message" for an invalid link or an
+  // unsupported file type but supplies neither, and the prototype has no
+  // rejection copy at all. Placeholders; see docs/open-questions.md item 13.
+  referenceLinkInvalid: 'Вкажіть коректне посилання — воно має починатися з http або https',
+  referenceTypeUnsupported: 'Цей тип файлу не підтримується. Оберіть зображення.',
+  referenceAddFailed: 'Не вдалося додати референс. Спробуйте ще раз.',
 } as const
 
 export type CopyKey = keyof typeof uk
