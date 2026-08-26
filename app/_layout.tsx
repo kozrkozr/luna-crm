@@ -3,8 +3,6 @@ import '../src/theme/global.css'
 import { PortalHost } from '@rn-primitives/portal'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { TamaguiProvider, Theme } from 'tamagui'
-import config from '../src/theme/tamagui.config'
 
 /**
  * Root shell for both surfaces.
@@ -17,35 +15,36 @@ import config from '../src/theme/tamagui.config'
  * The grouping is not cosmetic. S-2 found that a naive web export publishes the
  * creator's screens to the public link host; the route groups are how the Pages
  * build ships `s/` only.
+ *
+ * There is no theme provider. NativeWind needs only the stylesheet import above
+ * (ADR-016) — the tokens live in src/theme/global.css and reach components as
+ * Tailwind classes, so nothing has to be threaded through React context. The
+ * app is light-only, as it was on Tamagui: app.config.ts sets
+ * userInterfaceStyle: 'light' and nothing applies the `dark` class.
  */
 export default function RootLayout() {
   return (
-    <TamaguiProvider config={config} defaultTheme="light">
+    <>
+      <StatusBar style="dark" />
       {/*
-        No explicit PortalProvider here: TamaguiProvider already mounts one, and
-        adding a second warns about a nested root host. The «'PortalDispatchContext'
-        cannot be null» crash on US-001's role picker was caused solely by npm
-        nesting eight copies of @tamagui/portal, so the provider and the Sheet
-        held different React contexts. See the overrides entry in package.json.
+        headerShown: false — the route groups `(app)` and `(auth)` are
+        organisational, not screens. Left on, the root stack renders a header
+        titled with the literal group name, so registration showed
+        «(auth) Реєстрація». Each group's own layout owns its header.
       */}
-      <Theme name="light">
-        <StatusBar style="dark" />
-        {/*
-          headerShown: false — the route groups `(app)` and `(auth)` are
-          organisational, not screens. Left on, the root stack renders a header
-          titled with the literal group name, so registration showed
-          «(auth) Реєстрація». Each group's own layout owns its header.
-        */}
-        <Stack screenOptions={{ headerShown: false }} />
-        {/*
-          React Native Reusables' Select renders through @rn-primitives/portal,
-          which needs one host mounted as the last child of the providers. This
-          is the same provider/consumer-through-context shape that nested copies
-          of @tamagui/portal broke on a device (README, "Things that will bite
-          you") — the library changed, the hazard did not.
-        */}
-        <PortalHost />
-      </Theme>
-    </TamaguiProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+      {/*
+        React Native Reusables' Select renders through @rn-primitives/portal,
+        which needs one host mounted as the last child of the providers.
+
+        This is the same provider/consumer-through-context shape that nested
+        copies of @tamagui/portal broke on a device — the crash was
+        «'PortalDispatchContext' cannot be null» on US-001's role picker, and it
+        passed every browser check first because the DOM has an implicit host
+        that a native tree does not. The library changed with ADR-016; the
+        hazard did not. See README, "Things that will bite you".
+      */}
+      <PortalHost />
+    </>
   )
 }
