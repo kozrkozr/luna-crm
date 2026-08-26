@@ -50,13 +50,18 @@ currently the only moment a role is set, so a mistake is permanent.
 - **Raised by:** `US-001`
 - **Blocks:** nothing yet.
 
-### 5. Creating and sharing the *client* link
-`AccessLink` models one client link per shoot and `US-010` covers the client opening it, but no
-story covers the creator creating or sharing it. The prototype only offers
-«Переглянути як клієнт (демо)», a demo affordance rather than a share action.
+### 5. ~~Creating and sharing the *client* link~~ *(answered 2026-08-26)*
+**Answered by the owner: a «Клієнт» row on the shoot, carrying the client's name and contact
+with a copy control beside them** — the same shape as a crew member's row, so a link always sits
+next to whoever it belongs to.
+
+Routed through the discovery repo rather than decided here: it is now **`US-027`** (review
+`r05`, source commit `8df5a6d`), a new story in EP-04. It also gave `client_name` and
+`client_contact` their first home on any screen — `US-002` collects both and nothing had ever
+displayed them.
 
 - **Raised by:** reading EP-04 against EP-03
-- **Blocks:** `US-010` when EP-04 starts.
+- **Blocked:** `US-010` in practice — the story worked but no photographer could reach it.
 
 ### 6. Where the creator sets the raw-files / finished-photos links
 `US-024`/`US-025` specify the client's view of these, and `data-model.md` has the columns, but no

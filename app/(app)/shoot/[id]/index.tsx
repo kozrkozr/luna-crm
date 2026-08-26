@@ -30,7 +30,7 @@ import {
   type Reference,
 } from '../../../../src/features/references/api'
 import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
-import { crewLinkToken, crewLinkUrl } from '../../../../src/features/crew/links'
+import { clientLinkToken, crewLinkToken, linkUrl } from '../../../../src/features/crew/links'
 import {
   attachmentKind,
   signedLocationUrl,
@@ -51,7 +51,8 @@ type State =
  * references block.
  *
  * US-018 added the Локація section and the way into the edit screen; US-020
- * added the status toggle; US-005 added the Команда section.
+ * added the status toggle; US-005 added the Команда section; US-027 added the
+ * Клієнт row.
  *
  * US-019 added delete.
  *
@@ -147,6 +148,8 @@ export default function ShootDetailScreen() {
               }
             />
           </View>
+
+          <ClientSection shoot={shoot} />
 
           <LocationSection shoot={shoot} />
 
@@ -245,7 +248,7 @@ function CrewSection({
                   </Text>
                 </View>
                 <CrewResponsePill value={member.response} />
-                <CopyCrewLink shootId={shootId} crewMemberId={member.id} />
+                <CopyLink token={() => crewLinkToken(shootId, member.id)} whose={member.name} />
                 <RemoveCrewMember member={member} onRemoved={onRemoved} />
               </View>
             </View>
@@ -305,22 +308,34 @@ function RemoveCrewMember({
 }
 
 /**
- * US-006 AC-1 — the crew member's link, copied to the clipboard.
+ * The copy-to-clipboard control, for a crew member's link (US-006 AC-1) or the
+ * client's (US-027 AC-1).
  *
- * The token is created on first tap and reused after that. Re-generating would
- * silently kill a link the creator had already sent, and AC-2 makes removing
- * the person the only thing that revokes.
+ * The token is created on first tap and reused after that — US-027 AC-2 states
+ * that rule and US-006 already worked this way: minting a new token would
+ * silently kill a link that had already been sent.
  *
- * The delivery mechanism is deliberately just the clipboard: US-006's Out of
- * scope leaves SMS or anything else unspecified, and the prototype copies too.
+ * The delivery mechanism is deliberately just the clipboard: both stories leave
+ * SMS or anything else unspecified, and the prototype copies too.
  */
-function CopyCrewLink({ shootId, crewMemberId }: { shootId: string; crewMemberId: string }) {
+function CopyLink({
+  token: mintToken,
+  whose,
+}: {
+  token: () => Promise<string | null>
+  /**
+   * Whose link this copies. A shoot with three crew members has four of these
+   * controls, and «Скопіювати посилання» four times over says nothing about
+   * which is which to anyone not looking at the row it sits in.
+   */
+  whose: string
+}) {
   const [state, setState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle')
 
   const copy = async () => {
     setState('busy')
-    const token = await crewLinkToken(shootId, crewMemberId)
-    const url = token ? crewLinkUrl(token) : null
+    const token = await mintToken()
+    const url = token ? linkUrl(token) : null
     if (!url) {
       setState('failed')
       return
@@ -337,7 +352,7 @@ function CopyCrewLink({ shootId, crewMemberId }: { shootId: string; crewMemberId
       size="icon"
       disabled={state === 'busy'}
       onPress={() => void copy()}
-      accessibilityLabel={uk.copyLinkTitle}
+      accessibilityLabel={`${uk.copyLinkTitle}: ${whose}`}
     >
       <Text>{state === 'copied' ? '✓' : '🔗'}</Text>
     </Button>
@@ -415,6 +430,34 @@ function StatusToggle({
     <Button variant="secondary" className="h-auto flex-1 py-2" disabled={busy} onPress={toggle}>
       <Text className="text-center">{next === 'finished' ? uk.markFinished : uk.markNew}</Text>
     </Button>
+  )
+}
+
+/**
+ * US-027 — the shoot's client, and their link.
+ *
+ * AC-3 — the name and contact `US-002` collects, which until now appeared on no
+ * screen at all: the name was only ever the navigation title and the contact was
+ * nowhere. AC-1/AC-2 — the copy control beside them, mirroring a crew member's
+ * row so that a link always sits next to whoever it belongs to.
+ *
+ * Not editable from here: `US-018`'s Out of scope excludes editing client
+ * contact info, and `US-027` does not reopen it.
+ */
+function ClientSection({ shoot }: { shoot: Shoot }) {
+  return (
+    <View className="gap-2 pt-2">
+      <Text variant="h4">{uk.clientSection}</Text>
+      <View className="border-border overflow-hidden rounded-lg border">
+        <View className="flex-row items-center gap-3 px-4 py-3">
+          <View className="flex-1 gap-0.5">
+            <Text className="font-medium">{shoot.clientName}</Text>
+            <Text className="text-muted-foreground text-sm">{shoot.clientContact}</Text>
+          </View>
+          <CopyLink token={() => clientLinkToken(shoot.id)} whose={shoot.clientName} />
+        </View>
+      </View>
+    </View>
   )
 }
 

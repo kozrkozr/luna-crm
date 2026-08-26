@@ -111,6 +111,11 @@ export const uk = {
   // «Посилання скопійовано (демо):» carries a demo marker and a fake URL; the
   // real one confirms and nothing more.
   copyLinkTitle: 'Скопіювати посилання',
+  // US-027 — the shoot's client, and the link that belongs to them. «Клієнт»
+  // and «Контакт клієнта» are the prototype's own words for these fields;
+  // the copy control reuses copyLinkTitle, since it does the same thing a
+  // crew member's does.
+  clientSection: 'Клієнт',
   linkCopied: 'Посилання скопійовано',
   // Shown when EXPO_PUBLIC_LINK_BASE_URL is unset, which is a misconfiguration
   // rather than a user error. Placeholder; see docs/open-questions.md item 22.
