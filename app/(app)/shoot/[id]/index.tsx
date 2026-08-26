@@ -29,7 +29,7 @@ import {
   listReferences,
   type Reference,
 } from '../../../../src/features/references/api'
-import { listCrew, type CrewMember } from '../../../../src/features/crew/api'
+import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
 import { crewLinkToken, crewLinkUrl } from '../../../../src/features/crew/links'
 import {
   attachmentKind,
@@ -152,7 +152,17 @@ export default function ShootDetailScreen() {
 
           <ReferencesBlock shootId={shoot.id} references={references} onAdded={onAdded} />
 
-          <CrewSection shootId={shoot.id} crew={crew} />
+          <CrewSection
+            shootId={shoot.id}
+            crew={crew}
+            onRemoved={(removedId) =>
+              setState((current) =>
+                current.status === 'loaded'
+                  ? { ...current, crew: current.crew.filter((m) => m.id !== removedId) }
+                  : current
+              )
+            }
+          />
 
           {/*
             US-019 — last on the screen, as in the prototype. A destructive
@@ -200,13 +210,24 @@ export default function ShootDetailScreen() {
  * layout change from Ilona's prototype review, rather than a separate "links"
  * section.
  *
- * Deliberately absent, each its own story: the remove icon (US-022) and opening
- * a person for their full details (US-023). The note is not shown here either —
- * the prototype's row does not
+ * US-022 added the remove control.
+ *
+ * Deliberately absent: opening a person for their full details, which US-023
+ * gives the crew and US-026 the client, but which no story asks for on the
+ * creator's own screen — they wrote the record. The note is not shown here
+ * either — the prototype's row does not
  * show it, and it is the field ADR-013 exists to keep away from clients, so the
  * fewer places it is rendered the better.
  */
-function CrewSection({ shootId, crew }: { shootId: string; crew: CrewMember[] }) {
+function CrewSection({
+  shootId,
+  crew,
+  onRemoved,
+}: {
+  shootId: string
+  crew: CrewMember[]
+  onRemoved: (id: string) => void
+}) {
   return (
     <View className="gap-2 pt-2">
       <Text variant="h4">{uk.crew}</Text>
@@ -225,6 +246,7 @@ function CrewSection({ shootId, crew }: { shootId: string; crew: CrewMember[] })
                 </View>
                 <CrewResponsePill value={member.response} />
                 <CopyCrewLink shootId={shootId} crewMemberId={member.id} />
+                <RemoveCrewMember member={member} onRemoved={onRemoved} />
               </View>
             </View>
           ))}
@@ -237,6 +259,48 @@ function CrewSection({ shootId, crew }: { shootId: string; crew: CrewMember[] })
         </Button>
       </Link>
     </View>
+  )
+}
+
+/**
+ * US-022 — take someone off the shoot, after asking.
+ *
+ * AC-2 requires the confirmation, for the same reason US-019 does: an
+ * accidental tap must not silently cut someone out. It reuses the same
+ * component, so on a device this is a real iOS alert rather than an
+ * approximation of one.
+ *
+ * The trigger is the prototype's ✕, compact so it sits in the row without
+ * dominating a list of people. It carries an accessibility label, because a
+ * bare glyph next to a 🔗 is two unlabelled icons doing very different things.
+ */
+function RemoveCrewMember({
+  member,
+  onRemoved,
+}: {
+  member: CrewMember
+  onRemoved: (id: string) => void
+}) {
+  const [busy, setBusy] = useState(false)
+
+  return (
+    <DestructiveAction
+      compact
+      label={uk.removeCrewTitle}
+      question={uk.confirmRemoveCrew}
+      disabled={busy}
+      onConfirm={() => {
+        void (async () => {
+          setBusy(true)
+          const removed = await removeCrewMember(member.id)
+          setBusy(false)
+          // AC-1 — they no longer appear in the crew list. Dropping them from
+          // local state moves the row now; the screen refetches on focus and
+          // the policy would exclude them anyway.
+          if (removed) onRemoved(member.id)
+        })()
+      }}
+    />
   )
 }
 

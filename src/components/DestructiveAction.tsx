@@ -20,6 +20,15 @@ type Props = {
   question: string
   onConfirm: () => void
   disabled?: boolean
+  /**
+   * Render the trigger as a ✕ in a row rather than a full-width button.
+   *
+   * `US-022` puts remove beside a name, a role, a response and a link icon; a
+   * destructive button the width of the row would dominate a list of people.
+   * Only the trigger changes — the confirmation is the same one, so a compact
+   * control is not a quieter one.
+   */
+  compact?: boolean
 }
 
 /**
@@ -41,7 +50,7 @@ type Props = {
  * anonymous link view), but "does nothing" is the wrong kind of convenience,
  * and it is also the surface these criteria are tested on.
  */
-export function DestructiveAction({ label, question, onConfirm, disabled }: Props) {
+export function DestructiveAction({ label, question, onConfirm, disabled, compact }: Props) {
   const [open, setOpen] = useState(false)
 
   const ask = () => {
@@ -60,9 +69,21 @@ export function DestructiveAction({ label, question, onConfirm, disabled }: Prop
 
   return (
     <>
-      <Button variant="destructive" disabled={disabled} onPress={ask}>
-        <Text>{label}</Text>
-      </Button>
+      {compact ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={disabled}
+          onPress={ask}
+          accessibilityLabel={label}
+        >
+          <Text className="text-destructive">✕</Text>
+        </Button>
+      ) : (
+        <Button variant="destructive" disabled={disabled} onPress={ask}>
+          <Text>{label}</Text>
+        </Button>
+      )}
 
       {/*
         Mounted on web only. On native the alert above is the whole interaction,

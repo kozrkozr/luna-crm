@@ -133,6 +133,26 @@ export async function addCrewMember(
 }
 
 /**
+ * `US-022` AC-1 — take someone off the shoot; their link stops working.
+ *
+ * Goes through a SECURITY DEFINER function rather than an UPDATE, for the same
+ * reason deleting a shoot does: the SELECT policy's `removed_at is null` is
+ * applied to the new row, so a plain soft delete cannot be written. The
+ * reasoning is in the migration.
+ *
+ * The function does its own authorisation — the crew member has to be on a
+ * shoot the caller created — so this is not a bare escape hatch. `false` means
+ * it did none of that, and deliberately does not say which.
+ *
+ * `ADR-014` does the revocation: `removed_at` is what the link gateway reads,
+ * so this ends one person's access and nobody else's (`prd.md` R-05).
+ */
+export async function removeCrewMember(id: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('soft_remove_crew_member', { crew_member_id: id })
+  return !error && data === true
+}
+
+/**
  * `US-005` AC-1 — "optionally a note with an image attached". One image, not a
  * video: the story's Out of scope says only images were named for notes, and
  * that video here "would be a new ask".
