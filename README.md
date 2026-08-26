@@ -21,6 +21,28 @@ npx expo run:ios --device     # first build; needs Xcode + CocoaPods
 npm start                     # thereafter — JS changes hot-reload
 ```
 
+### Running the link surface
+
+Two of three user flows are anonymous link views, and they are **not** the app —
+they are the static export, served by Cloudflare Pages in production (`ADR-012`).
+To exercise them locally, in three terminals:
+
+```bash
+npx supabase start                                    # Postgres, Auth, Storage
+npx supabase functions serve link-gateway --no-verify-jwt   # ADR-013's gateway
+npm run export:web && npm run serve:link              # the link surface, on :8099
+```
+
+`npm run serve:link` is not a plain static server, and a plain one will not do:
+the export emits dynamic routes as literal `s/[token].html` files, so `/s/<token>`
+is a 404 until the host rewrites it. The script reads `public/_redirects` and
+applies the rules in order, which is what Pages does — see `S-2` F-3, still
+unverified against a real deployment.
+
+`EXPO_PUBLIC_LINK_BASE_URL` must point at wherever that surface is reachable, or
+the links the app copies will not open. On a phone that means the LAN address,
+not `localhost`.
+
 Schema lives as migration files in git (Supabase Free has zero backup retention —
 `architecture.md`, Stage 1):
 
