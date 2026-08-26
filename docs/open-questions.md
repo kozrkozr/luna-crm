@@ -106,7 +106,10 @@ actually decided. Building a sheet by hand during the port would have been a red
 
 - **Raised by:** the `ADR-016` port
 - **What shipped:** RNR's stock `Select` (anchored popover) in `app/(auth)/register.tsx`
-- **Blocks:** nothing. Bears on R-1, which is open anyway.
+- **Blocks:** nothing. This bore on R-1, and R-1 was answered on 2026-08-26 — Ilona reviewed
+  the app on a device, this picker included, and approved (`docs/spikes/S-1-*.md`). No
+  component-level feedback was captured, so the question is not so much answered as no longer
+  urgent: nobody asked for a sheet.
 
 ### 11. Do shoot list rows respond to touch, and what do they do?
 `US-004` does not say. The previous kit's list rows flashed on press by default, but nothing was

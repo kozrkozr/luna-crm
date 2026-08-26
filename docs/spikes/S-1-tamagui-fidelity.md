@@ -1,5 +1,29 @@
 # S-1 — Tamagui fidelity on a device
 
+> **CLOSED — Ilona reviewed the app on a device, 2026-08-26. She approved it.**
+>
+> This is the judgement the spike existed to trigger, and it has now been made. The subject she
+> judged was the **React Native Reusables** build (`ADR-016`), not the Tamagui one this report
+> describes — the Tamagui build was never seen by anyone.
+>
+> **What is evidenced:** the app was built and run on a physical iPhone, Ilona looked at it, and
+> the owner reports she approved with no concerns raised (owner, chat 2026-08-26).
+>
+> **What is not separately evidenced**, and is recorded here so nobody later reads more into
+> this than it says:
+> - Which of F-2's two questions she was answering. F-2 warns they must not be merged: *does it
+>   feel like an iPhone app* (that is R-1) versus *does it look like Luna* (that is the
+>   re-theming task). The owner reports approval; the record does not distinguish.
+> - She saw the **stock neutral palette**, not the terracotta prototype she approved twice in
+>   `03-design/reviews/`. So her approval cannot be read as approving Luna's visual identity —
+>   that design has not been built yet.
+> - No named component feedback was captured (F-2's question 3), so there is no actionable list
+>   of what felt wrong. Approval, not a punch list.
+>
+> **`risks.md` R-1 is answered and should be retired — but not here.** `docs/product/` is a
+> frozen snapshot and read-only (`CLAUDE.md`). Retiring R-1 is a spec change: it goes to the
+> discovery repo first, then the folder is re-copied.
+
 > **Superseded in subject, not in evidence — annotated 2026-08-26.**
 >
 > `ADR-016` replaced Tamagui with React Native Reusables (NativeWind) as the UI layer.
@@ -37,8 +61,9 @@
 - **Retires:** `risks.md` R-1 — "Tamagui may not reach the *authentic Apple look* bar"
 - **Assumed effort:** 2–3 days (`risks.md`, Spikes)
 - **Date:** 2026-08-25
-- **Status:** **partially complete — blocked on one thing only: no Xcode on this machine.**
-  Code is built and verified; the judgement call it exists to trigger has not happened yet.
+- **Status:** **complete (2026-08-26).** Ilona reviewed the app on a device and approved. See
+  the CLOSED note at the top for exactly what that does and does not establish. The build she
+  saw was React Native Reusables (`ADR-016`), not the Tamagui build this report describes.
 
 ## What the spike was for
 `ADR-010` chose Tamagui knowing it *approximates* Apple's components rather than using them,
