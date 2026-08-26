@@ -88,6 +88,8 @@ export const uk = {
   crewContact: 'Телефон або email',
   crewInstagram: "Instagram (необов'язково)",
   crewNotes: 'Нотатки',
+  // US-023 — a crew member reading a peer's record.
+  peerDetailsTitle: 'Деталі учасника',
   // US-005 — the add-crew screen, from the prototype's screenAddCrew. Its
   // rich-text toolbar (B / I) is demo chrome labelled as such; the data model
   // stores plain text, so the note is a plain textarea.

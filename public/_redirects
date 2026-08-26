@@ -5,16 +5,20 @@
 # rewrites to one. 200 = rewrite (serve that file, keep the URL), not a
 # redirect — the client router then reads the real token off location.pathname.
 #
-# ORDER MATTERS. Pages takes the first matching rule, so the deeper route has to
-# come first: with only the catch-all below, `/s/<token>/references` would be
-# served the shoot view instead of the all-references page (US-007 AC-1's "show
-# all" link). That is a silently wrong page, not an error, which is why it is
-# asserted in the export check rather than trusted.
+# ORDER MATTERS. Pages takes the first matching rule, so deeper routes come
+# first: with only the catch-all at the bottom, `/s/<token>/references` and
+# `/s/<token>/crew/<id>` would both be served the shoot view. That is a silently
+# wrong page, not an error, which is why the order is asserted in the export
+# check rather than trusted.
+#
+# Every route added under `/s/` needs a rule here. The export emits one file per
+# dynamic route, and a route with no rule is a 404 for every real URL.
 #
 # UNVERIFIED against a live Cloudflare Pages deployment. The bracket characters
 # in the targets are still the part most likely to need percent-encoding
 # (%5B/%5D) or a different form (S-2 F-3), and there are now two of them. If it
 # resists, the proven fallback is `"output": "single"` in app.json, which needs
 # no rewrite at all.
+/s/:token/crew/:crewId /s/[token]/crew/[crewId].html 200
 /s/:token/references /s/[token]/references.html 200
 /s/:token /s/[token].html 200

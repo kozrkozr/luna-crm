@@ -173,19 +173,17 @@ function CrewView({
             {crew.map((member, index) => (
               <View key={member.id}>
                 {index > 0 ? <Separator /> : null}
-                {/*
-                  AC-1 says each person is "clickable through to their own
-                  details (US-023)". That screen is not built, so the row is not
-                  yet a link — a control that goes nowhere would be worse than
-                  one that is not there.
-                */}
-                <View className="flex-row items-center gap-3 px-4 py-3">
-                  <Text className="flex-1">
-                    <Text className="font-medium">{member.name}</Text>
-                    <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
-                  </Text>
-                  <ResponsePill value={member.response} />
-                </View>
+                {/* US-007 AC-1 — each person is clickable through to their
+                    own details, which US-023 now provides. */}
+                <Link href={`/s/${token}/crew/${member.id}`} asChild>
+                  <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
+                    <Text className="flex-1">
+                      <Text className="font-medium">{member.name}</Text>
+                      <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
+                    </Text>
+                    <ResponsePill value={member.response} />
+                  </Pressable>
+                </Link>
               </View>
             ))}
           </View>

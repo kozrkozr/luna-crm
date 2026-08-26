@@ -102,6 +102,29 @@ type ShootRow = {
 type MemberRow = { id: string; name: string; role: string; response: string }
 
 /**
+ * `US-023` — a crew member sees a peer's complete details, "with nothing held
+ * back": name, role, contact, Instagram **and notes**.
+ *
+ * This is the first time a note crosses the network, and it is the reason
+ * `ADR-013` exists. `US-026` shows the same person to a client with the notes
+ * field **absent** — "not even an empty one" — so the two payloads are built by
+ * two functions that each name their own fields. The client's shape will not be
+ * this one with a key removed, because a shape derived by subtraction leaks the
+ * day someone adds a column and forgets.
+ *
+ * The prototype hides notes with a `hideNotes` flag on a shared body. That is
+ * the exact approach `ADR-013` rejects: it makes the difference a rendering
+ * decision, and the client would still have received the note.
+ */
+type PeerRow = MemberRow & {
+  phone: string | null
+  email: string | null
+  instagram: string | null
+  note: string | null
+  note_image: string | null
+}
+
+/**
  * `US-007` AC-1 — the date, the location, the shoot's references, and the rest
  * of the crew.
  *
@@ -137,7 +160,7 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
   // listed on a live shoot.
   const { data: crew } = await supabase
     .from('crew_members')
-    .select('id, name, role, response')
+    .select('id, name, role, response, phone, email, instagram, note, note_image')
     .eq('shoot_id', shootId)
     .is('removed_at', null)
     .order('created_at', { ascending: true })
@@ -169,12 +192,21 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
             : reference.url_or_path,
       }))
     ),
-    crew: (crew ?? []).map((member) => ({
-      id: member.id,
-      name: member.name,
-      role: member.role,
-      response: member.response,
-    })),
+    crew: await Promise.all(
+      ((crew ?? []) as PeerRow[]).map(async (member) => ({
+        id: member.id,
+        name: member.name,
+        role: member.role,
+        response: member.response,
+        // US-023 AC-1 — the crew audience sees the whole record. One contact
+        // field, as the form collects it (US-005) and as the prototype shows
+        // it back.
+        contact: member.phone ?? member.email,
+        instagram: member.instagram,
+        note: member.note,
+        noteImageUrl: await signed(supabase, member.note_image),
+      }))
+    ),
   }
 }
 

@@ -14,11 +14,25 @@ export type LinkReference = {
   url: string | null
 }
 
+/**
+ * A crew member as the CREW audience sees them (`US-023` AC-1): everything,
+ * notes included.
+ *
+ * `US-026` gives the client a different type without `note` or `noteImageUrl`,
+ * built by the gateway from its own named fields — not this one with keys
+ * deleted. AC-2 of this story is that the two views are deliberately not the
+ * same, and the type system is where that is easiest to keep true.
+ */
 export type LinkCrewMember = {
   id: string
   name: string
   role: string
   response: 'pending' | 'confirmed' | 'declined'
+  /** Phone or email, whichever was stored (US-005). */
+  contact: string | null
+  instagram: string | null
+  note: string | null
+  noteImageUrl: string | null
 }
 
 /**
@@ -91,6 +105,7 @@ function absolutise(payload: LinkPayload, base: string): LinkPayload {
       locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl),
     },
     references: payload.references.map((reference) => ({ ...reference, url: join(reference.url) })),
+    crew: payload.crew.map((member) => ({ ...member, noteImageUrl: join(member.noteImageUrl) })),
   }
 }
 
