@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { PortalProvider, TamaguiProvider, Theme } from 'tamagui'
+import { TamaguiProvider, Theme } from 'tamagui'
 import config from '../src/theme/tamagui.config'
 
 /**
@@ -19,16 +19,12 @@ export default function RootLayout() {
   return (
     <TamaguiProvider config={config} defaultTheme="light">
       {/*
-        PortalProvider is required on native, not optional. Tamagui's Sheet —
-        which Select becomes on touch via Adapt — renders through a portal, and
-        native has no default host, so the role picker on US-001's registration
-        screen threw «'PortalDispatchContext' cannot be null».
-
-        Web has an implicit host (document.body), which is why every browser
-        check passed and the device failed. Any Sheet, Dialog, AlertDialog or
-        adapted Select depends on this.
+        No explicit PortalProvider here: TamaguiProvider already mounts one, and
+        adding a second warns about a nested root host. The «'PortalDispatchContext'
+        cannot be null» crash on US-001's role picker was caused solely by npm
+        nesting eight copies of @tamagui/portal, so the provider and the Sheet
+        held different React contexts. See the overrides entry in package.json.
       */}
-      <PortalProvider shouldAddRootHost>
       <Theme name="light">
         <StatusBar style="dark" />
         {/*
@@ -39,7 +35,6 @@ export default function RootLayout() {
         */}
         <Stack screenOptions={{ headerShown: false }} />
       </Theme>
-      </PortalProvider>
     </TamaguiProvider>
   )
 }
