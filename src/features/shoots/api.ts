@@ -9,7 +9,27 @@ export type Shoot = {
   date: string
   status: ShootStatus
   locationAddress: string | null
+  /** Free text — directions and the like (US-018 AC-2). */
+  locationNote: string | null
+  /** Storage path to one image OR one video (US-018 AC-2). */
+  locationAttachment: string | null
 }
+
+/**
+ * US-018 — the editable half of a shoot. Client name and contact are absent on
+ * purpose: the story's Out of scope says only date and location were asked for,
+ * and "if that's also needed, it's a new ask, not assumed here".
+ */
+export type UpdateShootInput = {
+  date: string // ISO date, YYYY-MM-DD
+  locationAddress: string | null
+  locationNote: string | null
+  locationAttachment: string | null
+}
+
+/** Every column the app reads for a Shoot, in one place so the two queries agree. */
+const SHOOT_COLUMNS =
+  'id, client_name, client_contact, date, status, location_address, location_note, location_attachment'
 
 export type CreateShootInput = {
   clientName: string
@@ -56,20 +76,13 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
 export async function getShoot(id: string): Promise<Shoot | null> {
   const { data, error } = await supabase
     .from('shoots')
-    .select('id, client_name, client_contact, date, status, location_address')
+    .select(SHOOT_COLUMNS)
     .eq('id', id)
     .maybeSingle()
 
   if (error || !data) return null
 
-  return {
-    id: data.id,
-    clientName: data.client_name,
-    clientContact: data.client_contact,
-    date: data.date,
-    status: data.status as ShootStatus,
-    locationAddress: data.location_address,
-  }
+  return toShoot(data)
 }
 
 /**
@@ -79,17 +92,60 @@ export async function getShoot(id: string): Promise<Shoot | null> {
 export async function listShoots(): Promise<Shoot[] | null> {
   const { data, error } = await supabase
     .from('shoots')
-    .select('id, client_name, client_contact, date, status, location_address')
+    .select(SHOOT_COLUMNS)
     .order('date', { ascending: true })
 
   if (error || !data) return null
 
-  return data.map((row) => ({
+  return data.map(toShoot)
+}
+
+type ShootRow = {
+  id: string
+  client_name: string
+  client_contact: string
+  date: string
+  status: string
+  location_address: string | null
+  location_note: string | null
+  location_attachment: string | null
+}
+
+function toShoot(row: ShootRow): Shoot {
+  return {
     id: row.id,
     clientName: row.client_name,
     clientContact: row.client_contact,
     date: row.date,
     status: row.status as ShootStatus,
     locationAddress: row.location_address,
-  }))
+    locationNote: row.location_note,
+    locationAttachment: row.location_attachment,
+  }
+}
+
+/**
+ * US-018 AC-1 — save the edited date and location.
+ *
+ * `date` is typed as a required string rather than nullable, so AC-3's "save is
+ * blocked when the date is cleared" cannot be reached by calling this: the
+ * screen refuses first, and the column is NOT NULL behind it. Two barriers, and
+ * the type is the cheaper one.
+ *
+ * Empty address and note are written as null rather than '', so "never filled
+ * in" and "cleared" are the same state in the database and every reader has one
+ * case to handle instead of two.
+ */
+export async function updateShoot(id: string, input: UpdateShootInput): Promise<boolean> {
+  const { error } = await supabase
+    .from('shoots')
+    .update({
+      date: input.date,
+      location_address: input.locationAddress?.trim() || null,
+      location_note: input.locationNote?.trim() || null,
+      location_attachment: input.locationAttachment,
+    })
+    .eq('id', id)
+
+  return !error
 }

@@ -37,7 +37,11 @@ export default function AppLayout() {
         Title comes from the screen itself once the shoot is loaded — the client
         name is not known until then, and a placeholder would flash.
       */}
-      <Stack.Screen name="shoot/[id]" options={{ headerLargeTitle: false }} />
+      <Stack.Screen name="shoot/[id]/index" options={{ headerLargeTitle: false }} />
+      <Stack.Screen
+        name="shoot/[id]/edit"
+        options={{ title: uk.editShootTitle, headerLargeTitle: false }}
+      />
     </Stack>
     </RequireSession>
   )

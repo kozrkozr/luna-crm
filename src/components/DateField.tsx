@@ -14,6 +14,13 @@ type Props = {
   value: Date | null
   onChange: (date: Date) => void
   placeholder?: string
+  /**
+   * Offers a way to clear the date. US-018 AC-3 requires that clearing it and
+   * saving be blocked, which means the cleared state has to be reachable at
+   * all — a picker with no way out can only ever produce a valid date. Omitted
+   * on creation (US-002), where the field simply starts empty.
+   */
+  onClear?: () => void
 }
 
 /**
@@ -34,7 +41,7 @@ type Props = {
  * not typeable, since a text field invites locale ambiguity — is 05.09 September
  * or May? — for no gain on a device with a native picker.
  */
-export function DateField({ id, value, onChange, placeholder }: Props) {
+export function DateField({ id, value, onChange, placeholder, onClear }: Props) {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Date>(value ?? new Date())
 
@@ -47,19 +54,26 @@ export function DateField({ id, value, onChange, placeholder }: Props) {
         page background, which is what Input renders as. Justified to the start
         so the value sits where a field's text would.
       */}
-      <Button
-        id={id}
-        variant="outline"
-        className="w-full justify-start"
-        onPress={() => {
-          setDraft(value ?? new Date())
-          setOpen(true)
-        }}
-      >
-        <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
-          {value ? toIsoDate(value) : (placeholder ?? uk.pickDate)}
-        </Text>
-      </Button>
+      <View className="flex-row items-center gap-2">
+        <Button
+          id={id}
+          variant="outline"
+          className="flex-1 justify-start"
+          onPress={() => {
+            setDraft(value ?? new Date())
+            setOpen(true)
+          }}
+        >
+          <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
+            {value ? toIsoDate(value) : (placeholder ?? uk.pickDate)}
+          </Text>
+        </Button>
+        {onClear && value ? (
+          <Button variant="outline" size="icon" onPress={onClear} accessibilityLabel={uk.clearDate}>
+            <Text>✕</Text>
+          </Button>
+        ) : null}
+      </View>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={close}>
         {/* Dim the page behind, and let a tap outside dismiss. */}

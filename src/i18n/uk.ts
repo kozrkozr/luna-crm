@@ -47,6 +47,18 @@ export const uk = {
   // docs/open-questions.md item 1.
   done: 'Готово',
   newShoot: '+ Нова зйомка',
+  // US-018 — the edit screen and the location section, from the prototype's
+  // screenEditShoot. The two attach buttons drop the prototype's "(демо)"
+  // marker, which labelled a fake attachment rather than a real one.
+  edit: 'Редагувати',
+  editShootTitle: 'Редагування зйомки',
+  locationSection: 'Локація',
+  address: 'Адреса',
+  addressPlaceholder: 'напр. Студія, Київ',
+  locationNotes: 'Нотатки (як доїхати тощо)',
+  locationNotesPlaceholder: 'напр. Заїзд з двору, домофон 45',
+  attachImage: '+ Зображення',
+  attachVideo: '+ Відео',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',
   createFirst: 'Створити першу зйомку',
@@ -109,6 +121,15 @@ export const uk = {
   // filtered state at all. Placeholders; see docs/open-questions.md item 17.
   allShoots: 'Всі зйомки',
   noShootsOnDay: 'На цю дату зйомок немає.',
+  // US-018. AC-3 gives the rule (a shoot always needs a date) and reuses
+  // US-002's copy for it, but nothing covers a failed save or a rejected
+  // attachment type. Placeholders; see docs/open-questions.md item 18.
+  shootUpdateFailed: 'Не вдалося зберегти зміни. Спробуйте ще раз.',
+  attachmentTypeUnsupported: 'Цей тип файлу не підтримується.',
+  // The ✕ that empties the date field. Needs its own label: «Скасувати» is
+  // already the button that abandons the edit, and two controls answering to
+  // the same word is ambiguous to anyone not looking at the glyph.
+  clearDate: 'Очистити дату',
 } as const
 
 export type CopyKey = keyof typeof uk

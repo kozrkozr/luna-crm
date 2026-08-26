@@ -236,6 +236,40 @@ Three inventions, all placeholders:
   `src/i18n/uk.ts`
 - **Blocks:** nothing.
 
+### 18. `US-018` leaves three things to the build
+**Copy for a failed save and a rejected attachment.** AC-3 supplies the date rule and reuses
+`US-002`'s wording for it, but nothing covers a save that fails or a file type that cannot be
+attached.
+
+**A way to clear the date.** AC-3 requires that clearing the date and saving be *blocked*, which
+means the cleared state has to be reachable — but the date is a picker, and a picker with no way
+out can only ever produce a valid date. A ✕ control was added to `DateField`, on the edit screen
+only. Its label had to be its own: «Скасувати» was already the button that abandons the edit,
+and two controls answering to one word is ambiguous to anyone not looking at the glyph.
+
+**Which kind of thing the attachment is.** `Shoot.location_attachment` is a single text column
+with no companion `kind`, so image-versus-video is read off the file extension. That is the only
+signal the data model offers; the alternative was inventing a column the spec does not have.
+
+- **Raised by:** `US-018`
+- **Placeholders in code:** `shootUpdateFailed`, `attachmentTypeUnsupported`, `clearDate` in
+  `src/i18n/uk.ts`; `attachmentKind` in `src/features/shoots/locationMedia.ts`
+- **Blocks:** nothing.
+
+### 19. A location video does not play in the app
+`US-018` AC-2 says the attachment is "shown wherever the location is displayed". An image is
+shown inline. A video is a tile that opens in the platform's player instead, because nothing
+specifies inline playback and `risks.md` R-4 puts video behind spike **S-4**, which has not run
+— including its question of whether a signed URL outlives an idle page long enough to press
+play. Opening it is the gesture `US-003` AC-3 already established for a link.
+
+This will matter more in the link views (`US-007`, `US-010`), where a crew member on a shoot
+morning is the person actually watching it.
+
+- **Raised by:** `US-018` AC-2
+- **What shipped:** an inline image, and a 🎞 tile that opens the video externally
+- **Blocks:** nothing. Belongs with `S-4`.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

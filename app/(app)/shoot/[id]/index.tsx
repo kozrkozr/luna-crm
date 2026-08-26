@@ -1,20 +1,24 @@
 import { useCallback, useState } from 'react'
 import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, View } from 'react-native'
-import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { Link, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
-import { Button } from '../../../src/components/ui/button'
-import { Input } from '../../../src/components/ui/input'
-import { Text } from '../../../src/components/ui/text'
-import { StatusPill } from '../../../src/components/StatusPill'
-import { uk } from '../../../src/i18n/uk'
-import { getShoot, type Shoot } from '../../../src/features/shoots/api'
+import { Button } from '../../../../src/components/ui/button'
+import { Input } from '../../../../src/components/ui/input'
+import { Text } from '../../../../src/components/ui/text'
+import { StatusPill } from '../../../../src/components/StatusPill'
+import { uk } from '../../../../src/i18n/uk'
+import { getShoot, type Shoot } from '../../../../src/features/shoots/api'
 import {
   addImageReference,
   addLinkReference,
   listReferences,
   signedReferenceUrl,
   type Reference,
-} from '../../../src/features/references/api'
+} from '../../../../src/features/references/api'
+import {
+  attachmentKind,
+  signedLocationUrl,
+} from '../../../../src/features/shoots/locationMedia'
 
 type State =
   | { status: 'loading' }
@@ -30,8 +34,10 @@ type State =
  * what US-003 requires: enough of the shoot to know which one this is, and the
  * references block.
  *
- * Deliberately absent, each belonging to a story not yet built: edit (US-018),
- * delete (US-019), the status toggle (US-020), crew (US-005/US-006), and the
+ * US-018 added the Локація section and the way into the edit screen.
+ *
+ * Deliberately absent, each belonging to a story not yet built: delete
+ * (US-019), the status toggle (US-020), crew (US-005/US-006), and the
  * raw-files / finished-photos sections (US-024/US-025). The status is shown
  * because it is already stored and already rendered in the list — showing it is
  * not the same as offering to change it.
@@ -97,10 +103,97 @@ export default function ShootDetailScreen() {
             <StatusPill value={shoot.status} />
           </View>
 
+          {/* US-018 AC-1 — the way into edit. */}
+          <Link href={`/(app)/shoot/${shoot.id}/edit`} asChild>
+            <Button variant="outline">
+              <Text>{uk.edit}</Text>
+            </Button>
+          </Link>
+
+          <LocationSection shoot={shoot} />
+
           <ReferencesBlock shootId={shoot.id} references={references} onAdded={onAdded} />
         </View>
       </ScrollView>
     </>
+  )
+}
+
+/**
+ * US-018 — the location, shown wherever it is displayed (AC-1, AC-2).
+ *
+ * Renders nothing at all when there is no address, note or attachment. An
+ * empty «Локація» heading over blank space would suggest the section had
+ * failed to load rather than never been filled in, and the prototype shows it
+ * only when there is something in it.
+ *
+ * The address itself already appears next to the date above, as it does in the
+ * list; this section is the note and its attachment.
+ */
+function LocationSection({ shoot }: { shoot: Shoot }) {
+  const [uri, setUri] = useState<string | null>(null)
+  const [viewing, setViewing] = useState<string | null>(null)
+  const attachment = shoot.locationAttachment
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!attachment) return
+      let active = true
+      void (async () => {
+        const signed = await signedLocationUrl(attachment)
+        if (active) setUri(signed)
+      })()
+      return () => {
+        active = false
+      }
+    }, [attachment])
+  )
+
+  if (!shoot.locationAddress && !shoot.locationNote && !attachment) return null
+
+  const kind = attachment ? attachmentKind(attachment) : null
+
+  return (
+    <View className="gap-2 pt-2">
+      <Text variant="h4">{uk.locationSection}</Text>
+      {shoot.locationAddress ? <Text>{shoot.locationAddress}</Text> : null}
+      {shoot.locationNote ? (
+        <Text className="text-muted-foreground">{shoot.locationNote}</Text>
+      ) : null}
+
+      {attachment && kind === 'image' ? (
+        <Pressable
+          className="bg-secondary border-border h-40 w-full overflow-hidden rounded-md border active:opacity-70"
+          disabled={!uri}
+          onPress={() => uri && setViewing(uri)}
+          role="button"
+          accessibilityLabel={uk.locationSection}
+        >
+          {uri ? <Image source={{ uri }} className="h-full w-full" resizeMode="cover" /> : null}
+        </Pressable>
+      ) : null}
+
+      {attachment && kind === 'video' ? (
+        /*
+          A video opens in the platform's player rather than playing inline.
+          Nothing here specifies inline playback, and risks.md R-4 puts video
+          behind spike S-4 — which has not run — including whether a signed URL
+          survives an idle page long enough to press play. Opening it is the
+          same gesture US-003 AC-3 established for a link reference.
+        */
+        <Pressable
+          className="bg-secondary border-border h-20 w-full items-center justify-center rounded-md border active:opacity-70"
+          disabled={!uri}
+          onPress={() => uri && void openLink(uri)}
+          role="button"
+          accessibilityLabel={uk.attachVideo}
+        >
+          <Text className="text-3xl">🎞</Text>
+        </Pressable>
+      ) : null}
+
+      <ImageViewer uri={viewing} onClose={() => setViewing(null)} />
+    </View>
   )
 }
 
