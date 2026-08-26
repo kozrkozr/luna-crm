@@ -49,7 +49,9 @@ finished photos is deferred (`decisions/ADR-005-*.md`, amended by `ADR-008-*.md`
 
 ## Backlog order
 Full reasoning in [`04-tech/backlog-order.md`](04-tech/backlog-order.md). Spikes **S-1** and
-**S-2** run before any story; foundation work (~3–4 weeks, mapped to no story) comes next.
+**S-2** ran before any story and are **both complete as of 2026-08-26** — `risks.md` R-1 and R-2
+are retired. Foundation work (~3–4 weeks, mapped to no story) comes next; `S-3`–`S-5` remain,
+each before the epic it de-risks.
 
 | Order | Epic | Stories | Note |
 |---|---|---|---|

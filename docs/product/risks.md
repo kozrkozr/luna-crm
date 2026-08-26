@@ -1,7 +1,8 @@
 # Technical risks — Luna CRM v1
 
 - **Subproject:** 001-luna-crm
-- **Date:** 2026-08-25 (R-1 and R-2 revised 2026-08-26 — `ADR-016` replaced the UI layer)
+- **Date:** 2026-08-25 (R-1 and R-2 revised 2026-08-26 — `ADR-016` replaced the UI layer;
+  R-1 retired and R-2 closed later the same day — review `r02-2026-08-26`)
 - **Derived from:** `architecture.md`, `data-model.md`, `02-product/prd.md` (Risks),
   `01-discovery/challenge.md`
 
@@ -26,15 +27,26 @@ reopen it.
 
 ## Risks
 
-### R-1 — the UI layer may not reach the "authentic Apple look" bar *(medium)*
-The owner's stated priority is an authentic Apple look. Every UI-layer option that keeps React
-Native *approximates* Apple's components rather than using them, and the current one —
-React Native Reusables (`ADR-016`, replacing Tamagui) — is Tailwind classes over unstyled
-primitives, so the gap is the same shape as before. It is still accepted on paper and **still
-has never been seen: Ilona has not looked at a device build.** `ADR-016` did not answer this
-risk and was not motivated by it (its reasons were theming, dependency coupling and
-agent-friendliness). The remedy if it fails her eye is still a UI-layer rewrite — now the
-second one. **Spike S-1**, still open, subject updated.
+### R-1 — ~~the UI layer may not reach the "authentic Apple look" bar~~ *(retired 2026-08-26)*
+**Ilona reviewed the app on a physical iPhone on 2026-08-26 and approved it** (owner, chat).
+That judgement was the only thing that could close this risk, and it has now been made. The
+UI-layer rewrite this risk held in reserve — which would have been the second one — is not
+being spent. **Spike S-1 is complete.**
+
+Three limits on what that approval covers, recorded so it is not read as more than it is:
+
+- **What she saw was the React Native Reusables build** (`ADR-016`), on stock RNR components.
+  The Tamagui build that `ADR-010` and the original `S-1` were about was never seen by anyone.
+- **She saw the stock neutral palette, not the terracotta prototype** she approved twice in
+  `03-design/reviews/r01-`/`r02-2026-08-23/`. Re-theming is still an unbuilt task, so this is
+  not sign-off on Luna's visual identity — only on whether the app *feels* like an iPhone app.
+- **No component-level feedback was captured.** `S-1` F-2 warns that two judgements hide here
+  and must not be merged (*does it feel like an iPhone app* versus *does it look like Luna*);
+  the record does not distinguish which she was answering. This is an approval, not a punch
+  list, so there is nothing actionable to carry forward.
+
+If the re-theming task later changes her mind, that is a new risk against a new subject — not
+this one reopening.
 
 ### R-2 — One codebase may not serve both the app and the link views *(medium)*
 The architecture assumes React Native Web exports the link views (Flow 2, Flow 3) as static web
@@ -43,9 +55,18 @@ small web app — duplicating the design system and every Ukrainian string. **As
 would add 2–3 weeks. **Spike S-2.**
 
 `S-2` verified this for Tamagui. `ADR-016` replaced the UI layer with NativeWind, whose web
-output is produced differently, so **the export must be re-verified before screens are ported**
-(`ADR-016` open question 1). This is the one place a UI-kit swap can break architecture rather
-than appearance.
+output is produced differently, so the export had to be re-verified before screens were ported
+(`ADR-016` open question 1).
+
+**Re-verified 2026-08-26, before any screen was ported, and again after the port.** All 13
+routes still export, `_redirects` still ships, the `/s/*` rewrite still serves the token page,
+and — the finding `S-2` F-2 exists for — the invalid-link state is still absent from the
+prerendered HTML, confirmed by rendering both a valid-shaped and an invalid token with
+JavaScript disabled. NativeWind emits one external stylesheet where Tamagui inlined `<style>`
+per page, which *helps* this surface: the token page's HTML fell from 165 KB to 19 KB and styles
+now arrive with first paint rather than with the bundle. **R-2 is closed for both the codebase
+question and the UI-layer swap.** One item stays open and is not this risk: `S-2` F-3's
+`_redirects` rewrite has still never run on a live Cloudflare Pages deployment.
 
 ### R-3 — `US-009` is a "should" that a whole user journey depends on *(medium)*
 `prd.md` marks R-08/`US-009` (self-registered crew's cross-shoot schedule) as **should**, and
@@ -91,14 +112,16 @@ in-app function (creation, editing, crew, calendar), so this is unlikely — not
 ## Spikes
 | # | Spike | Retires | Assumed effort |
 |---|---|---|---|
-| S-1 | Build 2 real screens on a device; show Ilona | R-1 | 2–3 days |
-| S-2 | Static-export one link view via RN Web to Cloudflare Pages | R-2 | 1–2 days |
+| ~~S-1~~ | ~~Build 2 real screens on a device; show Ilona~~ — **done 2026-08-26**, R-1 retired | R-1 | 2–3 days |
+| ~~S-2~~ | ~~Static-export one link view via RN Web to Cloudflare Pages~~ — **done**; re-verified for NativeWind 2026-08-26. Live Pages deploy still unconfirmed (`S-2` F-3) | R-2 | 1–2 days |
 | S-3 | Link gateway: token → audience-shaped payload, notes stripped for client | `ADR-013` | 1 day |
 | S-4 | Upload a phone video, play it in a mobile browser link view; measure bytes; check signed-URL expiry against an idle page | R-4 | 1–2 days |
 | S-5 | Phone normalization (+380 formats) and email/phone matching on registration | R-3 | 1–2 days |
 
-Run S-1 and S-2 **before** any story work. Both can invalidate a foundational choice, and both
-are cheap only while nothing is built on top of them.
+~~Run S-1 and S-2 **before** any story work.~~ **Both are complete as of 2026-08-26.** S-3 to
+S-5 remain, and each still belongs before the epic it de-risks. The reasoning that put S-1 and
+S-2 first held: both were cheap while little sat on top of them, and S-1 in particular was
+finishable only once a device build existed.
 
 ## Effort per epic
 **Every number here is an assumption**, inferred from story count and size in

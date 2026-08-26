@@ -50,13 +50,12 @@
 >   mechanical half: it typechecks, `pod install` succeeds, a full simulator build compiles,
 >   the app launches, and the static web export re-verifies against S-2.
 >
-> **R-1 is still open, and this port did not touch it.** Nobody has seen this app on a device —
-> not on Tamagui, and not on React Native Reusables. `ADR-016` was decided on theming,
-> dependency coupling and agent-friendliness, not on fidelity, and it says so itself. The
-> judgement this spike exists to trigger — whether any of it *feels* like an iPhone app — has
-> still not been made by anyone. The "How to finish S-1" section below is still the open task,
-> with the subject changed and the palette question (F-2) unchanged: it is still stock, still
-> not Luna's, and re-theming is still a separate task.
+> **R-1 was still open when this annotation was written, and the port did not touch it.**
+> `ADR-016` was decided on theming, dependency coupling and agent-friendliness, not on fidelity,
+> and it says so itself. *(Answered hours later the same day — see the CLOSED note at the top.
+> R-1 is retired in the spec as of source commit `d1c1cf0`.)* The palette question (F-2) is
+> unchanged either way: it is still stock, still not Luna's, and re-theming is still a separate
+> task.
 
 - **Retires:** `risks.md` R-1 — "Tamagui may not reach the *authentic Apple look* bar"
 - **Assumed effort:** 2–3 days (`risks.md`, Spikes)

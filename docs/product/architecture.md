@@ -100,6 +100,8 @@ One service joins, and only because of who holds the device.
 
 Note for spike S-1 ("real screens on a device, shown to Ilona"): shown **in person on the
 developer's own device, that spike still costs $0**. Only remote delivery needs the $99.
+**This is what happened** — S-1 completed 2026-08-26 on a free-provisioned local build, so the
+$99 was not spent and the Stage 2 trigger has still not fired.
 
 ### Stage 3 — Production, from the first real shoot: $34.35/month
 The trigger is **the first real crew link sent to a real person** — when Ilona runs an actual

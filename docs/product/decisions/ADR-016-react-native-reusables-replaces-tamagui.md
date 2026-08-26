@@ -39,6 +39,14 @@ and 3 are sourced to `S-1` findings F-6/F-7 and F-4.
 `risks.md` R-1 — whether the UI layer reaches the "authentic Apple look" bar — is neither the
 reason for this change nor answered by it. It stays open, with a new subject.
 
+> **Addendum, 2026-08-26 (review `r02`).** The paragraph above is left as written — it was true
+> when this decision was made, and it is why the decision reads the way it does. It is no longer
+> true of today: later the same day Ilona reviewed the ported build on a physical iPhone and
+> approved it, and **R-1 is retired**. That does not change this ADR's reasoning. The point the
+> paragraph was making still stands and is worth keeping: this decision was not evidence about
+> the look, and should never be cited as though it were. What closed R-1 was her eye on a
+> device, not the UI-kit swap.
+
 ## Options considered
 ### Option A — stay on Tamagui
 - **Pros:** zero port cost; six screens already work; `S-1` verified every control v1 needs
@@ -84,8 +92,14 @@ visible piece of work, and the owner wants it as editable source rather than a t
 - **Revisit when:** the port shows RNR cannot cover a control v1 needs, or NativeWind breaks
   the static web export that `ADR-012`'s whole link surface depends on.
 
-## Open questions
-| # | Question | What decision it blocks |
+## Open questions — **both answered by the port, 2026-08-26**
+| # | Question | Answer |
 |---|---|---|
-| 1 | Does NativeWind survive the static web export to Cloudflare Pages? `S-2` verified this for Tamagui, and `ADR-012`'s entire link surface (two of three user flows) rides on it | Nothing yet, but a failure here is architectural, not cosmetic — re-verify before porting screens |
-| 2 | Does dropping Tamagui actually remove the reanimated coupling of reason 2, or do RNR's primitives reintroduce it? | Whether `risks.md`'s inherited-SDK-bump constraint is retired or just re-sourced |
+| 1 | Does NativeWind survive the static web export to Cloudflare Pages? `S-2` verified this for Tamagui, and `ADR-012`'s entire link surface (two of three user flows) rides on it | **Yes.** Re-verified before any screen was ported and again after. All 13 routes export, `_redirects` ships, the `/s/*` rewrite serves the token page, and `S-2` F-2's rule holds — the invalid-link state is absent from the prerendered HTML, confirmed with JavaScript disabled. NativeWind emits one external stylesheet where Tamagui inlined `<style>` per page, which helps this surface: the token page's HTML fell 165 KB → 19 KB. `risks.md` R-2 closed |
+| 2 | Does dropping Tamagui actually remove the reanimated coupling of reason 2, or do RNR's primitives reintroduce it? | **Re-sourced, not retired.** Tamagui's chain (`@tamagui/config` → `@tamagui/animations-reanimated`) does leave, but `nativewind` → `react-native-css-interop` declares `react-native-reanimated >=3.6.2` as a **non-optional** peer, and RNR's own `select.tsx` imports reanimated directly. Expo Router's reanimated peer is optional, so it is not the source either way. `risks.md`'s inherited SDK-bump constraint keeps its force under a new owner, and **reason 2 of this ADR is weaker than it looked** — the decision still stands on reasons 1 and 3 |
+
+**Reason 2 is worth re-reading in that light.** It argued that `@tamagui/config` pulls reanimated
+"regardless of which animation driver is chosen, which cost two separate native build failures".
+That was true, and the failures were real — but the replacement carries the same dependency, so
+the swap did not buy what reason 2 implied it would. It did not change the outcome: reason 1
+(theming) is what decided it, per the Decision section.

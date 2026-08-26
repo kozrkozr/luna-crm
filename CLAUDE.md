@@ -60,10 +60,11 @@ which took its names from the confirmed glossary. Do not invent `Booking`, `Team
 **One ID per commit.** A change touching two stories is two commits.
 
 ### 7. Build in the order given
-`docs/product/backlog-order.md`. Spikes **S-1** (UI-layer fidelity on a device — subject
-updated by `ADR-016`, still open) and **S-2** (static export of a link view) run **before any
-story** — both can invalidate a foundational choice and are cheap only while nothing sits on top
-of them.
+`docs/product/backlog-order.md`. Spikes **S-1** (UI-layer fidelity on a device) and **S-2**
+(static export of a link view) ran before any story and are **both complete (2026-08-26)** —
+`risks.md` R-1 and R-2 are retired. **S-3**–**S-5** remain, each before the epic it de-risks;
+both rules still apply to them: they can invalidate a foundational choice, and they are cheap
+only while nothing sits on top of them.
 
 ## Things that will surprise you
 - **v1 does host files**, despite "no file hosting" in the PRD's non-goals. That non-goal covers

@@ -1,19 +1,20 @@
 # Backlog order — Luna CRM v1
 
 - **Subproject:** 001-luna-crm
-- **Date:** 2026-08-25 (spike S-1 and the foundation line revised 2026-08-26 — `ADR-016`)
+- **Date:** 2026-08-25 (spike S-1 and the foundation line revised 2026-08-26 — `ADR-016`;
+  both spikes marked complete later the same day — review `r02-2026-08-26`)
 - **Derived from:** story `Dependencies` sections under `02-product/epics/`,
   `04-tech/risks.md` (effort and spikes), `04-tech/architecture.md`
 - **Effort figures are assumptions** carried from `risks.md`, not measurements.
 
-## Before any story: two spikes
-Both can invalidate a foundational choice, and both are cheap only while nothing is built on
+## Before any story: two spikes — **both complete, 2026-08-26**
+Both could invalidate a foundational choice, and both were cheap only while nothing was built on
 top of them (`risks.md`, Spikes).
 
-| # | Spike | Why first |
+| # | Spike | Outcome |
 |---|---|---|
-| S-1 | Two real screens on a device, shown to Ilona | `ADR-010`, and now `ADR-016`, accept a fidelity gap against the owner's own "authentic Apple look" priority. **Still open — Ilona has not looked.** If it fails her eye, the remedy after the build is a UI-layer rewrite |
-| S-2 | Static-export one link view via RN Web to Cloudflare Pages | The whole two-surface architecture assumes one codebase serves both. If it does not, a second web app is +2–3 weeks |
+| ~~S-1~~ | Two real screens on a device, shown to Ilona | **Done 2026-08-26 — she approved.** `risks.md` R-1 retired; the UI-layer rewrite it held in reserve is not being spent. She saw the React Native Reusables build on the stock palette, so this is not sign-off on Luna's visual identity — see R-1 for the limits |
+| ~~S-2~~ | Static-export one link view via RN Web to Cloudflare Pages | **Done**, and re-verified for NativeWind on 2026-08-26 before any screen was ported (`ADR-016` open question 1). `risks.md` R-2 closed. One item still open: the `_redirects` rewrite has never run on a live Cloudflare Pages deployment (`S-2` F-3) |
 
 ## Then: foundation — mapped to no story
 **Assumed 3–4 weeks.** Supabase project, schema, RLS, the design system (React Native
