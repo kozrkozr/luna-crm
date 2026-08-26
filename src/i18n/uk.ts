@@ -76,6 +76,9 @@ export const uk = {
   // shoot is in. Verbatim from the prototype, nested guillemets included.
   markFinished: 'Позначити як «Закінчена»',
   markNew: 'Позначити як «Нова»',
+  // US-019, verbatim from the prototype.
+  deleteShoot: 'Видалити зйомку',
+  confirmDeleteShoot: 'Видалити цю зйомку? Це незворотньо.',
 
   // EP-03 / EP-04 — crew and link views
   crew: 'Команда',

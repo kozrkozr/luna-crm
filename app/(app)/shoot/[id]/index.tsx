@@ -1,13 +1,15 @@
 import { useCallback, useState } from 'react'
 import { ActivityIndicator, Image, Linking, Modal, Pressable, ScrollView, View } from 'react-native'
-import { Link, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
 import { Text } from '../../../../src/components/ui/text'
 import { StatusPill } from '../../../../src/components/StatusPill'
+import { DestructiveAction } from '../../../../src/components/DestructiveAction'
 import { uk } from '../../../../src/i18n/uk'
 import {
+  deleteShoot,
   getShoot,
   setShootStatus,
   type Shoot,
@@ -42,12 +44,15 @@ type State =
  * US-018 added the Локація section and the way into the edit screen; US-020
  * added the status toggle.
  *
- * Deliberately absent, each belonging to a story not yet built: delete
- * (US-019), crew (US-005/US-006), and the raw-files / finished-photos sections
+ * US-019 added delete.
+ *
+ * Deliberately absent, each belonging to a story not yet built: crew
+ * (US-005/US-006) and the raw-files / finished-photos sections
  * (US-024/US-025).
  */
 export default function ShootDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
+  const router = useRouter()
   const [state, setState] = useState<State>({ status: 'loading' })
 
   useFocusEffect(
@@ -129,6 +134,36 @@ export default function ShootDetailScreen() {
           <LocationSection shoot={shoot} />
 
           <ReferencesBlock shootId={shoot.id} references={references} onAdded={onAdded} />
+
+          {/*
+            US-019 — last on the screen, as in the prototype. A destructive
+            action sitting under everything else is harder to hit by accident
+            than one next to the things you came here to use, and the
+            confirmation is the actual guarantee (AC-2).
+          */}
+          <View className="pt-6">
+            <DestructiveAction
+              label={uk.deleteShoot}
+              question={uk.confirmDeleteShoot}
+              onConfirm={() => {
+                void (async () => {
+                  if (await deleteShoot(shoot.id)) {
+                    // AC-1 — it disappears from the list, which refetches on
+                    // focus. Never `push`: the deleted shoot must not stay on
+                    // the stack to be swiped back to.
+                    //
+                    // `back` only when there is something to go back to. Arrive
+                    // here from a deep link — a notification, a shared URL, a
+                    // cold start on this route — and the stack is empty, so
+                    // `back` does nothing and leaves the reader looking at a
+                    // shoot that no longer exists.
+                    if (router.canGoBack()) router.back()
+                    else router.replace('/(app)')
+                  }
+                })()
+              }}
+            />
+          </View>
         </View>
       </ScrollView>
     </>

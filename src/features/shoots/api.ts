@@ -125,6 +125,27 @@ function toShoot(row: ShootRow): Shoot {
 }
 
 /**
+ * US-019 AC-1 — delete a shoot.
+ *
+ * Goes through a SECURITY DEFINER function rather than an UPDATE, because the
+ * SELECT policy's `deleted_at is null` is applied to the *new* row and makes a
+ * plain soft delete impossible. The reasoning is in the migration; the summary
+ * is that the policy is right and the write has to happen outside it.
+ *
+ * The function does its own authorisation, so this is not a bare escape hatch:
+ * it deletes only a shoot the caller created, and only one not already deleted.
+ * `false` means it did none of that, and deliberately does not say which.
+ *
+ * ADR-014 does the rest — every crew and client link for this shoot derives its
+ * validity from the parent row, so AC-1's "every link stops working" needs no
+ * cascade of its own.
+ */
+export async function deleteShoot(id: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('soft_delete_shoot', { shoot_id: id })
+  return !error && data === true
+}
+
+/**
  * US-020 AC-1 — mark a shoot Finished, or back to New.
  *
  * The parameter is `ShootStatus`, which is the union of exactly the two values
