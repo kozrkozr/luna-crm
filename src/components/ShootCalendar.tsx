@@ -1,28 +1,43 @@
-import { View } from 'react-native'
+import { useState } from 'react'
+import { Pressable, View } from 'react-native'
 import { Text } from './ui/text'
 import { MONTHS_UK, WEEKDAYS_UK } from '../i18n/uk'
 import { toIsoDate } from '../features/shoots/date'
 
 /**
- * US-004 AC-1 — a calendar below the "new shoot" button, marking the dates that
- * have a shoot. AC-2 — with no shoots it still renders, simply with nothing
- * marked; an empty calendar is a state, not an error.
+ * US-004's calendar.
  *
- * Deliberately the current month only, with no month arrows and no tappable
- * days. US-004's Out of scope excludes "month navigation, multi-month view, or
- * any calendar behavior beyond marking shoot dates on the current view", and
- * separately leaves what tapping a date does unspecified. The prototype *does*
- * draw ‹ › arrows; that conflict is real and is recorded in
- * docs/open-questions.md rather than resolved by guessing which one wins.
+ * AC-1 — marks the dates that have a shoot. AC-2 — renders unmarked when there
+ * are none; an empty calendar is a state, not an error. AC-3 — moves between
+ * months. AC-4 — tapping a date filters the list, which this component reports
+ * upward rather than doing itself.
+ *
+ * Every date is tappable, including unmarked ones (AC-4, owner's decision):
+ * tapping a day with no shoots is a real, empty result rather than a dead tap.
  *
  * Weeks start on Monday, as in the prototype.
  */
-export function ShootCalendar({ shootDates }: { shootDates: string[] }) {
+type Props = {
+  shootDates: string[]
+  selected: string | null
+  onSelect: (isoDate: string) => void
+}
+
+export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
   const marked = new Set(shootDates)
   const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth()
+  // AC-3 — which month is on screen. Opens on the current one.
+  const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() })
 
+  const step = (delta: number) =>
+    setCursor((c) => {
+      // Date normalises an out-of-range month into the neighbouring year, so
+      // December → January needs no special case.
+      const moved = new Date(c.year, c.month + delta, 1)
+      return { year: moved.getFullYear(), month: moved.getMonth() }
+    })
+
+  const { year, month } = cursor
   // `(getDay() + 6) % 7` shifts JavaScript's Sunday-first week to Monday-first.
   const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7
   // Day 0 of the next month is the last day of this one.
@@ -40,7 +55,11 @@ export function ShootCalendar({ shootDates }: { shootDates: string[] }) {
 
   return (
     <View className="border-border bg-card gap-2 rounded-xl border p-3">
-      <Text className="text-center text-sm font-semibold">{`${MONTHS_UK[month]} ${year}`}</Text>
+      <View className="flex-row items-center justify-between">
+        <MonthButton label="‹" onPress={() => step(-1)} />
+        <Text className="text-sm font-semibold">{`${MONTHS_UK[month]} ${year}`}</Text>
+        <MonthButton label="›" onPress={() => step(1)} />
+      </View>
 
       <View className="flex-row">
         {WEEKDAYS_UK.map((day) => (
@@ -56,31 +75,61 @@ export function ShootCalendar({ shootDates }: { shootDates: string[] }) {
             if (day === null) return <View key={dayIndex} className="flex-1" />
             // toIsoDate rather than a hand-built string: it is the one place
             // that turns a local calendar day into the YYYY-MM-DD the rows use.
-            const hasShoot = marked.has(toIsoDate(new Date(year, month, day)))
+            const iso = toIsoDate(new Date(year, month, day))
+            const hasShoot = marked.has(iso)
+            const isSelected = selected === iso
             return (
-              <View key={dayIndex} className="flex-1 items-center py-1.5">
+              <Pressable
+                key={dayIndex}
+                className="flex-1 items-center py-1.5 active:opacity-70"
+                onPress={() => onSelect(iso)}
+                role="button"
+                accessibilityLabel={iso}
+                accessibilityState={{ selected: isSelected }}
+              >
+                {/*
+                  Selection and "has a shoot" are different things and must not
+                  look alike: a filtered-to date with no shoots still has to
+                  read as selected, and a marked date the reader has not tapped
+                  must not read as filtered.
+                */}
                 <View
-                  className={
-                    hasShoot
-                      ? 'bg-status-new h-7 w-7 items-center justify-center rounded-lg'
-                      : 'h-7 w-7 items-center justify-center'
-                  }
+                  className={cellClass(hasShoot, isSelected)}
                 >
-                  <Text
-                    className={
-                      hasShoot
-                        ? 'text-status-new-foreground text-xs font-bold'
-                        : 'text-xs'
-                    }
-                  >
-                    {day}
-                  </Text>
+                  <Text className={textClass(hasShoot, isSelected)}>{day}</Text>
                 </View>
-              </View>
+              </Pressable>
             )
           })}
         </View>
       ))}
     </View>
+  )
+}
+
+function cellClass(hasShoot: boolean, isSelected: boolean): string {
+  const base = 'h-7 w-7 items-center justify-center rounded-lg'
+  if (isSelected) return `${base} bg-primary`
+  if (hasShoot) return `${base} bg-status-new`
+  return base
+}
+
+function textClass(hasShoot: boolean, isSelected: boolean): string {
+  if (isSelected) return 'text-primary-foreground text-xs font-bold'
+  if (hasShoot) return 'text-status-new-foreground text-xs font-bold'
+  return 'text-xs'
+}
+
+/** AC-3's month arrows. Glyphs, not words — the same ‹ › the prototype uses. */
+function MonthButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      className="h-8 w-8 items-center justify-center rounded-lg active:opacity-60"
+      onPress={onPress}
+      role="button"
+      accessibilityLabel={label}
+    >
+      <Text className="text-muted-foreground text-base">{label}</Text>
+    </Pressable>
   )
 }

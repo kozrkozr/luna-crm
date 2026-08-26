@@ -183,7 +183,13 @@ grey tiles reading `pinterest.com` is the foreseeable end state.
 - **Blocks:** nothing. Bears on `US-007`/`US-010`, where crew and clients read the same
   references.
 
-### 16. The calendar has no month navigation, and the prototype does
+### 16. ~~The calendar has no month navigation, and the prototype does~~ *(answered 2026-08-26)*
+**The owner asked for month navigation, and it is built** — `US-004` `AC-3`, review `r04`,
+source commit `c2ea13b`. The prototype was right and the story's exclusion was the thing that
+moved. The original text is kept below because the reasoning for shipping without it is the
+reason this was raised rather than decided.
+
+### 16 (as raised). The calendar has no month navigation, and the prototype does
 `US-004`'s Out of scope is explicit: *"Month navigation, multi-month view, or any calendar
 behavior beyond marking shoot dates on the current view — not specified; keep it simple until
 asked for more."* So the calendar shows the current month, with no arrows and no tappable days
@@ -207,6 +213,28 @@ decided.
 - **What shipped:** `src/components/ShootCalendar.tsx` — current month, no navigation, no
   tappable days
 - **Blocks:** nothing. One arrow pair if the answer is "add it".
+
+### 17. Copy for the filtered shoot list (`US-004` AC-4)
+AC-4 requires the filtered date to be stated, a control back to the full list, and an empty date
+to say so. It supplies none of the words, and the prototype has no filtered state at all — its
+calendar days only raise a toast saying the question is open.
+
+Three inventions, all placeholders:
+
+- **«Всі зйомки»** — the control that clears the filter.
+- **«На цю дату зйомок немає.»** — the empty result for a date with no shoots. This one matters
+  more than it looks: it must *not* read like AC-2's «У вас ще немає зйомок.», which means the
+  account has no shoots at all. Showing that copy for an empty date would tell the photographer
+  their shoots had vanished.
+- **«7 серпня»** — the label naming the filtered date. Ukrainian inflects the month when a day
+  precedes it, so this needed a genitive month list (`MONTHS_GENITIVE_UK`) alongside the
+  nominative one the calendar heading uses. That is a correctness point, not a style one: «7
+  Серпень» is wrong.
+
+- **Raised by:** `US-004` AC-4
+- **Placeholders in code:** `allShoots`, `noShootsOnDay` and `MONTHS_GENITIVE_UK` in
+  `src/i18n/uk.ts`
+- **Blocks:** nothing.
 
 ## Answered by re-reading the spec
 

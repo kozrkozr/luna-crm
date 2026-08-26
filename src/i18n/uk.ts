@@ -104,6 +104,11 @@ export const uk = {
   referenceLinkInvalid: 'Вкажіть коректне посилання — воно має починатися з http або https',
   referenceTypeUnsupported: 'Цей тип файлу не підтримується. Оберіть зображення.',
   referenceAddFailed: 'Не вдалося додати референс. Спробуйте ще раз.',
+  // US-004 AC-4. The story requires a way back to the full list and an empty
+  // result that says so, but supplies neither wording, and the prototype has no
+  // filtered state at all. Placeholders; see docs/open-questions.md item 17.
+  allShoots: 'Всі зйомки',
+  noShootsOnDay: 'На цю дату зйомок немає.',
 } as const
 
 export type CopyKey = keyof typeof uk
@@ -132,6 +137,26 @@ export type Role = (typeof ROLES_UK)[number]
  * Ukrainian convention and not JavaScript's Sunday-first default.
  */
 export const WEEKDAYS_UK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'] as const
+
+/**
+ * Month names in the genitive case, for naming a single date — «7 серпня», not
+ * «7 Серпень». Ukrainian inflects the month when a day precedes it, so the
+ * nominative list below cannot be reused for this.
+ */
+export const MONTHS_GENITIVE_UK = [
+  'січня',
+  'лютого',
+  'березня',
+  'квітня',
+  'травня',
+  'червня',
+  'липня',
+  'серпня',
+  'вересня',
+  'жовтня',
+  'листопада',
+  'грудня',
+] as const
 
 export const MONTHS_UK = [
   'Січень',
