@@ -12,7 +12,8 @@ Frozen snapshot from the discovery repo (`~/WebstormProjects/my-ai-agency/client
 then the folder is re-copied. See `docs/product/README.md`.
 
 ## Stack
-- **App:** React Native + Tamagui, Expo Router (`ADR-010`) — iOS first
+- **App:** React Native + React Native Reusables / NativeWind, Expo Router (`ADR-016`,
+  superseding `ADR-010`) — iOS first
 - **Link views:** the same codebase exported to static web, served by Cloudflare Pages (`ADR-012`)
 - **Backend:** Supabase — Postgres, Auth, Storage, Edge Functions (`ADR-011`)
 - **Auth:** email + password required, phone optional (`ADR-015`)
@@ -59,9 +60,10 @@ which took its names from the confirmed glossary. Do not invent `Booking`, `Team
 **One ID per commit.** A change touching two stories is two commits.
 
 ### 7. Build in the order given
-`docs/product/backlog-order.md`. Spikes **S-1** (Tamagui fidelity on a device) and **S-2**
-(static export of a link view) run **before any story** — both can invalidate a foundational
-choice and are cheap only while nothing sits on top of them.
+`docs/product/backlog-order.md`. Spikes **S-1** (UI-layer fidelity on a device — subject
+updated by `ADR-016`, still open) and **S-2** (static export of a link view) run **before any
+story** — both can invalidate a foundational choice and are cheap only while nothing sits on top
+of them.
 
 ## Things that will surprise you
 - **v1 does host files**, despite "no file hosting" in the PRD's non-goals. That non-goal covers

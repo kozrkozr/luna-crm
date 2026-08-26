@@ -36,7 +36,7 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
 | `app/(app)/` | The creator's surface — requires an account |
 | `app/s/[token].tsx` | The anonymous link surface: no account, no install, plain `/s/{token}` URLs |
 | `src/features/` | Story-shaped modules: `shoots/`, `crew/`, `references/`, `auth/` |
-| `src/theme/` | Tamagui config. **The only place a colour value may appear.** |
+| `src/theme/` | Theme config — NativeWind/Tailwind (`ADR-016`). **The only place a colour value may appear.** |
 | `src/i18n/` | Ukrainian copy (default) and English |
 | `src/lib/supabase/` | Client + generated types. App surface only |
 | `supabase/migrations/` | Schema, in git |
@@ -53,14 +53,16 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
   Expo's pinned versions for the SDK. A plain install put the wrong `react-native-worklets` in
   and the failure only surfaced at the native compile step — the web export and Metro bundle
   both succeeded with a broken native tree (`docs/spikes/S-1-*.md` F-7).
-- **Duplicate copies of a context-carrying package break it silently.** Tamagui's Sheet (what
-  `Select` becomes on touch) renders through a portal whose provider `TamaguiProvider` already
-  mounts — but npm had nested **eight** copies of `@tamagui/portal`, all the same version, so the
-  provider and the Sheet held different React contexts and native threw
-  «'PortalDispatchContext' cannot be null». Web has an implicit host in `document.body`, so it
-  passed every browser check and failed only on a device. The `overrides` entry in package.json
-  keeps it to one copy; `npm ls <pkg>` and a `find` for nested copies is the diagnostic. Verify
-  UI on a device or simulator, not only in a browser.
+- **Duplicate copies of a context-carrying package break it silently, and only on a device.**
+  Any UI package that pairs a provider with a consumer through React context has this trap: if
+  npm nests a second copy, the two hold different contexts and the consumer throws at runtime.
+  Web usually survives it — the DOM offers implicit hosts a native tree does not — so it passes
+  every browser check and fails only on a device. The concrete instance was Tamagui's portal
+  (npm nested **eight** copies of `@tamagui/portal`; the role picker threw
+  «'PortalDispatchContext' cannot be null»), recorded in `docs/spikes/S-1-*.md`. The library
+  changed with `ADR-016`; the trap did not. `npm ls <pkg>` and a `find` for nested copies is the
+  diagnostic, an `overrides` entry is the fix, and **UI is verified on a device or simulator, not
+  only in a browser**.
 - **Never infer "invalid link" from a missing token.** Static export prerenders `/s/[token]`
   without one; deciding invalidity there ships the error page for every link
   (`docs/spikes/S-2-*.md` F-2). Resolve first, then decide.
