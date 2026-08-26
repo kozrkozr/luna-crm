@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link, useLocalSearchParams } from 'expo-router'
 import { Button } from '../../../src/components/ui/button'
 import { Separator } from '../../../src/components/ui/separator'
 import { Text } from '../../../src/components/ui/text'
-import { ImageViewer } from '../../../src/components/ImageViewer'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { REFERENCE_DISPLAY_LIMIT } from '../../../src/components/ReferenceGrid'
-import { openExternalUrl } from '../../../src/lib/openExternalUrl'
 import { uk } from '../../../src/i18n/uk'
+import { LinkShootHeader } from '../../../src/components/LinkShootHeader'
 import {
   resolveLink,
   respondToLink,
+  type ClientLinkPayload,
   type CrewLinkPayload,
   type LinkCrewMember,
 } from '../../../src/features/links/gateway'
@@ -36,7 +36,7 @@ import {
 type Resolution =
   | { phase: 'resolving' }
   | { phase: 'invalid' }
-  | { phase: 'ready'; payload: CrewLinkPayload }
+  | { phase: 'ready'; payload: CrewLinkPayload | ClientLinkPayload }
 
 export default function LinkView() {
   const { token } = useLocalSearchParams<{ token?: string }>()
@@ -45,12 +45,7 @@ export default function LinkView() {
   const load = useCallback(async () => {
     if (token === undefined) return
     const payload = await resolveLink(token)
-    // The client audience gets its own view in US-010; a client token reaching
-    // this screen has nothing to render, so it is treated as no payload rather
-    // than half-rendered.
-    setResolution(
-      payload && payload.audience === 'crew' ? { phase: 'ready', payload } : { phase: 'invalid' }
-    )
+    setResolution(payload ? { phase: 'ready', payload } : { phase: 'invalid' })
   }, [token])
 
   useEffect(() => {
@@ -60,9 +55,7 @@ export default function LinkView() {
     void (async () => {
       const payload = await resolveLink(token)
       if (cancelled) return
-      setResolution(
-        payload && payload.audience === 'crew' ? { phase: 'ready', payload } : { phase: 'invalid' }
-      )
+      setResolution(payload ? { phase: 'ready', payload } : { phase: 'invalid' })
     })()
     return () => {
       cancelled = true
@@ -93,7 +86,78 @@ export default function LinkView() {
     )
   }
 
-  return <CrewView token={token!} payload={resolution.payload} onReload={load} />
+  // One URL shape, two audiences. Which view a token gets is the gateway's
+  // answer, not a guess made here — the payloads are different objects and the
+  // types make mixing them up a compile error.
+  return resolution.payload.audience === 'crew' ? (
+    <CrewView token={token!} payload={resolution.payload} onReload={load} />
+  ) : (
+    <ClientView token={token!} payload={resolution.payload} onReload={load} />
+  )
+}
+
+/**
+ * US-010 — the client's read-only view of their shoot.
+ *
+ * AC-1: date, location, the team, and the references. "with no edit controls
+ * anywhere" is why there is nothing else on this screen — no confirm/decline
+ * (that is the crew's, US-008), no reactions (US-011, retired by ADR-009), and
+ * no response pills, which the prototype's client row also omits.
+ *
+ * The team rows are not links yet: US-026 is the screen behind them.
+ */
+function ClientView({
+  token,
+  payload,
+  onReload,
+}: {
+  token: string
+  payload: ClientLinkPayload
+  onReload: () => void
+}) {
+  const { shoot, references, crew } = payload
+
+  return (
+    <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
+      <View className="gap-3 p-4">
+        <LinkShootHeader shoot={shoot} onReload={onReload} />
+
+        {references.length > 0 ? (
+          <View className="gap-2 pt-2">
+            <Text variant="h4">{uk.references}</Text>
+            <LinkReferenceGrid
+              references={references.slice(0, REFERENCE_DISPLAY_LIMIT)}
+              onMediaError={onReload}
+            />
+            {references.length > REFERENCE_DISPLAY_LIMIT ? (
+              <Link href={`/s/${token}/references`} asChild>
+                <Button variant="secondary">
+                  <Text>{`${uk.showAllReferences} (${references.length})`}</Text>
+                </Button>
+              </Link>
+            ) : null}
+          </View>
+        ) : null}
+
+        <View className="gap-2 pt-2">
+          <Text variant="h4">{uk.crew}</Text>
+          <View className="border-border overflow-hidden rounded-lg border">
+            {crew.map((member, index) => (
+              <View key={member.id}>
+                {index > 0 ? <Separator /> : null}
+                <View className="flex-row items-center gap-3 px-4 py-3">
+                  <Text className="flex-1">
+                    <Text className="font-medium">{member.name}</Text>
+                    <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  )
 }
 
 /** US-007 AC-1 — the date, the location, the references, and the rest of the crew. */
@@ -113,37 +177,20 @@ function CrewView({
   onReload: () => void
 }) {
   const { shoot, viewer, references, crew } = payload
-  const [viewingImage, setViewingImage] = useState<string | null>(null)
 
   return (
     <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
       <View className="gap-3 p-4">
-        <Text variant="h3">{`${uk.shootFor}: ${shoot.date}`}</Text>
+        <LinkShootHeader shoot={shoot} onReload={onReload} />
         {/*
           The reader is named. The prototype does this, and on a surface with no
           account it is the only thing that says whose link this is — which
-          matters most where a phone is shared or a link forwarded.
+          matters most where a phone is shared or a link forwarded. The client
+          has no equivalent: their link names no person.
         */}
         <Text className="text-muted-foreground">
           {`${uk.youAre}: ${viewer.name} (${viewer.role})`}
         </Text>
-
-        {shoot.locationAddress || shoot.locationNote || shoot.locationAttachmentUrl ? (
-          <View className="gap-2 pt-2">
-            <Text variant="h4">{uk.locationSection}</Text>
-            {shoot.locationAddress ? <Text>{shoot.locationAddress}</Text> : null}
-            {shoot.locationNote ? (
-              <Text className="text-muted-foreground">{shoot.locationNote}</Text>
-            ) : null}
-            {shoot.locationAttachmentUrl ? (
-              <LocationAttachment
-                url={shoot.locationAttachmentUrl}
-                onOpenImage={setViewingImage}
-                onMediaError={onReload}
-              />
-            ) : null}
-          </View>
-        ) : null}
 
         {references.length > 0 ? (
           <View className="gap-2 pt-2">
@@ -190,8 +237,6 @@ function CrewView({
         </View>
 
         <Respond token={token} viewer={viewer} onAnswered={onReload} />
-
-        <ImageViewer uri={viewingImage} onClose={() => setViewingImage(null)} />
       </View>
     </ScrollView>
   )
@@ -250,54 +295,6 @@ function Respond({
         <Text>{uk.confirm}</Text>
       </Button>
     </View>
-  )
-}
-
-/**
- * US-018's location attachment, read by its recipient. An image opens
- * full-screen; a video opens in the platform's player, for the reason
- * docs/open-questions.md #19 records — S-4 has not run.
- */
-function LocationAttachment({
-  url,
-  onOpenImage,
-  onMediaError,
-}: {
-  url: string
-  onOpenImage: (uri: string) => void
-  onMediaError: () => void
-}) {
-  // The signed URL keeps the stored extension, which is the only signal of what
-  // it holds — the column has no companion `kind` (open question 18).
-  const isVideo = /\.(mov|mp4)(\?|$)/i.test(url)
-
-  if (isVideo) {
-    return (
-      <Pressable
-        className="bg-secondary border-border h-20 w-full items-center justify-center rounded-md border active:opacity-70"
-        onPress={() => void openExternalUrl(url)}
-        role="button"
-        accessibilityLabel={uk.attachVideo}
-      >
-        <Text className="text-3xl">🎞</Text>
-      </Pressable>
-    )
-  }
-
-  return (
-    <Pressable
-      className="bg-secondary border-border h-40 w-full overflow-hidden rounded-md border active:opacity-70"
-      onPress={() => onOpenImage(url)}
-      role="button"
-      accessibilityLabel={uk.locationSection}
-    >
-      <Image
-        source={{ uri: url }}
-        className="h-full w-full"
-        resizeMode="cover"
-        onError={onMediaError}
-      />
-    </Pressable>
   )
 }
 

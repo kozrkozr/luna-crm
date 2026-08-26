@@ -243,6 +243,87 @@ async function respond(
   return json({ ok: true, response: data[0].response })
 }
 
+/**
+ * `US-010` / `US-026` — the client's payload.
+ *
+ * A separate function from `crewPayload`, and the separation is the point
+ * (`ADR-013`, CLAUDE.md rule 2). `US-026` AC-1 requires a crew member's notes
+ * to be absent — "not even an empty one" — and that is a statement about this
+ * object, not about a screen.
+ *
+ * Two things make it hard to get wrong rather than merely correct today:
+ *
+ * 1. **The query does not select `note` or `note_image`.** Not selected, not
+ *    mapped, not present. A future column named `note_2` would have to be added
+ *    to this SELECT deliberately before it could leak.
+ * 2. **Nothing is shared with the crew shape.** No spread, no `omit`, no
+ *    `hideNotes` flag. A shape built by subtraction leaks the day someone adds
+ *    a field and forgets to subtract it.
+ *
+ * The response status is absent too: the prototype's client row shows a name
+ * and a role, and whether a crew member confirmed is the photographer's
+ * business, not the client's. `US-010` never asks for it.
+ */
+async function clientPayload(supabase: Supabase, shootId: string) {
+  const { data: shoot } = await supabase
+    .from('shoots')
+    .select('id, date, location_address, location_note, location_attachment')
+    .eq('id', shootId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!shoot) return { ok: false }
+  const row = shoot as ShootRow
+
+  const { data: references } = await supabase
+    .from('shoot_references')
+    .select('id, kind, url_or_path')
+    .eq('shoot_id', shootId)
+    .order('created_at', { ascending: true })
+
+  // `removed_at` filtered by hand, as everywhere in this function: service role
+  // bypasses RLS, so a removed person would otherwise still be listed.
+  const { data: crew } = await supabase
+    .from('crew_members')
+    .select('id, name, role, phone, email, instagram')
+    .eq('shoot_id', shootId)
+    .is('removed_at', null)
+    .order('created_at', { ascending: true })
+
+  return {
+    ok: true,
+    audience: 'client' as const,
+    shootId: row.id,
+    shoot: {
+      date: row.date,
+      locationAddress: row.location_address,
+      // US-018 AC-2 shows the location note "wherever the location is
+      // displayed", and US-010 gives the client the location. A client finding
+      // the studio needs the same directions a crew member does.
+      locationNote: row.location_note,
+      locationAttachmentUrl: await signed(supabase, row.location_attachment),
+    },
+    references: await Promise.all(
+      (references ?? []).map(async (reference) => ({
+        id: reference.id,
+        kind: reference.kind,
+        url:
+          reference.kind === 'image'
+            ? await signed(supabase, reference.url_or_path)
+            : reference.url_or_path,
+      }))
+    ),
+    crew: (crew ?? []).map((member) => ({
+      id: member.id,
+      name: member.name,
+      role: member.role,
+      // US-026 AC-1 — name, role, contact and Instagram. Nothing else.
+      contact: member.phone ?? member.email,
+      instagram: member.instagram,
+    })),
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return json({}, 204)
 
@@ -312,5 +393,5 @@ Deno.serve(async (req) => {
   // is nobody for it to answer for. Refused rather than ignored.
   if (wanted) return denied()
 
-  return json({ ok: true, audience: 'client', shootId: shoot.id })
+  return json(await clientPayload(supabase, shoot.id))
 })

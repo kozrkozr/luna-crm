@@ -8,7 +8,7 @@ import { resolveLink, type LinkReference } from '../../../src/features/links/gat
 
 /**
  * US-021 on the anonymous surface — every reference on the shoot, reached from
- * the crew view's "show all" link (US-007 AC-1).
+ * the "show all" link on either link view (US-007 AC-1, US-010 AC-1).
  *
  * The same three-state rule as the view it comes from (S-2 F-2): nothing is
  * reported invalid until a resolution has been attempted. A crew member who
@@ -30,11 +30,10 @@ export default function LinkAllReferencesScreen() {
     void (async () => {
       const payload = await resolveLink(token)
       if (cancelled) return
-      setResolution(
-        payload && payload.audience === 'crew'
-          ? { phase: 'ready', references: payload.references }
-          : { phase: 'invalid' }
-      )
+      // Either audience. US-010 AC-1 gives the client the same "see all" link
+      // the crew has, and both payloads carry `references` — the difference
+      // between the two audiences is crew notes, which are not here.
+      setResolution(payload ? { phase: 'ready', references: payload.references } : { phase: 'invalid' })
     })()
     return () => {
       cancelled = true

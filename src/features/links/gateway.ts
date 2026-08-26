@@ -57,7 +57,37 @@ export type CrewLinkPayload = {
   crew: LinkCrewMember[]
 }
 
-export type LinkPayload = CrewLinkPayload | { audience: 'client'; shootId: string }
+/**
+ * A crew member as the CLIENT audience sees them (`US-026` AC-1): name, role,
+ * contact, Instagram. There is no `note` field on this type and there must
+ * never be one — the gateway builds it from its own named fields, and this is
+ * the client-side statement of the same rule.
+ *
+ * It is deliberately NOT `Omit<LinkCrewMember, 'note'>`. A type defined by
+ * subtraction quietly gains whatever is added to the thing it subtracts from.
+ */
+export type LinkClientCrewMember = {
+  id: string
+  name: string
+  role: string
+  contact: string | null
+  instagram: string | null
+}
+
+export type ClientLinkPayload = {
+  audience: 'client'
+  shootId: string
+  shoot: {
+    date: string
+    locationAddress: string | null
+    locationNote: string | null
+    locationAttachmentUrl: string | null
+  }
+  references: LinkReference[]
+  crew: LinkClientCrewMember[]
+}
+
+export type LinkPayload = CrewLinkPayload | ClientLinkPayload
 
 /**
  * Null means denied — an unknown token, a deleted shoot, or a removed crew
@@ -97,14 +127,15 @@ function absolutise(payload: LinkPayload, base: string): LinkPayload {
   const origin = base.replace(/\/+$/, '')
   const join = (url: string | null) => (url && url.startsWith('/') ? `${origin}${url}` : url)
 
-  if (payload.audience !== 'crew') return payload
+  const shoot = { ...payload.shoot, locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl) }
+  const references = payload.references.map((reference) => ({ ...reference, url: join(reference.url) }))
+
+  if (payload.audience === 'client') return { ...payload, shoot, references }
+
   return {
     ...payload,
-    shoot: {
-      ...payload.shoot,
-      locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl),
-    },
-    references: payload.references.map((reference) => ({ ...reference, url: join(reference.url) })),
+    shoot,
+    references,
     crew: payload.crew.map((member) => ({ ...member, noteImageUrl: join(member.noteImageUrl) })),
   }
 }
