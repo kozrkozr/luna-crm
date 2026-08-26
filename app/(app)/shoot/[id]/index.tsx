@@ -7,7 +7,12 @@ import { Input } from '../../../../src/components/ui/input'
 import { Text } from '../../../../src/components/ui/text'
 import { StatusPill } from '../../../../src/components/StatusPill'
 import { uk } from '../../../../src/i18n/uk'
-import { getShoot, type Shoot } from '../../../../src/features/shoots/api'
+import {
+  getShoot,
+  setShootStatus,
+  type Shoot,
+  type ShootStatus,
+} from '../../../../src/features/shoots/api'
 import {
   addImageReference,
   addLinkReference,
@@ -34,13 +39,12 @@ type State =
  * what US-003 requires: enough of the shoot to know which one this is, and the
  * references block.
  *
- * US-018 added the Локація section and the way into the edit screen.
+ * US-018 added the Локація section and the way into the edit screen; US-020
+ * added the status toggle.
  *
  * Deliberately absent, each belonging to a story not yet built: delete
- * (US-019), the status toggle (US-020), crew (US-005/US-006), and the
- * raw-files / finished-photos sections (US-024/US-025). The status is shown
- * because it is already stored and already rendered in the list — showing it is
- * not the same as offering to change it.
+ * (US-019), crew (US-005/US-006), and the raw-files / finished-photos sections
+ * (US-024/US-025).
  */
 export default function ShootDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -103,12 +107,24 @@ export default function ShootDetailScreen() {
             <StatusPill value={shoot.status} />
           </View>
 
-          {/* US-018 AC-1 — the way into edit. */}
-          <Link href={`/(app)/shoot/${shoot.id}/edit`} asChild>
-            <Button variant="outline">
-              <Text>{uk.edit}</Text>
-            </Button>
-          </Link>
+          <View className="flex-row items-stretch gap-2">
+            {/* US-018 AC-1 — the way into edit. */}
+            <Link href={`/(app)/shoot/${shoot.id}/edit`} asChild>
+              <Button variant="outline" className="h-auto flex-1 py-2">
+                <Text>{uk.edit}</Text>
+              </Button>
+            </Link>
+            <StatusToggle
+              shoot={shoot}
+              onChanged={(status) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? { ...current, shoot: { ...current.shoot, status } }
+                    : current
+                )
+              }
+            />
+          </View>
 
           <LocationSection shoot={shoot} />
 
@@ -116,6 +132,48 @@ export default function ShootDetailScreen() {
         </View>
       </ScrollView>
     </>
+  )
+}
+
+/**
+ * US-020 — mark the shoot Finished, or back to New.
+ *
+ * A toggle, not a picker. AC-2 requires that "New and Finished are the only two
+ * options — there is no way to reach any other status value, intentionally or
+ * by mistake", and a control with exactly one destination cannot offer a third.
+ * The label names where the tap leads, as the prototype's does.
+ *
+ * The status is only informational in v1: US-020's Out of scope rules out
+ * anything happening as a result, so nothing here locks edits or hides the
+ * shoot.
+ */
+function StatusToggle({
+  shoot,
+  onChanged,
+}: {
+  shoot: Shoot
+  onChanged: (status: ShootStatus) => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const next: ShootStatus = shoot.status === 'new' ? 'finished' : 'new'
+
+  const toggle = async () => {
+    setBusy(true)
+    const ok = await setShootStatus(shoot.id, next)
+    setBusy(false)
+    // AC-1 — the shoot shows the new status wherever it is displayed. Updating
+    // local state moves the pill here immediately; the list refetches on focus.
+    if (ok) onChanged(next)
+  }
+
+  return (
+    // The label wraps rather than truncating. «Позначити як «Закінчена»» does
+    // not fit half a phone's width on one line, and a button reading
+    // «Позначити як «Закін...» tells the reader less than the pill beside it
+    // already does. `h-auto` and vertical padding let the button grow instead.
+    <Button variant="secondary" className="h-auto flex-1 py-2" disabled={busy} onPress={toggle}>
+      <Text className="text-center">{next === 'finished' ? uk.markFinished : uk.markNew}</Text>
+    </Button>
   )
 }
 

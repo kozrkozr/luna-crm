@@ -125,6 +125,20 @@ function toShoot(row: ShootRow): Shoot {
 }
 
 /**
+ * US-020 AC-1 — mark a shoot Finished, or back to New.
+ *
+ * The parameter is `ShootStatus`, which is the union of exactly the two values
+ * the enum column allows. That is AC-2's requirement — "no way to reach any
+ * other status value, intentionally or by mistake" — held at three levels: the
+ * screen offers a toggle rather than a picker, this signature admits nothing
+ * else, and `shoot_status` rejects anything else in the database.
+ */
+export async function setShootStatus(id: string, status: ShootStatus): Promise<boolean> {
+  const { error } = await supabase.from('shoots').update({ status }).eq('id', id)
+  return !error
+}
+
+/**
  * US-018 AC-1 — save the edited date and location.
  *
  * `date` is typed as a required string rather than nullable, so AC-3's "save is

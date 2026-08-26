@@ -72,6 +72,10 @@ export const uk = {
   back: '← Назад',
   statusNew: 'Нова',
   statusFinished: 'Закінчена',
+  // US-020 — the toggle's label names the status it moves TO, not the one the
+  // shoot is in. Verbatim from the prototype, nested guillemets included.
+  markFinished: 'Позначити як «Закінчена»',
+  markNew: 'Позначити як «Нова»',
 
   // EP-03 / EP-04 — crew and link views
   crew: 'Команда',
