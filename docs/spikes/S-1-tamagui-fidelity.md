@@ -1,5 +1,39 @@
 # S-1 — Tamagui fidelity on a device
 
+> **Superseded in subject, not in evidence — annotated 2026-08-26.**
+>
+> `ADR-016` replaced Tamagui with React Native Reusables (NativeWind) as the UI layer.
+> This report is dated evidence and is left as written. What still applies, and what does not:
+>
+> - **F-6's reanimated constraint still applies, with a new owner.** Dropping Tamagui removed
+>   `@tamagui/config` → `@tamagui/animations-reanimated`, but NativeWind reintroduces the same
+>   coupling: `nativewind` → `react-native-css-interop` declares `react-native-reanimated`
+>   `>=3.6.2` as a **non-optional** peer, and RNR's `select.tsx` imports reanimated directly.
+>   Any RN version bump must still clear reanimated's peer range. The `overrides` pinning
+>   reanimated `4.5.1` / worklets `0.10.1` are kept. (`ADR-016` open question 2 — answered:
+>   **re-sourced, not retired.**)
+> - **F-7's `npx expo install` rule still applies**, unchanged and for the same reason. It was
+>   followed throughout the port.
+> - **F-7's duplicate-copy lesson still applies.** The specific package left with Tamagui, but
+>   RNR routes its Select through `@rn-primitives/portal`, the same provider-and-consumer-
+>   through-context shape, and it fails the same way: on a device only.
+> - **F-4 is moot.** It recorded Tamagui v2's API drift from its own documentation. That
+>   library is gone.
+> - **F-5 is moot.** It recorded swapping `@tamagui/config`'s web-only CSS animation driver for
+>   the React Native one. There is no such driver choice in the new stack.
+> - **F-1, F-2, F-3 and F-8 describe Tamagui's components** and do not carry over. The
+>   equivalent claim has to be re-earned for RNR, and the port has re-earned only the
+>   mechanical half: it typechecks, `pod install` succeeds, a full simulator build compiles,
+>   the app launches, and the static web export re-verifies against S-2.
+>
+> **R-1 is still open, and this port did not touch it.** Nobody has seen this app on a device —
+> not on Tamagui, and not on React Native Reusables. `ADR-016` was decided on theming,
+> dependency coupling and agent-friendliness, not on fidelity, and it says so itself. The
+> judgement this spike exists to trigger — whether any of it *feels* like an iPhone app — has
+> still not been made by anyone. The "How to finish S-1" section below is still the open task,
+> with the subject changed and the palette question (F-2) unchanged: it is still stock, still
+> not Luna's, and re-theming is still a separate task.
+
 - **Retires:** `risks.md` R-1 — "Tamagui may not reach the *authentic Apple look* bar"
 - **Assumed effort:** 2–3 days (`risks.md`, Spikes)
 - **Date:** 2026-08-25
