@@ -88,6 +88,20 @@ export const uk = {
   crewContact: 'Телефон або email',
   crewInstagram: "Instagram (необов'язково)",
   crewNotes: 'Нотатки',
+  // US-005 — the add-crew screen, from the prototype's screenAddCrew. Its
+  // rich-text toolbar (B / I) is demo chrome labelled as such; the data model
+  // stores plain text, so the note is a plain textarea.
+  addCrewMember: '+ Додати учасника',
+  addCrewTitle: 'Додати учасника команди',
+  crewNamePlaceholder: 'напр. Наталія',
+  crewContactPlaceholder: '+380… або email',
+  crewNotesPlaceholder: 'напр. привозить свій набір',
+  contactRequired: 'Вкажіть телефон або email',
+  // A crew member's answer to their invitation (US-008). Shown from US-005
+  // onward because the column exists and defaults to pending.
+  responsePending: 'Очікує',
+  responseConfirmed: 'Підтвердив',
+  responseDeclined: 'Відмовився',
   shootFor: 'Зйомка',
   confirm: 'Підтвердити',
   decline: 'Відмовитись',
@@ -138,6 +152,11 @@ export const uk = {
   // already the button that abandons the edit, and two controls answering to
   // the same word is ambiguous to anyone not looking at the glyph.
   clearDate: 'Очистити дату',
+  // US-005. AC-2 supplies the contact rule and the prototype supplies its
+  // message, but nothing covers a missing name — which the schema requires —
+  // or a save that fails. Placeholders; see docs/open-questions.md item 20.
+  crewNameRequired: "Вкажіть ім'я учасника",
+  crewAddFailed: 'Не вдалося додати учасника. Спробуйте ще раз.',
 } as const
 
 export type CopyKey = keyof typeof uk

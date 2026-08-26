@@ -270,6 +270,38 @@ morning is the person actually watching it.
 - **What shipped:** an inline image, and a 🎞 tile that opens the video externally
 - **Blocks:** nothing. Belongs with `S-4`.
 
+### 20. `US-005` leaves three things to the build
+**One contact field, two columns.** The prototype offers a single «Телефон або email»; the data
+model has `phone` and `email` and a CHECK that at least one is set. Which column a value lands
+in is decided by whether it contains an `@` — deliberately not a validating regex. AC-1 asks for
+a contact method, not a well-formed address, and rejecting «n.hair» or a phone written
+«+38 (050) 123» would invent a rule nobody wrote. It matters beyond storage: `open-questions.md`
+#8 in the spec resolves crew-to-account matching to "email or mobile phone", so a
+misclassified value is a person who never gets matched.
+
+**Copy for a missing name.** The schema makes `name` NOT NULL and AC-1 lists it, but only AC-2's
+contact rule has a message. Same gap `US-002` hit with the client's name.
+
+**Copy for a failed save.** Not covered.
+
+- **Raised by:** `US-005`
+- **Placeholders in code:** `crewNameRequired`, `crewAddFailed` in `src/i18n/uk.ts`;
+  `splitContact` in `src/features/crew/api.ts`
+- **Blocks:** nothing.
+
+### 21. The role select starts empty; the prototype's starts on the first role
+`US-005`'s form has a role picker. The prototype renders a `<select>`, which on the web is
+never empty — it shows Фотограф until changed, so a crew member always has a role even if the
+creator ignores the field. The app's picker shows «Оберіть роль…» instead, matching
+registration (`US-001`), where AC-2 explicitly requires that a missing role be refused.
+
+`US-005` has no such criterion, so refusing would be inventing one. The save falls back to the
+first role rather than blocking — which reproduces the prototype's outcome, but silently.
+
+- **Raised by:** `US-005`
+- **What shipped:** an empty-by-default picker with a fallback to `ROLES_UK[0]` on save
+- **Blocks:** nothing. Worth an answer before `US-023`, where a crew member reads another's role.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

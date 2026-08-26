@@ -4,6 +4,7 @@ import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'ex
 import * as ImagePicker from 'expo-image-picker'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
+import { Separator } from '../../../../src/components/ui/separator'
 import { Text } from '../../../../src/components/ui/text'
 import { StatusPill } from '../../../../src/components/StatusPill'
 import { DestructiveAction } from '../../../../src/components/DestructiveAction'
@@ -25,9 +26,9 @@ import {
   addImageReference,
   addLinkReference,
   listReferences,
-  signedReferenceUrl,
   type Reference,
 } from '../../../../src/features/references/api'
+import { listCrew, type CrewMember } from '../../../../src/features/crew/api'
 import {
   attachmentKind,
   signedLocationUrl,
@@ -36,7 +37,7 @@ import {
 type State =
   | { status: 'loading' }
   | { status: 'error' }
-  | { status: 'loaded'; shoot: Shoot; references: Reference[] }
+  | { status: 'loaded'; shoot: Shoot; references: Reference[]; crew: CrewMember[] }
 
 /**
  * The creator's shoot detail screen.
@@ -48,7 +49,7 @@ type State =
  * references block.
  *
  * US-018 added the Локація section and the way into the edit screen; US-020
- * added the status toggle.
+ * added the status toggle; US-005 added the Команда section.
  *
  * US-019 added delete.
  *
@@ -65,9 +66,17 @@ export default function ShootDetailScreen() {
     useCallback(() => {
       let active = true
       void (async () => {
-        const [shoot, references] = await Promise.all([getShoot(id), listReferences(id)])
+        const [shoot, references, crew] = await Promise.all([
+          getShoot(id),
+          listReferences(id),
+          listCrew(id),
+        ])
         if (!active) return
-        setState(shoot && references ? { status: 'loaded', shoot, references } : { status: 'error' })
+        setState(
+          shoot && references && crew
+            ? { status: 'loaded', shoot, references, crew }
+            : { status: 'error' }
+        )
       })()
       return () => {
         active = false
@@ -98,7 +107,7 @@ export default function ShootDetailScreen() {
     )
   }
 
-  const { shoot, references } = state
+  const { shoot, references, crew } = state
 
   return (
     <>
@@ -141,6 +150,8 @@ export default function ShootDetailScreen() {
 
           <ReferencesBlock shootId={shoot.id} references={references} onAdded={onAdded} />
 
+          <CrewSection shootId={shoot.id} crew={crew} />
+
           {/*
             US-019 — last on the screen, as in the prototype. A destructive
             action sitting under everything else is harder to hit by accident
@@ -173,6 +184,84 @@ export default function ShootDetailScreen() {
         </View>
       </ScrollView>
     </>
+  )
+}
+
+/**
+ * US-005 — the shoot's crew.
+ *
+ * AC-1's "appears in the shoot's crew list" is this. Each row shows the name,
+ * the role and whichever contact was actually stored, as the prototype's
+ * crew-row does.
+ *
+ * Deliberately absent, each its own story: the per-person link icon (US-006),
+ * the remove icon (US-022), and opening a person for their full details
+ * (US-023). The note is not shown here either — the prototype's row does not
+ * show it, and it is the field ADR-013 exists to keep away from clients, so the
+ * fewer places it is rendered the better.
+ */
+function CrewSection({ shootId, crew }: { shootId: string; crew: CrewMember[] }) {
+  return (
+    <View className="gap-2 pt-2">
+      <Text variant="h4">{uk.crew}</Text>
+
+      {crew.length > 0 ? (
+        <View className="border-border overflow-hidden rounded-lg border">
+          {crew.map((member, index) => (
+            <View key={member.id}>
+              {index > 0 ? <Separator /> : null}
+              <View className="flex-row items-center gap-3 px-4 py-3">
+                <View className="flex-1 gap-0.5">
+                  <Text className="font-medium">{member.name}</Text>
+                  <Text className="text-muted-foreground text-sm">
+                    {`${member.role} · ${member.phone ?? member.email ?? ''}`}
+                  </Text>
+                </View>
+                <CrewResponsePill value={member.response} />
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      <Link href={`/(app)/shoot/${shootId}/crew/add`} asChild>
+        <Button variant="secondary">
+          <Text>{uk.addCrewMember}</Text>
+        </Button>
+      </Link>
+    </View>
+  )
+}
+
+/**
+ * The crew member's answer to their invitation (US-008). Shown from here on
+ * because the column exists and defaults to `pending`; nothing on this screen
+ * can change it — that happens through their own link.
+ */
+function CrewResponsePill({ value }: { value: CrewMember['response'] }) {
+  const tone =
+    value === 'confirmed'
+      ? 'bg-status-finished border-status-finished-border'
+      : value === 'declined'
+        ? 'bg-destructive/10 border-destructive/30'
+        : 'bg-status-new border-status-new-border'
+  const text =
+    value === 'confirmed'
+      ? 'text-status-finished-foreground'
+      : value === 'declined'
+        ? 'text-destructive'
+        : 'text-status-new-foreground'
+  const label =
+    value === 'confirmed'
+      ? uk.responseConfirmed
+      : value === 'declined'
+        ? uk.responseDeclined
+        : uk.responsePending
+
+  return (
+    <View className={`rounded-full border px-2.5 py-1 ${tone}`}>
+      <Text className={`text-xs font-bold ${text}`}>{label}</Text>
+    </View>
   )
 }
 
