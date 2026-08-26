@@ -116,6 +116,10 @@ export const uk = {
   youAre: 'Ви',
   confirm: 'Підтвердити',
   decline: 'Відмовитись',
+  // US-008 — what the crew member sees once they have answered. A response is
+  // final in v1, so this replaces the buttons rather than sitting beside them.
+  youConfirmed: 'Ви підтвердили участь',
+  youDeclined: 'Ви відмовились',
   linkInvalidTitle: 'Це посилання більше не діє',
   linkInvalidSub:
     'Учасника було видалено зі зйомки, або зйомку видалено. Зверніться до фотографа за новим посиланням.',

@@ -21,7 +21,8 @@
  *    removed person onto a live shoot. Every query below filters, and the tests
  *    assert it.
  *
- * `US-006` AC-2 gave it its refusals; `US-007` gave it the crew payload.
+ * `US-006` AC-2 gave it its refusals; `US-007` gave it the crew payload;
+ * `US-008` gave it its one write.
  */
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -177,10 +178,55 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
   }
 }
 
+/**
+ * `US-008` — the crew member's answer, and the only thing this function writes.
+ *
+ * Three conditions, all in the WHERE clause rather than in branching, so the
+ * database decides and a race cannot slip between a check and an update:
+ *
+ *   * the row is this token's crew member          — AC-2, no cross-shoot writes
+ *   * they are not removed                          — AC-2, a revoked link acts on nothing
+ *   * their response is still `pending`             — Out of scope: "a submitted
+ *                                                     response is final"
+ *
+ * The service role can only write `response` at all — the grant is column-level
+ * (see the migration), so even a mistake here cannot touch a name or a note.
+ */
+async function respond(
+  supabase: Supabase,
+  crewMemberId: string,
+  response: 'confirmed' | 'declined'
+) {
+  const { data } = await supabase
+    .from('crew_members')
+    .update({ response })
+    .eq('id', crewMemberId)
+    .is('removed_at', null)
+    .eq('response', 'pending')
+    .select('id, response')
+
+  // Empty means the row was already answered, removed, or not there. The caller
+  // is told no more than that, for the same reason every refusal looks alike.
+  if (!data || data.length === 0) return denied()
+  return json({ ok: true, response: data[0].response })
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return json({}, 204)
 
-  const token = new URL(req.url).searchParams.get('token')
+  const url = new URL(req.url)
+  let token = url.searchParams.get('token')
+  let wanted: 'confirmed' | 'declined' | null = null
+
+  if (req.method === 'POST') {
+    const body = await req.json().catch(() => null)
+    token = body?.token ?? token
+    // Only the two values the enum allows. Anything else is refused before it
+    // reaches the database rather than relying on the enum to reject it.
+    wanted = body?.response === 'confirmed' || body?.response === 'declined' ? body.response : null
+    if (!wanted) return denied()
+  }
+
   if (!token) return denied()
 
   const supabase = createClient(
@@ -223,8 +269,16 @@ Deno.serve(async (req) => {
 
     if (!member) return denied()
 
+    // AC-2 — the same resolution gates the write. An invalid or revoked link
+    // never reaches `respond`, so no status change can occur through one.
+    if (wanted) return await respond(supabase, member.id, wanted)
+
     return json(await crewPayload(supabase, shoot.id, member))
   }
+
+  // A client link points at no crew member (the audience-shape CHECK), so there
+  // is nobody for it to answer for. Refused rather than ignored.
+  if (wanted) return denied()
 
   return json({ ok: true, audience: 'client', shootId: shoot.id })
 })

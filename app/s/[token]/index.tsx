@@ -9,7 +9,12 @@ import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { REFERENCE_DISPLAY_LIMIT } from '../../../src/components/ReferenceGrid'
 import { openExternalUrl } from '../../../src/lib/openExternalUrl'
 import { uk } from '../../../src/i18n/uk'
-import { resolveLink, type CrewLinkPayload, type LinkCrewMember } from '../../../src/features/links/gateway'
+import {
+  resolveLink,
+  respondToLink,
+  type CrewLinkPayload,
+  type LinkCrewMember,
+} from '../../../src/features/links/gateway'
 
 /**
  * The anonymous link surface (US-007, US-010). Ukrainian only — no switcher
@@ -88,18 +93,24 @@ export default function LinkView() {
     )
   }
 
-  return <CrewView token={token!} payload={resolution.payload} onMediaError={load} />
+  return <CrewView token={token!} payload={resolution.payload} onReload={load} />
 }
 
 /** US-007 AC-1 — the date, the location, the references, and the rest of the crew. */
 function CrewView({
   token,
   payload,
-  onMediaError,
+  onReload,
 }: {
   token: string
   payload: CrewLinkPayload
-  onMediaError: () => void
+  /**
+   * Re-reads the payload from the gateway. Used for two things that are the
+   * same thing: a media URL that expired (risks.md R-4) and an answer just
+   * submitted — in both cases the server knows the current state and this
+   * screen does not.
+   */
+  onReload: () => void
 }) {
   const { shoot, viewer, references, crew } = payload
   const [viewingImage, setViewingImage] = useState<string | null>(null)
@@ -128,7 +139,7 @@ function CrewView({
               <LocationAttachment
                 url={shoot.locationAttachmentUrl}
                 onOpenImage={setViewingImage}
-                onMediaError={onMediaError}
+                onMediaError={onReload}
               />
             ) : null}
           </View>
@@ -144,7 +155,7 @@ function CrewView({
             */}
             <LinkReferenceGrid
               references={references.slice(0, REFERENCE_DISPLAY_LIMIT)}
-              onMediaError={onMediaError}
+              onMediaError={onReload}
             />
             {references.length > REFERENCE_DISPLAY_LIMIT ? (
               <Link href={`/s/${token}/references`} asChild>
@@ -180,9 +191,67 @@ function CrewView({
           </View>
         </View>
 
+        <Respond token={token} viewer={viewer} onAnswered={onReload} />
+
         <ImageViewer uri={viewingImage} onClose={() => setViewingImage(null)} />
       </View>
     </ScrollView>
+  )
+}
+
+/**
+ * US-008 — confirm or decline, once.
+ *
+ * The buttons are replaced by the answer rather than joined by it: a submitted
+ * response is final in v1 (Out of scope), so leaving a way to press the other
+ * one would offer something the gateway will refuse.
+ *
+ * `onAnswered` re-reads the payload instead of trusting the local state. The
+ * gateway is the thing that decided, and a refusal it returns — because the
+ * link was revoked between loading the page and answering — has to be visible
+ * rather than papered over with an optimistic pill.
+ */
+function Respond({
+  token,
+  viewer,
+  onAnswered,
+}: {
+  token: string
+  viewer: CrewLinkPayload['viewer']
+  onAnswered: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+
+  if (viewer.response !== 'pending') {
+    return (
+      <View className="border-border bg-card mt-2 items-center rounded-xl border p-4">
+        <Text>{viewer.response === 'confirmed' ? uk.youConfirmed : uk.youDeclined}</Text>
+      </View>
+    )
+  }
+
+  const answer = async (response: 'confirmed' | 'declined') => {
+    setBusy(true)
+    await respondToLink(token, response)
+    setBusy(false)
+    // Re-read either way. If it failed, the reader sees why on the next render.
+    onAnswered()
+  }
+
+  return (
+    <View className="mt-2 flex-row gap-2">
+      <Button
+        variant="secondary"
+        className="flex-1"
+        disabled={busy}
+        onPress={() => void answer('declined')}
+      >
+        <Text>{uk.decline}</Text>
+      </Button>
+      <Button className="flex-1" disabled={busy} onPress={() => void answer('confirmed')}>
+        <Text>{uk.confirm}</Text>
+      </Button>
+    </View>
   )
 }
 

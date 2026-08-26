@@ -93,3 +93,37 @@ function absolutise(payload: LinkPayload, base: string): LinkPayload {
     references: payload.references.map((reference) => ({ ...reference, url: join(reference.url) })),
   }
 }
+
+/**
+ * `US-008` — answer the invitation. `true` only if the answer was recorded.
+ *
+ * Every refusal is the same `false`: an invalid link, a revoked one, and one
+ * already answered are indistinguishable here, as they are everywhere else on
+ * this surface. The caller re-reads the payload afterwards rather than trusting
+ * this to have told it the new state.
+ */
+export async function respondToLink(
+  token: string,
+  response: 'confirmed' | 'declined'
+): Promise<boolean> {
+  const base = process.env.EXPO_PUBLIC_SUPABASE_URL
+  const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+  if (!base || !key) return false
+
+  try {
+    const result = await fetch(`${base.replace(/\/+$/, '')}/functions/v1/link-gateway`, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        authorization: `Bearer ${key}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ token, response }),
+    })
+    if (!result.ok) return false
+    const body = (await result.json()) as { ok?: boolean }
+    return body?.ok === true
+  } catch {
+    return false
+  }
+}

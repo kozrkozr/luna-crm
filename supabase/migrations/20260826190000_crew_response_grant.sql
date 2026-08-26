@@ -1,0 +1,18 @@
+-- US-008 — a crew member answers their invitation through their link.
+--
+-- This is the first WRITE the link gateway performs. Everything anonymous until
+-- now was a read, so the service role held SELECT and nothing else.
+--
+-- The grant is COLUMN-LEVEL on purpose. `grant update on crew_members` would
+-- let the gateway write every column on the table — a name, a phone number, a
+-- note, `removed_at` — and the gateway is the one component reachable by anyone
+-- holding a URL. Naming the column means a bug in that function, or a way of
+-- reaching it nobody intended, still cannot change anything but the answer:
+--
+--     grant update (response) — not grant update
+--
+-- The rules US-008 states are enforced in the function's WHERE clause rather
+-- than here: a response can only move away from `pending` (Out of scope — "a
+-- submitted response is final"), and only for a crew member who is not removed
+-- on a shoot that is not deleted (AC-2).
+grant update (response) on public.crew_members to service_role;
