@@ -7,12 +7,28 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-08-26 *(re-frozen twice; first freeze 2026-08-25)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `befd916` — *docs(review r03): US-003 gains AC-3 — tapping a reference
-  opens it*. Diff this folder against that commit to see any drift since the last freeze.
+- **Source commit:** `c2ea13b` — *docs(review r04): US-004 gains month navigation and date
+  filtering*. Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the fourth 2026-08-26 re-freeze (review `r04`)
+**`US-004` gained AC-3 (month navigation) and AC-4 (tapping a date filters the list).** The
+second answers the spec's own open question #12, open since the 2026-08-23 prototype review.
+
+**This reversed three of `US-004`'s Out of scope lines**, so that section was rewritten rather
+than left to contradict the new criteria — filtering by date and month navigation are in;
+searching and multi-month view stay out. Read the story, not this folder's earlier state.
+
+Two sub-decisions are recorded in the criteria because the owner was asked before anything was
+written: **every date is tappable**, including ones with no shoot (so there is a second empty
+state, distinct from AC-2's), and **the filter is cleared by a visible control**, not only by
+tapping the date again.
+
+No new entity, column or query — the filter is screen state over an already-loaded list, which
+is why `open-questions.md` records #12 as having no technical bearing before or after.
 
 ## What moved in the third 2026-08-26 re-freeze (review `r03`)
 **`US-003` gained AC-3 — tapping a reference opens it.** A link opens in the phone's browser;

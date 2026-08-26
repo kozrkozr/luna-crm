@@ -46,8 +46,10 @@ a variable one. **Blocks:** the cost model, and whether a fifth third-party serv
 
 
 ## Carried, unchanged
-- **`02-product/open-questions.md` #12** — what tapping a calendar date does. Still open, still
-  built as its simplest version. No technical bearing.
+- ~~**`02-product/open-questions.md` #12** — what tapping a calendar date does.~~ **Answered
+  2026-08-26** (review `r04`): it filters the list to that date, and the calendar gained month
+  navigation. `US-004` `AC-3`/`AC-4`. Had no technical bearing, and still has none — it is
+  screen state over an already-loaded list, no new query and no new column.
 - **`02-product/open-questions.md` #13** — whether the profile becomes editable. Still open. If
   yes, it is a small story, not an architectural change.
 

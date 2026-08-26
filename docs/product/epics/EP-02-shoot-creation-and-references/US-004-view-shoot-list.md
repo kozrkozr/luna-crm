@@ -30,12 +30,39 @@ phase-03 prototype confirmed a calendar is needed, not just a list
 - **Then** an empty state is shown for the list, and the calendar shows no marked dates —
   neither is an error or a blank screen
 
+### AC-3 — Moving between months
+*Added 2026-08-26 (review `r04`). Previously excluded; the owner asked for it after using the
+built story.*
+
+- **Given** the shoot list
+- **When** the creator moves the calendar to the previous or next month
+- **Then** that month is shown, marking the dates in it that have a shoot
+
+Without this the calendar only ever showed the current month, so a shoot booked for any other
+month marked nothing — which for someone booking weeks ahead is most shoots.
+
+### AC-4 — Tapping a date filters the list
+*Added 2026-08-26 (review `r04`). This answers `02-product/open-questions.md` #12.*
+
+- **Given** the shoot list
+- **When** the creator taps a date on the calendar
+- **Then** the list below shows only the shoots on that date, and the date being filtered to is
+  stated
+- **And** a control is offered to return to the full list
+
+- **Given** a date with no shoots
+- **When** the creator taps it
+- **Then** the list is empty for that date, and says so — this is a result, not the
+  no-shoots-at-all empty state of AC-2, and not an error
+
+Every date is tappable, including unmarked ones (owner's decision, 2026-08-26). The filter is
+cleared by a visible control rather than only by tapping the date again, so that the way back is
+never something the reader has to discover.
+
 ## Out of scope
-- Filtering or searching the list — not requested in `prd.md`.
-- Exactly what happens when a calendar date is tapped (e.g. jump to that day's shoot, or
-  nothing) — not specified in the review; see `02-product/open-questions.md`.
-- Month navigation, multi-month view, or any calendar behavior beyond marking shoot dates on
-  the current view — not specified; keep it simple until asked for more.
+- Searching the list, or filtering it by anything other than a calendar date — not requested
+  in `prd.md`.
+- Multi-month view — one month at a time; `AC-3` covers moving between them.
 
 ## Dependencies
 US-002 — shoots must exist to be listed.
