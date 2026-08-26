@@ -6,9 +6,44 @@
  * migration), and the crew/client field split cannot be enforced in a browser
  * (ADR-013). The gateway answers, and this just carries the answer.
  */
-export type LinkPayload =
-  | { audience: 'crew'; shootId: string; crewMemberId: string }
-  | { audience: 'client'; shootId: string }
+/** A reference as the anonymous surface sees it: a usable URL, never a path. */
+export type LinkReference = {
+  id: string
+  kind: 'link' | 'image'
+  /** The external link, or a signed URL for an image. Null if signing failed. */
+  url: string | null
+}
+
+export type LinkCrewMember = {
+  id: string
+  name: string
+  role: string
+  response: 'pending' | 'confirmed' | 'declined'
+}
+
+/**
+ * Note the shape of this type: there is no `note` field on `LinkCrewMember`,
+ * and there will not be one on the client's version of it (`US-026`,
+ * CLAUDE.md rule 2). The gateway builds each payload from named fields, and
+ * these types are the client-side statement of the same rule.
+ */
+export type CrewLinkPayload = {
+  audience: 'crew'
+  shootId: string
+  crewMemberId: string
+  shoot: {
+    date: string
+    locationAddress: string | null
+    locationNote: string | null
+    locationAttachmentUrl: string | null
+  }
+  /** Who this link belongs to — «Ви: Ігор (Гафер)». */
+  viewer: { name: string; role: string; response: LinkCrewMember['response'] }
+  references: LinkReference[]
+  crew: LinkCrewMember[]
+}
+
+export type LinkPayload = CrewLinkPayload | { audience: 'client'; shootId: string }
 
 /**
  * Null means denied — an unknown token, a deleted shoot, or a removed crew

@@ -1,13 +1,20 @@
-# Cloudflare Pages rewrite for the crew/client link routes.
+# Cloudflare Pages rewrites for the anonymous link surface.
 #
-# `expo export -p web --output static` emits the dynamic route as a literal
-# file named `s/[token].html`, so a real token URL (/s/abc123) is a 404 until
-# the host rewrites it. 200 = rewrite (serve that file, keep the URL), not a
+# `expo export -p web --output static` emits dynamic routes as literal files
+# named after the parameter, so a real token URL is a 404 until the host
+# rewrites to one. 200 = rewrite (serve that file, keep the URL), not a
 # redirect — the client router then reads the real token off location.pathname.
 #
-# UNVERIFIED against a live Cloudflare Pages deployment: the bracket characters
-# in the target path are the part most likely to need percent-encoding (%5B/%5D)
-# or a different form. Verify on the first real deploy. If it resists, the
-# proven fallback is `"output": "single"` in app.json, which needs no rewrite
-# at all — both modes were tested locally and render identically after hydration.
-/s/* /s/[token].html 200
+# ORDER MATTERS. Pages takes the first matching rule, so the deeper route has to
+# come first: with only the catch-all below, `/s/<token>/references` would be
+# served the shoot view instead of the all-references page (US-007 AC-1's "show
+# all" link). That is a silently wrong page, not an error, which is why it is
+# asserted in the export check rather than trusted.
+#
+# UNVERIFIED against a live Cloudflare Pages deployment. The bracket characters
+# in the targets are still the part most likely to need percent-encoding
+# (%5B/%5D) or a different form (S-2 F-3), and there are now two of them. If it
+# resists, the proven fallback is `"output": "single"` in app.json, which needs
+# no rewrite at all.
+/s/:token/references /s/[token]/references.html 200
+/s/:token /s/[token].html 200

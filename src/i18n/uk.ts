@@ -111,6 +111,9 @@ export const uk = {
   // rather than a user error. Placeholder; see docs/open-questions.md item 22.
   linkNotConfigured: 'Адресу для посилань не налаштовано.',
   shootFor: 'Зйомка',
+  // US-007 — the crew link view names its reader, as the prototype does, so a
+  // shared phone does not leave someone answering for the wrong person.
+  youAre: 'Ви',
   confirm: 'Підтвердити',
   decline: 'Відмовитись',
   linkInvalidTitle: 'Це посилання більше не діє',
