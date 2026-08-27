@@ -73,3 +73,34 @@ ok('ADR-014 deleting the shoot denies the remaining link too', r.status===404 &&
 // ---------- another account cannot mint a link into this shoot ----------
 const intruder=await b.from('access_links').insert({token:token(),shoot_id:sid,audience:'crew',crew_member_id:c2})
 ok('RLS: another account cannot create a link for this shoot', !!intruder.error, intruder.error?.message?.slice(0,60))
+
+// ---------- the CORS preflight ----------
+// The link surface is served from another origin (ADR-012), so a browser sends
+// OPTIONS before every gateway call and makes the real request only if it
+// succeeds. This is asserted on the RESPONSE SHAPE, not just the status,
+// because the two runtimes disagree: `json({}, 204)` puts a body on a 204,
+// which HTTP forbids — the local runtime served it, the deployed one answered
+// 500, and every valid link rendered as dead in a real browser while curl (which
+// sends no preflight) resolved them fine. A status-only check passes locally
+// and would have missed it again.
+{
+  const pre = await fetch(GW, {
+    method: 'OPTIONS',
+    headers: {
+      origin: 'https://example.pages.dev',
+      'access-control-request-method': 'GET',
+      'access-control-request-headers': 'apikey,authorization',
+    },
+  })
+  // Any 2xx, not 204 specifically. The local runtime answers preflights itself
+  // with a 200 and never invokes this function's OPTIONS branch, which is the
+  // reason the production bug was invisible here — and the reason the real
+  // guard against it is `npm run smoke:deployed`, which runs against a live
+  // deployment. This assertion only catches the gateway refusing a preflight.
+  ok('the CORS preflight succeeds', pre.status >= 200 && pre.status < 300, `status ${pre.status}`)
+  ok('and carries no body, as a 204 must not',
+     (await pre.text()) === '', 'a 204 with a body is what broke this in production')
+  ok('and allows the headers the client actually sends',
+     (pre.headers.get('access-control-allow-headers') ?? '').includes('apikey'),
+     pre.headers.get('access-control-allow-headers') ?? 'none')
+}

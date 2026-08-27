@@ -15,7 +15,8 @@
     "test:acceptance": "bash tests/acceptance/run-all.sh",
     "typecheck": "tsc --noEmit",
     "db:push": "supabase db push",
-    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
+    "smoke:deployed": "node scripts/smoke-deployed.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.13",

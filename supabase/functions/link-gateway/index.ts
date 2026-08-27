@@ -26,19 +26,41 @@
  */
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
+/**
+ * The link surface is a static site on another origin (`ADR-012`), so every
+ * response needs these — including the preflight, which is what a browser sends
+ * before it will make the real request at all.
+ */
+const CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': 'authorization, content-type, apikey',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  // A token is a credential in a URL; keep it out of shared caches.
+  'cache-control': 'no-store',
+}
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: {
-      'content-type': 'application/json',
-      // The link surface is a static site on another origin (ADR-012).
-      'access-control-allow-origin': '*',
-      'access-control-allow-headers': 'authorization, content-type, apikey',
-      'access-control-allow-methods': 'GET, POST, OPTIONS',
-      // A token is a credential in a URL; keep it out of shared caches.
-      'cache-control': 'no-store',
-    },
+    headers: { 'content-type': 'application/json', ...CORS },
   })
+
+/**
+ * The CORS preflight. **Bodyless**, and that is the whole point of it being
+ * separate from `json`.
+ *
+ * This used to be `json({}, 204)`, which builds a 204 carrying `"{}"`. HTTP
+ * forbids a body on a 204, and the two runtimes disagree about it: the local
+ * one serves it happily, the deployed one answers 500. So the preflight failed
+ * only in production, and because a failed preflight means the browser never
+ * sends the real request, `resolveLink` saw a network error, returned null, and
+ * every valid link rendered «Це посилання більше не діє».
+ *
+ * Nothing was wrong with the token, the gateway or the data — `curl` resolved
+ * the same links correctly throughout, because curl sends no preflight. Found
+ * by deploying, 2026-08-27.
+ */
+const preflight = () => new Response(null, { status: 204, headers: CORS })
 
 /**
  * One shape for every refusal. A token that never existed, a shoot that was
@@ -358,7 +380,7 @@ async function clientPayload(supabase: Supabase, shootId: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return json({}, 204)
+  if (req.method === 'OPTIONS') return preflight()
 
   const url = new URL(req.url)
   let token = url.searchParams.get('token')
