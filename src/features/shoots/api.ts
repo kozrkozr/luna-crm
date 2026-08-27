@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase/client'
+import { isValidReferenceLink } from '../references/api'
 
 export type ShootStatus = 'new' | 'finished'
 
@@ -13,6 +14,12 @@ export type Shoot = {
   locationNote: string | null
   /** Storage path to one image OR one video (US-018 AC-2). */
   locationAttachment: string | null
+  /**
+   * `US-024` — an external link the creator pastes, e.g. to the file-sharing
+   * service they already use. Null renders the «В розробці» placeholder on the
+   * client's view; this is a link, not hosting (`ADR-008`).
+   */
+  rawFilesUrl: string | null
 }
 
 /**
@@ -25,11 +32,16 @@ export type UpdateShootInput = {
   locationAddress: string | null
   locationNote: string | null
   locationAttachment: string | null
+  /** `US-024` — set on the edit screen, where `ux-notes.md` and the prototype
+   *  both place it. Open question #6 recorded that no story's criteria cover
+   *  the creator entering it; design covers it, and AC-2 is unreachable
+   *  without it. */
+  rawFilesUrl: string | null
 }
 
 /** Every column the app reads for a Shoot, in one place so the two queries agree. */
 const SHOOT_COLUMNS =
-  'id, client_name, client_contact, date, status, location_address, location_note, location_attachment'
+  'id, client_name, client_contact, date, status, location_address, location_note, location_attachment, raw_files_url'
 
 export type CreateShootInput = {
   clientName: string
@@ -109,6 +121,7 @@ type ShootRow = {
   location_address: string | null
   location_note: string | null
   location_attachment: string | null
+  raw_files_url: string | null
 }
 
 function toShoot(row: ShootRow): Shoot {
@@ -121,6 +134,7 @@ function toShoot(row: ShootRow): Shoot {
     locationAddress: row.location_address,
     locationNote: row.location_note,
     locationAttachment: row.location_attachment,
+    rawFilesUrl: row.raw_files_url,
   }
 }
 
@@ -179,8 +193,31 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
       location_address: input.locationAddress?.trim() || null,
       location_note: input.locationNote?.trim() || null,
       location_attachment: input.locationAttachment,
+      // AC-3 — stored only if it is a link at all. The screen rejects a
+      // malformed one with a message first (US-003 AC-2's rule, reused rather
+      // than restated); this is the second guard, so a bad value cannot reach
+      // the column by another route.
+      raw_files_url: normaliseFilesLink(input.rawFilesUrl),
     })
     .eq('id', id)
 
   return !error
+}
+
+/**
+ * `US-024` AC-3 — "rejected the same way a reference link is (`US-003` AC-2)".
+ *
+ * So it IS that check, imported rather than reimplemented: http(s) and it
+ * parses. The two rules cannot drift apart, which is what the AC asks for.
+ *
+ * Reachability is deliberately not checked. AC-3's "or unreachable" needs a
+ * server-side fetch that file-sharing services routinely refuse, and a valid
+ * private link commonly answers 403 — a probe would hide working links more
+ * often than it caught dead ones. Owner's decision, 2026-08-27; recorded
+ * against docs/open-questions.md #7.
+ */
+export function normaliseFilesLink(value: string | null): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  return isValidReferenceLink(trimmed) ? trimmed : null
 }

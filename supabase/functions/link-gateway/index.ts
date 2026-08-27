@@ -97,6 +97,9 @@ type ShootRow = {
   location_address: string | null
   location_note: string | null
   location_attachment: string | null
+  /** US-024. Selected for the client audience only — the crew's payload does
+   *  not ask for it, and the prototype's crew link view has no files section. */
+  raw_files_url: string | null
 }
 
 type MemberRow = { id: string; name: string; role: string; response: string }
@@ -264,10 +267,31 @@ async function respond(
  * and a role, and whether a crew member confirmed is the photographer's
  * business, not the client's. `US-010` never asks for it.
  */
+/**
+ * `US-024` AC-3 — the same rule the app applies when the link is pasted
+ * (`isValidReferenceLink`, `US-003` AC-2), restated here because this function
+ * is the only thing standing between the column and the client.
+ *
+ * Reachability is not probed. AC-3's "or unreachable" would need a fetch per
+ * view against services that refuse it, and a valid private link commonly
+ * answers 403 — hiding more working links than dead ones. Owner's decision,
+ * 2026-08-27 (docs/open-questions.md #7).
+ */
+function filesLink(value: string | null): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  try {
+    const parsed = new URL(trimmed)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? trimmed : null
+  } catch {
+    return null
+  }
+}
+
 async function clientPayload(supabase: Supabase, shootId: string) {
   const { data: shoot } = await supabase
     .from('shoots')
-    .select('id, date, location_address, location_note, location_attachment')
+    .select('id, date, location_address, location_note, location_attachment, raw_files_url')
     .eq('id', shootId)
     .is('deleted_at', null)
     .maybeSingle()
@@ -303,6 +327,11 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       locationNote: row.location_note,
       locationAttachmentUrl: await signed(supabase, row.location_attachment),
     },
+    // US-024 — an external link the creator pasted, or null for the «В розробці»
+    // placeholder. AC-3's fallback is made here rather than on the screen: the
+    // column can hold anything written before the edit screen's check existed,
+    // and a value that is not a link must reach the client as no link at all.
+    rawFilesUrl: filesLink(row.raw_files_url),
     references: await Promise.all(
       (references ?? []).map(async (reference) => ({
         id: reference.id,

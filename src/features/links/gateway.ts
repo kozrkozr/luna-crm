@@ -83,6 +83,16 @@ export type ClientLinkPayload = {
     locationNote: string | null
     locationAttachmentUrl: string | null
   }
+  /**
+   * `US-024` — the creator's pasted external link, already checked by the
+   * gateway. Null means "show the placeholder", and is the only thing this
+   * surface has to distinguish: a malformed value arrives as null, so the
+   * screen never decides whether a link is usable.
+   *
+   * On `ClientLinkPayload` alone. The crew audience has no files section in the
+   * prototype, and `US-024` is a client story.
+   */
+  rawFilesUrl: string | null
   references: LinkReference[]
   crew: LinkClientCrewMember[]
 }

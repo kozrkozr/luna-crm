@@ -8,6 +8,7 @@ import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { REFERENCE_DISPLAY_LIMIT } from '../../../src/components/ReferenceGrid'
 import { uk } from '../../../src/i18n/uk'
 import { LinkShootHeader } from '../../../src/components/LinkShootHeader'
+import { FileSection } from '../../../src/components/FileSection'
 import {
   resolveLink,
   respondToLink,
@@ -116,7 +117,7 @@ function ClientView({
   payload: ClientLinkPayload
   onReload: () => void
 }) {
-  const { shoot, references, crew } = payload
+  const { shoot, references, crew, rawFilesUrl } = payload
 
   return (
     <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
@@ -163,6 +164,14 @@ function ClientView({
             ))}
           </View>
         </View>
+
+        {/*
+          US-024 — last on the screen, as in the prototype's client view, and
+          shown whether or not there is a link: AC-1 asks for a placeholder
+          rather than a missing section, so a client can see where files will
+          appear before any exist. Not hosting (ADR-008).
+        */}
+        <FileSection label={uk.rawFiles} url={rawFilesUrl} />
       </View>
     </ScrollView>
   )

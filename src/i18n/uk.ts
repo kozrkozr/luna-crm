@@ -136,6 +136,9 @@ export const uk = {
   rawFiles: 'Вихідники',
   finishedPhotos: 'Готові фото',
   inDevelopment: 'В розробці',
+  // The creator's side of US-024/US-025, from the prototype's edit form.
+  editFilesTitle: 'Файли',
+  setLinkPlaceholder: 'Посилання (напр. fex.net)',
 
   // Shared
   save: 'Зберегти',

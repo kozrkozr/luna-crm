@@ -10,6 +10,7 @@ import { Textarea } from '../../../../src/components/ui/textarea'
 import { DateField } from '../../../../src/components/DateField'
 import { uk } from '../../../../src/i18n/uk'
 import { getShoot, updateShoot } from '../../../../src/features/shoots/api'
+import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { toIsoDate } from '../../../../src/features/shoots/date'
 import {
   attachmentKind,
@@ -21,6 +22,7 @@ type Loaded = {
   address: string
   note: string
   attachment: string | null
+  rawFilesUrl: string
 }
 
 /**
@@ -29,11 +31,11 @@ type Loaded = {
  * Fields follow the prototype's screenEditShoot: date, then a Локація section
  * with address, notes, and the two attach buttons.
  *
- * The prototype's edit form also carries a Файли section for the raw-files and
- * finished-photos links. That is deliberately absent here: those belong to
- * US-024/US-025, and US-018's Out of scope limits this story to date and
- * location. docs/open-questions.md #6 records that no story's criteria cover
- * the creator entering those links at all.
+ * The Файли section below belongs to US-024, not to this story. It is here
+ * because the prototype and ux-notes.md both place it on this screen, and
+ * because US-024 AC-2 — "the creator has pasted an external link" — is
+ * unreachable without somewhere to paste it. docs/open-questions.md #6 records
+ * that design covers this and no story's criteria do.
  *
  * Client name and contact are absent for the same reason — the story says
  * editing them "is a new ask, not assumed here".
@@ -63,6 +65,7 @@ export default function EditShootScreen() {
           address: shoot.locationAddress ?? '',
           note: shoot.locationNote ?? '',
           attachment: shoot.locationAttachment,
+          rawFilesUrl: shoot.rawFilesUrl ?? '',
         })
       })()
       return () => {
@@ -104,12 +107,21 @@ export default function EditShootScreen() {
     }
     setDateError(false)
 
+    // US-024 AC-3 — a malformed link is refused with a message and nothing is
+    // saved, exactly as US-003 AC-2 refuses a reference. Empty is not
+    // malformed: clearing the field is how a link is removed.
+    if (loaded.rawFilesUrl.trim() && !isValidReferenceLink(loaded.rawFilesUrl)) {
+      setFormError(uk.referenceLinkInvalid)
+      return
+    }
+
     setBusy(true)
     const ok = await updateShoot(id, {
       date: toIsoDate(loaded.date),
       locationAddress: loaded.address,
       locationNote: loaded.note,
       locationAttachment: loaded.attachment,
+      rawFilesUrl: loaded.rawFilesUrl,
     })
     setBusy(false)
 
@@ -197,6 +209,23 @@ export default function EditShootScreen() {
             {attachmentKind(loaded.attachment) === 'video' ? '🎞' : '🖼'}
           </Text>
         ) : null}
+
+        <Text variant="h4" className="pt-4">
+          {uk.editFilesTitle}
+        </Text>
+
+        <Label htmlFor="raw-files">{uk.rawFiles}</Label>
+        <Input
+          id="raw-files"
+          value={loaded.rawFilesUrl}
+          onChangeText={(value) => {
+            set('rawFilesUrl', value)
+            setFormError(null)
+          }}
+          placeholder={uk.setLinkPlaceholder}
+          autoCapitalize="none"
+          keyboardType="url"
+        />
 
         {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 
