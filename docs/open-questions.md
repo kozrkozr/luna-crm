@@ -63,22 +63,46 @@ displayed them.
 - **Raised by:** reading EP-04 against EP-03
 - **Blocked:** `US-010` in practice — the story worked but no photographer could reach it.
 
-### 6. Where the creator sets the raw-files / finished-photos links
-`US-024`/`US-025` specify the client's view of these, and `data-model.md` has the columns, but no
-story's acceptance criteria cover the creator entering them. `ux-notes.md` places them on the
-edit screen and the prototype implements it there, so design covers it and the backlog does not.
+### 6. ~~Where the creator sets the raw-files / finished-photos links~~ *(answered 2026-08-27)*
+**Built on the edit screen, following design.** `ux-notes.md` places the two inputs there and
+the prototype implements them there, under a «Файли» heading its own comment labels
+`US-024 / US-025`. Design covers this; the backlog still does not.
+
+Decided rather than escalated because `US-024` AC-2 and `US-025` AC-2 both begin "the creator
+has pasted an external link" — the criteria presuppose the capability, so they are untestable
+until it exists, and design already says where it goes.
+
+**Still worth a backlog entry.** Nothing states what the creator sees, whether the field is
+reachable before a shoot has happened, or whether clearing it is meant to be the way to remove
+a link (it currently is). If the owner ever wants those defined, they need a story.
 
 - **Raised by:** reading EP-04 against EP-02
-- **Blocks:** nothing yet; `US-018` would be the natural home.
+- **Blocked:** `US-024` AC-2 and `US-025` AC-2, which had no way to be reached.
 
-### 7. `US-024`/`US-025` AC-3 asks for an undecidable check
-AC-3 requires rejecting a pasted link that is "malformed or unreachable". Reachability needs a
-server-side fetch that many file-sharing services refuse. It is also ambiguous *where* the check
-happens: AC-3 reads as the client's render ("falls back to its placeholder") but points at
-`US-003` AC-2, which rejects at input time with a message.
+### 7. ~~`US-024`/`US-025` AC-3 asks for an undecidable check~~ *(answered 2026-08-27)*
+**Answered by the owner: malformed only, exactly the check a reference link gets.** A pasted
+value must parse as a URL and be http(s) — `isValidReferenceLink`, imported rather than
+restated, so the two rules cannot drift.
+
+**Reachability is deliberately not probed.** It would need a server-side fetch per view against
+services that routinely refuse one, and a valid private link commonly answers 403 — so a probe
+would hide working links more often than it caught dead ones, turning a live link into
+«В розробці» for the client. The residual gap is accepted and named: a well-formed but dead
+link still reaches the client, so AC-3's "not a dead link dressed up as a working one" is only
+partly met.
+
+The *where* ambiguity resolved to **both**, because AC-3's sentence asks for both: the edit
+screen refuses a malformed link with a message and saves nothing (`US-003` AC-2's half), and
+the gateway collapses any non-link to null so the section falls back to the placeholder (AC-3's
+own half).
+
+**Not yet routed through the discovery repo.** The decision interprets AC-3 rather than
+changing it, so no story text was edited — but it is a product judgement about what a client
+should see, and it belongs in front of the owner before v1 ships. The probe can be added in the
+gateway later without touching either screen.
 
 - **Raised by:** `US-024`, `US-025`
-- **Blocks:** those stories when EP-04 starts.
+- **Blocked:** those stories; both now built.
 
 ### 8. Copy for missing client name / client contact on shoot creation
 `US-002` AC-2 requires "the missing field is indicated", and the prototype supplies copy only for
