@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router'
 import { Button } from '../../components/ui/button'
 import { Text } from '../../components/ui/text'
 import { supabase } from '../../lib/supabase/client'
-import { uk } from '../../i18n/uk'
+import { useStrings } from '../../i18n/LanguageProvider'
 
 /**
  * US-017 AC-1 — end the session and land on the login screen (US-013).
@@ -12,6 +12,7 @@ import { uk } from '../../i18n/uk'
  * for a signed-out user, which is half of AC-2.
  */
 export function LogoutButton() {
+  const t = useStrings()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
 
@@ -24,7 +25,7 @@ export function LogoutButton() {
 
   return (
     <Button variant="destructive" disabled={busy} onPress={logOut}>
-      <Text>{uk.logout}</Text>
+      <Text>{t.logout}</Text>
     </Button>
   )
 }

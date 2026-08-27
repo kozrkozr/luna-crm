@@ -5,7 +5,7 @@ import { Button } from '../../src/components/ui/button'
 import { Input } from '../../src/components/ui/input'
 import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
-import { uk } from '../../src/i18n/uk'
+import { useStrings } from '../../src/i18n/LanguageProvider'
 import { createShoot } from '../../src/features/shoots/api'
 import { toIsoDate } from '../../src/features/shoots/date'
 import { DateField } from '../../src/components/DateField'
@@ -27,6 +27,7 @@ import { DateField } from '../../src/components/DateField'
  * field left empty" is a state a user can actually reach.
  */
 export default function NewShootScreen() {
+  const t = useStrings()
   const router = useRouter()
 
   const [clientName, setClientName] = useState('')
@@ -60,7 +61,7 @@ export default function NewShootScreen() {
     setSubmitting(false)
 
     if (!result.ok) {
-      setFormError(uk.shootCreateFailed)
+      setFormError(t.shootCreateFailed)
       return
     }
 
@@ -76,17 +77,17 @@ export default function NewShootScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View className="gap-2 p-4">
-        <Label htmlFor="client-name">{uk.clientName}</Label>
+        <Label htmlFor="client-name">{t.clientName}</Label>
         <Input
           id="client-name"
           value={clientName}
           onChangeText={setClientName}
           autoCapitalize="words"
-          placeholder={uk.clientNamePlaceholder}
+          placeholder={t.clientNamePlaceholder}
         />
-        <FieldError show={!!errors.name} message={uk.clientNameRequired} />
+        <FieldError show={!!errors.name} message={t.clientNameRequired} />
 
-        <Label htmlFor="client-contact">{uk.clientContact}</Label>
+        <Label htmlFor="client-contact">{t.clientContact}</Label>
         <Input
           id="client-contact"
           value={clientContact}
@@ -95,20 +96,20 @@ export default function NewShootScreen() {
           keyboardType="email-address"
           placeholder="+380…"
         />
-        <FieldError show={!!errors.contact} message={uk.clientContactRequired} />
+        <FieldError show={!!errors.contact} message={t.clientContactRequired} />
 
-        <Label htmlFor="date">{uk.date}</Label>
+        <Label htmlFor="date">{t.date}</Label>
         <DateField id="date" value={date} onChange={setDate} />
-        <FieldError show={!!errors.date} message={uk.dateRequired} />
+        <FieldError show={!!errors.date} message={t.dateRequired} />
 
         {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 
         <View className="mt-4 flex-row gap-2">
           <Button variant="ghost" className="flex-1" onPress={() => router.back()}>
-            <Text>{uk.cancel}</Text>
+            <Text>{t.cancel}</Text>
           </Button>
           <Button className="flex-1" disabled={submitting} onPress={submit}>
-            <Text>{uk.save}</Text>
+            <Text>{t.save}</Text>
           </Button>
         </View>
       </View>

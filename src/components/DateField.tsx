@@ -3,7 +3,7 @@ import { Modal, Pressable, View } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button } from './ui/button'
 import { Text } from './ui/text'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 import { toIsoDate } from '../features/shoots/date'
 
 /** Standard height of the iOS date wheel. */
@@ -42,6 +42,7 @@ type Props = {
  * or May? — for no gain on a device with a native picker.
  */
 export function DateField({ id, value, onChange, placeholder, onClear }: Props) {
+  const t = useStrings()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Date>(value ?? new Date())
 
@@ -65,11 +66,11 @@ export function DateField({ id, value, onChange, placeholder, onClear }: Props) 
           }}
         >
           <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
-            {value ? toIsoDate(value) : (placeholder ?? uk.pickDate)}
+            {value ? toIsoDate(value) : (placeholder ?? t.pickDate)}
           </Text>
         </Button>
         {onClear && value ? (
-          <Button variant="outline" size="icon" onPress={onClear} accessibilityLabel={uk.clearDate}>
+          <Button variant="outline" size="icon" onPress={onClear} accessibilityLabel={t.clearDate}>
             <Text>✕</Text>
           </Button>
         ) : null}
@@ -92,7 +93,7 @@ export function DateField({ id, value, onChange, placeholder, onClear }: Props) 
             </View>
             <View className="flex-row gap-2">
               <Button variant="ghost" className="flex-1" onPress={close}>
-                <Text>{uk.cancel}</Text>
+                <Text>{t.cancel}</Text>
               </Button>
               <Button
                 className="flex-1"
@@ -101,7 +102,7 @@ export function DateField({ id, value, onChange, placeholder, onClear }: Props) 
                   close()
                 }}
               >
-                <Text>{uk.done}</Text>
+                <Text>{t.done}</Text>
               </Button>
             </View>
           </View>

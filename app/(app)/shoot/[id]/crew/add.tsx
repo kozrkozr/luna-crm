@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../../src/components/ui/select'
-import { ROLES_UK, uk, type Role } from '../../../../../src/i18n/uk'
+import { ROLES_UK, type Role } from '../../../../../src/i18n/uk'
+import { useStrings } from '../../../../../src/i18n/LanguageProvider'
 import {
   addCrewMember,
   hasContact,
@@ -36,6 +37,7 @@ import {
  * data model stores plain text, so the note is a plain textarea.
  */
 export default function AddCrewScreen() {
+  const t = useStrings()
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -61,7 +63,7 @@ export default function AddCrewScreen() {
     setBusy(true)
     const path = await uploadCrewNoteImage(id, picked.assets[0])
     setBusy(false)
-    if (!path) return setFormError(uk.attachmentTypeUnsupported)
+    if (!path) return setFormError(t.attachmentTypeUnsupported)
     setNoteImage(path)
     // Shown from the local file rather than a signed URL: it is already on the
     // device, and there is no row yet to sign against.
@@ -96,7 +98,7 @@ export default function AddCrewScreen() {
     })
     setBusy(false)
 
-    if (!added) return setFormError(uk.crewAddFailed)
+    if (!added) return setFormError(t.crewAddFailed)
 
     // AC-1 — they appear in the shoot's crew list, which refetches on focus.
     router.back()
@@ -109,7 +111,7 @@ export default function AddCrewScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View className="gap-2 p-4">
-        <Label htmlFor="crew-name">{uk.crewName}</Label>
+        <Label htmlFor="crew-name">{t.crewName}</Label>
         <Input
           id="crew-name"
           value={name}
@@ -118,17 +120,17 @@ export default function AddCrewScreen() {
             setErrors((e) => ({ ...e, name: false }))
           }}
           autoCapitalize="words"
-          placeholder={uk.crewNamePlaceholder}
+          placeholder={t.crewNamePlaceholder}
         />
-        {errors.name ? <Text className="text-destructive text-sm">{uk.crewNameRequired}</Text> : null}
+        {errors.name ? <Text className="text-destructive text-sm">{t.crewNameRequired}</Text> : null}
 
-        <Label htmlFor="crew-role">{uk.crewRole}</Label>
+        <Label htmlFor="crew-role">{t.crewRole}</Label>
         <Select
           value={role ? { value: role, label: role } : undefined}
           onValueChange={(option) => option && setRole(option.value as Role)}
         >
           <SelectTrigger id="crew-role" className="w-full">
-            <SelectValue placeholder={uk.rolePlaceholder} />
+            <SelectValue placeholder={t.rolePlaceholder} />
           </SelectTrigger>
           <SelectContent
             insets={{
@@ -149,7 +151,7 @@ export default function AddCrewScreen() {
           </SelectContent>
         </Select>
 
-        <Label htmlFor="crew-contact">{uk.crewContact}</Label>
+        <Label htmlFor="crew-contact">{t.crewContact}</Label>
         <Input
           id="crew-contact"
           value={contact}
@@ -159,13 +161,13 @@ export default function AddCrewScreen() {
           }}
           autoCapitalize="none"
           keyboardType="email-address"
-          placeholder={uk.crewContactPlaceholder}
+          placeholder={t.crewContactPlaceholder}
         />
         {errors.contact ? (
-          <Text className="text-destructive text-sm">{uk.contactRequired}</Text>
+          <Text className="text-destructive text-sm">{t.contactRequired}</Text>
         ) : null}
 
-        <Label htmlFor="crew-instagram">{uk.crewInstagram}</Label>
+        <Label htmlFor="crew-instagram">{t.crewInstagram}</Label>
         <Input
           id="crew-instagram"
           value={instagram}
@@ -174,17 +176,17 @@ export default function AddCrewScreen() {
           placeholder="@..."
         />
 
-        <Label htmlFor="crew-note">{uk.crewNotes}</Label>
+        <Label htmlFor="crew-note">{t.crewNotes}</Label>
         <Textarea
           id="crew-note"
           value={note}
           onChangeText={setNote}
-          placeholder={uk.crewNotesPlaceholder}
+          placeholder={t.crewNotesPlaceholder}
         />
 
         <View className="flex-row items-center gap-2 pt-1">
           <Button variant="secondary" disabled={busy} onPress={pickNoteImage}>
-            <Text>{uk.attachImage}</Text>
+            <Text>{t.attachImage}</Text>
           </Button>
           {noteImageUri ? (
             <Image
@@ -199,10 +201,10 @@ export default function AddCrewScreen() {
 
         <View className="mt-4 flex-row gap-2">
           <Button variant="ghost" className="flex-1" onPress={() => router.back()}>
-            <Text>{uk.cancel}</Text>
+            <Text>{t.cancel}</Text>
           </Button>
           <Button className="flex-1" disabled={busy} onPress={submit}>
-            <Text>{uk.save}</Text>
+            <Text>{t.save}</Text>
           </Button>
         </View>
       </View>

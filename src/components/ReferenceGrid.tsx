@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router'
 import { ImageViewer } from './ImageViewer'
 import { Text } from './ui/text'
 import { openExternalUrl } from '../lib/openExternalUrl'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 import { signedReferenceUrl, type Reference } from '../features/references/api'
 
 /**
@@ -57,6 +57,7 @@ function ReferenceThumb({
   reference: Reference
   onOpenImage: (uri: string) => void
 }) {
+  const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
 
   useFocusEffect(
@@ -85,7 +86,7 @@ function ReferenceThumb({
         // set a role; these are hand-composed, and ADR-016 made the
         // accessibility of those this project's problem rather than a library's.
         role="button"
-        accessibilityLabel={uk.references}
+        accessibilityLabel={t.references}
       >
         {uri ? <Image source={{ uri }} className="h-full w-full" resizeMode="cover" /> : null}
       </Pressable>

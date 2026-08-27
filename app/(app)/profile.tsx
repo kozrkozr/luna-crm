@@ -2,7 +2,7 @@ import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { Card } from '../../src/components/ui/card'
 import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
-import { uk } from '../../src/i18n/uk'
+import { useStrings } from '../../src/i18n/LanguageProvider'
 import { useProfile } from '../../src/features/auth/useProfile'
 import { LogoutButton } from '../../src/features/auth/LogoutButton'
 
@@ -21,6 +21,7 @@ import { LogoutButton } from '../../src/features/auth/LogoutButton'
  * Logging out (US-017) sits here, as it does in the prototype.
  */
 export default function ProfileScreen() {
+  const t = useStrings()
   const state = useProfile()
 
   if (state.status === 'loading') {
@@ -34,7 +35,7 @@ export default function ProfileScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
+        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
     )
   }
@@ -48,11 +49,11 @@ export default function ProfileScreen() {
             this screen does not use, so both are overridden to the tighter
             field list the prototype shows. */}
         <Card className="gap-1 p-4">
-          <Field label={uk.name} value={profile.name} />
-          <Field label={uk.contact} value={profile.email} />
-          {profile.phone ? <Field label={uk.phone} value={profile.phone} /> : null}
-          <Field label={uk.role} value={profile.role} />
-          <Field label={uk.social} value={profile.socialHandle ?? '—'} />
+          <Field label={t.name} value={profile.name} />
+          <Field label={t.contact} value={profile.email} />
+          {profile.phone ? <Field label={t.phone} value={profile.phone} /> : null}
+          <Field label={t.role} value={profile.role} />
+          <Field label={t.social} value={profile.socialHandle ?? '—'} />
         </Card>
 
         <LogoutButton />

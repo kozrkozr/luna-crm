@@ -8,7 +8,7 @@ import { Label } from '../../../../src/components/ui/label'
 import { Text } from '../../../../src/components/ui/text'
 import { Textarea } from '../../../../src/components/ui/textarea'
 import { DateField } from '../../../../src/components/DateField'
-import { uk } from '../../../../src/i18n/uk'
+import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { getShoot, updateShoot } from '../../../../src/features/shoots/api'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { toIsoDate } from '../../../../src/features/shoots/date'
@@ -42,6 +42,7 @@ type Loaded = {
  * editing them "is a new ask, not assumed here".
  */
 export default function EditShootScreen() {
+  const t = useStrings()
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
 
@@ -91,7 +92,7 @@ export default function EditShootScreen() {
     const path = await uploadLocationAttachment(id, picked.assets[0])
     setBusy(false)
 
-    if (!path) return setFormError(uk.attachmentTypeUnsupported)
+    if (!path) return setFormError(t.attachmentTypeUnsupported)
     // One column, so a new attachment replaces the old one — AC-2 allows one
     // image OR one video, not both.
     setLoaded((current) => (current ? { ...current, attachment: path } : current))
@@ -116,7 +117,7 @@ export default function EditShootScreen() {
     // together so neither can be saved while the other is malformed.
     const links = [loaded.rawFilesUrl, loaded.finishedPhotosUrl]
     if (links.some((link) => link.trim() && !isValidReferenceLink(link))) {
-      setFormError(uk.referenceLinkInvalid)
+      setFormError(t.referenceLinkInvalid)
       return
     }
 
@@ -131,7 +132,7 @@ export default function EditShootScreen() {
     })
     setBusy(false)
 
-    if (!ok) return setFormError(uk.shootUpdateFailed)
+    if (!ok) return setFormError(t.shootUpdateFailed)
 
     // AC-1 — the shoot reflects the change where it is shown. `back` returns to
     // the detail screen, which refetches on focus.
@@ -141,7 +142,7 @@ export default function EditShootScreen() {
   if (failedToLoad) {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
+        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
     )
   }
@@ -164,7 +165,7 @@ export default function EditShootScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View className="gap-2 p-4">
-        <Label htmlFor="date">{uk.date}</Label>
+        <Label htmlFor="date">{t.date}</Label>
         {/*
           `onClear` is passed here and nowhere else. Without it the date could
           never be emptied, and AC-3 — "clears the date entirely and tries to
@@ -179,34 +180,34 @@ export default function EditShootScreen() {
           }}
           onClear={() => set('date', null)}
         />
-        {dateError ? <Text className="text-destructive text-sm">{uk.dateRequired}</Text> : null}
+        {dateError ? <Text className="text-destructive text-sm">{t.dateRequired}</Text> : null}
 
         <Text variant="h4" className="pt-4">
-          {uk.locationSection}
+          {t.locationSection}
         </Text>
 
-        <Label htmlFor="address">{uk.address}</Label>
+        <Label htmlFor="address">{t.address}</Label>
         <Input
           id="address"
           value={loaded.address}
           onChangeText={(value) => set('address', value)}
-          placeholder={uk.addressPlaceholder}
+          placeholder={t.addressPlaceholder}
         />
 
-        <Label htmlFor="location-note">{uk.locationNotes}</Label>
+        <Label htmlFor="location-note">{t.locationNotes}</Label>
         <Textarea
           id="location-note"
           value={loaded.note}
           onChangeText={(value) => set('note', value)}
-          placeholder={uk.locationNotesPlaceholder}
+          placeholder={t.locationNotesPlaceholder}
         />
 
         <View className="flex-row gap-2 pt-1">
           <Button variant="secondary" className="flex-1" disabled={busy} onPress={() => pick('image')}>
-            <Text>{uk.attachImage}</Text>
+            <Text>{t.attachImage}</Text>
           </Button>
           <Button variant="secondary" className="flex-1" disabled={busy} onPress={() => pick('video')}>
-            <Text>{uk.attachVideo}</Text>
+            <Text>{t.attachVideo}</Text>
           </Button>
         </View>
 
@@ -217,10 +218,10 @@ export default function EditShootScreen() {
         ) : null}
 
         <Text variant="h4" className="pt-4">
-          {uk.editFilesTitle}
+          {t.editFilesTitle}
         </Text>
 
-        <Label htmlFor="raw-files">{uk.rawFiles}</Label>
+        <Label htmlFor="raw-files">{t.rawFiles}</Label>
         <Input
           id="raw-files"
           value={loaded.rawFilesUrl}
@@ -228,12 +229,12 @@ export default function EditShootScreen() {
             set('rawFilesUrl', value)
             setFormError(null)
           }}
-          placeholder={uk.setLinkPlaceholder}
+          placeholder={t.setLinkPlaceholder}
           autoCapitalize="none"
           keyboardType="url"
         />
 
-        <Label htmlFor="finished-photos">{uk.finishedPhotos}</Label>
+        <Label htmlFor="finished-photos">{t.finishedPhotos}</Label>
         <Input
           id="finished-photos"
           value={loaded.finishedPhotosUrl}
@@ -241,7 +242,7 @@ export default function EditShootScreen() {
             set('finishedPhotosUrl', value)
             setFormError(null)
           }}
-          placeholder={uk.setLinkPlaceholder}
+          placeholder={t.setLinkPlaceholder}
           autoCapitalize="none"
           keyboardType="url"
         />
@@ -250,10 +251,10 @@ export default function EditShootScreen() {
 
         <View className="mt-4 flex-row gap-2">
           <Button variant="ghost" className="flex-1" onPress={() => router.back()}>
-            <Text>{uk.cancel}</Text>
+            <Text>{t.cancel}</Text>
           </Button>
           <Button className="flex-1" disabled={busy} onPress={submit}>
-            <Text>{uk.save}</Text>
+            <Text>{t.save}</Text>
           </Button>
         </View>
       </View>

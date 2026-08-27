@@ -4,7 +4,7 @@ import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { Separator } from '../../src/components/ui/separator'
 import { Text } from '../../src/components/ui/text'
-import { MONTHS_GENITIVE_UK, uk } from '../../src/i18n/uk'
+import { useStrings } from '../../src/i18n/LanguageProvider'
 import { listShoots, type Shoot } from '../../src/features/shoots/api'
 import { StatusPill } from '../../src/components/StatusPill'
 import { ShootCalendar } from '../../src/components/ShootCalendar'
@@ -40,6 +40,7 @@ type State =
  * without a manual refresh.
  */
 export default function ShootListScreen() {
+  const t = useStrings()
   const router = useRouter()
   const [state, setState] = useState<State>({ status: 'loading' })
   // AC-4 — the date being filtered to, or null for the whole list.
@@ -63,7 +64,7 @@ export default function ShootListScreen() {
     <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
       <View className="gap-3 p-4">
         <Button onPress={() => router.push('/(app)/new-shoot')}>
-          <Text>{uk.newShoot}</Text>
+          <Text>{t.newShoot}</Text>
         </Button>
 
         {/*
@@ -83,9 +84,9 @@ export default function ShootListScreen() {
 
         {selectedDate ? (
           <View className="flex-row items-center justify-between gap-3">
-            <Text className="font-medium">{formatDayLabel(selectedDate)}</Text>
+            <Text className="font-medium">{formatDayLabel(selectedDate, t.monthsGenitive)}</Text>
             <Button variant="secondary" size="sm" onPress={() => setSelectedDate(null)}>
-              <Text>{uk.allShoots}</Text>
+              <Text>{t.allShoots}</Text>
             </Button>
           </View>
         ) : null}
@@ -95,21 +96,21 @@ export default function ShootListScreen() {
             <ActivityIndicator size="large" />
           </View>
         ) : state.status === 'error' ? (
-          <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
+          <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
         ) : state.shoots.length === 0 ? (
           <View className="items-center gap-2 py-8">
-            <Text variant="h4">{uk.emptyShoots}</Text>
-            <Text className="text-muted-foreground">{uk.emptyShootsSub}</Text>
+            <Text variant="h4">{t.emptyShoots}</Text>
+            <Text className="text-muted-foreground">{t.emptyShootsSub}</Text>
             {/* The prototype's empty state offers the action directly. */}
             <Button className="mt-2" onPress={() => router.push('/(app)/new-shoot')}>
-              <Text>{uk.createFirst}</Text>
+              <Text>{t.createFirst}</Text>
             </Button>
           </View>
         ) : visible(state.shoots, selectedDate).length === 0 ? (
           // AC-4 — the account has shoots, this date has none. A result, not
           // the AC-2 empty state and not an error.
           <View className="items-center py-8">
-            <Text className="text-muted-foreground">{uk.noShootsOnDay}</Text>
+            <Text className="text-muted-foreground">{t.noShootsOnDay}</Text>
           </View>
         ) : (
           /*
@@ -156,7 +157,7 @@ function visible(shoots: Shoot[], selectedDate: string | null): Shoot[] {
  * Ukrainian. Built from the ISO parts rather than a Date, so no timezone can
  * shift the day between the row and its label.
  */
-function formatDayLabel(isoDate: string): string {
+function formatDayLabel(isoDate: string, monthsGenitive: readonly string[]): string {
   const [, month, day] = isoDate.split('-')
-  return `${Number(day)} ${MONTHS_GENITIVE_UK[Number(month) - 1]}`
+  return `${Number(day)} ${monthsGenitive[Number(month) - 1]}`
 }

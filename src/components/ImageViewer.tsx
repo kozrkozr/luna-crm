@@ -1,7 +1,7 @@
 import { Image, Modal, Pressable, View } from 'react-native'
 import { Button } from './ui/button'
 import { Text } from './ui/text'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 
 /**
  * A full-screen image, dismissible back to where the viewer was.
@@ -16,6 +16,7 @@ import { uk } from '../i18n/uk'
  * already uses to confirm and close.
  */
 export function ImageViewer({ uri, onClose }: { uri: string | null; onClose: () => void }) {
+  const t = useStrings()
   return (
     <Modal visible={!!uri} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable className="flex-1 bg-black" onPress={onClose}>
@@ -24,7 +25,7 @@ export function ImageViewer({ uri, onClose }: { uri: string | null; onClose: () 
         </View>
         <View className="absolute right-4 top-16">
           <Button variant="secondary" onPress={onClose}>
-            <Text>{uk.done}</Text>
+            <Text>{t.done}</Text>
           </Button>
         </View>
       </Pressable>

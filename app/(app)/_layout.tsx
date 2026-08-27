@@ -1,7 +1,7 @@
 import { Link, Stack } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { Text } from '../../src/components/ui/text'
-import { uk } from '../../src/i18n/uk'
+import { LanguageProvider, useStrings } from '../../src/i18n/LanguageProvider'
 import { RequireSession } from '../../src/features/auth/RequireSession'
 
 /**
@@ -12,16 +12,39 @@ import { RequireSession } from '../../src/features/auth/RequireSession'
 export default function AppLayout() {
   return (
     <RequireSession>
+      {/*
+        US-014 — the language provider wraps this group and only this group.
+        `(auth)` and `s/` sit outside it, so a screen with no account behind it
+        has no language to resolve and stays Ukrainian by construction rather
+        than by remembering to.
+
+        Inside RequireSession, because the preference is read from the signed-in
+        user's row: there is nothing to resolve until there is a session.
+      */}
+      <LanguageProvider>
+        <AppStack />
+      </LanguageProvider>
+    </RequireSession>
+  )
+}
+
+/**
+ * Separate from `AppLayout` because a component cannot consume a context it
+ * renders itself — the titles below need the provider that AppLayout mounts.
+ */
+function AppStack() {
+  const t = useStrings()
+  return (
     <Stack screenOptions={{ headerLargeTitle: true }}>
       <Stack.Screen
         name="index"
         options={{
-          title: uk.myShoots,
+          title: t.myShoots,
           // US-016 AC-2 requires the profile to be *reachable*. The prototype
           // reaches it from a person icon in the account header.
           headerRight: () => (
             <Link href="/(app)/profile" asChild>
-              <Button variant="ghost" size="sm" accessibilityLabel={uk.profileTitle}>
+              <Button variant="ghost" size="sm" accessibilityLabel={t.profileTitle}>
                 <Text>👤</Text>
               </Button>
             </Link>
@@ -30,9 +53,9 @@ export default function AppLayout() {
       />
       <Stack.Screen
         name="new-shoot"
-        options={{ title: uk.newShootTitle, headerLargeTitle: false, presentation: 'modal' }}
+        options={{ title: t.newShootTitle, headerLargeTitle: false, presentation: 'modal' }}
       />
-      <Stack.Screen name="profile" options={{ title: uk.profileTitle }} />
+      <Stack.Screen name="profile" options={{ title: t.profileTitle }} />
       {/*
         Title comes from the screen itself once the shoot is loaded — the client
         name is not known until then, and a placeholder would flash.
@@ -40,17 +63,16 @@ export default function AppLayout() {
       <Stack.Screen name="shoot/[id]/index" options={{ headerLargeTitle: false }} />
       <Stack.Screen
         name="shoot/[id]/edit"
-        options={{ title: uk.editShootTitle, headerLargeTitle: false }}
+        options={{ title: t.editShootTitle, headerLargeTitle: false }}
       />
       <Stack.Screen
         name="shoot/[id]/references"
-        options={{ title: uk.allReferencesTitle, headerLargeTitle: false }}
+        options={{ title: t.allReferencesTitle, headerLargeTitle: false }}
       />
       <Stack.Screen
         name="shoot/[id]/crew/add"
-        options={{ title: uk.addCrewTitle, headerLargeTitle: false }}
+        options={{ title: t.addCrewTitle, headerLargeTitle: false }}
       />
     </Stack>
-    </RequireSession>
   )
 }

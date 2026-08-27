@@ -11,7 +11,7 @@ import {
 } from './ui/alert-dialog'
 import { Button } from './ui/button'
 import { Text } from './ui/text'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 
 type Props = {
   /** The button's own label, e.g. «Видалити зйомку». */
@@ -51,6 +51,7 @@ type Props = {
  * and it is also the surface these criteria are tested on.
  */
 export function DestructiveAction({ label, question, onConfirm, disabled, compact }: Props) {
+  const t = useStrings()
   const [open, setOpen] = useState(false)
 
   const ask = () => {
@@ -59,7 +60,7 @@ export function DestructiveAction({ label, question, onConfirm, disabled, compac
         // `cancel` and `destructive` are what make iOS lay the buttons out the
         // way people already expect: cancel is the safe default, the red one is
         // the one that acts.
-        { text: uk.cancel, style: 'cancel' },
+        { text: t.cancel, style: 'cancel' },
         { text: label, style: 'destructive', onPress: onConfirm },
       ])
       return
@@ -98,7 +99,7 @@ export function DestructiveAction({ label, question, onConfirm, disabled, compac
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>
-                <Text>{uk.cancel}</Text>
+                <Text>{t.cancel}</Text>
               </AlertDialogCancel>
               <AlertDialogAction onPress={onConfirm}>
                 <Text>{label}</Text>

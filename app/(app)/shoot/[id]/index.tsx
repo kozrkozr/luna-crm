@@ -15,7 +15,7 @@ import {
 } from '../../../../src/components/ReferenceGrid'
 import { ImageViewer } from '../../../../src/components/ImageViewer'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
-import { uk } from '../../../../src/i18n/uk'
+import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import {
   deleteShoot,
   getShoot,
@@ -61,6 +61,7 @@ type State =
  * (US-024/US-025).
  */
 export default function ShootDetailScreen() {
+  const t = useStrings()
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const [state, setState] = useState<State>({ status: 'loading' })
@@ -105,7 +106,7 @@ export default function ShootDetailScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
+        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
     )
   }
@@ -134,7 +135,7 @@ export default function ShootDetailScreen() {
             {/* US-018 AC-1 — the way into edit. */}
             <Link href={`/(app)/shoot/${shoot.id}/edit`} asChild>
               <Button variant="outline" className="h-auto flex-1 py-2">
-                <Text>{uk.edit}</Text>
+                <Text>{t.edit}</Text>
               </Button>
             </Link>
             <StatusToggle
@@ -175,8 +176,8 @@ export default function ShootDetailScreen() {
           */}
           <View className="pt-6">
             <DestructiveAction
-              label={uk.deleteShoot}
-              question={uk.confirmDeleteShoot}
+              label={t.deleteShoot}
+              question={t.confirmDeleteShoot}
               onConfirm={() => {
                 void (async () => {
                   if (await deleteShoot(shoot.id)) {
@@ -231,9 +232,10 @@ function CrewSection({
   crew: CrewMember[]
   onRemoved: (id: string) => void
 }) {
+  const t = useStrings()
   return (
     <View className="gap-2 pt-2">
-      <Text variant="h4">{uk.crew}</Text>
+      <Text variant="h4">{t.crew}</Text>
 
       {crew.length > 0 ? (
         <View className="border-border overflow-hidden rounded-lg border">
@@ -258,7 +260,7 @@ function CrewSection({
 
       <Link href={`/(app)/shoot/${shootId}/crew/add`} asChild>
         <Button variant="secondary">
-          <Text>{uk.addCrewMember}</Text>
+          <Text>{t.addCrewMember}</Text>
         </Button>
       </Link>
     </View>
@@ -284,13 +286,14 @@ function RemoveCrewMember({
   member: CrewMember
   onRemoved: (id: string) => void
 }) {
+  const t = useStrings()
   const [busy, setBusy] = useState(false)
 
   return (
     <DestructiveAction
       compact
-      label={uk.removeCrewTitle}
-      question={uk.confirmRemoveCrew}
+      label={t.removeCrewTitle}
+      question={t.confirmRemoveCrew}
       disabled={busy}
       onConfirm={() => {
         void (async () => {
@@ -330,6 +333,7 @@ function CopyLink({
    */
   whose: string
 }) {
+  const t = useStrings()
   const [state, setState] = useState<'idle' | 'busy' | 'copied' | 'failed'>('idle')
 
   const copy = async () => {
@@ -352,7 +356,7 @@ function CopyLink({
       size="icon"
       disabled={state === 'busy'}
       onPress={() => void copy()}
-      accessibilityLabel={`${uk.copyLinkTitle}: ${whose}`}
+      accessibilityLabel={`${t.copyLinkTitle}: ${whose}`}
     >
       <Text>{state === 'copied' ? '✓' : '🔗'}</Text>
     </Button>
@@ -365,6 +369,7 @@ function CopyLink({
  * can change it — that happens through their own link.
  */
 function CrewResponsePill({ value }: { value: CrewMember['response'] }) {
+  const t = useStrings()
   const tone =
     value === 'confirmed'
       ? 'bg-status-finished border-status-finished-border'
@@ -379,10 +384,10 @@ function CrewResponsePill({ value }: { value: CrewMember['response'] }) {
         : 'text-status-new-foreground'
   const label =
     value === 'confirmed'
-      ? uk.responseConfirmed
+      ? t.responseConfirmed
       : value === 'declined'
-        ? uk.responseDeclined
-        : uk.responsePending
+        ? t.responseDeclined
+        : t.responsePending
 
   return (
     <View className={`rounded-full border px-2.5 py-1 ${tone}`}>
@@ -410,6 +415,7 @@ function StatusToggle({
   shoot: Shoot
   onChanged: (status: ShootStatus) => void
 }) {
+  const t = useStrings()
   const [busy, setBusy] = useState(false)
   const next: ShootStatus = shoot.status === 'new' ? 'finished' : 'new'
 
@@ -428,7 +434,7 @@ function StatusToggle({
     // «Позначити як «Закін...» tells the reader less than the pill beside it
     // already does. `h-auto` and vertical padding let the button grow instead.
     <Button variant="secondary" className="h-auto flex-1 py-2" disabled={busy} onPress={toggle}>
-      <Text className="text-center">{next === 'finished' ? uk.markFinished : uk.markNew}</Text>
+      <Text className="text-center">{next === 'finished' ? t.markFinished : t.markNew}</Text>
     </Button>
   )
 }
@@ -445,9 +451,10 @@ function StatusToggle({
  * contact info, and `US-027` does not reopen it.
  */
 function ClientSection({ shoot }: { shoot: Shoot }) {
+  const t = useStrings()
   return (
     <View className="gap-2 pt-2">
-      <Text variant="h4">{uk.clientSection}</Text>
+      <Text variant="h4">{t.clientSection}</Text>
       <View className="border-border overflow-hidden rounded-lg border">
         <View className="flex-row items-center gap-3 px-4 py-3">
           <View className="flex-1 gap-0.5">
@@ -473,6 +480,7 @@ function ClientSection({ shoot }: { shoot: Shoot }) {
  * list; this section is the note and its attachment.
  */
 function LocationSection({ shoot }: { shoot: Shoot }) {
+  const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
   const [viewing, setViewing] = useState<string | null>(null)
   const attachment = shoot.locationAttachment
@@ -497,7 +505,7 @@ function LocationSection({ shoot }: { shoot: Shoot }) {
 
   return (
     <View className="gap-2 pt-2">
-      <Text variant="h4">{uk.locationSection}</Text>
+      <Text variant="h4">{t.locationSection}</Text>
       {shoot.locationAddress ? <Text>{shoot.locationAddress}</Text> : null}
       {shoot.locationNote ? (
         <Text className="text-muted-foreground">{shoot.locationNote}</Text>
@@ -509,7 +517,7 @@ function LocationSection({ shoot }: { shoot: Shoot }) {
           disabled={!uri}
           onPress={() => uri && setViewing(uri)}
           role="button"
-          accessibilityLabel={uk.locationSection}
+          accessibilityLabel={t.locationSection}
         >
           {uri ? <Image source={{ uri }} className="h-full w-full" resizeMode="cover" /> : null}
         </Pressable>
@@ -528,7 +536,7 @@ function LocationSection({ shoot }: { shoot: Shoot }) {
           disabled={!uri}
           onPress={() => uri && void openExternalUrl(uri)}
           role="button"
-          accessibilityLabel={uk.attachVideo}
+          accessibilityLabel={t.attachVideo}
         >
           <Text className="text-3xl">🎞</Text>
         </Pressable>
@@ -555,6 +563,7 @@ function ReferencesBlock({
   references: Reference[]
   onAdded: (reference: Reference) => void
 }) {
+  const t = useStrings()
   const [link, setLink] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -570,10 +579,10 @@ function ReferencesBlock({
     }
     setError(
       result.reason === 'invalidLink'
-        ? uk.referenceLinkInvalid
+        ? t.referenceLinkInvalid
         : result.reason === 'unsupportedType'
-          ? uk.referenceTypeUnsupported
-          : uk.referenceAddFailed
+          ? t.referenceTypeUnsupported
+          : t.referenceAddFailed
     )
   }
 
@@ -600,7 +609,7 @@ function ReferencesBlock({
 
   return (
     <View className="gap-3 pt-2">
-      <Text variant="h4">{uk.references}</Text>
+      <Text variant="h4">{t.references}</Text>
 
       {/*
         US-021 AC-1/AC-2 — the shoot's own page shows up to the display limit,
@@ -612,7 +621,7 @@ function ReferencesBlock({
       {references.length > REFERENCE_DISPLAY_LIMIT ? (
         <Link href={`/(app)/shoot/${shootId}/references`} asChild>
           <Button variant="secondary">
-            <Text>{`${uk.showAllReferences} (${references.length})`}</Text>
+            <Text>{`${t.showAllReferences} (${references.length})`}</Text>
           </Button>
         </Link>
       ) : null}
@@ -627,13 +636,13 @@ function ReferencesBlock({
           }}
           autoCapitalize="none"
           keyboardType="url"
-          placeholder={uk.refPlaceholder}
+          placeholder={t.refPlaceholder}
         />
         <Button variant="outline" size="icon" disabled={busy} onPress={pickFromGallery}>
-          <Text>{uk.pickFromGallery}</Text>
+          <Text>{t.pickFromGallery}</Text>
         </Button>
         <Button variant="secondary" disabled={busy || !link.trim()} onPress={submitLink}>
-          <Text>{uk.addRefBtn}</Text>
+          <Text>{t.addRefBtn}</Text>
         </Button>
       </View>
 

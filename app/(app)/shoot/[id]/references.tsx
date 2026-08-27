@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Text } from '../../../../src/components/ui/text'
 import { ReferenceGrid } from '../../../../src/components/ReferenceGrid'
-import { uk } from '../../../../src/i18n/uk'
+import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { listReferences, type Reference } from '../../../../src/features/references/api'
 
 type State =
@@ -25,6 +25,7 @@ type State =
  * where US-003 put it.
  */
 export default function AllReferencesScreen() {
+  const t = useStrings()
   const { id } = useLocalSearchParams<{ id: string }>()
   const [state, setState] = useState<State>({ status: 'loading' })
 
@@ -53,7 +54,7 @@ export default function AllReferencesScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{uk.somethingWentWrong}</Text>
+        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
     )
   }

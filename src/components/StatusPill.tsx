@@ -1,6 +1,6 @@
 import { View } from 'react-native'
 import { Text } from './ui/text'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 import type { ShootStatus } from '../features/shoots/api'
 
 /**
@@ -22,12 +22,16 @@ const TONE_TEXT: Record<ShootStatus, string> = {
   finished: 'text-status-finished-foreground',
 }
 
-const LABEL: Record<ShootStatus, string> = {
-  new: uk.statusNew,
-  finished: uk.statusFinished,
-}
-
 export function StatusPill({ value }: { value: ShootStatus }) {
+  const t = useStrings()
+  // Built here, not at module scope. The previous version read the dictionary
+  // once when the module was imported, so it would have kept the language the
+  // app started in for the rest of the session.
+  const LABEL: Record<ShootStatus, string> = {
+    new: t.statusNew,
+    finished: t.statusFinished,
+  }
+
   return (
     <View className={`rounded-full border px-2.5 py-1 ${TONE[value]}`}>
       <Text className={`text-xs font-bold ${TONE_TEXT[value]}`}>{LABEL[value]}</Text>

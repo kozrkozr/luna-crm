@@ -185,16 +185,72 @@ export const uk = {
   // or a save that fails. Placeholders; see docs/open-questions.md item 20.
   crewNameRequired: "Вкажіть ім'я учасника",
   crewAddFailed: 'Не вдалося додати учасника. Спробуйте ще раз.',
+
+  /**
+   * Calendar labels for US-004, verbatim from the prototype's `calendarHtml`.
+   *
+   * In the dictionary rather than beside it, because they are UI copy and
+   * `US-015` has to translate them. Weekdays are **Monday-first**, as in the
+   * prototype — `(getDay() + 6) % 7` — which is the Ukrainian convention and
+   * not JavaScript's Sunday-first default; an English dictionary keeps that
+   * order, since it describes the grid, not the language.
+   */
+  weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'],
+
+  /**
+   * Month names in the genitive case, for naming a single date — «7 серпня»,
+   * not «7 Серпень». Ukrainian inflects the month when a day precedes it, so
+   * the nominative list below cannot be reused for this. English has no such
+   * case, and `US-015` is expected to repeat its month names in both.
+   */
+  monthsGenitive: [
+    'січня',
+    'лютого',
+    'березня',
+    'квітня',
+    'травня',
+    'червня',
+    'липня',
+    'серпня',
+    'вересня',
+    'жовтня',
+    'листопада',
+    'грудня',
+  ],
+
+  /** Nominative month names, for a calendar heading — «Серпень 2026». */
+  months: [
+    'Січень',
+    'Лютий',
+    'Березень',
+    'Квітень',
+    'Травень',
+    'Червень',
+    'Липень',
+    'Серпень',
+    'Вересень',
+    'Жовтень',
+    'Листопад',
+    'Грудень',
+  ],
+
 } as const
 
 export type CopyKey = keyof typeof uk
+
 
 /**
  * Professional roles offered at registration (US-001). The story defers the
  * list to "the glossary's confirmed roles as the starting list"; the glossary
  * confirms makeup artist, stylist, gaffer and shoot manager, and the gated
- * prototype adds Фотограф and fixes the Ukrainian labels. Stored in Ukrainian
- * because that is what the prototype offers as values.
+ * prototype adds Фотограф and fixes the Ukrainian labels.
+ *
+ * **Deliberately NOT in the dictionary.** These are values written to
+ * `crew_members.role` and `users.role` and read back on every surface,
+ * including the two Ukrainian-only ones. `US-015` AC-2 requires that switching
+ * language leaves "the shoot's own content (client info, references, names)"
+ * unchanged — translating a stored role would rewrite data, and a client's link
+ * view would then disagree with the creator's screen about what someone does.
  */
 export const ROLES_UK = [
   'Фотограф',
@@ -205,46 +261,3 @@ export const ROLES_UK = [
 ] as const
 
 export type Role = (typeof ROLES_UK)[number]
-
-/**
- * Calendar labels for US-004, verbatim from the prototype's `calendarHtml`.
- *
- * Weekdays are **Monday-first**, as there — `(getDay() + 6) % 7` — which is the
- * Ukrainian convention and not JavaScript's Sunday-first default.
- */
-export const WEEKDAYS_UK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'] as const
-
-/**
- * Month names in the genitive case, for naming a single date — «7 серпня», not
- * «7 Серпень». Ukrainian inflects the month when a day precedes it, so the
- * nominative list below cannot be reused for this.
- */
-export const MONTHS_GENITIVE_UK = [
-  'січня',
-  'лютого',
-  'березня',
-  'квітня',
-  'травня',
-  'червня',
-  'липня',
-  'серпня',
-  'вересня',
-  'жовтня',
-  'листопада',
-  'грудня',
-] as const
-
-export const MONTHS_UK = [
-  'Січень',
-  'Лютий',
-  'Березень',
-  'Квітень',
-  'Травень',
-  'Червень',
-  'Липень',
-  'Серпень',
-  'Вересень',
-  'Жовтень',
-  'Листопад',
-  'Грудень',
-] as const

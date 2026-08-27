@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { Text } from './ui/text'
-import { MONTHS_UK, WEEKDAYS_UK } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 import { toIsoDate } from '../features/shoots/date'
 
 /**
@@ -24,6 +24,7 @@ type Props = {
 }
 
 export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
+  const t = useStrings()
   const marked = new Set(shootDates)
   const today = new Date()
   // AC-3 — which month is on screen. Opens on the current one.
@@ -57,12 +58,12 @@ export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
     <View className="border-border bg-card gap-2 rounded-xl border p-3">
       <View className="flex-row items-center justify-between">
         <MonthButton label="‹" onPress={() => step(-1)} />
-        <Text className="text-sm font-semibold">{`${MONTHS_UK[month]} ${year}`}</Text>
+        <Text className="text-sm font-semibold">{`${t.months[month]} ${year}`}</Text>
         <MonthButton label="›" onPress={() => step(1)} />
       </View>
 
       <View className="flex-row">
-        {WEEKDAYS_UK.map((day) => (
+        {t.weekdays.map((day: string) => (
           <Text key={day} className="text-muted-foreground flex-1 text-center text-[10px]">
             {day}
           </Text>
