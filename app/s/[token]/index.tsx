@@ -117,7 +117,7 @@ function ClientView({
   payload: ClientLinkPayload
   onReload: () => void
 }) {
-  const { shoot, references, crew, rawFilesUrl } = payload
+  const { shoot, references, crew, rawFilesUrl, finishedPhotosUrl } = payload
 
   return (
     <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
@@ -172,6 +172,9 @@ function ClientView({
           appear before any exist. Not hosting (ADR-008).
         */}
         <FileSection label={uk.rawFiles} url={rawFilesUrl} />
+        {/* US-025 — the same section for finished photos, in the prototype's
+            order: raw files first, finished photos below. */}
+        <FileSection label={uk.finishedPhotos} url={finishedPhotosUrl} />
       </View>
     </ScrollView>
   )

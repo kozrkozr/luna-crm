@@ -20,6 +20,8 @@ export type Shoot = {
    * client's view; this is a link, not hosting (`ADR-008`).
    */
   rawFilesUrl: string | null
+  /** `US-025` — the same, for finished photos. Also a link, not hosting. */
+  finishedPhotosUrl: string | null
 }
 
 /**
@@ -37,11 +39,13 @@ export type UpdateShootInput = {
    *  the creator entering it; design covers it, and AC-2 is unreachable
    *  without it. */
   rawFilesUrl: string | null
+  /** `US-025`, alongside `rawFilesUrl` and set on the same screen. */
+  finishedPhotosUrl: string | null
 }
 
 /** Every column the app reads for a Shoot, in one place so the two queries agree. */
 const SHOOT_COLUMNS =
-  'id, client_name, client_contact, date, status, location_address, location_note, location_attachment, raw_files_url'
+  'id, client_name, client_contact, date, status, location_address, location_note, location_attachment, raw_files_url, finished_photos_url'
 
 export type CreateShootInput = {
   clientName: string
@@ -122,6 +126,7 @@ type ShootRow = {
   location_note: string | null
   location_attachment: string | null
   raw_files_url: string | null
+  finished_photos_url: string | null
 }
 
 function toShoot(row: ShootRow): Shoot {
@@ -135,6 +140,7 @@ function toShoot(row: ShootRow): Shoot {
     locationNote: row.location_note,
     locationAttachment: row.location_attachment,
     rawFilesUrl: row.raw_files_url,
+    finishedPhotosUrl: row.finished_photos_url,
   }
 }
 
@@ -198,6 +204,7 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
       // than restated); this is the second guard, so a bad value cannot reach
       // the column by another route.
       raw_files_url: normaliseFilesLink(input.rawFilesUrl),
+      finished_photos_url: normaliseFilesLink(input.finishedPhotosUrl),
     })
     .eq('id', id)
 

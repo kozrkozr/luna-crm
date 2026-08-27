@@ -23,6 +23,7 @@ type Loaded = {
   note: string
   attachment: string | null
   rawFilesUrl: string
+  finishedPhotosUrl: string
 }
 
 /**
@@ -31,7 +32,7 @@ type Loaded = {
  * Fields follow the prototype's screenEditShoot: date, then a Локація section
  * with address, notes, and the two attach buttons.
  *
- * The Файли section below belongs to US-024, not to this story. It is here
+ * The Файли section below belongs to US-024 and US-025, not to this story. It is here
  * because the prototype and ux-notes.md both place it on this screen, and
  * because US-024 AC-2 — "the creator has pasted an external link" — is
  * unreachable without somewhere to paste it. docs/open-questions.md #6 records
@@ -66,6 +67,7 @@ export default function EditShootScreen() {
           note: shoot.locationNote ?? '',
           attachment: shoot.locationAttachment,
           rawFilesUrl: shoot.rawFilesUrl ?? '',
+          finishedPhotosUrl: shoot.finishedPhotosUrl ?? '',
         })
       })()
       return () => {
@@ -110,7 +112,10 @@ export default function EditShootScreen() {
     // US-024 AC-3 — a malformed link is refused with a message and nothing is
     // saved, exactly as US-003 AC-2 refuses a reference. Empty is not
     // malformed: clearing the field is how a link is removed.
-    if (loaded.rawFilesUrl.trim() && !isValidReferenceLink(loaded.rawFilesUrl)) {
+    // US-024 AC-3 and US-025 AC-3 — the same rule for both fields, checked
+    // together so neither can be saved while the other is malformed.
+    const links = [loaded.rawFilesUrl, loaded.finishedPhotosUrl]
+    if (links.some((link) => link.trim() && !isValidReferenceLink(link))) {
       setFormError(uk.referenceLinkInvalid)
       return
     }
@@ -122,6 +127,7 @@ export default function EditShootScreen() {
       locationNote: loaded.note,
       locationAttachment: loaded.attachment,
       rawFilesUrl: loaded.rawFilesUrl,
+      finishedPhotosUrl: loaded.finishedPhotosUrl,
     })
     setBusy(false)
 
@@ -220,6 +226,19 @@ export default function EditShootScreen() {
           value={loaded.rawFilesUrl}
           onChangeText={(value) => {
             set('rawFilesUrl', value)
+            setFormError(null)
+          }}
+          placeholder={uk.setLinkPlaceholder}
+          autoCapitalize="none"
+          keyboardType="url"
+        />
+
+        <Label htmlFor="finished-photos">{uk.finishedPhotos}</Label>
+        <Input
+          id="finished-photos"
+          value={loaded.finishedPhotosUrl}
+          onChangeText={(value) => {
+            set('finishedPhotosUrl', value)
             setFormError(null)
           }}
           placeholder={uk.setLinkPlaceholder}

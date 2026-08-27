@@ -93,6 +93,8 @@ export type ClientLinkPayload = {
    * prototype, and `US-024` is a client story.
    */
   rawFilesUrl: string | null
+  /** `US-025` — the same, for finished photos. */
+  finishedPhotosUrl: string | null
   references: LinkReference[]
   crew: LinkClientCrewMember[]
 }

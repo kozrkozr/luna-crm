@@ -100,6 +100,8 @@ type ShootRow = {
   /** US-024. Selected for the client audience only — the crew's payload does
    *  not ask for it, and the prototype's crew link view has no files section. */
   raw_files_url: string | null
+  /** US-025, the same and on the same screen. */
+  finished_photos_url: string | null
 }
 
 type MemberRow = { id: string; name: string; role: string; response: string }
@@ -291,7 +293,7 @@ function filesLink(value: string | null): string | null {
 async function clientPayload(supabase: Supabase, shootId: string) {
   const { data: shoot } = await supabase
     .from('shoots')
-    .select('id, date, location_address, location_note, location_attachment, raw_files_url')
+    .select('id, date, location_address, location_note, location_attachment, raw_files_url, finished_photos_url')
     .eq('id', shootId)
     .is('deleted_at', null)
     .maybeSingle()
@@ -332,6 +334,8 @@ async function clientPayload(supabase: Supabase, shootId: string) {
     // column can hold anything written before the edit screen's check existed,
     // and a value that is not a link must reach the client as no link at all.
     rawFilesUrl: filesLink(row.raw_files_url),
+    // US-025 — same rule, same fallback.
+    finishedPhotosUrl: filesLink(row.finished_photos_url),
     references: await Promise.all(
       (references ?? []).map(async (reference) => ({
         id: reference.id,
