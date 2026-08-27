@@ -104,7 +104,8 @@ export default function LinkView() {
  * (that is the crew's, US-008), no reactions (US-011, retired by ADR-009), and
  * no response pills, which the prototype's client row also omits.
  *
- * The team rows are not links yet: US-026 is the screen behind them.
+ * The team rows are links. US-026 is the screen behind them, and it shows a
+ * client the same person US-023 shows a crew member, minus the notes.
  */
 function ClientView({
   token,
@@ -145,12 +146,19 @@ function ClientView({
             {crew.map((member, index) => (
               <View key={member.id}>
                 {index > 0 ? <Separator /> : null}
-                <View className="flex-row items-center gap-3 px-4 py-3">
-                  <Text className="flex-1">
-                    <Text className="font-medium">{member.name}</Text>
-                    <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
-                  </Text>
-                </View>
+                {/* US-026 AC-1 — each person opens their own details. Same
+                    route as the crew audience uses; what it shows is decided by
+                    the token, not by the URL. No response pill: the prototype's
+                    client row omits it, and whether someone has answered is the
+                    photographer's business (US-010 AC-1 lists team, not status). */}
+                <Link href={`/s/${token}/crew/${member.id}`} asChild>
+                  <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
+                    <Text className="flex-1">
+                      <Text className="font-medium">{member.name}</Text>
+                      <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
+                    </Text>
+                  </Pressable>
+                </Link>
               </View>
             ))}
           </View>
