@@ -347,6 +347,23 @@ what will settle the actual value.
   in `src/i18n/uk.ts` for when it is unset
 - **Blocks:** nothing in the build. The first real deploy needs the value.
 
+### 23. Crew and user roles stay Ukrainian in the English UI
+`US-015` switches the interface but not the data, and a role — «Візажист», «Гафер» — is stored
+data: it is written to `crew_members.role` and `users.role`, and read back on the two
+Ukrainian-only surfaces. So an account on English sees English chrome around Ukrainian role
+names, and the registration and add-crew pickers offer Ukrainian options.
+
+`US-015` AC-2 requires that switching language leave "the shoot's own content (client info,
+references, names)" unchanged, which is why this was not translated: rewriting the stored value
+is forbidden, and mapping it for display only would make the creator's English screen disagree
+with the client's Ukrainian link view about what someone does.
+
+A display-only mapping is still the likely answer if the owner minds — it needs a decision about
+whether the two surfaces are allowed to name the same person's role differently, and a story.
+
+- **Raised by:** building `US-015`
+- **Blocks:** nothing; the behaviour is deliberate and tested.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26
@@ -368,21 +385,3 @@ project needs the same setting** — Authentication → Providers → Email.
 `US-001` defers the list to "the glossary's confirmed roles as the starting list". The glossary
 confirms makeup artist, stylist, gaffer and shoot manager; the gated prototype adds Фотограф and
 fixes the Ukrainian labels. Five roles, in `ROLES_UK` (`src/i18n/uk.ts`).
-
-### 27. Crew and user roles stay Ukrainian in the English UI
-`US-015` switches the interface but not the data, and a role — «Візажист», «Гафер» — is stored
-data: it is written to `crew_members.role` and `users.role`, and read back on the two
-Ukrainian-only surfaces. So an account on English sees English chrome around Ukrainian role
-names, and the registration and add-crew pickers offer Ukrainian options.
-
-`US-015` AC-2 requires that switching language leave "the shoot's own content (client info,
-references, names)" unchanged, which is why this was not translated: rewriting the stored value
-is forbidden, and mapping it for display only would make the creator's English screen disagree
-with the client's Ukrainian link view about what someone does.
-
-A display-only mapping is still the likely answer if the owner minds — it needs a decision about
-whether the two surfaces are allowed to name the same person's role differently, and a story.
-
-- **Raised by:** building `US-015`
-- **Blocks:** nothing; the behaviour is deliberate and tested.
-
