@@ -91,7 +91,9 @@ If the stack is not running, the suites say so and stop; they do not produce a s
   removed row that by design no API will return, the other reads catalogue metadata about a
   column-level grant.
 - **`ws` comes from the dependency tree**, not from a declared devDependency — `cdp.mjs` imports it
-  for the CDP socket and it is present as a transitive dependency. If it ever disappears, add it to
+`ws` is a declared devDependency, pinned to 7.5.13 to match the version Expo's own
+dev middleware resolves — installing a newer one hoists it over that and rewrites 118 lines of
+lockfile for no gain.
   `devDependencies` rather than reaching back into a path.
 - **Ports are unique per suite.** `openBrowser({ port })` — two suites sharing a debugging port will
   attach to each other's browser.
