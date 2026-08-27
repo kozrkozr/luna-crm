@@ -13,8 +13,16 @@ import { StatusBar } from 'expo-status-bar'
  *            plain /s/{token} URL and served as static web (ADR-012).
  *
  * The grouping is not cosmetic. S-2 found that a naive web export publishes the
- * creator's screens to the public link host; the route groups are how the Pages
- * build ships `s/` only.
+ * creator's screens to the public link host, and the route groups are what a
+ * Pages build would filter on to ship `s/` only.
+ *
+ * **No such filter exists yet, deliberately.** `expo export -p web` emits all
+ * 23 routes and the whole of `dist/` is what would be deployed, creator screens
+ * included. Owner's decision, 2026-08-27: the web app surface is useful for
+ * review during the build, so it ships with the link views for now. Not a data
+ * risk — RLS guards every row whatever pages exist — but the web app was only
+ * ever a development convenience, so anyone reaching it gets a surface nobody
+ * designed for a browser. Revisit before v1: docs/open-questions.md #26.
  *
  * There is no theme provider. NativeWind needs only the stylesheet import above
  * (ADR-016) — the tokens live in src/theme/global.css and reach components as

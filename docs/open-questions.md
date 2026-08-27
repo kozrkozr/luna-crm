@@ -393,6 +393,28 @@ and whether a crew member should see the client's name at all (they are not give
 - **Raised by:** building `US-009`
 - **Blocks:** nothing; flagged so it is reviewed rather than assumed settled.
 
+### 26. The Pages deploy publishes the creator's app as well as the link views
+`expo export -p web` emits 23 HTML routes. Three are the link surface (`s/…`); the other twenty
+are the photographer's app — login, register, profile, shoot creation and editing. Nothing
+filters `dist/` before deployment, and no deploy config exists yet.
+
+**Deferred on purpose, owner's decision 2026-08-27**: the web app is useful for review during the
+build, so for now it ships alongside the link views. Recorded so it is not later mistaken for an
+oversight and "fixed" against that decision.
+
+Not a data risk: RLS guards every row regardless of which pages exist, and a stranger opening
+`/login` sees a login form and nothing else. The real cost is that the web app surface was only
+ever a development convenience — `DestructiveAction` carries a comment saying so — and anyone who
+reaches it gets a surface nobody designed, tested on a phone, or intended to support. It will
+mostly work, which is worse than plainly not working.
+
+**Revisit before v1 ships.** The fix is a publish filter (copy `s/`, `_redirects` and the shared
+assets only), roughly half an hour. `"output": "single"` would also solve it, at the cost of the
+server-rendered first paint that S-2 F-2 exists to protect.
+
+- **Raised by:** reading `dist/` before a first deploy
+- **Blocks:** nothing now; a decision before the first public deploy.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26
