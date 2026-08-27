@@ -169,6 +169,10 @@ export const uk = {
   // US-004 AC-4. The story requires a way back to the full list and an empty
   // result that says so, but supplies neither wording, and the prototype has no
   // filtered state at all. Placeholders; see docs/open-questions.md item 17.
+  // US-009 — marks a row as a shoot you are ON rather than one you created.
+  // No prototype copy exists: ux-notes.md left US-009 out of it. Recorded in
+  // docs/open-questions.md #24.
+  crewShootBadge: 'В команді',
   allShoots: 'Всі зйомки',
   noShootsOnDay: 'На цю дату зйомок немає.',
   // US-018. AC-3 gives the rule (a shoot always needs a date) and reuses

@@ -6,13 +6,26 @@ import { Separator } from '../../src/components/ui/separator'
 import { Text } from '../../src/components/ui/text'
 import { useStrings } from '../../src/i18n/LanguageProvider'
 import { listShoots, type Shoot } from '../../src/features/shoots/api'
+import { listCrewShoots, type CrewShoot } from '../../src/features/shoots/crewSchedule'
 import { StatusPill } from '../../src/components/StatusPill'
 import { ShootCalendar } from '../../src/components/ShootCalendar'
 
 type State =
   | { status: 'loading' }
   | { status: 'error' }
-  | { status: 'loaded'; shoots: Shoot[] }
+  | { status: 'loaded'; shoots: Shoot[]; crewShoots: CrewShoot[] }
+
+/**
+ * One row, two provenances (`US-009`).
+ *
+ * A shoot you created and a shoot you were added to are different things —
+ * different permissions, different destinations when tapped, different fields
+ * available — so they are different variants rather than one type with nullable
+ * halves. The list shows them together because a commitment is a commitment.
+ */
+type Row =
+  | { kind: 'created'; date: string; shoot: Shoot }
+  | { kind: 'crew'; date: string; entry: CrewShoot }
 
 /**
  * The shoot creator's home view (US-004).
@@ -50,9 +63,18 @@ export default function ShootListScreen() {
     useCallback(() => {
       let active = true
       void (async () => {
-        const shoots = await listShoots()
+        // Both in parallel: one is not a fallback for the other, and a user can
+        // have shoots of both kinds.
+        const [shoots, crewShoots] = await Promise.all([listShoots(), listCrewShoots()])
         if (!active) return
-        setState(shoots ? { status: 'loaded', shoots } : { status: 'error' })
+        // `listCrewShoots` returning null is an error like any other. It is not
+        // treated as "no commitments", which would quietly show a crew member
+        // an empty schedule and tell them nothing was wrong.
+        setState(
+          shoots && crewShoots
+            ? { status: 'loaded', shoots, crewShoots }
+            : { status: 'error' }
+        )
       })()
       return () => {
         active = false
@@ -73,8 +95,13 @@ export default function ShootListScreen() {
           and after an error it renders unmarked rather than disappearing —
           the chrome should not move under the reader.
         */}
+        {/*
+          US-009 — the calendar marks BOTH kinds. A crew member's commitments
+          are the whole reason they would open this screen, and a calendar that
+          ignored them would show an empty month to someone booked all week.
+        */}
         <ShootCalendar
-          shootDates={state.status === 'loaded' ? state.shoots.map((s) => s.date) : []}
+          shootDates={state.status === 'loaded' ? rows(state.shoots, state.crewShoots).map((r) => r.date) : []}
           selected={selectedDate}
           // Tapping the selected date again clears it. The visible control
           // below is the documented way back (AC-4); this is just the gesture
@@ -97,7 +124,7 @@ export default function ShootListScreen() {
           </View>
         ) : state.status === 'error' ? (
           <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
-        ) : state.shoots.length === 0 ? (
+        ) : rows(state.shoots, state.crewShoots).length === 0 ? (
           <View className="items-center gap-2 py-8">
             <Text variant="h4">{t.emptyShoots}</Text>
             <Text className="text-muted-foreground">{t.emptyShootsSub}</Text>
@@ -106,7 +133,7 @@ export default function ShootListScreen() {
               <Text>{t.createFirst}</Text>
             </Button>
           </View>
-        ) : visible(state.shoots, selectedDate).length === 0 ? (
+        ) : visible(rows(state.shoots, state.crewShoots), selectedDate).length === 0 ? (
           // AC-4 — the account has shoots, this date has none. A result, not
           // the AC-2 empty state and not an error.
           <View className="items-center py-8">
@@ -119,25 +146,26 @@ export default function ShootListScreen() {
             container, a Separator between rows, and each row a
             title/subtitle/trailing layout. Same shape, same content — the kit
             is thinner, not the screen.
-
-            Rows open the shoot detail screen. They were deliberately inert
-            until US-003, which is the story that gave them somewhere to go.
           */
           <View className="border-border overflow-hidden rounded-lg border">
-            {visible(state.shoots, selectedDate).map((shoot, index) => (
-              <View key={shoot.id}>
+            {visible(rows(state.shoots, state.crewShoots), selectedDate).map((row, index) => (
+              <View key={row.kind === 'created' ? row.shoot.id : `crew-${row.entry.shootId}`}>
                 {index > 0 ? <Separator /> : null}
-                <Link href={`/(app)/shoot/${shoot.id}`} asChild>
-                  <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
-                    <View className="flex-1 gap-0.5">
-                      <Text className="font-medium">{shoot.clientName}</Text>
-                      <Text className="text-muted-foreground text-sm">
-                        {`${shoot.date}${shoot.locationAddress ? ` · ${shoot.locationAddress}` : ''}`}
-                      </Text>
-                    </View>
-                    <StatusPill value={shoot.status} />
-                  </Pressable>
-                </Link>
+                {row.kind === 'created' ? (
+                  <Link href={`/(app)/shoot/${row.shoot.id}`} asChild>
+                    <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
+                      <View className="flex-1 gap-0.5">
+                        <Text className="font-medium">{row.shoot.clientName}</Text>
+                        <Text className="text-muted-foreground text-sm">
+                          {`${row.shoot.date}${row.shoot.locationAddress ? ` · ${row.shoot.locationAddress}` : ''}`}
+                        </Text>
+                      </View>
+                      <StatusPill value={row.shoot.status} />
+                    </Pressable>
+                  </Link>
+                ) : (
+                  <CrewRow entry={row.entry} badge={t.crewShootBadge} />
+                )}
               </View>
             ))}
           </View>
@@ -147,9 +175,61 @@ export default function ShootListScreen() {
   )
 }
 
+/**
+ * `US-009` — the two sources as one dated list.
+ *
+ * Sorted by date across both, so a shoot someone booked you for sits between
+ * two of your own rather than after them. Ties keep created shoots first, which
+ * is arbitrary but stable — the alternative is rows that reorder between
+ * renders.
+ */
+function rows(shoots: Shoot[], crewShoots: CrewShoot[]): Row[] {
+  const created: Row[] = shoots.map((shoot) => ({ kind: 'created', date: shoot.date, shoot }))
+  const crewed: Row[] = crewShoots.map((entry) => ({ kind: 'crew', date: entry.date, entry }))
+  return [...created, ...crewed].sort((a, b) =>
+    a.date === b.date ? (a.kind === b.kind ? 0 : a.kind === 'created' ? -1 : 1) : a.date < b.date ? -1 : 1
+  )
+}
+
 /** AC-4 — the list narrowed to one date, or all of it when nothing is selected. */
-function visible(shoots: Shoot[], selectedDate: string | null): Shoot[] {
-  return selectedDate ? shoots.filter((shoot) => shoot.date === selectedDate) : shoots
+function visible(all: Row[], selectedDate: string | null): Row[] {
+  return selectedDate ? all.filter((row) => row.date === selectedDate) : all
+}
+
+/**
+ * A shoot someone else booked you for (`US-009`).
+ *
+ * Deliberately shaped unlike a created row. There is no client name to lead
+ * with — a crew member is not given one (`US-007`) — so the location leads and
+ * the date falls to the subtitle beside the role, which is the answer to "why
+ * am I on this?".
+ *
+ * It opens the reader's own link view rather than the creator's shoot screen.
+ * That is not a shortcut: a crew member cannot read the shoot row at all, and
+ * the link is the access they already have (`US-007`). With no link created
+ * yet, the row is inert rather than broken — nothing has been shared with them.
+ */
+function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
+  const body = (
+    <View className="flex-row items-center gap-3 px-4 py-3">
+      <View className="flex-1 gap-0.5">
+        <Text className="font-medium">{entry.locationAddress ?? entry.date}</Text>
+        <Text className="text-muted-foreground text-sm">
+          {entry.locationAddress ? `${entry.date} · ${entry.role}` : entry.role}
+        </Text>
+      </View>
+      <View className="border-border bg-secondary rounded-full border px-2.5 py-1">
+        <Text className="text-muted-foreground text-xs font-bold">{badge}</Text>
+      </View>
+    </View>
+  )
+
+  if (!entry.token) return body
+  return (
+    <Link href={`/s/${entry.token}`} asChild>
+      <Pressable className="active:bg-secondary">{body}</Pressable>
+    </Link>
+  )
 }
 
 /**

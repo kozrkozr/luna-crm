@@ -364,6 +364,35 @@ whether the two surfaces are allowed to name the same person's role differently,
 - **Raised by:** building `US-015`
 - **Blocks:** nothing; the behaviour is deliberate and tested.
 
+### 24. Nothing collects a phone from a registering user
+Spike `S-5` F-3. The matching that `US-009` runs on accepts email or phone, and `users.phone`
+exists and is read by the signup trigger — but the registration form does not offer the field and
+the profile is read-only (`#4`). So `users.phone` is null for every account, and a crew member
+added by phone alone can never be matched to one.
+
+`US-005`'s placeholder is «+380… або email», which invites the phone. Nothing warns the
+photographer that a phone-added person will not get a schedule.
+
+Not a defect in `US-009` — it works by email, which is what it was built and tested on. It is a
+gap between two stories that no story owns: adding a phone field at registration, or making the
+profile editable, would close it and neither exists.
+
+- **Raised by:** spike `S-5`
+- **Blocks:** nothing; `US-009` ships without it. Related to `#4`.
+
+### 25. Copy for a crew shoot on the shoot list
+`US-009` needed a way to tell a shoot you were added to from one you created, on the same list.
+`ux-notes.md` deliberately left `US-009` out of the prototype, so no design and no copy exist for
+it — «В команді» / "On the crew" is mine, not the owner's, and is the only invented user-facing
+string in the build so far.
+
+The same gap covers the rest of that row: what a crew shoot is titled when it has no location,
+and whether a crew member should see the client's name at all (they are not given it, following
+`US-007`).
+
+- **Raised by:** building `US-009`
+- **Blocks:** nothing; flagged so it is reviewed rather than assumed settled.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

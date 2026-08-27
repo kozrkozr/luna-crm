@@ -134,6 +134,7 @@ export const en: Strings = {
   referenceLinkInvalid: 'Enter a valid link — it must start with http or https',
   referenceTypeUnsupported: 'This file type is not supported. Choose an image.',
   referenceAddFailed: 'Could not add the reference. Please try again.',
+  crewShootBadge: 'On the crew',
   allShoots: 'All shoots',
   noShootsOnDay: 'No shoots on this date.',
   shootUpdateFailed: 'Could not save the changes. Please try again.',
