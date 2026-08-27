@@ -3,7 +3,12 @@ import { supabase } from '../lib/supabase/client'
 import { uk } from './uk'
 import { DEFAULT_LANGUAGE, stringsFor, type Language, type Strings } from './index'
 
-type LanguageValue = { language: Language; strings: Strings }
+type LanguageValue = {
+  language: Language
+  strings: Strings
+  /** `US-015` AC-1 — switch, and remember. False if the choice was not saved. */
+  setLanguage: (next: Language) => Promise<boolean>
+}
 
 /**
  * Null when no provider is mounted, and that is load-bearing rather than
@@ -31,7 +36,7 @@ const LanguageContext = createContext<LanguageValue | null>(null)
  * anything being written — AC-1's "no saved language preference".
  */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE)
+  const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE)
 
   useEffect(() => {
     let active = true
@@ -43,7 +48,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (!active || !data) return
       // Checked rather than cast: an unexpected value falls back to Ukrainian
       // instead of resolving to an empty dictionary.
-      if (data.language === 'uk' || data.language === 'en') setLanguage(data.language)
+      if (data.language === 'uk' || data.language === 'en') setLanguageState(data.language)
     })()
 
     return () => {
@@ -51,8 +56,48 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  /**
+   * `US-015` AC-1 — "all UI text changes to English, and the choice persists
+   * the next time they log in". Two separate obligations, so this does two
+   * things and only claims success for both.
+   *
+   * The screen changes first, because a language toggle that waits on a round
+   * trip feels broken. But an unsaved choice is not the choice AC-1 describes,
+   * so a failed write puts the previous language back rather than leaving the
+   * UI showing one thing and the account remembering another.
+   *
+   * `users.language` is the only column written. That is what makes AC-2 true
+   * by construction: nothing in a shoot, a reference or a name is touched, so
+   * switching cannot alter data.
+   */
+  const change = async (next: Language): Promise<boolean> => {
+    if (next === language) return true
+    const previous = language
+    setLanguageState(next)
+
+    const { data: auth } = await supabase.auth.getUser()
+    if (!auth.user) {
+      setLanguageState(previous)
+      return false
+    }
+    // Filtered by id as well as by RLS. The policy already restricts this to
+    // the caller's own row; the filter says so at the call site too.
+    const { error } = await supabase
+      .from('users')
+      .update({ language: next })
+      .eq('id', auth.user.id)
+
+    if (error) {
+      setLanguageState(previous)
+      return false
+    }
+    return true
+  }
+
   return (
-    <LanguageContext.Provider value={{ language, strings: stringsFor(language) }}>
+    <LanguageContext.Provider
+      value={{ language, strings: stringsFor(language), setLanguage: change }}
+    >
       {children}
     </LanguageContext.Provider>
   )
@@ -73,4 +118,15 @@ export function useStrings(): Strings {
 /** The resolved language itself, for the places that need the code and not the copy. */
 export function useLanguage(): Language {
   return useContext(LanguageContext)?.language ?? DEFAULT_LANGUAGE
+}
+
+/**
+ * The switch itself (`US-015`).
+ *
+ * Returns `null` where no provider is mounted — the auth screens and the link
+ * surface — so a switcher cannot be rendered somewhere the choice would have
+ * nowhere to persist to.
+ */
+export function useLanguageSwitch(): LanguageValue | null {
+  return useContext(LanguageContext)
 }

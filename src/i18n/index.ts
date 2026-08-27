@@ -1,4 +1,5 @@
 import { uk } from './uk'
+import { en } from './en'
 
 /**
  * The two UI languages, and the only two (`EP-05`, Out of scope). Russian is a
@@ -12,11 +13,20 @@ export type Language = 'uk' | 'en'
 /**
  * Every UI string, shaped by the Ukrainian dictionary.
  *
- * Typing English as `typeof uk` rather than the two independently is what makes
- * a missing translation a compile error instead of a blank label. `US-014` AC-2
- * asks that "no text is left untranslated"; this is where that is enforced.
+ * Shaped from the Ukrainian dictionary rather than declared twice, so a key
+ * added to one and forgotten in the other is a compile error instead of a blank
+ * label. `US-014` AC-2 asks that "no text is left untranslated"; this is where
+ * that is enforced.
+ *
+ * The literal types `as const` gives `uk` are widened back to `string` here.
+ * Without that, `Strings` would demand the exact Ukrainian text — English would
+ * not typecheck against its own type.
  */
-export type Strings = typeof uk
+export type Strings = {
+  readonly [K in keyof typeof uk]: (typeof uk)[K] extends readonly string[]
+    ? readonly string[]
+    : string
+}
 
 /**
  * `US-014` AC-1 — Ukrainian unless an account says otherwise.
@@ -30,11 +40,8 @@ export type Strings = typeof uk
  */
 export const DEFAULT_LANGUAGE: Language = 'uk'
 
-/**
- * `en` arrives with `US-015`. Until then the map has one entry and every
- * language resolves to Ukrainian, which is precisely what `US-014` describes.
- */
-const dictionaries: Partial<Record<Language, Strings>> = { uk }
+/** `US-015` added `en`. Both languages resolve; nothing else does. */
+const dictionaries: Record<Language, Strings> = { uk, en }
 
 export function stringsFor(language: Language): Strings {
   return dictionaries[language] ?? uk

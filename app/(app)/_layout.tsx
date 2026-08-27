@@ -1,8 +1,10 @@
+import { View } from 'react-native'
 import { Link, Stack } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { Text } from '../../src/components/ui/text'
 import { LanguageProvider, useStrings } from '../../src/i18n/LanguageProvider'
 import { RequireSession } from '../../src/features/auth/RequireSession'
+import { LanguageSwitcher } from '../../src/components/LanguageSwitcher'
 
 /**
  * The creator's surface. Everything here requires a session (EP-01), enforced
@@ -42,12 +44,17 @@ function AppStack() {
           title: t.myShoots,
           // US-016 AC-2 requires the profile to be *reachable*. The prototype
           // reaches it from a person icon in the account header.
+          // US-015 — the UA/EN toggle sits beside the profile icon, as in the
+          // prototype's account header.
           headerRight: () => (
-            <Link href="/(app)/profile" asChild>
-              <Button variant="ghost" size="sm" accessibilityLabel={t.profileTitle}>
-                <Text>👤</Text>
-              </Button>
-            </Link>
+            <View className="flex-row items-center gap-1">
+              <LanguageSwitcher />
+              <Link href="/(app)/profile" asChild>
+                <Button variant="ghost" size="sm" accessibilityLabel={t.profileTitle}>
+                  <Text>👤</Text>
+                </Button>
+              </Link>
+            </View>
           ),
         }}
       />
