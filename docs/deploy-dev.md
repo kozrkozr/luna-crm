@@ -52,10 +52,12 @@ cat .env.local-backup      # keep this visible somewhere
 
 Then link this repo to it and push the schema:
 
+The CLI is a project devDependency, not a global command — hence `npx`.
+
 ```bash
-supabase login
-supabase link --project-ref <the ref from your project URL>
-supabase db push
+npx supabase login
+npx supabase link --project-ref <the ref from your project URL>
+npx supabase db push
 ```
 
 `db push` applies all nine migrations — tables, RLS policies, grants, the storage bucket, the
@@ -66,7 +68,7 @@ soft-delete functions and the US-009 matching triggers. It should report nine ap
 Two of three user flows are this function. Without it, every link is dead.
 
 ```bash
-supabase functions deploy link-gateway
+npx supabase functions deploy link-gateway
 ```
 
 No secrets to set: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically,
@@ -113,9 +115,24 @@ Build locally and upload the result. No GitHub repo needed, and no Node version 
 Cloudflare's side — you are building on your own Node 22.
 
 ```bash
-node -v                      # must be >= 22; the export fails on 20
-npm run export:web           # produces dist/
+node -v                              # must be >= 22; the export fails on 20
+rm -rf dist
+npx expo export -p web --clear       # NOT `npm run export:web` — see below
 npx wrangler pages deploy dist --project-name=luna-crm
+```
+
+**`--clear` is not optional after `.env` changes, and this one bites silently.** Metro caches
+transformed modules with the `EXPO_PUBLIC_*` values already inlined. Without it the export
+completes normally, prints the same route list, and produces a `dist/` still pointing at whatever
+backend the previous build used. Nothing fails; you simply deploy the wrong thing. Confirmed here
+on the first attempt — the bundle still carried a `192.168.x.x` LAN address after `.env` had been
+switched to the hosted project.
+
+Check the build rather than trusting it:
+
+```bash
+grep -rl "<your-project-ref>" dist >/dev/null && echo "ok: hosted URL baked in"
+grep -rl "192.168"             dist >/dev/null && echo "STALE — rebuild with --clear"
 ```
 
 First run opens a browser to authorise Cloudflare and offers to create the project — accept

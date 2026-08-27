@@ -7,5 +7,9 @@ android/
 *.log
 .env
 .env.local
+# Any local variant — including the backup docs/deploy-dev.md tells you to make
+# before pointing .env at a deployed environment.
+.env.*
+!.env.example
 .DS_Store
 
