@@ -12,6 +12,7 @@
     "web": "expo start --web",
     "export:web": "expo export -p web",
     "serve:link": "node scripts/serve-link-surface.js",
+    "test:acceptance": "bash tests/acceptance/run-all.sh",
     "typecheck": "tsc --noEmit",
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts"
