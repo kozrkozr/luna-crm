@@ -87,10 +87,21 @@ http
           res.writeHead(rule.status, { location: rule.to })
           return res.end()
         }
+        // Resolve the target the way Pages does: it serves `foo.html` at the
+        // clean URL `/foo`, so a rewrite target is written without the
+        // extension and the file is found by adding it back. Writing `.html`
+        // in the rule instead does not work on Pages — it 308s the `.html`
+        // form to the clean one, and the rewrite bounces before it lands.
         file = path.join(ROOT, rule.to)
-        if (!fs.existsSync(file)) {
-          res.writeHead(404)
-          return res.end(`rewrite target missing: ${rule.to}`)
+        if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+          const targetAsHtml = path.join(ROOT, `${rule.to}.html`)
+          const targetAsIndex = path.join(ROOT, rule.to, 'index.html')
+          if (fs.existsSync(targetAsHtml)) file = targetAsHtml
+          else if (fs.existsSync(targetAsIndex)) file = targetAsIndex
+          else {
+            res.writeHead(404)
+            return res.end(`rewrite target missing: ${rule.to}`)
+          }
         }
       }
     }
