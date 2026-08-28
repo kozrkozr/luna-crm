@@ -43,6 +43,21 @@ export const uk = {
   date: 'Дата',
   dateRequired: 'Вкажіть дату зйомки',
   pickDate: 'Обрати дату',
+  /*
+   * US-030. «Дата і час», «Початок» and «Кінець» are the design system's own
+   * strings, taken from its shoot-edit mockup rather than translated here.
+   *
+   * `pickTime` and the two required-messages are NOT from any mockup: no
+   * prototype covers picker or validation copy. They mirror `pickDate` and
+   * `dateRequired`, which docs/open-questions.md item 1 already records as
+   * placeholders — same status, same note.
+   */
+  dateAndTime: 'Дата і час',
+  timeStart: 'Початок',
+  timeEnd: 'Кінець',
+  pickTime: 'Обрати час',
+  startTimeRequired: 'Вкажіть початок зйомки',
+  endTimeRequired: 'Вкажіть кінець зйомки',
   // iOS convention for confirming a picker. Not from the prototype — see
   // docs/open-questions.md item 1.
   done: 'Готово',

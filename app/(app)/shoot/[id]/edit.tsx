@@ -11,7 +11,7 @@ import { DateField } from '../../../../src/components/DateField'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { getShoot, updateShoot } from '../../../../src/features/shoots/api'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
-import { toIsoDate } from '../../../../src/features/shoots/date'
+import { fromTimeValue, toIsoDate, toTimeValue } from '../../../../src/features/shoots/date'
 import {
   attachmentKind,
   uploadLocationAttachment,
@@ -19,6 +19,13 @@ import {
 
 type Loaded = {
   date: Date | null
+  /**
+   * `US-030` AC-5. Null for a shoot created before that story (AC-6): the
+   * fields open empty and save is blocked until they are filled, which is what
+   * "the next edit collects them" means in practice.
+   */
+  startTime: Date | null
+  endTime: Date | null
   address: string
   note: string
   attachment: string | null
@@ -49,6 +56,7 @@ export default function EditShootScreen() {
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [failedToLoad, setFailedToLoad] = useState(false)
   const [dateError, setDateError] = useState(false)
+  const [timeErrors, setTimeErrors] = useState({ start: false, end: false })
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -64,6 +72,8 @@ export default function EditShootScreen() {
           // `new Date(string)`, which parses a bare date as UTC midnight and
           // can land on the previous day west of Greenwich.
           date: fromIsoDate(shoot.date),
+          startTime: shoot.startTime ? fromTimeValue(shoot.startTime) : null,
+          endTime: shoot.endTime ? fromTimeValue(shoot.endTime) : null,
           address: shoot.locationAddress ?? '',
           note: shoot.locationNote ?? '',
           attachment: shoot.locationAttachment,
@@ -110,6 +120,16 @@ export default function EditShootScreen() {
     }
     setDateError(false)
 
+    // US-030 AC-5 — the same rule as creation, including what it leaves out:
+    // an end before the start is not checked here either (AC-3 is unwritten,
+    // 02-product/open-questions.md item 14).
+    const missingTimes = { start: !loaded.startTime, end: !loaded.endTime }
+    setTimeErrors(missingTimes)
+    if (missingTimes.start || missingTimes.end) {
+      setFormError(null)
+      return
+    }
+
     // US-024 AC-3 — a malformed link is refused with a message and nothing is
     // saved, exactly as US-003 AC-2 refuses a reference. Empty is not
     // malformed: clearing the field is how a link is removed.
@@ -124,6 +144,8 @@ export default function EditShootScreen() {
     setBusy(true)
     const ok = await updateShoot(id, {
       date: toIsoDate(loaded.date),
+      startTime: toTimeValue(loaded.startTime as Date),
+      endTime: toTimeValue(loaded.endTime as Date),
       locationAddress: loaded.address,
       locationNote: loaded.note,
       locationAttachment: loaded.attachment,
@@ -181,6 +203,40 @@ export default function EditShootScreen() {
           onClear={() => set('date', null)}
         />
         {dateError ? <Text className="text-destructive text-sm">{t.dateRequired}</Text> : null}
+
+        {/* US-030 AC-5 — a pair of fields in one row (design system §5.9). */}
+        <View className="flex-row gap-2">
+          <View className="flex-1 gap-2">
+            <Label htmlFor="start-time">{t.timeStart}</Label>
+            <DateField
+              id="start-time"
+              mode="time"
+              value={loaded.startTime}
+              onChange={(value) => {
+                set('startTime', value)
+                setTimeErrors((current) => ({ ...current, start: false }))
+              }}
+            />
+          </View>
+          <View className="flex-1 gap-2">
+            <Label htmlFor="end-time">{t.timeEnd}</Label>
+            <DateField
+              id="end-time"
+              mode="time"
+              value={loaded.endTime}
+              onChange={(value) => {
+                set('endTime', value)
+                setTimeErrors((current) => ({ ...current, end: false }))
+              }}
+            />
+          </View>
+        </View>
+        {timeErrors.start ? (
+          <Text className="text-destructive text-sm">{t.startTimeRequired}</Text>
+        ) : null}
+        {timeErrors.end ? (
+          <Text className="text-destructive text-sm">{t.endTimeRequired}</Text>
+        ) : null}
 
         <Text variant="h4" className="pt-4">
           {t.locationSection}

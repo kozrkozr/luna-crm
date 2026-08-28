@@ -7,7 +7,7 @@ import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
 import { useStrings } from '../../src/i18n/LanguageProvider'
 import { createShoot } from '../../src/features/shoots/api'
-import { toIsoDate } from '../../src/features/shoots/date'
+import { toIsoDate, toTimeValue } from '../../src/features/shoots/date'
 import { DateField } from '../../src/components/DateField'
 
 /**
@@ -24,7 +24,8 @@ import { DateField } from '../../src/components/DateField'
  * like a field.
  *
  * The date starts unset rather than defaulting to today, so AC-2's "required
- * field left empty" is a state a user can actually reach.
+ * field left empty" is a state a user can actually reach. US-030's start and
+ * end times work the same way, and for the same reason.
  */
 export default function NewShootScreen() {
   const t = useStrings()
@@ -33,21 +34,37 @@ export default function NewShootScreen() {
   const [clientName, setClientName] = useState('')
   const [clientContact, setClientContact] = useState('')
   const [date, setDate] = useState<Date | null>(null)
+  // US-030 AC-1 — both required. Unset like the date, so AC-2's "required field
+  // left empty" stays a reachable state rather than one a default hides.
+  const [startTime, setStartTime] = useState<Date | null>(null)
+  const [endTime, setEndTime] = useState<Date | null>(null)
 
-  const [errors, setErrors] = useState<{ name?: boolean; contact?: boolean; date?: boolean }>({})
+  const [errors, setErrors] = useState<{
+    name?: boolean
+    contact?: boolean
+    date?: boolean
+    startTime?: boolean
+    endTime?: boolean
+  }>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const submit = async () => {
     // AC-2 — save is blocked, the missing field is indicated, and nothing is
     // created. Validated before the request for exactly that reason.
+    //
+    // Note what is NOT checked: whether the end is before the start. US-030
+    // AC-3 is unwritten — see 02-product/open-questions.md item 14 — so an
+    // inverted range saves. That is the specified behaviour, not an oversight.
     const nextErrors = {
       name: !clientName.trim(),
       contact: !clientContact.trim(),
       date: !date,
+      startTime: !startTime,
+      endTime: !endTime,
     }
     setErrors(nextErrors)
-    if (nextErrors.name || nextErrors.contact || nextErrors.date) {
+    if (Object.values(nextErrors).some(Boolean)) {
       setFormError(null)
       return
     }
@@ -57,6 +74,8 @@ export default function NewShootScreen() {
       clientName,
       clientContact,
       date: toIsoDate(date as Date),
+      startTime: toTimeValue(startTime as Date),
+      endTime: toTimeValue(endTime as Date),
     })
     setSubmitting(false)
 
@@ -101,6 +120,23 @@ export default function NewShootScreen() {
         <Label htmlFor="date">{t.date}</Label>
         <DateField id="date" value={date} onChange={setDate} />
         <FieldError show={!!errors.date} message={t.dateRequired} />
+
+        {/*
+          Start and end side by side, each flex-1 — the pairing the design
+          system's §5.9 specifies for a row of two fields.
+        */}
+        <View className="flex-row gap-2">
+          <View className="flex-1 gap-2">
+            <Label htmlFor="start-time">{t.timeStart}</Label>
+            <DateField id="start-time" mode="time" value={startTime} onChange={setStartTime} />
+          </View>
+          <View className="flex-1 gap-2">
+            <Label htmlFor="end-time">{t.timeEnd}</Label>
+            <DateField id="end-time" mode="time" value={endTime} onChange={setEndTime} />
+          </View>
+        </View>
+        <FieldError show={!!errors.startTime} message={t.startTimeRequired} />
+        <FieldError show={!!errors.endTime} message={t.endTimeRequired} />
 
         {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 

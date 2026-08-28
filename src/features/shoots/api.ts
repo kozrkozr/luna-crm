@@ -8,6 +8,13 @@ export type Shoot = {
   clientName: string
   clientContact: string
   date: string
+  /**
+   * `US-030` — local wall-clock `HH:MM`. Null only for shoots created before
+   * that story: the form requires both, the column does not, and AC-6 says such
+   * a shoot renders its date alone rather than half a range.
+   */
+  startTime: string | null
+  endTime: string | null
   status: ShootStatus
   locationAddress: string | null
   /** Free text — directions and the like (US-018 AC-2). */
@@ -31,6 +38,9 @@ export type Shoot = {
  */
 export type UpdateShootInput = {
   date: string // ISO date, YYYY-MM-DD
+  /** `US-030` AC-5 — editable, under the same rules as creation. */
+  startTime: string // HH:MM
+  endTime: string // HH:MM
   locationAddress: string | null
   locationNote: string | null
   locationAttachment: string | null
@@ -45,12 +55,20 @@ export type UpdateShootInput = {
 
 /** Every column the app reads for a Shoot, in one place so the two queries agree. */
 const SHOOT_COLUMNS =
-  'id, client_name, client_contact, date, status, location_address, location_note, location_attachment, raw_files_url, finished_photos_url'
+  'id, client_name, client_contact, date, start_time, end_time, status, location_address, location_note, location_attachment, raw_files_url, finished_photos_url'
 
 export type CreateShootInput = {
   clientName: string
   clientContact: string
   date: string // ISO date, YYYY-MM-DD
+  /**
+   * `US-030` AC-1 — both required, and typed non-nullable so AC-2's "save is
+   * blocked" cannot be bypassed by calling this directly. The *column* is
+   * nullable (see the migration); required-ness lives here and in the form,
+   * because only rows predating the story are allowed to lack them.
+   */
+  startTime: string // HH:MM
+  endTime: string // HH:MM
 }
 
 export type CreateShootResult = { ok: true; id: string } | { ok: false }
@@ -76,6 +94,8 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
       client_name: input.clientName.trim(),
       client_contact: input.clientContact.trim(),
       date: input.date,
+      start_time: input.startTime,
+      end_time: input.endTime,
     })
     .select('id')
     .single()
@@ -121,6 +141,8 @@ type ShootRow = {
   client_name: string
   client_contact: string
   date: string
+  start_time: string | null
+  end_time: string | null
   status: string
   location_address: string | null
   location_note: string | null
@@ -135,6 +157,10 @@ function toShoot(row: ShootRow): Shoot {
     clientName: row.client_name,
     clientContact: row.client_contact,
     date: row.date,
+    // Postgres hands back `09:00:00`; the app and the design both speak HH:MM.
+    // Trimmed here so no screen has to know the column's precision.
+    startTime: row.start_time ? row.start_time.slice(0, 5) : null,
+    endTime: row.end_time ? row.end_time.slice(0, 5) : null,
     status: row.status as ShootStatus,
     locationAddress: row.location_address,
     locationNote: row.location_note,
@@ -196,6 +222,8 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
     .from('shoots')
     .update({
       date: input.date,
+      start_time: input.startTime,
+      end_time: input.endTime,
       location_address: input.locationAddress?.trim() || null,
       location_note: input.locationNote?.trim() || null,
       location_attachment: input.locationAttachment,

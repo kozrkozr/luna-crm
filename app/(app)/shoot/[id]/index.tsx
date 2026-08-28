@@ -8,6 +8,7 @@ import { Input } from '../../../../src/components/ui/input'
 import { Separator } from '../../../../src/components/ui/separator'
 import { Text } from '../../../../src/components/ui/text'
 import { StatusPill } from '../../../../src/components/StatusPill'
+import { formatTimeRange } from '../../../../src/features/shoots/date'
 import { DestructiveAction } from '../../../../src/components/DestructiveAction'
 import {
   ReferenceGrid,
@@ -125,8 +126,16 @@ export default function ShootDetailScreen() {
             its header is a brand bar rather than a native title.
           */}
           <View className="flex-row items-center gap-3">
+            {/*
+              US-030 AC-4 — the range sits between the date and the location.
+              `formatTimeRange` returns null for a shoot created before that
+              story, and the segment then drops out entirely (AC-6) rather than
+              showing an empty dash.
+            */}
             <Text className="text-muted-foreground flex-1">
-              {`${shoot.date}${shoot.locationAddress ? ` · ${shoot.locationAddress}` : ''}`}
+              {[shoot.date, formatTimeRange(shoot.startTime, shoot.endTime), shoot.locationAddress]
+                .filter(Boolean)
+                .join(' · ')}
             </Text>
             <StatusPill value={shoot.status} />
           </View>

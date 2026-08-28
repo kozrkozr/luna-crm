@@ -4,7 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button } from './ui/button'
 import { Text } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
-import { toIsoDate } from '../features/shoots/date'
+import { toIsoDate, toTimeValue } from '../features/shoots/date'
 
 /** Standard height of the iOS date wheel. */
 const PICKER_HEIGHT = 216
@@ -15,6 +15,13 @@ type Props = {
   onChange: (date: Date) => void
   placeholder?: string
   /**
+   * `date` renders YYYY-MM-DD and opens the calendar wheel; `time` renders
+   * HH:MM and opens the clock wheel (US-030). One component rather than two
+   * because the modal below is the whole substance of this file, and the note
+   * on it is a warning worth having in exactly one place.
+   */
+  mode?: 'date' | 'time'
+  /**
    * Offers a way to clear the date. US-018 AC-3 requires that clearing it and
    * saving be blocked, which means the cleared state has to be reachable at
    * all — a picker with no way out can only ever produce a valid date. Omitted
@@ -24,8 +31,8 @@ type Props = {
 }
 
 /**
- * A date field: shaped like the Input fields around it, opening the platform
- * picker on tap.
+ * A date or time field: shaped like the Input fields around it, opening the
+ * platform picker on tap. `mode` chooses which (US-030 added the time case).
  *
  * Uses React Native's Modal rather than a library sheet. The previous UI
  * layer's sheet did not appear here — most likely its fit-to-content mode
@@ -41,12 +48,14 @@ type Props = {
  * not typeable, since a text field invites locale ambiguity — is 05.09 September
  * or May? — for no gain on a device with a native picker.
  */
-export function DateField({ id, value, onChange, placeholder, onClear }: Props) {
+export function DateField({ id, value, onChange, placeholder, onClear, mode = 'date' }: Props) {
   const t = useStrings()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Date>(value ?? new Date())
 
   const close = () => setOpen(false)
+  const format = mode === 'time' ? toTimeValue : toIsoDate
+  const emptyLabel = placeholder ?? (mode === 'time' ? t.pickTime : t.pickDate)
 
   return (
     <>
@@ -66,7 +75,7 @@ export function DateField({ id, value, onChange, placeholder, onClear }: Props) 
           }}
         >
           <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
-            {value ? toIsoDate(value) : (placeholder ?? t.pickDate)}
+            {value ? format(value) : emptyLabel}
           </Text>
         </Button>
         {onClear && value ? (
@@ -83,7 +92,7 @@ export function DateField({ id, value, onChange, placeholder, onClear }: Props) 
             <View className="flex-row justify-center" style={{ height: PICKER_HEIGHT }}>
               <DateTimePicker
                 value={draft}
-                mode="date"
+                mode={mode}
                 display="spinner"
                 style={{ flex: 1, height: PICKER_HEIGHT }}
                 onChange={(_event, selected) => {

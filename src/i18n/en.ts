@@ -59,6 +59,13 @@ export const en: Strings = {
   date: 'Date',
   dateRequired: 'Set the shoot date',
   pickDate: 'Pick a date',
+  // US-030.
+  dateAndTime: 'Date and time',
+  timeStart: 'Start',
+  timeEnd: 'End',
+  pickTime: 'Pick a time',
+  startTimeRequired: 'Set the shoot start time',
+  endTimeRequired: 'Set the shoot end time',
   done: 'Done',
   newShoot: '+ New shoot',
   edit: 'Edit',

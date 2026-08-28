@@ -8,6 +8,7 @@ import { useStrings } from '../../src/i18n/LanguageProvider'
 import { listShoots, type Shoot } from '../../src/features/shoots/api'
 import { listCrewShoots, type CrewShoot } from '../../src/features/shoots/crewSchedule'
 import { StatusPill } from '../../src/components/StatusPill'
+import { formatTimeRange } from '../../src/features/shoots/date'
 import { ShootCalendar } from '../../src/components/ShootCalendar'
 
 type State =
@@ -156,8 +157,16 @@ export default function ShootListScreen() {
                     <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
                       <View className="flex-1 gap-0.5">
                         <Text className="font-medium">{row.shoot.clientName}</Text>
+                        {/* US-030 AC-4 — same composition as the detail screen;
+                            the calendar's day view is this list, filtered. */}
                         <Text className="text-muted-foreground text-sm">
-                          {`${row.shoot.date}${row.shoot.locationAddress ? ` · ${row.shoot.locationAddress}` : ''}`}
+                          {[
+                            row.shoot.date,
+                            formatTimeRange(row.shoot.startTime, row.shoot.endTime),
+                            row.shoot.locationAddress,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </Text>
                       </View>
                       <StatusPill value={row.shoot.status} />
