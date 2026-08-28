@@ -4,10 +4,14 @@ import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'ex
 import * as Clipboard from 'expo-clipboard'
 import * as ImagePicker from 'expo-image-picker'
 import { Button } from '../../../../src/components/ui/button'
+import { Card } from '../../../../src/components/ui/card'
 import { Input } from '../../../../src/components/ui/input'
-import { Separator } from '../../../../src/components/ui/separator'
 import { Text } from '../../../../src/components/ui/text'
 import { StatusPill } from '../../../../src/components/StatusPill'
+import { ResponsePill } from '../../../../src/components/ResponsePill'
+import { SectionHeader } from '../../../../src/components/SectionHeader'
+import { Avatar } from '../../../../src/components/Avatar'
+import { OwnerOnlyTag, RoleChip } from '../../../../src/components/Visibility'
 import { formatTimeRange } from '../../../../src/features/shoots/date'
 import { DestructiveAction } from '../../../../src/components/DestructiveAction'
 import {
@@ -107,7 +111,9 @@ export default function ShootDetailScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
+        {/* On the frame, so onDark-muted — `muted-foreground` is #6E6E73 and
+            lands at 1.9:1 here. */}
+        <Text className="text-body text-onDark-muted">{t.somethingWentWrong}</Text>
       </View>
     )
   }
@@ -118,50 +124,59 @@ export default function ShootDetailScreen() {
     <>
       <Stack.Screen options={{ title: shoot.clientName }} />
       <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
-        <View className="gap-3 p-4">
+        <View className="p-4">
           {/*
-            The client name is the navigation title and is not repeated in the
-            body — the same pattern as the shoot list and the profile screen.
-            The prototype shows it once too; it only puts it in the body because
-            its header is a brand bar rather than a native title.
-          */}
-          <View className="flex-row items-center gap-3">
-            {/*
-              US-030 AC-4 — the range sits between the date and the location.
-              `formatTimeRange` returns null for a shoot created before that
-              story, and the segment then drops out entirely (AC-6) rather than
-              showing an empty dash.
-            */}
-            <Text className="text-muted-foreground flex-1">
-              {[shoot.date, formatTimeRange(shoot.startTime, shoot.endTime), shoot.locationAddress]
-                .filter(Boolean)
-                .join(' · ')}
-            </Text>
-            <StatusPill value={shoot.status} />
-          </View>
+            The hero card (design system §5.2, §3.5). The client name is the
+            navigation title and is not repeated here — the prototype repeats it
+            only because its header is a brand bar rather than a native title.
 
-          <View className="flex-row items-stretch gap-2">
-            {/* US-018 AC-1 — the way into edit. */}
-            <Link href={`/(app)/shoot/${shoot.id}/edit`} asChild>
-              <Button variant="outline" className="h-auto flex-1 py-2">
-                <Text>{t.edit}</Text>
-              </Button>
-            </Link>
-            <StatusToggle
-              shoot={shoot}
-              onChanged={(status) =>
-                setState((current) =>
-                  current.status === 'loaded'
-                    ? { ...current, shoot: { ...current.shoot, status } }
-                    : current
-                )
-              }
-            />
-          </View>
+            Location moved INTO this card, which is where the mockups put it:
+            the address, the access note and the location photo all belong to
+            "where is this shoot", and a separate «Локація» heading below split
+            one idea across two surfaces.
+          */}
+          <Card variant="hero" className="gap-3">
+            <View className="flex-row items-start gap-3">
+              <View className="flex-1 gap-0.5">
+                {/*
+                  US-030 AC-4 — the range is the largest thing on the card, the
+                  `numeric-xl` role the design gives it. `formatTimeRange`
+                  returns null for a shoot created before that story and the
+                  line simply does not render (AC-6).
+                */}
+                <Text className="text-label text-ink-muted font-semibold">{shoot.date}</Text>
+                {formatTimeRange(shoot.startTime, shoot.endTime) ? (
+                  <Text className="text-numeric-xl text-ink font-bold">
+                    {formatTimeRange(shoot.startTime, shoot.endTime)}
+                  </Text>
+                ) : null}
+              </View>
+              <StatusPill value={shoot.status} />
+            </View>
+
+            <LocationBlock shoot={shoot} />
+
+            <View className="flex-row items-stretch gap-2">
+              {/* US-018 AC-1 — the way into edit. */}
+              <Link href={`/(app)/shoot/${shoot.id}/edit`} asChild>
+                <Button variant="secondary" size="block" className="flex-1">
+                  <Text>{t.edit}</Text>
+                </Button>
+              </Link>
+              <StatusToggle
+                shoot={shoot}
+                onChanged={(status) =>
+                  setState((current) =>
+                    current.status === 'loaded'
+                      ? { ...current, shoot: { ...current.shoot, status } }
+                      : current
+                  )
+                }
+              />
+            </View>
+          </Card>
 
           <ClientSection shoot={shoot} />
-
-          <LocationSection shoot={shoot} />
 
           <ReferencesBlock shootId={shoot.id} references={references} onAdded={onAdded} />
 
@@ -183,7 +198,7 @@ export default function ShootDetailScreen() {
             than one next to the things you came here to use, and the
             confirmation is the actual guarantee (AC-2).
           */}
-          <View className="pt-6">
+          <View className="pb-8 pt-8">
             <DestructiveAction
               label={t.deleteShoot}
               question={t.confirmDeleteShoot}
@@ -243,37 +258,52 @@ function CrewSection({
 }) {
   const t = useStrings()
   return (
-    <View className="gap-2 pt-2">
-      <Text variant="h4">{t.crew}</Text>
+    <View>
+      {/* The count is the design's own pattern — «Команда: 3» (§6.1). */}
+      <SectionHeader label={t.crew} count={crew.length} />
 
-      {crew.length > 0 ? (
-        <View className="border-border overflow-hidden rounded-lg border">
-          {crew.map((member, index) => (
-            <View key={member.id}>
-              {index > 0 ? <Separator /> : null}
-              <View className="flex-row items-center gap-3 px-4 py-3">
-                <View className="flex-1 gap-0.5">
-                  <Text className="font-medium">{member.name}</Text>
-                  <Text className="text-muted-foreground text-sm">
-                    {`${member.role} · ${member.phone ?? member.email ?? ''}`}
-                  </Text>
-                </View>
-                <CrewResponsePill value={member.response} />
-                <CopyLink token={() => crewLinkToken(shootId, member.id)} whose={member.name} />
-                <RemoveCrewMember member={member} onRemoved={onRemoved} />
-              </View>
-            </View>
-          ))}
-        </View>
-      ) : null}
+      {/*
+        One card per person, gap 8 between them (§5.7), rather than one bordered
+        box with separators inside. The design's unit is the card: a person is a
+        thing, and the previous list read as a table of rows.
+      */}
+      {crew.map((member) => (
+        <Card key={member.id} variant="row" className="mb-2 flex-row items-center gap-3">
+          <Avatar name={member.name} size={38} />
+          <View className="flex-1 gap-0.5">
+            <Text className="text-body text-ink font-semibold">{member.name}</Text>
+            <Text className="text-label text-ink-muted">
+              {`${member.role} · ${member.phone ?? member.email ?? ''}`}
+            </Text>
+          </View>
+          {/*
+            shrink-0 on the group: without it a long Ukrainian role squeezes the
+            pill and the two icon buttons out of the row (§5.3, §5.7).
+          */}
+          <View className="shrink-0 flex-row items-center gap-2">
+            <ResponsePill value={member.response} label={responseLabel(member.response, t)} />
+            <CopyLink token={() => crewLinkToken(shootId, member.id)} whose={member.name} />
+            <RemoveCrewMember member={member} onRemoved={onRemoved} />
+          </View>
+        </Card>
+      ))}
 
       <Link href={`/(app)/shoot/${shootId}/crew/add`} asChild>
-        <Button variant="secondary">
+        <Button variant="dashed" size="block" className="mt-2">
           <Text>{t.addCrewMember}</Text>
         </Button>
       </Link>
     </View>
   )
+}
+
+/** The three `US-008` answers, named. Shared by the crew rows and the pill. */
+function responseLabel(value: CrewMember['response'], t: ReturnType<typeof useStrings>): string {
+  return value === 'confirmed'
+    ? t.responseConfirmed
+    : value === 'declined'
+      ? t.responseDeclined
+      : t.responsePending
 }
 
 /**
@@ -377,33 +407,6 @@ function CopyLink({
  * because the column exists and defaults to `pending`; nothing on this screen
  * can change it — that happens through their own link.
  */
-function CrewResponsePill({ value }: { value: CrewMember['response'] }) {
-  const t = useStrings()
-  const tone =
-    value === 'confirmed'
-      ? 'bg-status-finished border-status-finished-border'
-      : value === 'declined'
-        ? 'bg-destructive/10 border-destructive/30'
-        : 'bg-status-new border-status-new-border'
-  const text =
-    value === 'confirmed'
-      ? 'text-status-finished-foreground'
-      : value === 'declined'
-        ? 'text-destructive'
-        : 'text-status-new-foreground'
-  const label =
-    value === 'confirmed'
-      ? t.responseConfirmed
-      : value === 'declined'
-        ? t.responseDeclined
-        : t.responsePending
-
-  return (
-    <View className={`rounded-full border px-2.5 py-1 ${tone}`}>
-      <Text className={`text-xs font-bold ${text}`}>{label}</Text>
-    </View>
-  )
-}
 
 /**
  * US-020 — mark the shoot Finished, or back to New.
@@ -462,17 +465,35 @@ function StatusToggle({
 function ClientSection({ shoot }: { shoot: Shoot }) {
   const t = useStrings()
   return (
-    <View className="gap-2 pt-2">
-      <Text variant="h4">{t.clientSection}</Text>
-      <View className="border-border overflow-hidden rounded-lg border">
-        <View className="flex-row items-center gap-3 px-4 py-3">
-          <View className="flex-1 gap-0.5">
-            <Text className="font-medium">{shoot.clientName}</Text>
-            <Text className="text-muted-foreground text-sm">{shoot.clientContact}</Text>
+    <View>
+      <SectionHeader label={t.clientSection} />
+      {/*
+        The `client` card variant — the purple surface that means "this is the
+        client" (§5.7). The avatar takes the same purple ring, so the role reads
+        before the chip is even parsed.
+      */}
+      <Card variant="client" className="gap-2.5">
+        <View className="flex-row items-center gap-3">
+          <Avatar name={shoot.clientName} size={38} className="border-2 border-client-ring" />
+          <View className="flex-1 flex-row items-center gap-2">
+            <Text className="text-body text-ink font-semibold">{shoot.clientName}</Text>
+            <RoleChip label={t.clientRole} />
           </View>
           <CopyLink token={() => clientLinkToken(shoot.id)} whose={shoot.clientName} />
         </View>
-      </View>
+
+        {/*
+          The contact carries an owner-only tag, and the tag is factual rather
+          than decorative: the link gateway's ShootRow has never selected
+          client_contact, so no crew member and no client has ever received it
+          (ADR-018, Visibility). If a story ever puts it in a payload, this tag
+          is the thing that has to change first.
+        */}
+        <View className="gap-1.5 pl-[50px]">
+          <OwnerOnlyTag label={t.ownerOnly} />
+          <Text className="text-body-sm text-ink">{shoot.clientContact}</Text>
+        </View>
+      </Card>
     </View>
   )
 }
@@ -480,15 +501,16 @@ function ClientSection({ shoot }: { shoot: Shoot }) {
 /**
  * US-018 — the location, shown wherever it is displayed (AC-1, AC-2).
  *
- * Renders nothing at all when there is no address, note or attachment. An
- * empty «Локація» heading over blank space would suggest the section had
- * failed to load rather than never been filled in, and the prototype shows it
- * only when there is something in it.
+ * Now a block INSIDE the hero card rather than a section of its own with its
+ * own «Локація» heading. The mockups put the address, the access note and the
+ * location photo together in the hero, and they are right to: they answer one
+ * question. The heading is gone because a card that already says 09:00 – 12:00
+ * and an address does not need to be told it is about the location.
  *
- * The address itself already appears next to the date above, as it does in the
- * list; this section is the note and its attachment.
+ * Renders nothing when there is no address, note or attachment — an empty
+ * divider inside the card would read as a section that failed to load.
  */
-function LocationSection({ shoot }: { shoot: Shoot }) {
+function LocationBlock({ shoot }: { shoot: Shoot }) {
   const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
   const [viewing, setViewing] = useState<string | null>(null)
@@ -513,16 +535,25 @@ function LocationSection({ shoot }: { shoot: Shoot }) {
   const kind = attachment ? attachmentKind(attachment) : null
 
   return (
-    <View className="gap-2 pt-2">
-      <Text variant="h4">{t.locationSection}</Text>
-      {shoot.locationAddress ? <Text>{shoot.locationAddress}</Text> : null}
+    /*
+      A hairline above, not around: §5.2 divides the inside of a card with a
+      single 1px `surface-hair` rule and 12pt of breathing room, never a nested
+      box.
+    */
+    <View className="border-surface-hair gap-2 border-t pt-3">
+      {shoot.locationAddress ? (
+        <View className="flex-row items-start gap-1.5">
+          <Text className="text-ink-icon text-[16px]">📍</Text>
+          <Text className="text-body-sm text-ink flex-1">{shoot.locationAddress}</Text>
+        </View>
+      ) : null}
       {shoot.locationNote ? (
-        <Text className="text-muted-foreground">{shoot.locationNote}</Text>
+        <Text className="text-body-sm text-ink-muted">{shoot.locationNote}</Text>
       ) : null}
 
       {attachment && kind === 'image' ? (
         <Pressable
-          className="bg-secondary border-border h-40 w-full overflow-hidden rounded-md border active:opacity-70"
+          className="bg-surface-alt h-40 w-full overflow-hidden rounded-xl active:opacity-70"
           disabled={!uri}
           onPress={() => uri && setViewing(uri)}
           role="button"
@@ -541,7 +572,7 @@ function LocationSection({ shoot }: { shoot: Shoot }) {
           same gesture US-003 AC-3 established for a link reference.
         */
         <Pressable
-          className="bg-secondary border-border h-20 w-full items-center justify-center rounded-md border active:opacity-70"
+          className="bg-surface-alt h-20 w-full items-center justify-center rounded-xl active:opacity-70"
           disabled={!uri}
           onPress={() => uri && void openExternalUrl(uri)}
           role="button"
@@ -617,8 +648,8 @@ function ReferencesBlock({
   }
 
   return (
-    <View className="gap-3 pt-2">
-      <Text variant="h4">{t.references}</Text>
+    <View>
+      <SectionHeader label={t.references} count={references.length} />
 
       {/*
         US-021 AC-1/AC-2 — the shoot's own page shows up to the display limit,
@@ -629,13 +660,18 @@ function ReferencesBlock({
 
       {references.length > REFERENCE_DISPLAY_LIMIT ? (
         <Link href={`/(app)/shoot/${shootId}/references`} asChild>
-          <Button variant="secondary">
+          <Button variant="dashed" size="block" className="mt-2">
             <Text>{`${t.showAllReferences} (${references.length})`}</Text>
           </Button>
         </Link>
       ) : null}
 
-      <View className="flex-row items-center gap-2">
+      {/*
+        The add row lives on a white card. It holds an Input, and an input is
+        content: on the bare frame its own white fill would be the only light
+        thing on the screen not sitting on a card, which reads as a mistake.
+      */}
+      <View className="bg-card mt-2 flex-row items-center gap-2 rounded-xl p-2.5">
         <Input
           className="flex-1"
           value={link}

@@ -58,6 +58,17 @@ export const uk = {
   pickTime: 'Обрати час',
   startTimeRequired: 'Вкажіть початок зйомки',
   endTimeRequired: 'Вкажіть кінець зйомки',
+  /*
+   * ADR-017's design system supplies these two strings itself, from its
+   * shoot-detail mockup — they are not translations invented here.
+   *
+   * `ownerOnly` is truthful about our data, not just decoration: the link
+   * gateway's ShootRow has never selected client_name or client_contact, so the
+   * client's contacts really do reach no audience but the creator (ADR-018,
+   * Visibility). If that ever changes, this label has to change with it.
+   */
+  ownerOnly: 'Бачите лише ви',
+  clientRole: 'Клієнт',
   // iOS convention for confirming a picker. Not from the prototype — see
   // docs/open-questions.md item 1.
   done: 'Готово',

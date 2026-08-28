@@ -3,6 +3,7 @@ import '../src/theme/global.css'
 import { PortalHost } from '@rn-primitives/portal'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { SCREEN } from '../src/theme/palette'
 
 /**
  * Root shell for both surfaces.
@@ -46,7 +47,13 @@ export default function RootLayout() {
         titled with the literal group name, so registration showed
         «(auth) Реєстрація». Each group's own layout owns its header.
       */}
-      <Stack screenOptions={{ headerShown: false }} />
+      {/*
+        `contentStyle` carries the dark frame here too (ADR-017). The link views
+        sit directly under this stack and draw their own header, so they get no
+        headerStyle — but without a content background the navigator paints
+        white behind them and the first paint of a link flashes.
+      */}
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: SCREEN } }} />
       {/*
         React Native Reusables' Select renders through @rn-primitives/portal,
         which needs one host mounted as the last child of the providers.

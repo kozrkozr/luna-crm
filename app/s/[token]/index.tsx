@@ -9,6 +9,7 @@ import { REFERENCE_DISPLAY_LIMIT } from '../../../src/components/ReferenceGrid'
 import { uk } from '../../../src/i18n/uk'
 import { LinkShootHeader } from '../../../src/components/LinkShootHeader'
 import { FileSection } from '../../../src/components/FileSection'
+import { ResponsePill as SharedResponsePill } from '../../../src/components/ResponsePill'
 import {
   resolveLink,
   respondToLink,
@@ -320,19 +321,13 @@ function Respond({
   )
 }
 
+/**
+ * The pill is shared with the creator's screen (src/components/ResponsePill).
+ * Only the label lookup stays here: this surface is Ukrainian-only with no
+ * switcher (`US-014`/`US-015`), so it reads `uk` directly rather than through
+ * the provider the app group mounts.
+ */
 function ResponsePill({ value }: { value: LinkCrewMember['response'] }) {
-  const tone =
-    value === 'confirmed'
-      ? 'bg-status-finished border-status-finished-border'
-      : value === 'declined'
-        ? 'bg-destructive/10 border-destructive/30'
-        : 'bg-status-new border-status-new-border'
-  const text =
-    value === 'confirmed'
-      ? 'text-status-finished-foreground'
-      : value === 'declined'
-        ? 'text-destructive'
-        : 'text-status-new-foreground'
   const label =
     value === 'confirmed'
       ? uk.responseConfirmed
@@ -340,9 +335,5 @@ function ResponsePill({ value }: { value: LinkCrewMember['response'] }) {
         ? uk.responseDeclined
         : uk.responsePending
 
-  return (
-    <View className={`rounded-full border px-2.5 py-1 ${tone}`}>
-      <Text className={`text-xs font-bold ${text}`}>{label}</Text>
-    </View>
-  )
+  return <SharedResponsePill value={value} label={label} />
 }

@@ -8,6 +8,7 @@ import { Label } from '../../../../src/components/ui/label'
 import { Text } from '../../../../src/components/ui/text'
 import { Textarea } from '../../../../src/components/ui/textarea'
 import { DateField } from '../../../../src/components/DateField'
+import { SectionHeader } from '../../../../src/components/SectionHeader'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { getShoot, updateShoot } from '../../../../src/features/shoots/api'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
@@ -164,7 +165,7 @@ export default function EditShootScreen() {
   if (failedToLoad) {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
+        <Text className="text-body text-onDark-muted">{t.somethingWentWrong}</Text>
       </View>
     )
   }
@@ -187,6 +188,8 @@ export default function EditShootScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View className="gap-2 p-4">
+        {/* Field groups keep gap-2 between a label and its input; the section
+            headers supply the 24pt rhythm between groups (§3.3). */}
         <Label htmlFor="date">{t.date}</Label>
         {/*
           `onClear` is passed here and nowhere else. Without it the date could
@@ -238,9 +241,11 @@ export default function EditShootScreen() {
           <Text className="text-destructive text-sm">{t.endTimeRequired}</Text>
         ) : null}
 
-        <Text variant="h4" className="pt-4">
-          {t.locationSection}
-        </Text>
+        {/* On the frame, so SectionHeader — `variant="h4"` inherits
+            `text-foreground`, which is now the frame's own white, and the
+            heading disappeared into it at 1.04:1. This is the §2 defect the
+            design system leads with. */}
+        <SectionHeader label={t.locationSection} />
 
         <Label htmlFor="address">{t.address}</Label>
         <Input
@@ -268,14 +273,12 @@ export default function EditShootScreen() {
         </View>
 
         {loaded.attachment ? (
-          <Text className="text-muted-foreground text-sm">
+          <Text className="text-body-sm text-onDark-muted">
             {attachmentKind(loaded.attachment) === 'video' ? '🎞' : '🖼'}
           </Text>
         ) : null}
 
-        <Text variant="h4" className="pt-4">
-          {t.editFilesTitle}
-        </Text>
+        <SectionHeader label={t.editFilesTitle} />
 
         <Label htmlFor="raw-files">{t.rawFiles}</Label>
         <Input
@@ -305,12 +308,22 @@ export default function EditShootScreen() {
 
         {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 
-        <View className="mt-4 flex-row gap-2">
-          <Button variant="ghost" className="flex-1" onPress={() => router.back()}>
-            <Text>{t.cancel}</Text>
-          </Button>
-          <Button className="flex-1" disabled={busy} onPress={submit}>
+        {/*
+          Save is the screen's one CTA and takes the inverted treatment (§3.5,
+          variant 2): white on the frame at 18.24:1, where the mockups' #1C1C1E
+          would sit at 1.07 and have no edge at all. It is full-width and last,
+          which is the placement that variant requires — white competes with the
+          white cards if it floats among them.
+
+          Cancel is a ghost beneath it rather than beside it: at half width the
+          two read as equally weighted, and one of them discards the edit.
+        */}
+        <View className="mt-5 gap-2 pb-8">
+          <Button variant="cta" size="cta" disabled={busy} onPress={submit}>
             <Text>{t.save}</Text>
+          </Button>
+          <Button variant="ghost" size="block" onPress={() => router.back()}>
+            <Text className="text-onDark-secondary">{t.cancel}</Text>
           </Button>
         </View>
       </View>

@@ -66,6 +66,9 @@ export const en: Strings = {
   pickTime: 'Pick a time',
   startTimeRequired: 'Set the shoot start time',
   endTimeRequired: 'Set the shoot end time',
+  // ADR-017. The link views are Ukrainian-only, but the app has a switcher.
+  ownerOnly: 'Only you can see this',
+  clientRole: 'Client',
   done: 'Done',
   newShoot: '+ New shoot',
   edit: 'Edit',

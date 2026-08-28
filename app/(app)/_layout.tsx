@@ -5,6 +5,7 @@ import { Text } from '../../src/components/ui/text'
 import { LanguageProvider, useStrings } from '../../src/i18n/LanguageProvider'
 import { RequireSession } from '../../src/features/auth/RequireSession'
 import { LanguageSwitcher } from '../../src/components/LanguageSwitcher'
+import { navigationScreenOptions } from '../../src/theme/palette'
 
 /**
  * The creator's surface. Everything here requires a session (EP-01), enforced
@@ -37,7 +38,16 @@ export default function AppLayout() {
 function AppStack() {
   const t = useStrings()
   return (
-    <Stack screenOptions={{ headerLargeTitle: true }}>
+    /*
+      ADR-017 — the native header and the navigator's own background have to be
+      told about the dark frame. NativeWind cannot reach either: they are
+      @react-navigation props that take colour strings, so the values come from
+      src/theme/palette.ts and the colour rule still holds.
+
+      `contentStyle` is as important as the header here. Without it the
+      navigator paints white behind each screen and every push flashes.
+    */
+    <Stack screenOptions={{ headerLargeTitle: true, ...navigationScreenOptions }}>
       <Stack.Screen
         name="index"
         options={{

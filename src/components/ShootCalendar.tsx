@@ -110,16 +110,23 @@ export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
   )
 }
 
+/*
+ * Token names only, mapped from those ADR-017 renamed. The design system's
+ * §5.12 replaces this whole calendar — a 44pt cell, a 32pt number circle and
+ * dots beneath — and that is the last item of the redesign wave, since it is
+ * the only component with no RNR equivalent. Until then this keeps working and
+ * keeps its colours honest.
+ */
 function cellClass(hasShoot: boolean, isSelected: boolean): string {
   const base = 'h-7 w-7 items-center justify-center rounded-lg'
   if (isSelected) return `${base} bg-primary`
-  if (hasShoot) return `${base} bg-status-new`
+  if (hasShoot) return `${base} bg-status-new-bg`
   return base
 }
 
 function textClass(hasShoot: boolean, isSelected: boolean): string {
   if (isSelected) return 'text-primary-foreground text-xs font-bold'
-  if (hasShoot) return 'text-status-new-foreground text-xs font-bold'
+  if (hasShoot) return 'text-status-new-fg text-xs font-bold'
   return 'text-xs'
 }
 
