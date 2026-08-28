@@ -113,6 +113,15 @@ body = await ev('document.body.innerText')
 ok('the edit screen offers a Файли section', body.includes('Файли') && body.includes('Вихідники'),
    body.replace(/\n/g, ' | ').slice(0, 140))
 
+// US-030 AC-5 made start and end times required on this screen, so a save that
+// leaves them empty is now blocked before any other validation runs — the time
+// error would mask the one this suite is about. Filled the way us030-check does
+// it: the pickers have no web rendering, so «Готово» accepts the draft.
+await B.tap(`document.querySelector('#start-time')`); await B.settle()
+await B.tapByText('Готово'); await B.settle()
+await B.tap(`document.querySelector('#end-time')`); await B.settle()
+await B.tapByText('Готово'); await B.settle()
+
 // AC-3 at input time — US-003 AC-2's rule: a message, and nothing saved.
 await B.setInput('#raw-files', MALFORMED)
 await B.tapByText('Зберегти')

@@ -66,6 +66,14 @@ ok('AC-3 still on the edit screen after the block', body.includes('Локаці�
 // ---------- AC-1 / AC-2: set a date, address and note, then save ----------
 await tap(`document.querySelector('#date')`) ; await B.settle()
 await tap(btn('Готово')) ; await B.settle()
+// US-030 AC-5 made start and end times required on this screen, so a save that
+// leaves them empty is now blocked before any other validation runs — the time
+// error would mask the one this suite is about. Filled the way us030-check does
+// it: the pickers have no web rendering, so «Готово» accepts the draft.
+await B.tap(`document.querySelector('#start-time')`); await B.settle()
+await B.tapByText('Готово'); await B.settle()
+await B.tap(`document.querySelector('#end-time')`); await B.settle()
+await B.tapByText('Готово'); await B.settle()
 await setInput(`document.querySelector('#address')`, 'Студія Луна, Київ')
 await setInput(`document.querySelector('#location-note')`, 'Заїзд з двору, домофон 45')
 await B.settle()
@@ -74,7 +82,21 @@ body = await ev('document.body.innerText')
 ok('AC-1 returns to the shoot after saving', body.includes('Референси'))
 ok('AC-1 the new address is shown', body.includes('Студія Луна, Київ'), body.replace(/\n/g,' | ').slice(0,160))
 ok('AC-2 the location note is shown', body.includes('Заїзд з двору, домофон 45'))
-ok('AC-2 the Локація section appears', body.includes('Локація'))
+// Was `body.includes('Локація')`. ADR-017's pilot moved the location into the
+// shoot's hero card and dropped that heading — the mockups put the address, the
+// access note and the location photo together, and a card already showing
+// 09:00 – 12:00 and an address does not need to be told it is about location.
+//
+// AC-2 asks that the note be "shown wherever the location is displayed", not
+// that a heading exist, so the assertion now tests the AC: the note is rendered
+// on the white card rather than orphaned onto the dark frame.
+const noteSurface = await ev(`(()=>{
+  let el=[...document.querySelectorAll('*')].find(e=>e.children.length===0 && (e.textContent||'').includes('Заїзд з двору'));
+  while(el){const bg=getComputedStyle(el).backgroundColor; if(bg && bg!=='rgba(0, 0, 0, 0)') return bg; el=el.parentElement;}
+  return 'none';
+})()`)
+ok('AC-2 the note is shown on the shoot card, not on the bare frame',
+   noteSurface === 'rgb(255, 255, 255)', noteSurface)
 
 // ---------- the row really changed ----------
 const db = createClient(process.env.SB_URL, process.env.SB_KEY, { auth:{persistSession:false} })
