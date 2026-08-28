@@ -1,19 +1,70 @@
 /*
  * The only place a colour value may appear (README, Layout).
  *
- * These are React Native Reusables' stock tokens, unchanged — a neutral
- * grey-and-black system, the NativeWind counterpart of the stock theme S-1 F-2
- * describes. Kept stock deliberately: ADR-016 is a UI-layer port, and
- * re-theming to the terracotta palette Ilona approved is a separate task. Doing
- * both at once would make the port's diff unreviewable.
+ * These are the tokens of the dark-frame design system adopted in `ADR-017`,
+ * which supersedes the warm terracotta palette of the phase-03 prototype. The
+ * structure of the system is inverted from a normal light app and every rule
+ * below follows from it:
  *
- * When that task comes, this file is the seam. No screen and no component
- * hardcodes a colour; they all name semantic tokens (bg-background, text-muted-
- * foreground, border-border), so swapping the values below re-themes the app.
+ *   screen (near-black #151517)
+ *     └── content lives on WHITE cards, radius 12–20
+ *           └── inside a card, a warm light-grey inset (#F7F6F3)
  *
- * The app runs light-only (app.config.ts sets userInterfaceStyle: 'light', as
- * it did before ADR-016). The `.dark:root` block is RNR stock, left in place
- * and inert — no story asks for a dark theme, so nothing applies the class.
+ * So the dark frame is a *frame*, not a surface. Only screen titles, section
+ * headers, field labels, empty states and dashed placeholders sit on it; real
+ * content sits on white. The neutrals are warm on purpose — #F7F6F3 and
+ * #E9E8E4 carry a yellow undertone (hue 45–48°), not grey. Do not reach for
+ * Tailwind's `neutral-*` instead; the character is in the undertone.
+ *
+ * Colour carries exactly three meanings — shoot status, role/privacy, and
+ * links. There is deliberately no brand accent. Chrome is monochrome.
+ *
+ * Two layers, per the design system's §4:
+ *   Layer A — overrides of React Native Reusables' shadcn variables, so stock
+ *             RNR components (Button, Card, Input, Select, AlertDialog) are
+ *             correct without editing their source.
+ *   Layer B — the application scales shadcn has no slot for: the dark frame,
+ *             status, client/private, warning, link, avatar tints.
+ *
+ * The system's §4 recommends writing Layer B as literal hex in
+ * tailwind.config.js. Declined (`ADR-017`, Decision): this file being the only
+ * place a colour value appears is worth more than the one indirection.
+ *
+ * `.dark:root` is gone. The app declares one theme (the system's §4, "Тема:
+ * одна, не дві"), so there is no `dark` class to apply and no half-finished
+ * light variant for the system setting to fall into. RNR's stock components
+ * still carry `dark:` classes; they are inert and harmless. app.config.ts keeps
+ * `userInterfaceStyle: 'light'` deliberately — it governs *native* chrome
+ * (keyboard, date pickers), which appears over the white card content, not over
+ * the dark frame.
+ *
+ * ── Four deliberate departures from the source document ──────────────────────
+ *
+ * 1. `--accent` is #F7F6F3, not the document's #F4F0FB. Its Layer A table maps
+ *    accent to the purple client axis, but in RNR `--accent` is what every
+ *    ghost and outline control uses for its pressed state. Purple means "this
+ *    is the client"; a button being pressed is chrome, and §1 says chrome
+ *    carries no colour. Purple stays in Layer B's `client-*` only.
+ *
+ * 2. `--primary` stays dark (#1C1C1E) even though §3.5's chosen fix inverts the
+ *    main CTA to white. Both are true at once: a modal's primary button sits on
+ *    a *white* card (§5.13), and that is what RNR's stock `Button` and
+ *    `AlertDialogAction` render with `bg-primary`. Inverting the variable would
+ *    make those invisible. The pinned screen CTA gets its own `cta` pair in
+ *    Layer B instead, so the special case is the one that is explicit.
+ *
+ * 3. `--radius: 12px`, not the 14px its §4 note suggests. §3.4's table names
+ *    six steps (8/10/12/14/16/20); at 14px the derived sm/md/lg become
+ *    10/12/14 and the 8 step is lost. At 12px they are 8/10/12 — exactly the
+ *    first three names — and tailwind.config.js extends xl/2xl/3xl with
+ *    14/16/20. All six match. (`ADR-017` open question 3.)
+ *
+ * 4. Status tokens are named for `ShootStatus` — `new` and `finished` — not the
+ *    document's `planned`/`progress`/`done`. The values are the document's; the
+ *    names keep the code greppable against the backlog (CLAUDE.md rule 5), and
+ *    the enum has two members, not three. `progress`/green is therefore unused.
+ *    This also settles docs/open-questions.md #12: the previous status tones
+ *    were values nobody had chosen.
  */
 @tailwind base;
 @tailwind components;
@@ -21,69 +72,107 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 63%;
-    --radius: 0.625rem;
+    /* ── Layer A — RNR / shadcn slots ─────────────────────────────────── */
+    --background: 240 4.5% 8.6%; /* #151517 — the frame */
+    --foreground: 0 0% 100%; /* #FFFFFF — text on the frame */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 0 0% 6.7%; /* #111111 */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 0 0% 6.7%; /* #111111 */
+    --primary: 240 3.4% 11.4%; /* #1C1C1E — on-card primary; see departure 2 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF */
+    --secondary: 45 20% 96.1%; /* #F7F6F3 — warm inset, icon buttons, tiles */
+    --secondary-foreground: 0 0% 6.7%; /* #111111 */
+    --muted: 45 20% 96.1%; /* #F7F6F3 */
+    --muted-foreground: 240 2.2% 44.1%; /* #6E6E73 — 5.07 on white. The
+                                         * document corrects this from the
+                                         * mockups' #8A8A8E, which is 3.44 and
+                                         * fails AA for text. */
+    --accent: 45 20% 96.1%; /* #F7F6F3 — press states; see departure 1 */
+    --accent-foreground: 0 0% 6.7%; /* #111111 */
+    --destructive: 342 50.8% 46.3%; /* #B23A5E */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+    --border: 48 10.2% 90.4%; /* #E9E8E4 — the hairline ON WHITE. The frame has
+                               * its own; see --on-dark-border below. shadcn has
+                               * one border slot and this palette needs two, so
+                               * anything bordered on the dark frame must name
+                               * the dark one explicitly. */
+    --input: 48 10.2% 90.4%; /* #E9E8E4 */
+    --ring: 210 70.9% 54.1%; /* #378ADD — input focus */
+    --radius: 12px; /* → sm/md/lg = 8/10/12; see departure 3 */
+
+    /* ── Layer B — the dark frame ─────────────────────────────────────── */
+    --screen: 240 4.5% 8.6%; /* #151517 */
+    --screen-deep: 240 7.1% 5.5%; /* #0D0D0F — under status/nav bars */
+    --screen-raised: 240 3.4% 11.4%; /* #1C1C1E — toast, dark pill */
+    --screen-chip: 240 4.6% 12.7%; /* #1F1F22 — filter chips */
+    --screen-segment: 240 4.1% 14.3%; /* #232326 — active dark segment */
 
     /*
-     * Shoot status tones (US-020). Not part of RNR's stock set: the previous
-     * UI layer carried these as its own colour sub-themes, which NativeWind has
-     * no equivalent for, so the two tones become tokens here rather than
-     * palette classes inside StatusPill. That keeps this file the only place a
-     * colour value appears, which is the whole point of the rule.
+     * Text and borders on the frame. The three dark fills above are all within
+     * 1.2:1 of the frame itself — at this brightness the contrast formula
+     * cannot separate them, whatever shade is chosen (§3.5). So dark surfaces
+     * are separated by a BORDER, never by fill alone.
      */
-    --status-new: 48 96% 89%;
-    --status-new-border: 46 97% 77%;
-    --status-new-foreground: 23 83% 31%;
-    --status-finished: 152 76% 90%;
-    --status-finished-border: 149 80% 76%;
-    --status-finished-foreground: 163 88% 20%;
-  }
+    --on-dark: 0 0% 100%; /* #FFFFFF — 18.24 on the frame */
+    --on-dark-secondary: 240 2.9% 79.4%; /* #C9C9CC — field labels, 11.04 */
+    --on-dark-muted: 240 1.8% 56.9%; /* #8F8F93 — 5.66 */
+    --on-dark-empty: 240 4.2% 90.6%; /* #E6E6E8 — empty-state titles, 14.63 */
+    --on-dark-border: 240 6.3% 21.8%; /* #34343B — hairline on the frame */
+    --on-dark-border-strong: 240 3.9% 40.4%; /* #63636B — ~3:1, required when
+                                              * the border is a control's only
+                                              * boundary (WCAG 1.4.11) */
 
-  .dark:root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70.9% 59.4%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 300 0% 45%;
-    --radius: 0.625rem;
+    /* ── Layer B — light surfaces ─────────────────────────────────────── */
+    --surface: 0 0% 100%; /* #FFFFFF */
+    --surface-alt: 45 20% 96.1%; /* #F7F6F3 — warm inset */
+    --surface-hair: 48 10.2% 90.4%; /* #E9E8E4 — dividers, dashed borders */
+    --ink: 0 0% 6.7%; /* #111111 — 18.88 on white */
+    --ink-muted: 240 2.2% 44.1%; /* #6E6E73 — 5.07, secondary text */
+    --ink-icon: 240 1.7% 54.9%; /* #8A8A8E — 3.44: ICONS AND DECOR ONLY. Meets
+                                 * the 3:1 non-text requirement, fails AA for
+                                 * text. Never use it for a string. */
 
-    --status-new: 26 83% 14%;
-    --status-new-border: 26 70% 26%;
-    --status-new-foreground: 48 96% 89%;
-    --status-finished: 166 91% 9%;
-    --status-finished-border: 163 88% 20%;
-    --status-finished-foreground: 152 76% 90%;
+    /* ── Layer B — the pinned screen CTA (departure 2) ────────────────── */
+    --cta: 0 0% 100%; /* #FFFFFF on the frame — 18.24 */
+    --cta-foreground: 0 0% 6.7%; /* #111111 — 18.88 */
+
+    /* ── Layer B — shoot status (departure 4) ─────────────────────────── */
+    --status-new-bg: 218.2 78.6% 94.5%; /* #E6EEFC */
+    --status-new-fg: 218.1 61.5% 42.7%; /* #2A5BB0 — 5.59 on its bg */
+    --status-new-solid: 210 70.9% 54.1%; /* #378ADD — 4px stripe on list rows */
+    --status-finished-bg: 344.3 74.2% 93.9%; /* #FBE4EA */
+    --status-finished-fg: 342 50.8% 46.3%; /* #B23A5E — 4.75 on its bg */
+    --status-finished-solid: 340 60% 57.8%; /* #D4537E */
+
+    /* ── Layer B — warning / waiting ──────────────────────────────────── */
+    --warning-bg: 37.5 76.2% 91.8%; /* #FAEEDA */
+    --warning-fg: 36.4 79.2% 30.2%; /* #8A5A10 — 5.16 */
+    --warning-ring: 37.9 73.8% 56.7%; /* #E2A63F — conflict outline */
+
+    /*
+     * Client (role) and private (visibility) are the same values today and are
+     * still two scales. The document warns why: purple currently means both
+     * "this is the client" and "only you can see this", and those come apart
+     * the moment anything private is not about the client. ADR-018 adds exactly
+     * that. Split now, while it costs nothing.
+     */
+    --client-bg: 261.8 57.9% 96.3%; /* #F4F0FB — client card, client button */
+    --client-chip: 259.3 63.6% 91.4%; /* #E4DBF7 — «Клієнт» chip */
+    --client-fg: 257.3 43.5% 43.7%; /* #5B3FA0 — 5.92 */
+    --client-ring: 261.1 61.4% 82.7%; /* #CBB8EE — client avatar ring */
+    --client-avatar: 261 71.4% 94.5%; /* #EEE7FB */
+    --private-bg: 259.3 63.6% 91.4%; /* #E4DBF7 — «Бачите лише ви» */
+    --private-fg: 257.3 43.5% 43.7%; /* #5B3FA0 */
+
+    /* ── Layer B — links ──────────────────────────────────────────────── */
+    --link: 218.1 61.5% 42.7%; /* #2A5BB0 — 6.52 on white */
+    --link-on-dark: 215.1 100% 74.5%; /* #7DB3FF — 8.48 on the frame. The white
+                                       * link colour gives 2.80 there; never
+                                       * use --link on the frame. */
+
+    /* ── Layer B — odds and ends ──────────────────────────────────────── */
+    --online: 131.2 60.7% 53.1%; /* #3FD05A — presence dot */
+    --avatar-header: 213.1 30.6% 42.9%; /* #4C6A8F — header avatar fill */
   }
 }

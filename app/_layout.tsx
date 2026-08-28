@@ -26,14 +26,20 @@ import { StatusBar } from 'expo-status-bar'
  *
  * There is no theme provider. NativeWind needs only the stylesheet import above
  * (ADR-016) — the tokens live in src/theme/global.css and reach components as
- * Tailwind classes, so nothing has to be threaded through React context. The
- * app is light-only, as it was before ADR-016: app.config.ts sets
- * userInterfaceStyle: 'light' and nothing applies the `dark` class.
+ * Tailwind classes, so nothing has to be threaded through React context.
+ *
+ * The app declares ONE theme, the dark frame of ADR-017: everything is defined
+ * on `:root`, there is no `.dark` block, and nothing applies the `dark` class.
+ * That is why no scheme has to be pinned — the system setting has no light
+ * variant to fall into. `StatusBar style="light"` because the bar sits on the
+ * near-black frame; app.config.ts keeps `userInterfaceStyle: 'light'` on
+ * purpose, since that governs native chrome (keyboard, date pickers) which
+ * appears over the white card content, not over the frame.
  */
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       {/*
         headerShown: false — the route groups `(app)` and `(auth)` are
         organisational, not screens. Left on, the root stack renders a header

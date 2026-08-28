@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { Text } from './ui/text'
+import { Text, TextClassContext } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
 import { toIsoDate } from '../features/shoots/date'
 
@@ -55,56 +55,58 @@ export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
 
   return (
-    <View className="border-border bg-card gap-2 rounded-xl border p-3">
-      <View className="flex-row items-center justify-between">
-        <MonthButton label="‹" onPress={() => step(-1)} />
-        <Text className="text-sm font-semibold">{`${t.months[month]} ${year}`}</Text>
-        <MonthButton label="›" onPress={() => step(1)} />
-      </View>
+    <TextClassContext.Provider value="text-card-foreground">
+      <View className="border-border bg-card gap-2 rounded-xl border p-3">
+        <View className="flex-row items-center justify-between">
+          <MonthButton label="‹" onPress={() => step(-1)} />
+          <Text className="text-sm font-semibold">{`${t.months[month]} ${year}`}</Text>
+          <MonthButton label="›" onPress={() => step(1)} />
+        </View>
 
-      <View className="flex-row">
-        {t.weekdays.map((day: string) => (
-          <Text key={day} className="text-muted-foreground flex-1 text-center text-[10px]">
-            {day}
-          </Text>
+        <View className="flex-row">
+          {t.weekdays.map((day: string) => (
+            <Text key={day} className="text-muted-foreground flex-1 text-center text-[10px]">
+              {day}
+            </Text>
+          ))}
+        </View>
+
+        {weeks.map((week, weekIndex) => (
+          <View key={weekIndex} className="flex-row">
+            {week.map((day, dayIndex) => {
+              if (day === null) return <View key={dayIndex} className="flex-1" />
+              // toIsoDate rather than a hand-built string: it is the one place
+              // that turns a local calendar day into the YYYY-MM-DD the rows use.
+              const iso = toIsoDate(new Date(year, month, day))
+              const hasShoot = marked.has(iso)
+              const isSelected = selected === iso
+              return (
+                <Pressable
+                  key={dayIndex}
+                  className="flex-1 items-center py-1.5 active:opacity-70"
+                  onPress={() => onSelect(iso)}
+                  role="button"
+                  accessibilityLabel={iso}
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  {/*
+                    Selection and "has a shoot" are different things and must not
+                    look alike: a filtered-to date with no shoots still has to
+                    read as selected, and a marked date the reader has not tapped
+                    must not read as filtered.
+                  */}
+                  <View
+                    className={cellClass(hasShoot, isSelected)}
+                  >
+                    <Text className={textClass(hasShoot, isSelected)}>{day}</Text>
+                  </View>
+                </Pressable>
+              )
+            })}
+          </View>
         ))}
       </View>
-
-      {weeks.map((week, weekIndex) => (
-        <View key={weekIndex} className="flex-row">
-          {week.map((day, dayIndex) => {
-            if (day === null) return <View key={dayIndex} className="flex-1" />
-            // toIsoDate rather than a hand-built string: it is the one place
-            // that turns a local calendar day into the YYYY-MM-DD the rows use.
-            const iso = toIsoDate(new Date(year, month, day))
-            const hasShoot = marked.has(iso)
-            const isSelected = selected === iso
-            return (
-              <Pressable
-                key={dayIndex}
-                className="flex-1 items-center py-1.5 active:opacity-70"
-                onPress={() => onSelect(iso)}
-                role="button"
-                accessibilityLabel={iso}
-                accessibilityState={{ selected: isSelected }}
-              >
-                {/*
-                  Selection and "has a shoot" are different things and must not
-                  look alike: a filtered-to date with no shoots still has to
-                  read as selected, and a marked date the reader has not tapped
-                  must not read as filtered.
-                */}
-                <View
-                  className={cellClass(hasShoot, isSelected)}
-                >
-                  <Text className={textClass(hasShoot, isSelected)}>{day}</Text>
-                </View>
-              </Pressable>
-            )
-          })}
-        </View>
-      ))}
-    </View>
+    </TextClassContext.Provider>
   )
 }
 

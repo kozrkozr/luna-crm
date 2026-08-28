@@ -62,7 +62,10 @@ const buttonTextVariants = cva(
     variants: {
       variant: {
         default: 'text-primary-foreground',
-        destructive: 'text-white',
+        // Was `text-white`, an RNR stock literal that bypassed the token.
+        // Same value today (--destructive-foreground is #FFFFFF) but it now
+        // follows the palette instead of coinciding with it.
+        destructive: 'text-destructive-foreground',
         outline: cn(
           'group-active:text-accent-foreground',
           Platform.select({ web: 'group-hover:text-accent-foreground' })

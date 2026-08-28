@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link, useLocalSearchParams } from 'expo-router'
 import { Button } from '../../../src/components/ui/button'
 import { Separator } from '../../../src/components/ui/separator'
-import { Text } from '../../../src/components/ui/text'
+import { Text, TextClassContext } from '../../../src/components/ui/text'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { REFERENCE_DISPLAY_LIMIT } from '../../../src/components/ReferenceGrid'
 import { uk } from '../../../src/i18n/uk'
@@ -287,9 +287,11 @@ function Respond({
 
   if (viewer.response !== 'pending') {
     return (
-      <View className="border-border bg-card mt-2 items-center rounded-xl border p-4">
-        <Text>{viewer.response === 'confirmed' ? uk.youConfirmed : uk.youDeclined}</Text>
-      </View>
+      <TextClassContext.Provider value="text-card-foreground">
+        <View className="border-border bg-card mt-2 items-center rounded-xl border p-4">
+          <Text>{viewer.response === 'confirmed' ? uk.youConfirmed : uk.youDeclined}</Text>
+        </View>
+      </TextClassContext.Provider>
     )
   }
 

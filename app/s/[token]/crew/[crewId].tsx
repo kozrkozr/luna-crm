@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
-import { Text } from '../../../../src/components/ui/text'
+import { Text, TextClassContext } from '../../../../src/components/ui/text'
 import { ImageViewer } from '../../../../src/components/ImageViewer'
 import { uk } from '../../../../src/i18n/uk'
 import {
@@ -104,34 +104,36 @@ export default function CrewMemberDetailScreen() {
         <Text variant="h3">{uk.peerDetailsTitle}</Text>
 
         {/* The creator's add-crew form, read back — US-023 AC-1's "same layout". */}
-        <View className="border-border bg-card gap-1 rounded-xl border p-4">
-          <Field label={uk.crewName} value={member.name} strong />
-          <Field label={uk.crewRole} value={member.role} />
-          <Field label={uk.crewContact} value={member.contact} />
-          <Field label={uk.crewInstagram} value={member.instagram} />
+        <TextClassContext.Provider value="text-card-foreground">
+          <View className="border-border bg-card gap-1 rounded-xl border p-4">
+            <Field label={uk.crewName} value={member.name} strong />
+            <Field label={uk.crewRole} value={member.role} />
+            <Field label={uk.crewContact} value={member.contact} />
+            <Field label={uk.crewInstagram} value={member.instagram} />
 
-          {/* US-026 AC-1 — everything above is shared; this is the one
-              difference, and it is an absence rather than a blank. */}
-          {resolution.audience === 'crew' ? (
-            <>
-              <Field label={uk.crewNotes} value={resolution.member.note} />
-              {resolution.member.noteImageUrl ? (
-                <Pressable
-                  className="bg-secondary border-border mt-2 h-40 w-full overflow-hidden rounded-md border active:opacity-70"
-                  onPress={() => setViewingImage(resolution.member.noteImageUrl)}
-                  role="button"
-                  accessibilityLabel={uk.crewNotes}
-                >
-                  <Image
-                    source={{ uri: resolution.member.noteImageUrl }}
-                    className="h-full w-full"
-                    resizeMode="cover"
-                  />
-                </Pressable>
-              ) : null}
-            </>
-          ) : null}
-        </View>
+            {/* US-026 AC-1 — everything above is shared; this is the one
+                difference, and it is an absence rather than a blank. */}
+            {resolution.audience === 'crew' ? (
+              <>
+                <Field label={uk.crewNotes} value={resolution.member.note} />
+                {resolution.member.noteImageUrl ? (
+                  <Pressable
+                    className="bg-secondary border-border mt-2 h-40 w-full overflow-hidden rounded-md border active:opacity-70"
+                    onPress={() => setViewingImage(resolution.member.noteImageUrl)}
+                    role="button"
+                    accessibilityLabel={uk.crewNotes}
+                  >
+                    <Image
+                      source={{ uri: resolution.member.noteImageUrl }}
+                      className="h-full w-full"
+                      resizeMode="cover"
+                    />
+                  </Pressable>
+                ) : null}
+              </>
+            ) : null}
+          </View>
+        </TextClassContext.Provider>
 
         {/* Mounted for the crew audience only. A client has no image to open,
             because the payload that would carry one does not reach them. */}
