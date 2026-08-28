@@ -191,7 +191,7 @@ export default function AddCrewScreen() {
           {noteImageUri ? (
             <Image
               source={{ uri: noteImageUri }}
-              className="border-border h-12 w-12 rounded-md border"
+              className="border-onDark-border h-12 w-12 rounded-md border"
               resizeMode="cover"
             />
           ) : null}

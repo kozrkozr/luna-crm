@@ -77,7 +77,7 @@ function ReferenceThumb({
   if (reference.kind === 'image') {
     return (
       <Pressable
-        className="bg-secondary border-border h-24 w-24 overflow-hidden rounded-md border active:opacity-70"
+        className="bg-surface-alt h-24 w-24 overflow-hidden rounded-xl active:opacity-70"
         // Not tappable until the URL is signed: there would be nothing to show,
         // and the thumbnail is blank at that point anyway.
         disabled={!uri}
@@ -95,7 +95,7 @@ function ReferenceThumb({
 
   return (
     <Pressable
-      className="bg-secondary border-border h-24 w-24 justify-end rounded-md border p-2 active:opacity-70"
+      className="bg-surface-alt h-24 w-24 justify-end rounded-xl p-2 active:opacity-70"
       onPress={() => void openExternalUrl(reference.urlOrPath)}
       role="button"
       accessibilityLabel={hostOf(reference.urlOrPath)}

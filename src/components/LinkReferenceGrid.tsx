@@ -38,7 +38,7 @@ export function LinkReferenceGrid({
           reference.kind === 'image' ? (
             <Pressable
               key={reference.id}
-              className="bg-secondary border-border h-24 w-24 overflow-hidden rounded-md border active:opacity-70"
+              className="bg-surface-alt h-24 w-24 overflow-hidden rounded-xl active:opacity-70"
               disabled={!reference.url}
               onPress={() => reference.url && setViewing(reference.url)}
               role="button"
@@ -56,7 +56,7 @@ export function LinkReferenceGrid({
           ) : (
             <Pressable
               key={reference.id}
-              className="bg-secondary border-border h-24 w-24 justify-end rounded-md border p-2 active:opacity-70"
+              className="bg-surface-alt h-24 w-24 justify-end rounded-xl p-2 active:opacity-70"
               onPress={() => reference.url && void openExternalUrl(reference.url)}
               role="button"
               accessibilityLabel={hostOf(reference.url)}

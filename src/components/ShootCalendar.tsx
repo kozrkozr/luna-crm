@@ -56,7 +56,9 @@ export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
 
   return (
     <TextClassContext.Provider value="text-card-foreground">
-      <View className="border-border bg-card gap-2 rounded-xl border p-3">
+      {/* A card, so no border: white on the frame separates at 18.24:1 and an
+          outline would be decoration (§3.5, §5.2). */}
+      <View className="bg-card gap-2 rounded-xl p-3">
         <View className="flex-row items-center justify-between">
           <MonthButton label="‹" onPress={() => step(-1)} />
           <Text className="text-sm font-semibold">{`${t.months[month]} ${year}`}</Text>
@@ -65,7 +67,7 @@ export function ShootCalendar({ shootDates, selected, onSelect }: Props) {
 
         <View className="flex-row">
           {t.weekdays.map((day: string) => (
-            <Text key={day} className="text-muted-foreground flex-1 text-center text-[10px]">
+            <Text key={day} className="text-micro text-ink-muted flex-1 text-center font-semibold">
               {day}
             </Text>
           ))}
@@ -139,7 +141,7 @@ function MonthButton({ label, onPress }: { label: string; onPress: () => void })
       role="button"
       accessibilityLabel={label}
     >
-      <Text className="text-muted-foreground text-base">{label}</Text>
+      <Text className="text-title-sm text-ink">{label}</Text>
     </Pressable>
   )
 }

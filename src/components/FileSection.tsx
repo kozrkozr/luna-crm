@@ -2,6 +2,7 @@ import { View } from 'react-native'
 import { Text } from './ui/text'
 import { Button } from './ui/button'
 import { uk } from '../i18n/uk'
+import { SectionHeader } from './SectionHeader'
 import { openExternalUrl } from '../lib/openExternalUrl'
 
 /**
@@ -23,17 +24,21 @@ import { openExternalUrl } from '../lib/openExternalUrl'
  */
 export function FileSection({ label, url }: { label: string; url: string | null }) {
   return (
-    <View className="gap-1 pt-2">
-      <Text variant="h4">{label}</Text>
+    <View>
+      <SectionHeader label={label} />
       {url ? (
-        <Button variant="secondary" onPress={() => void openExternalUrl(url)}>
+        <Button variant="secondary" size="block" className="bg-card" onPress={() => void openExternalUrl(url)}>
           {/* The URL itself, as the prototype shows it: on a link with no
               account, the host is the only thing telling a client where they
               are about to be sent. */}
           <Text numberOfLines={1}>{url}</Text>
         </Button>
       ) : (
-        <Text className="text-muted-foreground">{uk.inDevelopment}</Text>
+        /* §5.14's ComingSoonTile: a dashed placeholder on the frame, which is
+           what «В розробці» has always been. */
+        <View className="border-1.5 border-surface-hair items-center rounded-xl border border-dashed px-3.5 py-3">
+          <Text className="text-label text-onDark-muted">{uk.inDevelopment}</Text>
+        </View>
       )}
     </View>
   )

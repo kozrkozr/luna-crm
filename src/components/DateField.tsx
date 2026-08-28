@@ -68,19 +68,32 @@ export function DateField({ id, value, onChange, placeholder, onClear, mode = 'd
         <Button
           id={id}
           variant="outline"
-          className="flex-1 justify-start"
+          /*
+            ADR-017 — `variant="outline"` is `bg-background`, which after the
+            inversion is the near-black frame: this field was rendering
+            dark-on-dark like Input was. Overridden to the white field of §5.9
+            so it matches the Inputs it sits among, which is the whole point of
+            the component.
+          */
+          className="border-input bg-card h-11 flex-1 justify-start rounded-md"
           onPress={() => {
             setDraft(value ?? new Date())
             setOpen(true)
           }}
         >
-          <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
+          <Text className={value ? 'text-card-foreground' : 'text-muted-foreground'}>
             {value ? format(value) : emptyLabel}
           </Text>
         </Button>
         {onClear && value ? (
-          <Button variant="outline" size="icon" onPress={onClear} accessibilityLabel={t.clearDate}>
-            <Text>✕</Text>
+          <Button
+            variant="secondary"
+            size="circle"
+            onPress={onClear}
+            accessibilityLabel={t.clearDate}
+            hitSlop={6}
+          >
+            <Text className="text-ink">✕</Text>
           </Button>
         ) : null}
       </View>
@@ -88,7 +101,10 @@ export function DateField({ id, value, onChange, placeholder, onClear, mode = 'd
       <Modal visible={open} transparent animationType="slide" onRequestClose={close}>
         {/* Dim the page behind, and let a tap outside dismiss. */}
         <Pressable className="flex-1 justify-end bg-black/40" onPress={close}>
-          <View className="bg-background gap-3 rounded-t-2xl p-4">
+          {/* The picker sheet is a modal card: white, radius 16 (§5.13). It
+              was `bg-background` — the frame — behind a native picker that
+              renders its own dark text. */}
+          <View className="bg-card gap-3 rounded-t-2xl p-4">
             <View className="flex-row justify-center" style={{ height: PICKER_HEIGHT }}>
               <DateTimePicker
                 value={draft}

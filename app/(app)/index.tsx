@@ -2,12 +2,12 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
-import { Separator } from '../../src/components/ui/separator'
 import { Text } from '../../src/components/ui/text'
 import { useStrings } from '../../src/i18n/LanguageProvider'
 import { listShoots, type Shoot } from '../../src/features/shoots/api'
 import { listCrewShoots, type CrewShoot } from '../../src/features/shoots/crewSchedule'
 import { StatusPill } from '../../src/components/StatusPill'
+import { Card } from '../../src/components/ui/card'
 import { formatTimeRange } from '../../src/features/shoots/date'
 import { ShootCalendar } from '../../src/components/ShootCalendar'
 
@@ -124,11 +124,21 @@ export default function ShootListScreen() {
             <ActivityIndicator size="large" />
           </View>
         ) : state.status === 'error' ? (
-          <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
+          <Text className="text-body text-onDark-muted">{t.somethingWentWrong}</Text>
         ) : rows(state.shoots, state.crewShoots).length === 0 ? (
+          /*
+            The empty state is one of the few things the design puts directly on
+            the frame rather than on a card (§5.14): a light title, muted body,
+            centred, capped at 280.
+          */
           <View className="items-center gap-2 py-8">
-            <Text variant="h4">{t.emptyShoots}</Text>
-            <Text className="text-muted-foreground">{t.emptyShootsSub}</Text>
+            <Text className="text-body text-onDark-empty font-semibold">{t.emptyShoots}</Text>
+            <Text
+              className="text-body-sm text-onDark-muted text-center"
+              style={{ maxWidth: 280 }}
+            >
+              {t.emptyShootsSub}
+            </Text>
             {/* The prototype's empty state offers the action directly. */}
             <Button className="mt-2" onPress={() => router.push('/(app)/new-shoot')}>
               <Text>{t.createFirst}</Text>
@@ -138,38 +148,45 @@ export default function ShootListScreen() {
           // AC-4 — the account has shoots, this date has none. A result, not
           // the AC-2 empty state and not an error.
           <View className="items-center py-8">
-            <Text className="text-muted-foreground">{t.noShootsOnDay}</Text>
+            <Text className="text-body text-onDark-muted">{t.noShootsOnDay}</Text>
           </View>
         ) : (
           /*
-            The previous UI layer's grouped-list components have no RNR
-            counterpart, so the list is composed here: a bordered, clipped
-            container, a Separator between rows, and each row a
-            title/subtitle/trailing layout. Same shape, same content — the kit
-            is thinner, not the screen.
+            ADR-017 — one card per shoot with gap 8, replacing the single
+            bordered box with separators inside. Theme-only in the sense that
+            matters: the same rows, the same content, the same navigation. What
+            changes is the unit — the design's list is a stack of cards, and a
+            shoot is a thing rather than a table row.
+
+            The 4px status stripe of §5.6 is deliberately NOT here. It belongs to
+            the ListRow component, and building that is part of the design's own
+            §10 Step 3 rather than this mechanical pass.
           */
-          <View className="border-border overflow-hidden rounded-lg border">
-            {visible(rows(state.shoots, state.crewShoots), selectedDate).map((row, index) => (
+          <View>
+            {visible(rows(state.shoots, state.crewShoots), selectedDate).map((row) => (
               <View key={row.kind === 'created' ? row.shoot.id : `crew-${row.entry.shootId}`}>
-                {index > 0 ? <Separator /> : null}
                 {row.kind === 'created' ? (
                   <Link href={`/(app)/shoot/${row.shoot.id}`} asChild>
-                    <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
-                      <View className="flex-1 gap-0.5">
-                        <Text className="font-medium">{row.shoot.clientName}</Text>
-                        {/* US-030 AC-4 — same composition as the detail screen;
-                            the calendar's day view is this list, filtered. */}
-                        <Text className="text-muted-foreground text-sm">
-                          {[
-                            row.shoot.date,
-                            formatTimeRange(row.shoot.startTime, row.shoot.endTime),
-                            row.shoot.locationAddress,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </Text>
-                      </View>
-                      <StatusPill value={row.shoot.status} />
+                    <Pressable>
+                      <Card variant="row" className="mb-2 flex-row items-center gap-3">
+                        <View className="flex-1 gap-0.5">
+                          <Text className="text-title-sm text-ink font-semibold">
+                            {row.shoot.clientName}
+                          </Text>
+                          {/* US-030 AC-4 — same composition as the detail screen;
+                              the calendar's day view is this list, filtered. */}
+                          <Text className="text-label text-ink-muted">
+                            {[
+                              row.shoot.date,
+                              formatTimeRange(row.shoot.startTime, row.shoot.endTime),
+                              row.shoot.locationAddress,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </Text>
+                        </View>
+                        <StatusPill value={row.shoot.status} />
+                      </Card>
                     </Pressable>
                   </Link>
                 ) : (
@@ -220,23 +237,29 @@ function visible(all: Row[], selectedDate: string | null): Row[] {
  */
 function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
   const body = (
-    <View className="flex-row items-center gap-3 px-4 py-3">
+    <Card variant="row" className="mb-2 flex-row items-center gap-3">
       <View className="flex-1 gap-0.5">
-        <Text className="font-medium">{entry.locationAddress ?? entry.date}</Text>
-        <Text className="text-muted-foreground text-sm">
+        <Text className="text-title-sm text-ink font-semibold">
+          {entry.locationAddress ?? entry.date}
+        </Text>
+        <Text className="text-label text-ink-muted">
           {entry.locationAddress ? `${entry.date} · ${entry.role}` : entry.role}
         </Text>
       </View>
-      <View className="border-border bg-secondary rounded-full border px-2.5 py-1">
-        <Text className="text-muted-foreground text-xs font-bold">{badge}</Text>
+      {/* The badge stays borderless on the warm inset, like every other chip
+          in the system (§5.3) — it is a label, not a control. */}
+      <View className="bg-surface-alt shrink-0 rounded-full px-2.5 py-1">
+        <Text numberOfLines={1} className="text-caption text-ink-muted font-bold">
+          {badge}
+        </Text>
       </View>
-    </View>
+    </Card>
   )
 
   if (!entry.token) return body
   return (
     <Link href={`/s/${entry.token}`} asChild>
-      <Pressable className="active:bg-secondary">{body}</Pressable>
+      <Pressable>{body}</Pressable>
     </Link>
   )
 }

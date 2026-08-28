@@ -121,7 +121,7 @@ export default function RegisterScreen() {
           (config.toml, minimum_password_length) and the backlog specifies none,
           so a user could otherwise only discover it by being rejected.
         */}
-        <Text className="text-muted-foreground text-xs">{uk.passwordHint}</Text>
+        <Text className="text-label text-onDark-muted">{uk.passwordHint}</Text>
 
         <Label htmlFor="role">{uk.role}</Label>
         {/*

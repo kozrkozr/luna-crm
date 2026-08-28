@@ -59,7 +59,12 @@ function Option({
       accessibilityLabel={code === 'uk' ? 'Українська' : 'English'}
       accessibilityState={{ selected: active }}
     >
-      <Text className={active ? 'text-xs font-bold' : 'text-muted-foreground text-xs'}>
+      {/* In the navigation header, so on the frame (ADR-017). */}
+      <Text
+        className={
+          active ? 'text-caption text-onDark font-bold' : 'text-caption text-onDark-muted'
+        }
+      >
         {label}
       </Text>
     </Button>

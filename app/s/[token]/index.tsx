@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link, useLocalSearchParams } from 'expo-router'
 import { Button } from '../../../src/components/ui/button'
-import { Separator } from '../../../src/components/ui/separator'
-import { Text, TextClassContext } from '../../../src/components/ui/text'
+import { Text } from '../../../src/components/ui/text'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { REFERENCE_DISPLAY_LIMIT } from '../../../src/components/ReferenceGrid'
 import { uk } from '../../../src/i18n/uk'
 import { LinkShootHeader } from '../../../src/components/LinkShootHeader'
 import { FileSection } from '../../../src/components/FileSection'
+import { SectionHeader } from '../../../src/components/SectionHeader'
+import { Card } from '../../../src/components/ui/card'
 import { ResponsePill as SharedResponsePill } from '../../../src/components/ResponsePill'
 import {
   resolveLink,
@@ -80,10 +81,21 @@ export default function LinkView() {
     return (
       <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
         <Text className="text-5xl">⚠️</Text>
-        <Text variant="h3" className="text-center">
+        {/*
+          On the frame, so the §5.14 empty-state pair: a light title and muted
+          body. `variant="h3"` inherited text-foreground, which after ADR-017 is
+          the frame's own white — it happened to stay readable here, unlike the
+          h4 headings below, but by accident rather than by token.
+        */}
+        <Text className="text-title text-onDark-empty text-center font-semibold">
           {uk.linkInvalidTitle}
         </Text>
-        <Text className="text-muted-foreground text-center">{uk.linkInvalidSub}</Text>
+        <Text
+          className="text-body-sm text-onDark-muted text-center"
+          style={{ maxWidth: 280 }}
+        >
+          {uk.linkInvalidSub}
+        </Text>
       </View>
     )
   }
@@ -126,15 +138,15 @@ function ClientView({
         <LinkShootHeader shoot={shoot} onReload={onReload} />
 
         {references.length > 0 ? (
-          <View className="gap-2 pt-2">
-            <Text variant="h4">{uk.references}</Text>
+          <View>
+            <SectionHeader label={uk.references} count={references.length} />
             <LinkReferenceGrid
               references={references.slice(0, REFERENCE_DISPLAY_LIMIT)}
               onMediaError={onReload}
             />
             {references.length > REFERENCE_DISPLAY_LIMIT ? (
               <Link href={`/s/${token}/references`} asChild>
-                <Button variant="secondary">
+                <Button variant="dashed" size="block" className="mt-2">
                   <Text>{`${uk.showAllReferences} (${references.length})`}</Text>
                 </Button>
               </Link>
@@ -142,26 +154,25 @@ function ClientView({
           </View>
         ) : null}
 
-        <View className="gap-2 pt-2">
-          <Text variant="h4">{uk.crew}</Text>
-          <View className="border-border overflow-hidden rounded-lg border">
-            {crew.map((member, index) => (
-              <View key={member.id}>
-                {index > 0 ? <Separator /> : null}
-                {/* US-026 AC-1 — each person opens their own details. Same
-                    route as the crew audience uses; what it shows is decided by
-                    the token, not by the URL. No response pill: the prototype's
-                    client row omits it, and whether someone has answered is the
-                    photographer's business (US-010 AC-1 lists team, not status). */}
-                <Link href={`/s/${token}/crew/${member.id}`} asChild>
-                  <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
+        <View>
+          <SectionHeader label={uk.crew} count={crew.length} />
+          <View>
+            {crew.map((member) => (
+              /* US-026 AC-1 — each person opens their own details. Same route as
+                 the crew audience uses; what it shows is decided by the token,
+                 not by the URL. No response pill: the prototype's client row
+                 omits it, and whether someone has answered is the
+                 photographer's business (US-010 AC-1 lists team, not status). */
+              <Link key={member.id} href={`/s/${token}/crew/${member.id}`} asChild>
+                <Pressable>
+                  <Card variant="row" className="mb-2 flex-row items-center gap-3">
                     <Text className="flex-1">
-                      <Text className="font-medium">{member.name}</Text>
-                      <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
+                      <Text className="text-body text-ink font-semibold">{member.name}</Text>
+                      <Text className="text-label text-ink-muted">{` · ${member.role}`}</Text>
                     </Text>
-                  </Pressable>
-                </Link>
-              </View>
+                  </Card>
+                </Pressable>
+              </Link>
             ))}
           </View>
         </View>
@@ -209,13 +220,13 @@ function CrewView({
           matters most where a phone is shared or a link forwarded. The client
           has no equivalent: their link names no person.
         */}
-        <Text className="text-muted-foreground">
+        <Text className="text-body-sm text-onDark-secondary">
           {`${uk.youAre}: ${viewer.name} (${viewer.role})`}
         </Text>
 
         {references.length > 0 ? (
-          <View className="gap-2 pt-2">
-            <Text variant="h4">{uk.references}</Text>
+          <View>
+            <SectionHeader label={uk.references} count={references.length} />
             {/*
               AC-1 — "up to the display limit (with a link to see all,
               US-021)". The limit is the same constant the creator's screen
@@ -227,7 +238,7 @@ function CrewView({
             />
             {references.length > REFERENCE_DISPLAY_LIMIT ? (
               <Link href={`/s/${token}/references`} asChild>
-                <Button variant="secondary">
+                <Button variant="dashed" size="block" className="mt-2">
                   <Text>{`${uk.showAllReferences} (${references.length})`}</Text>
                 </Button>
               </Link>
@@ -235,24 +246,23 @@ function CrewView({
           </View>
         ) : null}
 
-        <View className="gap-2 pt-2">
-          <Text variant="h4">{uk.crew}</Text>
-          <View className="border-border overflow-hidden rounded-lg border">
-            {crew.map((member, index) => (
-              <View key={member.id}>
-                {index > 0 ? <Separator /> : null}
-                {/* US-007 AC-1 — each person is clickable through to their
-                    own details, which US-023 now provides. */}
-                <Link href={`/s/${token}/crew/${member.id}`} asChild>
-                  <Pressable className="active:bg-secondary flex-row items-center gap-3 px-4 py-3">
+        <View>
+          <SectionHeader label={uk.crew} count={crew.length} />
+          <View>
+            {crew.map((member) => (
+              /* US-007 AC-1 — each person is clickable through to their own
+                 details, which US-023 now provides. */
+              <Link key={member.id} href={`/s/${token}/crew/${member.id}`} asChild>
+                <Pressable>
+                  <Card variant="row" className="mb-2 flex-row items-center gap-3">
                     <Text className="flex-1">
-                      <Text className="font-medium">{member.name}</Text>
-                      <Text className="text-muted-foreground">{` · ${member.role}`}</Text>
+                      <Text className="text-body text-ink font-semibold">{member.name}</Text>
+                      <Text className="text-label text-ink-muted">{` · ${member.role}`}</Text>
                     </Text>
                     <ResponsePill value={member.response} />
-                  </Pressable>
-                </Link>
-              </View>
+                  </Card>
+                </Pressable>
+              </Link>
             ))}
           </View>
         </View>
@@ -288,11 +298,14 @@ function Respond({
 
   if (viewer.response !== 'pending') {
     return (
-      <TextClassContext.Provider value="text-card-foreground">
-        <View className="border-border bg-card mt-2 items-center rounded-xl border p-4">
-          <Text>{viewer.response === 'confirmed' ? uk.youConfirmed : uk.youDeclined}</Text>
-        </View>
-      </TextClassContext.Provider>
+      /* A Card now, which supplies text-card-foreground itself — the explicit
+         provider was the stopgap that kept this from going white-on-white when
+         --foreground inverted. */
+      <Card variant="block" className="mt-2 items-center">
+        <Text className="text-body text-ink">
+          {viewer.response === 'confirmed' ? uk.youConfirmed : uk.youDeclined}
+        </Text>
+      </Card>
     )
   }
 

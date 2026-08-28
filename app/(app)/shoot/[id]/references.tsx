@@ -54,7 +54,7 @@ export default function AllReferencesScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4">
-        <Text className="text-muted-foreground">{t.somethingWentWrong}</Text>
+        <Text className="text-body text-onDark-muted">{t.somethingWentWrong}</Text>
       </View>
     )
   }

@@ -3,6 +3,7 @@ import { Image, Pressable, View } from 'react-native'
 import { ImageViewer } from './ImageViewer'
 import { Text } from './ui/text'
 import { uk } from '../i18n/uk'
+import { Card } from './ui/card'
 import { openExternalUrl } from '../lib/openExternalUrl'
 
 type Shoot = {
@@ -30,24 +31,42 @@ export function LinkShootHeader({ shoot, onReload }: { shoot: Shoot; onReload: (
 
   return (
     <>
-      <Text variant="h3">{`${uk.shootFor}: ${shoot.date}`}</Text>
+      {/*
+        ADR-017 — a hero card, mirroring the creator's shoot screen: the date
+        leads, the location sits with it behind a hairline. Content, not chrome,
+        so it belongs on white.
 
-      {hasLocation ? (
-        <View className="gap-2 pt-2">
-          <Text variant="h4">{uk.locationSection}</Text>
-          {shoot.locationAddress ? <Text>{shoot.locationAddress}</Text> : null}
-          {shoot.locationNote ? (
-            <Text className="text-muted-foreground">{shoot.locationNote}</Text>
-          ) : null}
-          {shoot.locationAttachmentUrl ? (
-            <LocationAttachment
-              url={shoot.locationAttachmentUrl}
-              onOpenImage={setViewing}
-              onMediaError={onReload}
-            />
-          ) : null}
-        </View>
-      ) : null}
+        No time range here. US-030 added start and end times, but the gateway
+        still selects only `date` — deliberately, since AC-4 names the owner's
+        screens and adding a field to an anonymous payload needs a story
+        (ADR-013). When that story lands, the range goes here.
+      */}
+      <Card variant="hero" className="gap-3">
+        <Text className="text-numeric-xl text-ink font-bold">
+          {`${uk.shootFor}: ${shoot.date}`}
+        </Text>
+
+        {hasLocation ? (
+          <View className="border-surface-hair gap-2 border-t pt-3">
+            {shoot.locationAddress ? (
+              <View className="flex-row items-start gap-1.5">
+                <Text className="text-ink-icon text-[16px]">📍</Text>
+                <Text className="text-body-sm text-ink flex-1">{shoot.locationAddress}</Text>
+              </View>
+            ) : null}
+            {shoot.locationNote ? (
+              <Text className="text-body-sm text-ink-muted">{shoot.locationNote}</Text>
+            ) : null}
+            {shoot.locationAttachmentUrl ? (
+              <LocationAttachment
+                url={shoot.locationAttachmentUrl}
+                onOpenImage={setViewing}
+                onMediaError={onReload}
+              />
+            ) : null}
+          </View>
+        ) : null}
+      </Card>
 
       <ImageViewer uri={viewing} onClose={() => setViewing(null)} />
     </>
@@ -75,7 +94,7 @@ function LocationAttachment({
   if (isVideo) {
     return (
       <Pressable
-        className="bg-secondary border-border h-20 w-full items-center justify-center rounded-md border active:opacity-70"
+        className="bg-surface-alt h-20 w-full items-center justify-center rounded-xl active:opacity-70"
         onPress={() => void openExternalUrl(url)}
         role="button"
         accessibilityLabel={uk.attachVideo}
@@ -87,7 +106,7 @@ function LocationAttachment({
 
   return (
     <Pressable
-      className="bg-secondary border-border h-40 w-full overflow-hidden rounded-md border active:opacity-70"
+      className="bg-surface-alt h-40 w-full overflow-hidden rounded-xl active:opacity-70"
       onPress={() => onOpenImage(url)}
       role="button"
       accessibilityLabel={uk.locationSection}

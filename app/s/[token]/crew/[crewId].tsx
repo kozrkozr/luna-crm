@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
-import { Text, TextClassContext } from '../../../../src/components/ui/text'
+import { Text } from '../../../../src/components/ui/text'
+import { Card } from '../../../../src/components/ui/card'
 import { ImageViewer } from '../../../../src/components/ImageViewer'
 import { uk } from '../../../../src/i18n/uk'
 import {
@@ -86,10 +87,12 @@ export default function CrewMemberDetailScreen() {
     return (
       <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
         <Text className="text-5xl">⚠️</Text>
-        <Text variant="h3" className="text-center">
+        <Text className="text-title text-onDark-empty text-center font-semibold">
           {uk.linkInvalidTitle}
         </Text>
-        <Text className="text-muted-foreground text-center">{uk.linkInvalidSub}</Text>
+        <Text className="text-body-sm text-onDark-muted text-center" style={{ maxWidth: 280 }}>
+          {uk.linkInvalidSub}
+        </Text>
       </View>
     )
   }
@@ -101,11 +104,13 @@ export default function CrewMemberDetailScreen() {
       <View className="gap-3 p-4">
         {/* One title for both audiences, as in the prototype: the client is not
             told they are seeing a reduced version of the record. */}
-        <Text variant="h3">{uk.peerDetailsTitle}</Text>
+        <Text className="text-title text-onDark font-semibold">{uk.peerDetailsTitle}</Text>
 
         {/* The creator's add-crew form, read back — US-023 AC-1's "same layout". */}
-        <TextClassContext.Provider value="text-card-foreground">
-          <View className="border-border bg-card gap-1 rounded-xl border p-4">
+        {/* A Card supplies text-card-foreground itself — the explicit provider
+            was the stopgap that kept this from going white-on-white when
+            --foreground inverted (ADR-017). */}
+        <Card variant="block" className="gap-1">
             <Field label={uk.crewName} value={member.name} strong />
             <Field label={uk.crewRole} value={member.role} />
             <Field label={uk.crewContact} value={member.contact} />
@@ -118,7 +123,7 @@ export default function CrewMemberDetailScreen() {
                 <Field label={uk.crewNotes} value={resolution.member.note} />
                 {resolution.member.noteImageUrl ? (
                   <Pressable
-                    className="bg-secondary border-border mt-2 h-40 w-full overflow-hidden rounded-md border active:opacity-70"
+                    className="bg-surface-alt mt-2 h-40 w-full overflow-hidden rounded-xl active:opacity-70"
                     onPress={() => setViewingImage(resolution.member.noteImageUrl)}
                     role="button"
                     accessibilityLabel={uk.crewNotes}
@@ -132,8 +137,7 @@ export default function CrewMemberDetailScreen() {
                 ) : null}
               </>
             ) : null}
-          </View>
-        </TextClassContext.Provider>
+        </Card>
 
         {/* Mounted for the crew audience only. A client has no image to open,
             because the payload that would carry one does not reach them. */}
@@ -157,8 +161,12 @@ export default function CrewMemberDetailScreen() {
 function Field({ label, value, strong }: { label: string; value: string | null; strong?: boolean }) {
   return (
     <View className="gap-1 pt-2">
-      <Text className="text-muted-foreground text-sm">{label}</Text>
-      <Text className={strong ? 'font-semibold' : undefined}>{value?.trim() || '—'}</Text>
+      {/* Inside the card, so `muted-foreground` is right here: #6E6E73 on white
+          is 5.07:1. Only the size moves, onto the design's scale. */}
+      <Text className="text-label text-muted-foreground">{label}</Text>
+      <Text className={`text-body-sm ${strong ? 'font-semibold' : ''}`}>
+        {value?.trim() || '—'}
+      </Text>
     </View>
   )
 }
