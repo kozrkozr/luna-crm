@@ -87,10 +87,10 @@ export default function CrewMemberDetailScreen() {
     return (
       <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
         <Text className="text-5xl">⚠️</Text>
-        <Text className="text-title text-onDark-empty text-center font-semibold">
+        <Text className="text-title text-foreground text-center font-semibold">
           {uk.linkInvalidTitle}
         </Text>
-        <Text className="text-body-sm text-onDark-muted text-center" style={{ maxWidth: 280 }}>
+        <Text className="text-body-sm text-muted-foreground text-center" style={{ maxWidth: 280 }}>
           {uk.linkInvalidSub}
         </Text>
       </View>
@@ -104,7 +104,7 @@ export default function CrewMemberDetailScreen() {
       <View className="gap-3 p-4">
         {/* One title for both audiences, as in the prototype: the client is not
             told they are seeing a reduced version of the record. */}
-        <Text className="text-title text-onDark font-semibold">{uk.peerDetailsTitle}</Text>
+        <Text className="text-title text-foreground font-semibold">{uk.peerDetailsTitle}</Text>
 
         {/* The creator's add-crew form, read back — US-023 AC-1's "same layout". */}
         {/* A Card supplies text-card-foreground itself — the explicit provider
@@ -123,7 +123,7 @@ export default function CrewMemberDetailScreen() {
                 <Field label={uk.crewNotes} value={resolution.member.note} />
                 {resolution.member.noteImageUrl ? (
                   <Pressable
-                    className="bg-surface-alt mt-2 h-40 w-full overflow-hidden rounded-xl active:opacity-70"
+                    className="bg-muted mt-2 h-40 w-full overflow-hidden rounded-xl active:opacity-70"
                     onPress={() => setViewingImage(resolution.member.noteImageUrl)}
                     role="button"
                     accessibilityLabel={uk.crewNotes}

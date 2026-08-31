@@ -11,7 +11,17 @@ const config: ExpoConfig = {
   version: '0.1.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'light',
+  /*
+   * Dark, matching the app (2026-08-29). This governs the NATIVE surfaces
+   * NativeWind cannot reach — the keyboard, `DateTimePicker`, `Alert.alert`,
+   * the text-selection handles — and while it said `light` every one of them
+   * came up bright against a dark app. The keyboard flashing white on each
+   * focus was the visible symptom; the date picker drawing dark text on a dark
+   * sheet was the invisible one.
+   *
+   * Changing this needs a native rebuild — it is a plist value, not JavaScript.
+   */
+  userInterfaceStyle: 'dark',
   plugins: [
     'expo-router',
     [

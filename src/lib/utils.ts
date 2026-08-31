@@ -14,11 +14,11 @@ import { extendTailwindMerge } from 'tailwind-merge'
  * Tailwind's own sizes must be a text **colour**.
  *
  * The consequence is that a size and a colour on the same element are treated
- * as rivals and one is deleted. `text-numeric-xl text-ink` lost the size, so
- * the shoot's time range rendered at 16px instead of 22. `text-onDark-secondary
- * text-label` lost the colour, so every field label in the app rendered pure
- * black on the near-black frame — invisible, and the exact defect the design
- * system's §2 leads with, reintroduced by a utility function.
+ * as rivals and one is deleted. a size paired with a colour lost the
+ * size, so the shoot's time range rendered at 16px instead of 22 — and in the
+ * other order it lost the colour, so every field label in the app rendered
+ * black on a near-black background. Invisible, and caused by a utility
+ * function rather than by any style anyone wrote.
  *
  * Nothing warns. The class is dropped from the output string, so there is no
  * unmatched selector, no console message, and the element simply inherits.

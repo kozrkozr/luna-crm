@@ -1,15 +1,35 @@
 const { hairlineWidth } = require('nativewind/theme')
 
 /**
- * Colour is NOT defined here — every value is an `hsl(var(--token))` reference
+ * React Native Reusables' stock scales. ADR-017's application colours — the
+ * frame, warm neutrals, client/private, warning, link, cta — were removed on
+ * 2026-08-29 at the owner's request; see src/theme/global.css.
+ *
+ * The type scale below is NOT stock and stays deliberately: `text-body`,
+ * `text-title` and the rest are named sizes used across 33 files, and they
+ * carry no colour and no visual identity. Removing them would be churn, not a
+ * theme reset. Say so if they should go too.
+ *
+ * Every colour carries `<alpha-value>`, which is what makes an opacity modifier
+ * work: `bg-primary/90`, `active:bg-accent/50`, `ring-destructive/20`. Written
+ * as a bare `hsl(var(--x))` the modifier is parsed, matched — and then silently
+ * dropped, because there is nowhere in the value to put the alpha. Every
+ * pressed and hover state in RNR's stock components is written with one, so
+ * without this the buttons have no press feedback at all and nothing reports a
+ * problem.
+ *
+ * Colour is NOT defined here — every value is an `hsl(var(--token) / <alpha-value>)` reference
  * into src/theme/global.css, which is the single place a colour may appear
  * (README, Layout). That includes the Layer B application scales: the design
  * system's §4 suggests writing those as literal hex here, and `ADR-017`
  * declines it for this rule's sake.
  *
- * The scales below are the dark-frame design system adopted in `ADR-017`. Read
- * global.css first — it carries the reasoning, the contrast ratios, and the
- * four places this implementation departs from the source document.
+ * The colour set is deliberately small since the monochrome pass of 2026-08-30:
+ * the stock shadcn slots plus `border-strong`, and no application scales at
+ * all. Seven used to sit below them — two shoot-status triples, `client`,
+ * `link`, `pending`, `confirmed` and `warning` — and all went with the app-wide
+ * move to the handoff's monochrome zinc direction. Read global.css first; it
+ * carries the reasoning and what the change costs.
  *
  * @type {import('tailwindcss').Config}
  */
@@ -25,136 +45,52 @@ module.exports = {
     extend: {
       colors: {
         // ── shadcn slots (Layer A) — stock RNR components read these ──────
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
+        background: 'hsl(var(--background) / <alpha-value>)',
+        foreground: 'hsl(var(--foreground) / <alpha-value>)',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)',
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: 'hsl(var(--destructive) / <alpha-value>)',
+          foreground: 'hsl(var(--destructive-foreground) / <alpha-value>)',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: 'hsl(var(--muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground) / <alpha-value>)',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+          DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
+          foreground: 'hsl(var(--popover-foreground) / <alpha-value>)',
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: 'hsl(var(--card) / <alpha-value>)',
+          foreground: 'hsl(var(--card-foreground) / <alpha-value>)',
         },
 
-        // ── the dark frame (Layer B) ──────────────────────────────────────
-        screen: {
-          DEFAULT: 'hsl(var(--screen))',
-          deep: 'hsl(var(--screen-deep))',
-          raised: 'hsl(var(--screen-raised))',
-          chip: 'hsl(var(--screen-chip))',
-          segment: 'hsl(var(--screen-segment))',
-        },
-        // Text and hairlines that sit ON the frame. `onDark.border` is the
-        // second border colour shadcn has no slot for — name it explicitly
-        // anywhere a border lands on the dark background.
-        onDark: {
-          DEFAULT: 'hsl(var(--on-dark))',
-          secondary: 'hsl(var(--on-dark-secondary))',
-          muted: 'hsl(var(--on-dark-muted))',
-          empty: 'hsl(var(--on-dark-empty))',
-          border: 'hsl(var(--on-dark-border))',
-          borderStrong: 'hsl(var(--on-dark-border-strong))',
-        },
+        /*
+         * `--border-strong` — the shoot-detail handoff's `#3f3f46`, one step up
+         * from `border`. The outlined «Очікує» badge, the reminder button and
+         * the sheet grabber all sit on it. See src/theme/global.css.
+         */
+        'border-strong': 'hsl(var(--border-strong) / <alpha-value>)',
 
-        // ── light surfaces (Layer B) ──────────────────────────────────────
-        surface: {
-          DEFAULT: 'hsl(var(--surface))',
-          alt: 'hsl(var(--surface-alt))',
-          hair: 'hsl(var(--surface-hair))',
-        },
-        ink: {
-          DEFAULT: 'hsl(var(--ink))',
-          muted: 'hsl(var(--ink-muted))',
-          // 3.44 on white: icons and decoration only, never text.
-          icon: 'hsl(var(--ink-icon))',
-        },
-
-        // ── the pinned screen CTA ─────────────────────────────────────────
-        cta: {
-          DEFAULT: 'hsl(var(--cta))',
-          foreground: 'hsl(var(--cta-foreground))',
-        },
-
-        // ── shoot status ──────────────────────────────────────────────────
-        // Named for `ShootStatus` (`new` | `finished`), not the design
-        // document's planned/progress/done — see global.css, departure 4.
-        // `solid` is the 4px stripe down the left of a list row.
-        'status-new': {
-          bg: 'hsl(var(--status-new-bg))',
-          fg: 'hsl(var(--status-new-fg))',
-          solid: 'hsl(var(--status-new-solid))',
-        },
-        'status-finished': {
-          bg: 'hsl(var(--status-finished-bg))',
-          fg: 'hsl(var(--status-finished-fg))',
-          solid: 'hsl(var(--status-finished-solid))',
-        },
-
-        // ── warning / waiting ─────────────────────────────────────────────
-        warning: {
-          bg: 'hsl(var(--warning-bg))',
-          fg: 'hsl(var(--warning-fg))',
-          ring: 'hsl(var(--warning-ring))',
-        },
-
-        // ── role vs visibility: two scales, same values today ─────────────
-        client: {
-          bg: 'hsl(var(--client-bg))',
-          chip: 'hsl(var(--client-chip))',
-          fg: 'hsl(var(--client-fg))',
-          ring: 'hsl(var(--client-ring))',
-          avatar: 'hsl(var(--client-avatar))',
-        },
-        private: {
-          bg: 'hsl(var(--private-bg))',
-          fg: 'hsl(var(--private-fg))',
-        },
-
-        // ── links ─────────────────────────────────────────────────────────
-        // `link` is unreadable on the frame (2.80) — use `link-onDark` there.
-        link: {
-          DEFAULT: 'hsl(var(--link))',
-          onDark: 'hsl(var(--link-on-dark))',
-        },
-
-        online: 'hsl(var(--online))',
-        'avatar-header': 'hsl(var(--avatar-header))',
       },
-      /*
-       * `--radius: 12px` makes the derived three exactly the design's first
-       * three steps; xl/2xl/3xl extend it to all six (8/10/12/14/16/20).
-       * `xl` (14) is the workhorse: row cards, buttons, tiles.
-       */
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        xl: '14px',
-        '2xl': '16px',
-        '3xl': '20px',
       },
       /*
        * The design system's scale, normalised from the 19 sizes (with half

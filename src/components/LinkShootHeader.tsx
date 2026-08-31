@@ -42,20 +42,20 @@ export function LinkShootHeader({ shoot, onReload }: { shoot: Shoot; onReload: (
         (ADR-013). When that story lands, the range goes here.
       */}
       <Card variant="hero" className="gap-3">
-        <Text className="text-numeric-xl text-ink font-bold">
+        <Text className="text-numeric-xl text-card-foreground font-bold">
           {`${uk.shootFor}: ${shoot.date}`}
         </Text>
 
         {hasLocation ? (
-          <View className="border-surface-hair gap-2 border-t pt-3">
+          <View className="border-border gap-2 border-t pt-3">
             {shoot.locationAddress ? (
               <View className="flex-row items-start gap-1.5">
-                <Text className="text-ink-icon text-[16px]">📍</Text>
-                <Text className="text-body-sm text-ink flex-1">{shoot.locationAddress}</Text>
+                <Text className="text-muted-foreground text-[16px]">📍</Text>
+                <Text className="text-body-sm text-card-foreground flex-1">{shoot.locationAddress}</Text>
               </View>
             ) : null}
             {shoot.locationNote ? (
-              <Text className="text-body-sm text-ink-muted">{shoot.locationNote}</Text>
+              <Text className="text-body-sm text-muted-foreground">{shoot.locationNote}</Text>
             ) : null}
             {shoot.locationAttachmentUrl ? (
               <LocationAttachment
@@ -94,7 +94,7 @@ function LocationAttachment({
   if (isVideo) {
     return (
       <Pressable
-        className="bg-surface-alt h-20 w-full items-center justify-center rounded-xl active:opacity-70"
+        className="bg-muted h-20 w-full items-center justify-center rounded-xl active:opacity-70"
         onPress={() => void openExternalUrl(url)}
         role="button"
         accessibilityLabel={uk.attachVideo}
@@ -106,7 +106,7 @@ function LocationAttachment({
 
   return (
     <Pressable
-      className="bg-surface-alt h-40 w-full overflow-hidden rounded-xl active:opacity-70"
+      className="bg-muted h-40 w-full overflow-hidden rounded-xl active:opacity-70"
       onPress={() => onOpenImage(url)}
       role="button"
       accessibilityLabel={uk.locationSection}

@@ -8,6 +8,10 @@ export type Profile = {
   phone: string | null
   role: Role | string
   socialHandle: string | null
+  /** `20260831100000` — a second handle beside `socialHandle` (Instagram). */
+  telegram: string | null
+  /** `20260831120000` — Storage path, not a URL. Sign it before display. */
+  avatarUrl: string | null
 }
 
 export type ProfileState =
@@ -30,7 +34,7 @@ export function useProfile(): ProfileState {
     void (async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('name, email, phone, role, social_handle')
+        .select('name, email, phone, role, social_handle, telegram, avatar_url')
         .maybeSingle()
 
       if (!active) return
@@ -48,6 +52,8 @@ export function useProfile(): ProfileState {
           phone: data.phone,
           role: data.role,
           socialHandle: data.social_handle,
+          telegram: data.telegram,
+          avatarUrl: data.avatar_url,
         },
       })
     })()

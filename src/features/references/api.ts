@@ -20,6 +20,19 @@ export type Reference = {
   kind: ReferenceKind
   /** External URL for `link`; a Storage object path for `image`. */
   urlOrPath: string
+  /**
+   * The group this reference belongs to — «Світло», «Пози», «Стиль» on the Figma
+   * shoot-detail frame, which draws the section as separate named groups.
+   *
+   * `null` for every row written before the column existed, and for anything
+   * added without choosing. Those render in an untitled group rather than under
+   * an invented «Без категорії» heading (CLAUDE.md rule 1).
+   *
+   * Free text, not a union: the fixed list the picker offers is a UI decision
+   * (`REFERENCE_CATEGORIES` in the dictionary), and typing it here would make
+   * adding a group a schema change. See the migration for the full reasoning.
+   */
+  category: string | null
 }
 
 /**
@@ -71,9 +84,22 @@ export function isValidReferenceLink(value: string): boolean {
   return parsed.protocol === 'http:' || parsed.protocol === 'https:'
 }
 
-function toReference(row: { id: string; kind: string; url_or_path: string }): Reference {
-  return { id: row.id, kind: row.kind as ReferenceKind, urlOrPath: row.url_or_path }
+function toReference(row: {
+  id: string
+  kind: string
+  url_or_path: string
+  category: string | null
+}): Reference {
+  return {
+    id: row.id,
+    kind: row.kind as ReferenceKind,
+    urlOrPath: row.url_or_path,
+    category: row.category,
+  }
 }
+
+/** The one column list, so the three queries below cannot drift apart. */
+const REFERENCE_COLUMNS = 'id, kind, url_or_path, category'
 
 /**
  * References on a shoot, oldest first.
@@ -85,7 +111,7 @@ function toReference(row: { id: string; kind: string; url_or_path: string }): Re
 export async function listReferences(shootId: string): Promise<Reference[] | null> {
   const { data, error } = await supabase
     .from('shoot_references')
-    .select('id, kind, url_or_path')
+    .select(REFERENCE_COLUMNS)
     .eq('shoot_id', shootId)
     .order('created_at', { ascending: true })
 
@@ -94,15 +120,20 @@ export async function listReferences(shootId: string): Promise<Reference[] | nul
 }
 
 /** `US-003` AC-1, the pasted-link half. */
-export async function addLinkReference(shootId: string, link: string): Promise<AddReferenceResult> {
+export async function addLinkReference(
+  shootId: string,
+  link: string,
+  /** The group to file it under, or null to leave it ungrouped. */
+  category: string | null = null
+): Promise<AddReferenceResult> {
   // AC-2 — validated before the insert, so a rejected link never reaches the
   // table and the existing list is provably unchanged.
   if (!isValidReferenceLink(link)) return { ok: false, reason: 'invalidLink' }
 
   const { data, error } = await supabase
     .from('shoot_references')
-    .insert({ shoot_id: shootId, kind: 'link', url_or_path: link.trim() })
-    .select('id, kind, url_or_path')
+    .insert({ shoot_id: shootId, kind: 'link', url_or_path: link.trim(), category })
+    .select(REFERENCE_COLUMNS)
     .single()
 
   if (error || !data) return { ok: false, reason: 'failed' }
@@ -120,7 +151,9 @@ export async function addLinkReference(shootId: string, link: string): Promise<A
  */
 export async function addImageReference(
   shootId: string,
-  asset: ImagePicker.ImagePickerAsset
+  asset: ImagePicker.ImagePickerAsset,
+  /** The group to file it under, or null to leave it ungrouped. */
+  category: string | null = null
 ): Promise<AddReferenceResult> {
   const mimeType = asset.mimeType?.toLowerCase() ?? ''
 
@@ -154,8 +187,8 @@ export async function addImageReference(
 
   const { data, error } = await supabase
     .from('shoot_references')
-    .insert({ shoot_id: shootId, kind: 'image', url_or_path: path })
-    .select('id, kind, url_or_path')
+    .insert({ shoot_id: shootId, kind: 'image', url_or_path: path, category })
+    .select(REFERENCE_COLUMNS)
     .single()
 
   if (error || !data) return { ok: false, reason: 'failed' }
@@ -173,4 +206,28 @@ export async function signedReferenceUrl(path: string): Promise<string | null> {
 
   if (error || !data) return null
   return data.signedUrl
+}
+
+/**
+ * Take a reference off a shoot.
+ *
+ * **No story covers this** — `US-003` adds, `US-021` lists. Built at the owner's
+ * request (2026-08-30); see docs/redesign-log.md.
+ *
+ * Goes through a SECURITY DEFINER function rather than an UPDATE, for the third
+ * time in this codebase and for the same reason each time: the SELECT policy's
+ * `removed_at is null` is applied to the NEW row, so a plain soft delete makes
+ * the row fail its own read policy. The reasoning is in the migration; the
+ * summary is that the policy is right and the write has to happen outside it.
+ *
+ * The function does its own authorisation, so this is not a bare escape hatch:
+ * it removes only a reference on a shoot the caller created. `false` means it
+ * did none of that, and deliberately does not say which.
+ *
+ * The stored image stays in the bucket — nothing points at it, no story asks
+ * for deletion, and no DELETE is granted anywhere.
+ */
+export async function removeReference(id: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('soft_remove_reference', { reference_id: id })
+  return !error && data === true
 }

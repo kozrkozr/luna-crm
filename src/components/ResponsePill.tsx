@@ -12,29 +12,31 @@ import type { CrewMember } from '../features/crew/api'
  * styles nothing, so the pills went transparent rather than failing loudly.
  * That is the argument for one copy.
  *
- * Tones:
+ * **Monochrome since 2026-08-30** (owner), and this is exactly the pair the
+ * shoot-detail handoff draws:
  *
- * - `pending` → **warning**. The one the design system specifies: §3.1 names
- *   `warning-bg` as the fill of the «Очікує» chip.
- * - `confirmed` → `status-finished`, and `declined` → destructive. Neither
- *   appears in any mockup, so these keep exactly the pairing the code already
- *   used and are not a new decision. Worth revisiting if the design ever covers
- *   them: pink for "confirmed" reads oddly, and the system's unused green
- *   (`progress`) is the obvious candidate — but adding a scale for it would be
- *   inventing, so it waits.
+ * - `confirmed` — **solid `#fafafa` with `#18181b` text**, i.e. `primary` and
+ *   `primary-foreground`. The brightest thing in a crew row, which is right:
+ *   it is the answer the row exists to report.
+ * - `pending` — **outlined**, border `#3f3f46` (`border-strong`), text
+ *   `#d4d4d8`. It stays the one bordered chip in the app, as it was when it was
+ *   amber; only the hue is gone.
+ * - `declined` — `destructive`, still the one state no mockup covers. It keeps
+ *   its hue because `--destructive` survived the monochrome pass: the handoff
+ *   has a red of its own for refusals.
  *
- * No border, matching `StatusPill` and §5.3: these fills carry their own text
- * at 4.75:1 or better and need no outline to separate from a white card.
+ * The green `confirmed` and amber `pending` scales this used are gone from
+ * src/theme/global.css.
  */
 const TONE: Record<CrewMember['response'], string> = {
-  pending: 'bg-warning-bg',
-  confirmed: 'bg-status-finished-bg',
+  pending: 'border-border-strong border',
+  confirmed: 'bg-primary',
   declined: 'bg-destructive/10',
 }
 
 const TONE_TEXT: Record<CrewMember['response'], string> = {
-  pending: 'text-warning-fg',
-  confirmed: 'text-status-finished-fg',
+  pending: 'text-foreground/85',
+  confirmed: 'text-primary-foreground',
   declined: 'text-destructive',
 }
 

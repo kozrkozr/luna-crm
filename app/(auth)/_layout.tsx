@@ -1,5 +1,4 @@
 import { Stack } from 'expo-router'
-import { uk } from '../../src/i18n/uk'
 import { navigationScreenOptions } from '../../src/theme/palette'
 
 /**
@@ -15,9 +14,18 @@ import { navigationScreenOptions } from '../../src/theme/palette'
  */
 export default function AuthLayout() {
   return (
-    <Stack screenOptions={{ headerLargeTitle: true, ...navigationScreenOptions }}>
-      <Stack.Screen name="login" options={{ title: uk.loginTitle }} />
-      <Stack.Screen name="register" options={{ title: uk.registerTitle }} />
+    /*
+      No header. ADR-017's auth mockup opens with its own intro block — logo,
+      product name, tagline — and a native title bar above it would state the
+      screen's name twice, once in a chrome the design does not have. The
+      segmented control inside the screen is what names the two modes now.
+    */
+    <Stack screenOptions={{ headerShown: false, ...navigationScreenOptions }}>
+      <Stack.Screen name="login" />
+      <Stack.Screen name="register" />
+      {/* Where the password-recovery email lands (`lunacrm://reset`). Headerless
+          like its siblings — it draws its own heading. */}
+      <Stack.Screen name="reset" />
     </Stack>
   )
 }

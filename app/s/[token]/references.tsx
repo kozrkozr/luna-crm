@@ -52,10 +52,10 @@ export default function LinkAllReferencesScreen() {
     return (
       <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
         <Text className="text-5xl">⚠️</Text>
-        <Text className="text-title text-onDark-empty text-center font-semibold">
+        <Text className="text-title text-foreground text-center font-semibold">
           {uk.linkInvalidTitle}
         </Text>
-        <Text className="text-body-sm text-onDark-muted text-center" style={{ maxWidth: 280 }}>
+        <Text className="text-body-sm text-muted-foreground text-center" style={{ maxWidth: 280 }}>
           {uk.linkInvalidSub}
         </Text>
       </View>
@@ -65,7 +65,7 @@ export default function LinkAllReferencesScreen() {
   return (
     <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
       <View className="gap-3 p-4">
-        <Text className="text-title text-onDark font-semibold">{uk.allReferencesTitle}</Text>
+        <Text className="text-title text-foreground font-semibold">{uk.allReferencesTitle}</Text>
         <LinkReferenceGrid references={resolution.references} />
       </View>
     </ScrollView>

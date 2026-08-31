@@ -3,7 +3,7 @@ import '../src/theme/global.css'
 import { PortalHost } from '@rn-primitives/portal'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { SCREEN } from '../src/theme/palette'
+import { BACKGROUND } from '../src/theme/palette'
 
 /**
  * Root shell for both surfaces.
@@ -53,7 +53,7 @@ export default function RootLayout() {
         headerStyle — but without a content background the navigator paints
         white behind them and the first paint of a link flashes.
       */}
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: SCREEN } }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BACKGROUND } }} />
       {/*
         React Native Reusables' Select renders through @rn-primitives/portal,
         which needs one host mounted as the last child of the providers.

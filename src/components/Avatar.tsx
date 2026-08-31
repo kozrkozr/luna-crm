@@ -1,6 +1,5 @@
 import { View } from 'react-native'
 import { Text } from './ui/text'
-import { avatarTint } from '../theme/palette'
 
 /**
  * An initials avatar, tinted by hashing the name (design system §5.8, §3.1).
@@ -12,9 +11,10 @@ import { avatarTint } from '../theme/palette'
  * names, and nothing in the data model holds an emoji for a person. Initials
  * are derivable; an emoji would have to be invented per person.
  *
- * The tint is a colour value, so it comes from src/theme/palette.ts rather than
- * from here. All six tints clear 15.6:1 against the initials' `ink`, so the
- * hash cannot land on an unreadable pair.
+ * One surface, not a hashed tint. ADR-017's system gave every avatar one of six
+ * warm colours picked by hashing the name; that palette went with the rest of it
+ * on 2026-08-29, and RNR has no equivalent scale. `secondary` is the stock
+ * raised surface, and `secondary-foreground` reads on it by construction.
  *
  * `ring` draws the client's 2px surround (§5.7). The ring colour has to be
  * passed as a class rather than assumed: on a white card it is `client-ring`,
@@ -50,8 +50,8 @@ export function Avatar({ name, size = 38, className }: Props) {
   const label = initials(name)
   return (
     <View
-      className={`shrink-0 items-center justify-center rounded-full ${className ?? ''}`}
-      style={{ width: size, height: size, backgroundColor: avatarTint(name) }}
+      className={`bg-secondary shrink-0 items-center justify-center rounded-full ${className ?? ''}`}
+      style={{ width: size, height: size }}
     >
       {/*
         lineHeight pinned to the font size: without it Android adds its own
@@ -59,7 +59,7 @@ export function Avatar({ name, size = 38, className }: Props) {
         system flags for emoji avatars applies to text ones.
       */}
       <Text
-        className="text-ink font-semibold"
+        className="text-secondary-foreground font-semibold"
         style={{ fontSize: Math.round(size * 0.36), lineHeight: Math.round(size * 0.36) }}
       >
         {label}

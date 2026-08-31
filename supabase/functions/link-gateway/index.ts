@@ -116,6 +116,18 @@ const signed = async (supabase: Supabase, path: string | null): Promise<string |
 type ShootRow = {
   id: string
   date: string
+  /** `US-030`. Selected for both audiences since 2026-08-31. */
+  start_time: string | null
+  end_time: string | null
+  /** Whose shoot it is — the organizer card reads `users` through this. */
+  creator_id: string
+  /**
+   * The shoot's production note. **Selected in `crewPayload` and nowhere else**
+   * — `US-026` requires it to be absent from a client's response. Typed here
+   * because one row type serves both queries; the SELECT is what decides, and
+   * `clientPayload` never asks for this column.
+   */
+  notes: string | null
   location_address: string | null
   location_note: string | null
   location_attachment: string | null
@@ -126,7 +138,14 @@ type ShootRow = {
   finished_photos_url: string | null
 }
 
-type MemberRow = { id: string; name: string; role: string; response: string }
+type MemberRow = {
+  id: string
+  name: string
+  role: string
+  response: string
+  /** `US-008`, optional — «Причина — за бажанням» (20260831180000). */
+  decline_reason: string | null
+}
 
 /**
  * `US-023` — a crew member sees a peer's complete details, "with nothing held
@@ -152,6 +171,47 @@ type PeerRow = MemberRow & {
 }
 
 /**
+ * Who organised the shoot, for the link view's «Організатор» card.
+ *
+ * **This is the first time anything from `users` reaches an anonymous
+ * audience.** Owner's decision, 2026-08-31: a call sheet whose recipient cannot
+ * reach the person who sent it is missing the point, so name, role and contacts
+ * are sent to crew AND clients.
+ *
+ * What that costs, stated once: the link is shareable, so the photographer's
+ * phone reaches anyone it is forwarded to. That is the same property every other
+ * field on this payload has, and it is the reason the footer calls the link
+ * private.
+ *
+ * `email` is NOT selected. It is the login credential (`ADR-015`), it is the
+ * crew-matching key (`match_contact_to_user`), and nothing on this screen asks
+ * for it — three reasons, any one of which is enough.
+ */
+async function organizer(supabase: Supabase, creatorId: string) {
+  const { data } = await supabase
+    .from('users')
+    .select('name, role, phone, social_handle, telegram')
+    .eq('id', creatorId)
+    .maybeSingle()
+
+  if (!data) return null
+  const row = data as {
+    name: string
+    role: string
+    phone: string | null
+    social_handle: string | null
+    telegram: string | null
+  }
+  return {
+    name: row.name,
+    role: row.role,
+    phone: row.phone,
+    instagram: row.social_handle,
+    telegram: row.telegram,
+  }
+}
+
+/**
  * `US-007` AC-1 — the date, the location, the shoot's references, and the rest
  * of the crew.
  *
@@ -163,11 +223,38 @@ type PeerRow = MemberRow & {
  * **No `note` is included, for anyone, yet.** `US-023` gives a crew member
  * their peers' notes and is not built; until a screen reads them there is no
  * reason for them to cross the network.
+ *
+ * **`shoots.notes` is the exception, since 2026-08-31.** It is the shoot's own
+ * production note — what the client wants, what to bring — and
+ * `Shoot Link Preview.dc.html` shows it to crew under «Нотатки від
+ * організатора», badged «Клієнт не бачить». The owner approved sending it to
+ * crew and only crew.
+ *
+ * So this function selects it and `clientPayload` does not, which is the whole
+ * of the guarantee: `US-026` requires the field to be absent from a client's
+ * response, "not even an empty one", and a shape built from named fields is what
+ * makes that true. **Adding `notes` to `clientPayload`'s select is the single
+ * edit that would break `ADR-013` and CLAUDE.md rule 2.**
  */
 async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRow) {
   const { data: shoot } = await supabase
     .from('shoots')
-    .select('id, date, location_address, location_note, location_attachment')
+    /*
+      **`notes` is selected HERE and in no other query in this file.**
+
+      `shoots.notes` is the shoot's production note, badged «Клієнт не бачить»
+      wherever it appears. `US-026` requires the field to be absent from a
+      client's response — "not even an empty one" — and the way that is
+      guaranteed is that `clientPayload`'s own select does not name it. Adding it
+      there would be the single change that breaks CLAUDE.md rule 2.
+
+      `start_time` / `end_time` go to both audiences: `US-030` added them on
+      2026-08-28 and this function was never updated, so no link view has ever
+      been able to show a time.
+    */
+    .select(
+      'id, date, start_time, end_time, creator_id, location_address, location_note, location_attachment, notes'
+    )
     .eq('id', shootId)
     .is('deleted_at', null)
     .maybeSingle()
@@ -179,6 +266,11 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
     .from('shoot_references')
     .select('id, kind, url_or_path')
     .eq('shoot_id', shootId)
+    // ADR-014, by hand again: `shoot_references.removed_at` (migration
+    // 20260830140000) is filtered by the table's policy for the app, and this
+    // runs as service role where no policy applies. Without it a reference the
+    // creator removed keeps being served to everyone holding a link.
+    .is('removed_at', null)
     .order('created_at', { ascending: true })
 
   // ADR-014, and the one place it is not enforced for us: this runs as service
@@ -199,13 +291,23 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
     crewMemberId: viewer.id,
     shoot: {
       date: row.date,
+      startTime: row.start_time,
+      endTime: row.end_time,
       locationAddress: row.location_address,
       locationNote: row.location_note,
       locationAttachmentUrl: await signed(supabase, row.location_attachment),
+      /* Crew only. See the SELECT above, and `US-026`. */
+      notes: row.notes,
     },
+    organizer: await organizer(supabase, row.creator_id),
     // "Ви: Ігор (Гафер)" — the prototype names the reader, so a shared phone
     // does not leave someone answering for the wrong person.
-    viewer: { name: viewer.name, role: viewer.role, response: viewer.response },
+    viewer: {
+      name: viewer.name,
+      role: viewer.role,
+      response: viewer.response,
+      declineReason: viewer.decline_reason,
+    },
     references: await Promise.all(
       (references ?? []).map(async (reference) => ({
         id: reference.id,
@@ -315,7 +417,16 @@ function filesLink(value: string | null): string | null {
 async function clientPayload(supabase: Supabase, shootId: string) {
   const { data: shoot } = await supabase
     .from('shoots')
-    .select('id, date, location_address, location_note, location_attachment, raw_files_url, finished_photos_url')
+    /*
+      **`notes` is deliberately absent**, and this comment is the reason it must
+      stay absent: `US-026` requires the shoot's production note to be missing
+      from a client's response entirely. The field is selected in `crewPayload`
+      and nowhere else. Adding it to this list is the one edit that breaks
+      `ADR-013` and CLAUDE.md rule 2.
+    */
+    .select(
+      'id, date, start_time, end_time, creator_id, location_address, location_note, location_attachment, raw_files_url, finished_photos_url'
+    )
     .eq('id', shootId)
     .is('deleted_at', null)
     .maybeSingle()
@@ -327,6 +438,11 @@ async function clientPayload(supabase: Supabase, shootId: string) {
     .from('shoot_references')
     .select('id, kind, url_or_path')
     .eq('shoot_id', shootId)
+    // ADR-014, by hand again: `shoot_references.removed_at` (migration
+    // 20260830140000) is filtered by the table's policy for the app, and this
+    // runs as service role where no policy applies. Without it a reference the
+    // creator removed keeps being served to everyone holding a link.
+    .is('removed_at', null)
     .order('created_at', { ascending: true })
 
   // `removed_at` filtered by hand, as everywhere in this function: service role
@@ -385,6 +501,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url)
   let token = url.searchParams.get('token')
   let wanted: 'confirmed' | 'declined' | null = null
+  let wantedReason: string | null = null
 
   if (req.method === 'POST') {
     const body = await req.json().catch(() => null)
@@ -393,6 +510,16 @@ Deno.serve(async (req) => {
     // reaches the database rather than relying on the enum to reject it.
     wanted = body?.response === 'confirmed' || body?.response === 'declined' ? body.response : null
     if (!wanted) return denied()
+    /*
+      Free text from an anonymous caller, so it is bounded here rather than
+      trusted: the design offers three chips, and nothing in the product reads
+      this column back except the creator's own screen. A cap is the difference
+      between a reason and an upload.
+    */
+    wantedReason =
+      typeof body?.reason === 'string' && body.reason.trim()
+        ? body.reason.trim().slice(0, 120)
+        : null
   }
 
   if (!token) return denied()
@@ -430,7 +557,7 @@ Deno.serve(async (req) => {
     // is the only thing that revokes it; there is no expiry (ADR-014).
     const { data: member } = await supabase
       .from('crew_members')
-      .select('id, name, role, response')
+      .select('id, name, role, response, decline_reason')
       .eq('id', link.crew_member_id!)
       .is('removed_at', null)
       .maybeSingle()
@@ -439,7 +566,7 @@ Deno.serve(async (req) => {
 
     // AC-2 — the same resolution gates the write. An invalid or revoked link
     // never reaches `respond`, so no status change can occur through one.
-    if (wanted) return await respond(supabase, member.id, wanted)
+    if (wanted) return await respond(supabase, member.id, wanted, wantedReason)
 
     return json(await crewPayload(supabase, shoot.id, member))
   }

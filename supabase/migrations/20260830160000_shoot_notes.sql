@@ -1,0 +1,42 @@
+-- A shoot-level note: «Побажання клієнта, обладнання, що взяти».
+--
+-- **No story defines this field.** It has been drawn in three designs — the
+-- shoot detail's «Нотатки» card, the edit screen's «Нотатки» group, and now the
+-- new-shoot form — and was left unbuilt each time for exactly that reason
+-- (docs/redesign-log.md S-1, then H-1). The owner asked for the column on
+-- 2026-08-30 so that all three can be built. Recorded here rather than assumed
+-- into the backlog: `US-002`, `US-018` and `US-035` all need amending.
+--
+-- Distinct from the two notes that already exist, and the distinction matters:
+--
+--   * `shoots.location_note`  — how to get in. Directions, a door code, the
+--                               guard's number. `US-018` AC-2.
+--   * `crew_members.note`     — about one PERSON on one shoot. The field
+--                               `ADR-013` and CLAUDE.md rule 2 exist to keep
+--                               away from clients.
+--   * `shoots.notes`          — about the SHOOT. What the client wants, what to
+--                               bring. This column.
+--
+-- ── Visibility ──────────────────────────────────────────────────────────────
+--
+-- The design badges it «Клієнт не бачить», which says who must NOT see it and
+-- leaves open whether crew should. **Nothing is added to the link gateway by
+-- this migration**, so today the answer is "only the creator": both payloads are
+-- built from explicit column lists and neither selects this one.
+--
+-- That is deliberate and it is the safe default. Adding it to `crewPayload` is
+-- one line whenever a story asks for it; removing it from a client payload that
+-- had already shipped it is not. The same reasoning the gateway already applies
+-- to `crew_members.note`: "until a screen reads them there is no reason for them
+-- to cross the network".
+--
+-- **If this is ever sent to crew, it must still never reach a client** —
+-- `US-026` requires the field to be absent, "not even an empty one".
+
+alter table public.shoots
+  add column notes text;
+
+-- No policy change and no grant change. `shoots` already carries
+-- `select, insert, update` for `authenticated` (20260825140000) and the
+-- creator-scoped policies from the initial schema, so this column inherits
+-- both — it is readable and writable by the shoot's creator and by nobody else.

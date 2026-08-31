@@ -8,8 +8,16 @@ export type RegistrationInput = {
   name: string
   email: string
   password: string
-  role: Role
+  /**
+   * `US-001` AC-2's role. Typed as `Role` no longer — «Інша роль» (owner,
+   * 2026-08-31) lets a reader type their own, and `users.role` is a text
+   * column. The glossary's five stay the offered set; they are no longer the
+   * only possible values, which `US-001` and the glossary both need to record.
+   */
+  role: string
   socialHandle?: string
+  /** `20260831100000` — a second handle beside `socialHandle` (Instagram). */
+  telegram?: string
 }
 
 export type RegistrationFailure = 'weakPassword' | 'emailTaken' | 'failed'
@@ -39,6 +47,7 @@ export async function register(input: RegistrationInput): Promise<RegistrationRe
         name: input.name.trim(),
         role: input.role,
         social_handle: input.socialHandle?.trim() || null,
+        telegram: input.telegram?.trim() || null,
       },
     },
   })

@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Modal, Pressable, View } from 'react-native'
+import { Keyboard, Modal, Pressable, View } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button } from './ui/button'
 import { Text } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
+import { elevation } from '../theme/elevation'
 import { toIsoDate, toTimeValue } from '../features/shoots/date'
 
 /** Standard height of the iOS date wheel. */
@@ -69,19 +70,38 @@ export function DateField({ id, value, onChange, placeholder, onClear, mode = 'd
           id={id}
           variant="outline"
           /*
-            ADR-017 — `variant="outline"` is `bg-background`, which after the
-            inversion is the near-black frame: this field was rendering
-            dark-on-dark like Input was. Overridden to the white field of §5.9
-            so it matches the Inputs it sits among, which is the whole point of
-            the component.
+            The point of this component is to look like the Input fields it sits
+            among, so it carries their fill and border: `border-input
+            bg-input/30`, as in Input, SelectTrigger and Checkbox.
+            `variant="outline"` cannot give it that on its own — RNR puts the
+            fill behind a `dark:` prefix, and nothing applies the `dark` class
+            here, so the variant paints `bg-background` and the field came out
+            flat against the screen. The variant's `shadow-sm shadow-black/5`
+            does apply and is not repeated.
+
+            `h-11` matches Input's height; the button's own size classes are
+            built for a button, not a field.
           */
-          className="border-input bg-card h-11 flex-1 justify-start rounded-md"
+          className="border-input bg-input/30 h-11 flex-1 justify-start rounded-md"
           onPress={() => {
+            /*
+              Blur the focused field before the sheet appears. Tapping this
+              button does not take focus away from a TextInput — a Button is not
+              a text target — so a field like the phone number stayed first
+              responder underneath the modal, and iOS handed focus back to it
+              when the modal was dismissed: the keyboard reappeared over a form
+              the user had moved on from.
+
+              `Keyboard.dismiss()` blurs the currently focused input rather than
+              only hiding the keyboard, which is what makes the focus not come
+              back.
+            */
+            Keyboard.dismiss()
             setDraft(value ?? new Date())
             setOpen(true)
           }}
         >
-          <Text className={value ? 'text-card-foreground' : 'text-muted-foreground'}>
+          <Text className={value ? 'text-foreground' : 'text-muted-foreground'}>
             {value ? format(value) : emptyLabel}
           </Text>
         </Button>
@@ -93,27 +113,70 @@ export function DateField({ id, value, onChange, placeholder, onClear, mode = 'd
             accessibilityLabel={t.clearDate}
             hitSlop={6}
           >
-            <Text className="text-ink">✕</Text>
+            <Text className="text-card-foreground">✕</Text>
           </Button>
         ) : null}
       </View>
 
       <Modal visible={open} transparent animationType="slide" onRequestClose={close}>
-        {/* Dim the page behind, and let a tap outside dismiss. */}
-        <Pressable className="flex-1 justify-end bg-black/40" onPress={close}>
-          {/* The picker sheet is a modal card: white, radius 16 (§5.13). It
-              was `bg-background` — the frame — behind a native picker that
-              renders its own dark text. */}
-          <View className="bg-card gap-3 rounded-t-2xl p-4">
+        {/*
+          No dim — owner's decision. The page behind stays at full brightness and
+          the sheet is separated from it by its own border and shadow alone,
+          which is why those were added.
+
+          `bg-transparent` rather than dropping the Pressable: it still fills the
+          screen and still catches the tap that dismisses the sheet. RN hit
+          testing does not depend on a background colour, so an invisible layer
+          is as tappable as a dimmed one.
+        */}
+        <Pressable className="flex-1 justify-end bg-transparent" onPress={close}>
+          {/*
+            `DateTimePicker` is a native view that draws its own text, and it
+            takes the colour from the enclosing appearance rather than from
+            anything NativeWind can reach — so on a light-appearance container it
+            draws BLACK numbers on this dark sheet.
+
+            `themeVariant` is the only reliable lever: it forces the picker's own
+            appearance and does not depend on the app being built dark.
+            `app.config.ts` does set `userInterfaceStyle: 'dark'`, but that value
+            only reaches the app through `ios/LunaCRM/Info.plist`, which this repo
+            checks in — so it is a build away at best, and this prop keeps the
+            picker readable regardless. iOS only; Android ignores it.
+          */}
+          {/*
+            The border and the shadow are what make this read as a sheet at all:
+            `--card` is the same near-black as `--background`, so the sheet and
+            the page it covers are the same colour, and the dim behind it was the
+            only thing distinguishing them — two flat dark rectangles instead of
+            one surface over another. Same fix as SelectContent, and the same
+            pattern AlertDialogContent and Toast already use: an edge plus
+            `elevation.overlay`, which is the one shadow that survives to
+            Android.
+          */}
+          <View
+            className="bg-card border-border gap-3 rounded-t-2xl border p-4"
+            style={elevation.overlay}
+          >
             <View className="flex-row justify-center" style={{ height: PICKER_HEIGHT }}>
               <DateTimePicker
                 value={draft}
                 mode={mode}
                 display="spinner"
+                themeVariant="dark"
                 style={{ flex: 1, height: PICKER_HEIGHT }}
-                onChange={(_event, selected) => {
-                  if (selected) setDraft(selected)
-                }}
+                /*
+                  `onValueChange`, not the deprecated `onChange` — 9.1.0 warns on
+                  the old one, which multiplexed selection, dismissal and
+                  Android's neutral button through one callback and `event.type`.
+                  The replacement fires only on a selection and types `date` as
+                  non-optional, so the `if (selected)` guard the old signature
+                  needed is gone.
+
+                  No `onDismiss`: the picker is the inline spinner inside this
+                  file's own Modal, so Cancel and the tap outside are what
+                  dismiss it, and nothing native does.
+                */
+                onValueChange={(_event, selected) => setDraft(selected)}
               />
             </View>
             <View className="flex-row gap-2">

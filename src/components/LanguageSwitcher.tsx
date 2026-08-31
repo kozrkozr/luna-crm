@@ -62,7 +62,7 @@ function Option({
       {/* In the navigation header, so on the frame (ADR-017). */}
       <Text
         className={
-          active ? 'text-caption text-onDark font-bold' : 'text-caption text-onDark-muted'
+          active ? 'text-caption text-foreground font-bold' : 'text-caption text-muted-foreground'
         }
       >
         {label}

@@ -2,23 +2,30 @@ import { cn } from '@/lib/utils';
 import { Platform, TextInput } from 'react-native';
 
 /*
- * ADR-017 — a white field, explicitly.
+ * React Native Reusables' stock dark field, restored 2026-08-29.
  *
- * Stock RNR styles this with `bg-background` and `text-foreground`, which is
- * correct in a light app and wrong in this one: after the inversion those are
- * the near-black frame and white text, so every form field on every screen went
- * dark-on-dark. The design system's §5.9 specifies the opposite — a white input
- * with #111111 text and an #E9E8E4 hairline, sitting on the frame under a
- * light-grey label.
+ * ADR-017 had rewritten this as a white field on a near-black frame (its §5.9).
+ * When the owner dropped that design system and took RNR's stock dark tokens
+ * (see src/theme/global.css), the component was only re-pointed at dark
+ * tokens — the fill and the lift RNR gives a field were left out. They are back.
  *
- * `bg-card` / `text-card-foreground` rather than `surface`/`ink` so the field
- * keeps tracking the same token pair as every other white surface.
+ * Two deliberate departures from stock remain:
+ *
+ * - `h-11`, not `h-10 sm:h-9`. 44pt is the iOS minimum tap target.
+ * - The placeholder is `text-muted-foreground`, not stock's `/50` of it. At half
+ *   opacity over this background it lands near #565656 and fails 4.5:1.
  */
 function Input({ className, ...props }: React.ComponentProps<typeof TextInput> & React.RefAttributes<TextInput>) {
   return (
     <TextInput
       className={cn(
-        'border-input bg-card text-card-foreground flex h-11 w-full min-w-0 flex-row items-center rounded-md border px-3 py-1 text-base leading-5',
+        // `bg-input/30` is what stock RNR paints in dark mode, written without
+        // the `dark:` prefix: this app has one theme on `:root` and never
+        // applies the `dark` class, so the prefixed version could never fire and
+        // the field sat at exactly the screen colour. Translucent, as stock has
+        // it — over the background it composites to ~#131313, so the field reads
+        // as faintly raised rather than relying on the hairline alone.
+        'border-input bg-input/30 text-foreground flex h-11 w-full min-w-0 flex-row items-center rounded-md border px-3 py-1 text-base leading-5 shadow-sm shadow-black/5',
         props.editable === false &&
         cn(
           'opacity-50',
@@ -34,6 +41,9 @@ function Input({ className, ...props }: React.ComponentProps<typeof TextInput> &
         }),
         className
       )}
+      // iOS shows the light keyboard unless it is asked otherwise; the frame is
+      // dark, so the keyboard is too. Overridable per field via props.
+      keyboardAppearance="dark"
       {...props}
     />
   );

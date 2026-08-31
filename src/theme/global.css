@@ -1,70 +1,46 @@
 /*
  * The only place a colour value may appear (README, Layout).
  *
- * These are the tokens of the dark-frame design system adopted in `ADR-017`,
- * which supersedes the warm terracotta palette of the phase-03 prototype. The
- * structure of the system is inverted from a normal light app and every rule
- * below follows from it:
+ * **React Native Reusables' stock dark theme, and nothing else.** Owner's
+ * decision, 2026-08-29: the dark-frame design system adopted in `ADR-017` is
+ * removed and the app returns to RNR's defaults.
  *
- *   screen (near-black #151517)
- *     └── content lives on WHITE cards, radius 12–20
- *           └── inside a card, a warm light-grey inset (#F7F6F3)
+ * These values are RNR's `.dark` block verbatim, promoted to `:root` so they
+ * are the app's one theme rather than a variant something must switch into.
+ * That keeps the arrangement the app already had — one theme, no `.dark` class,
+ * no half-finished light variant for the system setting to fall into — while
+ * the values themselves stop being ours.
  *
- * So the dark frame is a *frame*, not a surface. Only screen titles, section
- * headers, field labels, empty states and dashed placeholders sit on it; real
- * content sits on white. The neutrals are warm on purpose — #F7F6F3 and
- * #E9E8E4 carry a yellow undertone (hue 45–48°), not grey. Do not reach for
- * Tailwind's `neutral-*` instead; the character is in the undertone.
+ * **What this changes beyond colour.** ADR-017's system inverted the usual
+ * structure: a near-black frame with content on WHITE cards. RNR's dark theme is
+ * conventional — a card is no longer a bright surface, so everything written to
+ * sit "on white" had to be re-pointed at the dark pair. That was the bulk of
+ * this change.
  *
- * Colour carries exactly three meanings — shoot status, role/privacy, and
- * links. There is deliberately no brand accent. Chrome is monochrome.
+ * RNR would have `--card` equal to `--background`, separated by a border rather
+ * than by brightness. **That one value is now the Figma file's instead** — see
+ * the note on it below.
  *
- * Two layers, per the design system's §4:
- *   Layer A — overrides of React Native Reusables' shadcn variables, so stock
- *             RNR components (Button, Card, Input, Select, AlertDialog) are
- *             correct without editing their source.
- *   Layer B — the application scales shadcn has no slot for: the dark frame,
- *             status, client/private, warning, link, avatar tints.
+ * The scales ADR-017 added — the frame, the warm neutrals, the client/private
+ * purple axis, warning, link, cta, avatar tints — are gone. Where they carried
+ * meaning the app still needs, they map onto stock slots: `secondary` for a
+ * raised surface, `muted-foreground` for secondary text, `destructive` for a
+ * refusal.
  *
- * The system's §4 recommends writing Layer B as literal hex in
- * tailwind.config.js. Declined (`ADR-017`, Decision): this file being the only
- * place a colour value appears is worth more than the one indirection.
+ * **One documented exception, down from seven.** `--card` is the Figma file's
+ * `#1F1F22` rather than stock's page colour. Every other token is RNR's,
+ * verbatim, plus one addition — `--border-strong`, the shoot-detail handoff's
+ * `#3f3f46`.
  *
- * `.dark:root` is gone. The app declares one theme (the system's §4, "Тема:
- * одна, не дві"), so there is no `dark` class to apply and no half-finished
- * light variant for the system setting to fall into. RNR's stock components
- * still carry `dark:` classes; they are inert and harmless. app.config.ts keeps
- * `userInterfaceStyle: 'light'` deliberately — it governs *native* chrome
- * (keyboard, date pickers), which appears over the white card content, not over
- * the dark frame.
+ * The list was longer until 2026-08-30. Two shoot-status triples, `client`,
+ * `link`, `pending`, `confirmed` and finally `warning` all lived here, and all
+ * went with the owner's app-wide move to the handoff's monochrome zinc
+ * direction. `--destructive` is the only hue left. See the block at the top of
+ * `:root` for what that costs.
  *
- * ── Four deliberate departures from the source document ──────────────────────
- *
- * 1. `--accent` is #F7F6F3, not the document's #F4F0FB. Its Layer A table maps
- *    accent to the purple client axis, but in RNR `--accent` is what every
- *    ghost and outline control uses for its pressed state. Purple means "this
- *    is the client"; a button being pressed is chrome, and §1 says chrome
- *    carries no colour. Purple stays in Layer B's `client-*` only.
- *
- * 2. `--primary` stays dark (#1C1C1E) even though §3.5's chosen fix inverts the
- *    main CTA to white. Both are true at once: a modal's primary button sits on
- *    a *white* card (§5.13), and that is what RNR's stock `Button` and
- *    `AlertDialogAction` render with `bg-primary`. Inverting the variable would
- *    make those invisible. The pinned screen CTA gets its own `cta` pair in
- *    Layer B instead, so the special case is the one that is explicit.
- *
- * 3. `--radius: 12px`, not the 14px its §4 note suggests. §3.4's table names
- *    six steps (8/10/12/14/16/20); at 14px the derived sm/md/lg become
- *    10/12/14 and the 8 step is lost. At 12px they are 8/10/12 — exactly the
- *    first three names — and tailwind.config.js extends xl/2xl/3xl with
- *    14/16/20. All six match. (`ADR-017` open question 3.)
- *
- * 4. Status tokens are named for `ShootStatus` — `new` and `finished` — not the
- *    document's `planned`/`progress`/`done`. The values are the document's; the
- *    names keep the code greppable against the backlog (CLAUDE.md rule 5), and
- *    the enum has two members, not three. `progress`/green is therefore unused.
- *    This also settles docs/open-questions.md #12: the previous status tones
- *    were values nobody had chosen.
+ * **The rule that survives all of it:** a value here must be something RNR has
+ * no slot for — a card that lifts, a warning, a stronger border — and it must
+ * come from a named source. Every remaining token is stock, verbatim.
  */
 @tailwind base;
 @tailwind components;
@@ -72,107 +48,97 @@
 
 @layer base {
   :root {
-    /* ── Layer A — RNR / shadcn slots ─────────────────────────────────── */
-    --background: 240 4.5% 8.6%; /* #151517 — the frame */
-    --foreground: 0 0% 100%; /* #FFFFFF — text on the frame */
-    --card: 0 0% 100%; /* #FFFFFF */
-    --card-foreground: 0 0% 6.7%; /* #111111 */
-    --popover: 0 0% 100%; /* #FFFFFF */
-    --popover-foreground: 0 0% 6.7%; /* #111111 */
-    --primary: 240 3.4% 11.4%; /* #1C1C1E — on-card primary; see departure 2 */
-    --primary-foreground: 0 0% 100%; /* #FFFFFF */
-    --secondary: 45 20% 96.1%; /* #F7F6F3 — warm inset, icon buttons, tiles */
-    --secondary-foreground: 0 0% 6.7%; /* #111111 */
-    --muted: 45 20% 96.1%; /* #F7F6F3 */
-    --muted-foreground: 240 2.2% 44.1%; /* #6E6E73 — 5.07 on white. The
-                                         * document corrects this from the
-                                         * mockups' #8A8A8E, which is 3.44 and
-                                         * fails AA for text. */
-    --accent: 45 20% 96.1%; /* #F7F6F3 — press states; see departure 1 */
-    --accent-foreground: 0 0% 6.7%; /* #111111 */
-    --destructive: 342 50.8% 46.3%; /* #B23A5E */
-    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
-    --border: 48 10.2% 90.4%; /* #E9E8E4 — the hairline ON WHITE. The frame has
-                               * its own; see --on-dark-border below. shadcn has
-                               * one border slot and this palette needs two, so
-                               * anything bordered on the dark frame must name
-                               * the dark one explicitly. */
-    --input: 48 10.2% 90.4%; /* #E9E8E4 */
-    --ring: 210 70.9% 54.1%; /* #378ADD — input focus */
-    --radius: 12px; /* → sm/md/lg = 8/10/12; see departure 3 */
-
-    /* ── Layer B — the dark frame ─────────────────────────────────────── */
-    --screen: 240 4.5% 8.6%; /* #151517 */
-    --screen-deep: 240 7.1% 5.5%; /* #0D0D0F — under status/nav bars */
-    --screen-raised: 240 3.4% 11.4%; /* #1C1C1E — toast, dark pill */
-    --screen-chip: 240 4.6% 12.7%; /* #1F1F22 — filter chips */
-    --screen-segment: 240 4.1% 14.3%; /* #232326 — active dark segment */
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    /*
+     * **Not RNR's value.** Stock dark sets `--card` to `0 0% 3.9%`, the same as
+     * `--background`, so a card has no fill of its own and needs a border to
+     * exist at all. The Figma file draws the crew card on `#1F1F22` over the
+     * page's near-black — a card that lifts *and* is bordered (owner,
+     * 2026-08-30; node 1:79 of the shoot-detail frame, read through the Dev Mode
+     * MCP server. No Figma variable behind it — a raw hex).
+     *
+     * The tint is the file's, not a mistake: `#1F1F22` is hue 240 at 5%, because
+     * that frame is built on Tailwind's **zinc** scale (its `#27272A` border is
+     * `zinc-800` exactly) where this theme is RNR's pure-neutral **neutral**. At
+     * 5% saturation the difference is imperceptible; the value is kept as drawn
+     * rather than flattened to `0 0% 13%`, so it can be traced back.
+     *
+     * `--card-foreground` needs no change: `#FAFAFA` is what the file uses too.
+     */
+    --card: 240 5% 13%; /* #1F1F22 */
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 70.9% 59.4%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 300 0% 45%;
+    --radius: 0.625rem;
 
     /*
-     * Text and borders on the frame. The three dark fills above are all within
-     * 1.2:1 of the frame itself — at this brightness the contrast formula
-     * cannot separate them, whatever shade is chosen (§3.5). So dark surfaces
-     * are separated by a BORDER, never by fill alone.
+     * ── Monochrome, 2026-08-30 (owner) ────────────────────────────────────
+     *
+     * Six colour scales lived here until today: the two shoot-status triples
+     * (`status-new` blue, `status-finished` pink), `client` purple, `link`
+     * blue, `pending` amber and `confirmed` green. All six are **removed**.
+     *
+     * The shoot-detail handoff (`design_handoff_shoot_detail/README.md`) is
+     * built on the shadcn dark **zinc** scale and states the rule outright:
+     * "monochrome zinc scale, no colour tints", "only these; no coloured
+     * status tints". A status is a solid `foreground` chip or an outlined one;
+     * a confirmed crew member is solid, a pending one outlined; nothing is
+     * distinguished by hue any more. The owner extended that decision to the
+     * whole app rather than to the one screen, so the tokens go rather than
+     * being kept for the screens not yet redesigned.
+     *
+     * **What is lost, stated plainly.** Access level was the one thing this
+     * product colour-coded, and the client purple was the last of it — see the
+     * note in src/components/Visibility.tsx, which has been making this point
+     * since the first theme reset. Status and response are now distinguished by
+     * FILL vs OUTLINE and by their words. That is two channels, not one, but it
+     * is not colour.
+     *
+     * `--destructive` stays: the handoff has its own red (`#f87171` text,
+     * `#7f1d1d` border and confirm fill), so a refusal is still the one thing
+     * with a hue.
      */
-    --on-dark: 0 0% 100%; /* #FFFFFF — 18.24 on the frame */
-    --on-dark-secondary: 240 2.9% 79.4%; /* #C9C9CC — field labels, 11.04 */
-    --on-dark-muted: 240 1.8% 56.9%; /* #8F8F93 — 5.66 */
-    --on-dark-empty: 240 4.2% 90.6%; /* #E6E6E8 — empty-state titles, 14.63 */
-    --on-dark-border: 240 6.3% 21.8%; /* #34343B — hairline on the frame */
-    --on-dark-border-strong: 240 3.9% 40.4%; /* #63636B — ~3:1, required when
-                                              * the border is a control's only
-                                              * boundary (WCAG 1.4.11) */
-
-    /* ── Layer B — light surfaces ─────────────────────────────────────── */
-    --surface: 0 0% 100%; /* #FFFFFF */
-    --surface-alt: 45 20% 96.1%; /* #F7F6F3 — warm inset */
-    --surface-hair: 48 10.2% 90.4%; /* #E9E8E4 — dividers, dashed borders */
-    --ink: 0 0% 6.7%; /* #111111 — 18.88 on white */
-    --ink-muted: 240 2.2% 44.1%; /* #6E6E73 — 5.07, secondary text */
-    --ink-icon: 240 1.7% 54.9%; /* #8A8A8E — 3.44: ICONS AND DECOR ONLY. Meets
-                                 * the 3:1 non-text requirement, fails AA for
-                                 * text. Never use it for a string. */
-
-    /* ── Layer B — the pinned screen CTA (departure 2) ────────────────── */
-    --cta: 0 0% 100%; /* #FFFFFF on the frame — 18.24 */
-    --cta-foreground: 0 0% 6.7%; /* #111111 — 18.88 */
-
-    /* ── Layer B — shoot status (departure 4) ─────────────────────────── */
-    --status-new-bg: 218.2 78.6% 94.5%; /* #E6EEFC */
-    --status-new-fg: 218.1 61.5% 42.7%; /* #2A5BB0 — 5.59 on its bg */
-    --status-new-solid: 210 70.9% 54.1%; /* #378ADD — 4px stripe on list rows */
-    --status-finished-bg: 344.3 74.2% 93.9%; /* #FBE4EA */
-    --status-finished-fg: 342 50.8% 46.3%; /* #B23A5E — 4.75 on its bg */
-    --status-finished-solid: 340 60% 57.8%; /* #D4537E */
-
-    /* ── Layer B — warning / waiting ──────────────────────────────────── */
-    --warning-bg: 37.5 76.2% 91.8%; /* #FAEEDA */
-    --warning-fg: 36.4 79.2% 30.2%; /* #8A5A10 — 5.16 */
-    --warning-ring: 37.9 73.8% 56.7%; /* #E2A63F — conflict outline */
 
     /*
-     * Client (role) and private (visibility) are the same values today and are
-     * still two scales. The document warns why: purple currently means both
-     * "this is the client" and "only you can see this", and those come apart
-     * the moment anything private is not about the client. ADR-018 adds exactly
-     * that. Split now, while it costs nothing.
+     * The handoff's "strong border / focus ring" `#3f3f46`, one step up from
+     * `--border`. RNR has no slot for it and the difference is load-bearing in
+     * the design: an outlined «Очікує» badge, the «Надіслати нагадування»
+     * button and the sheet's grabber all sit on it, and at `--border` they
+     * disappear into the surface behind them.
+     *
+     * Source: design_handoff_shoot_detail/README.md, "Design tokens (shadcn
+     * dark)". Same provenance rule as `--card` — a named file, not a guess.
      */
-    --client-bg: 261.8 57.9% 96.3%; /* #F4F0FB — client card, client button */
-    --client-chip: 259.3 63.6% 91.4%; /* #E4DBF7 — «Клієнт» chip */
-    --client-fg: 257.3 43.5% 43.7%; /* #5B3FA0 — 5.92 */
-    --client-ring: 261.1 61.4% 82.7%; /* #CBB8EE — client avatar ring */
-    --client-avatar: 261 71.4% 94.5%; /* #EEE7FB */
-    --private-bg: 259.3 63.6% 91.4%; /* #E4DBF7 — «Бачите лише ви» */
-    --private-fg: 257.3 43.5% 43.7%; /* #5B3FA0 */
+    --border-strong: 240 5% 26%; /* #3f3f46 */
 
-    /* ── Layer B — links ──────────────────────────────────────────────── */
-    --link: 218.1 61.5% 42.7%; /* #2A5BB0 — 6.52 on white */
-    --link-on-dark: 215.1 100% 74.5%; /* #7DB3FF — 8.48 on the frame. The white
-                                       * link colour gives 2.80 there; never
-                                       * use --link on the frame. */
+    /*
+     * `--warning` was here until 2026-08-30, and it is the last of the seven
+     * scales the monochrome pass removed.
+     *
+     * It outlived the other six twice. First as the home screen's «Сьогодні»
+     * amber — retired when `Home.dc.html` drew that state in white. Then as
+     * `US-031`'s clash marker on the shoot list, which was a defensible last
+     * colour because it meant "something is wrong with the schedule" rather
+     * than identity or state — retired when `Calendar.dc.html` drew that tag as
+     * an outline badge.
+     *
+     * With both gone it had no usage anywhere, so it went too. **`--destructive`
+     * is now the only hue in the app**, which is also all stock shadcn dark has.
+     */
 
-    /* ── Layer B — odds and ends ──────────────────────────────────────── */
-    --online: 131.2 60.7% 53.1%; /* #3FD05A — presence dot */
-    --avatar-header: 213.1 30.6% 42.9%; /* #4C6A8F — header avatar fill */
   }
 }

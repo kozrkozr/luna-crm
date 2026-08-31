@@ -36,8 +36,8 @@ export function FileSection({ label, url }: { label: string; url: string | null 
       ) : (
         /* §5.14's ComingSoonTile: a dashed placeholder on the frame, which is
            what «В розробці» has always been. */
-        <View className="border-1.5 border-surface-hair items-center rounded-xl border border-dashed px-3.5 py-3">
-          <Text className="text-label text-onDark-muted">{uk.inDevelopment}</Text>
+        <View className="border-1.5 border-border items-center rounded-xl border border-dashed px-3.5 py-3">
+          <Text className="text-label text-muted-foreground">{uk.inDevelopment}</Text>
         </View>
       )}
     </View>

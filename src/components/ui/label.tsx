@@ -34,7 +34,7 @@ function Label({
            * than a variant. A label ever placed on a white card must override
            * it — `text-foreground` would be white there.
            */
-          'text-onDark-secondary text-label font-semibold',
+          'text-muted-foreground text-label font-semibold',
           Platform.select({ web: 'leading-none' }),
           className
         )}

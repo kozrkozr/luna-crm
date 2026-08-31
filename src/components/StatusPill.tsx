@@ -4,26 +4,41 @@ import { useStrings } from '../i18n/LanguageProvider'
 import type { ShootStatus } from '../features/shoots/api'
 
 /**
- * Status colour is named by token, never by value — src/theme/global.css is the
- * only place the values live (ADR-017).
+ * A shoot's status (`US-020`), as a badge.
  *
- * The tokens are named for `ShootStatus` rather than for the design document's
- * planned/progress/done, so this file stays greppable against the backlog
- * (CLAUDE.md rule 5). `new` takes the document's blue, `finished` its pink;
- * its green is unused, because the enum has two members.
+ * **Monochrome since 2026-08-30** (owner). The two statuses used to be a blue
+ * and a pink triple from `design-guidelines.md` §3.1; the shoot-detail handoff
+ * is built on the shadcn dark zinc scale and rules out coloured status tints
+ * outright, and the owner took that app-wide. Both tokens are gone from
+ * src/theme/global.css.
  *
- * No border. The pill was bordered under the previous palette because its fill
- * barely separated from the card; the design system's §5.3 specifies fill and
- * text only, and these fills carry 4.75–5.59 against their own text.
+ * So the pair is now **fill vs outline** rather than hue vs hue:
+ *
+ * - `new` — a solid `secondary` chip, which is what the handoff draws for the
+ *   shoot card's status badge (bg `#27272a`, text `#fafafa`).
+ * - `finished` — outlined on `border-strong`, the same treatment the handoff
+ *   gives every "not the active state" badge (see `ResponsePill`'s «Очікує»).
+ *
+ * **What this costs, stated once:** a status is no longer identifiable at a
+ * glance across a list — it has to be read. Two channels remain (the fill and
+ * the word) where there were three. `docs/redesign-log.md` records it.
+ *
+ * `onLight` is gone (2026-08-30). It swapped the pair for a light surface, and
+ * the home screen's white next-shoot card was its only caller ever — that card
+ * is dark and bordered now, so there is no light surface left in the app for a
+ * pill to sit on.
+ *
+ * The tokens are named for `ShootStatus` (`new` | `finished`) so this file stays
+ * greppable against the backlog (CLAUDE.md rule 5).
  */
 const TONE: Record<ShootStatus, string> = {
-  new: 'bg-status-new-bg',
-  finished: 'bg-status-finished-bg',
+  new: 'bg-secondary',
+  finished: 'border-border-strong border',
 }
 
 const TONE_TEXT: Record<ShootStatus, string> = {
-  new: 'text-status-new-fg',
-  finished: 'text-status-finished-fg',
+  new: 'text-secondary-foreground',
+  finished: 'text-muted-foreground',
 }
 
 export function StatusPill({ value }: { value: ShootStatus }) {
@@ -40,8 +55,13 @@ export function StatusPill({ value }: { value: ShootStatus }) {
     // shrink-0 and numberOfLines: «Заплановано» is 11 characters and sits
     // beside a name on a card. Without both, either the pill squeezes the name
     // or it wraps onto two lines (§5.3).
-    <View className={`shrink-0 rounded-full px-2.5 py-1 ${TONE[value]}`}>
-      <Text numberOfLines={1} className={`text-caption font-bold ${TONE_TEXT[value]}`}>
+    <View
+      className={`shrink-0 rounded-full px-2.5 py-1 ${TONE[value]}`}
+    >
+      <Text
+        numberOfLines={1}
+        className={`text-caption font-bold ${TONE_TEXT[value]}`}
+      >
         {LABEL[value]}
       </Text>
     </View>

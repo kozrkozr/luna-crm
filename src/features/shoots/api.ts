@@ -5,8 +5,24 @@ export type ShootStatus = 'new' | 'finished'
 
 export type Shoot = {
   id: string
+  /** `ADR-018` — the client is a row now. */
+  clientId: string
+  /**
+   * Read through the join below, not stored on the shoot. Kept on this type so
+   * every screen that shows a shoot's client keeps working unchanged — the data
+   * moved, the shape did not.
+   */
   clientName: string
   clientContact: string
+  /**
+   * `ADR-018` gave the client an `instagram` column; this exposes it, because
+   * the shoot-detail person sheet shows a client's phone AND handle side by
+   * side. Owner-only, like `clientContact`: the link gateway's ShootRow selects
+   * neither, so no crew member and no client has ever received either.
+   */
+  clientInstagram: string | null
+  /** `20260831160000` — the client's Telegram, same provenance as above. */
+  clientTelegram: string | null
   date: string
   /**
    * `US-030` — local wall-clock `HH:MM`. Null only for shoots created before
@@ -19,6 +35,17 @@ export type Shoot = {
   locationAddress: string | null
   /** Free text — directions and the like (US-018 AC-2). */
   locationNote: string | null
+  /**
+   * The shoot's own note — what the client wants, what to bring.
+   *
+   * Added 2026-08-30 (migration `20260830160000_shoot_notes.sql`). **No story
+   * defines it**; three designs drew it and the owner asked for the column.
+   *
+   * Not `locationNote`, which is how to get IN, and not `CrewMember.note`,
+   * which is about a person. **The link gateway selects none of the three for a
+   * client**, and this one it does not select for anyone — see the migration.
+   */
+  notes: string | null
   /** Storage path to one image OR one video (US-018 AC-2). */
   locationAttachment: string | null
   /**
@@ -32,11 +59,20 @@ export type Shoot = {
 }
 
 /**
- * US-018 — the editable half of a shoot. Client name and contact are absent on
- * purpose: the story's Out of scope says only date and location were asked for,
- * and "if that's also needed, it's a new ask, not assumed here".
+ * US-018 — the editable half of a shoot.
+ *
+ * **`clientId` was absent until 2026-08-30.** The story's Out of scope said only
+ * date and location were asked for, and "if that's also needed, it's a new ask,
+ * not assumed here". The owner made the ask.
+ *
+ * It moves the shoot to a different client. It does **not** rename one: an
+ * `ADR-018` client has cross-shoot identity, so renaming would silently rewrite
+ * every other shoot that person appears on. That belongs on the client's own
+ * profile (`US-028`), not on a shoot.
  */
 export type UpdateShootInput = {
+  /** `ADR-018` — which client this shoot belongs to. */
+  clientId: string
   date: string // ISO date, YYYY-MM-DD
   /** `US-030` AC-5 — editable, under the same rules as creation. */
   startTime: string // HH:MM
@@ -44,6 +80,8 @@ export type UpdateShootInput = {
   locationAddress: string | null
   locationNote: string | null
   locationAttachment: string | null
+  /** `20260830160000` — editable, like every other field on this form. */
+  notes: string | null
   /** `US-024` — set on the edit screen, where `ux-notes.md` and the prototype
    *  both place it. Open question #6 recorded that no story's criteria cover
    *  the creator entering it; design covers it, and AC-2 is unreachable
@@ -54,12 +92,22 @@ export type UpdateShootInput = {
 }
 
 /** Every column the app reads for a Shoot, in one place so the two queries agree. */
+/*
+ * `clients(name, phone)` is a join, not a subquery: PostgREST resolves it
+ * through the `shoots.client_id` foreign key, so it costs one round trip and is
+ * subject to the same RLS as a direct read of `clients`.
+ */
 const SHOOT_COLUMNS =
-  'id, client_name, client_contact, date, start_time, end_time, status, location_address, location_note, location_attachment, raw_files_url, finished_photos_url'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, status, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url'
 
 export type CreateShootInput = {
-  clientName: string
-  clientContact: string
+  /**
+   * `ADR-018` — the caller supplies a client that already exists. Finding or
+   * creating one is `US-029`'s job on the creation form, not this function's:
+   * a `createShoot` that quietly created clients would make the dedup rule
+   * unenforceable, because every path would have its own.
+   */
+  clientId: string
   date: string // ISO date, YYYY-MM-DD
   /**
    * `US-030` AC-1 — both required, and typed non-nullable so AC-2's "save is
@@ -69,6 +117,18 @@ export type CreateShootInput = {
    */
   startTime: string // HH:MM
   endTime: string // HH:MM
+  /**
+   * `US-002`'s Out of scope excludes location at creation — it moved to
+   * `US-018` after Ilona's prototype review. `ADR-017`'s client-match-flow
+   * mockup collects it here again and the owner confirmed it (2026-08-29), so
+   * the story needs amending; see docs/redesign-log.md.
+   *
+   * Nullable, because a shoot created without one is still valid — the column
+   * has always been nullable and `US-018` still owns editing it.
+   */
+  locationAddress: string | null
+  /** `20260830160000` — the shoot's own note, collected on the create form. */
+  notes: string | null
 }
 
 export type CreateShootResult = { ok: true; id: string } | { ok: false }
@@ -91,11 +151,12 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
     .from('shoots')
     .insert({
       creator_id: userId,
-      client_name: input.clientName.trim(),
-      client_contact: input.clientContact.trim(),
+      client_id: input.clientId,
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
+      location_address: input.locationAddress,
+      notes: input.notes?.trim() || null,
     })
     .select('id')
     .single()
@@ -138,8 +199,13 @@ export async function listShoots(): Promise<Shoot[] | null> {
 
 type ShootRow = {
   id: string
-  client_name: string
-  client_contact: string
+  client_id: string
+  /*
+   * PostgREST returns an embedded row for a to-one join, but types it as
+   * possibly an array — hence both shapes here. It is never actually an array:
+   * `client_id` is NOT NULL and points at a single row.
+   */
+  clients: EmbeddedClient | EmbeddedClient[] | null
   date: string
   start_time: string | null
   end_time: string | null
@@ -147,15 +213,32 @@ type ShootRow = {
   location_address: string | null
   location_note: string | null
   location_attachment: string | null
+  notes: string | null
   raw_files_url: string | null
   finished_photos_url: string | null
+}
+
+type EmbeddedClient = {
+  name: string
+  phone: string | null
+  instagram: string | null
+  telegram: string | null
+}
+
+/** The joined client row, whichever shape PostgREST handed back. */
+function embeddedClient(row: ShootRow): EmbeddedClient | null {
+  if (!row.clients) return null
+  return Array.isArray(row.clients) ? (row.clients[0] ?? null) : row.clients
 }
 
 function toShoot(row: ShootRow): Shoot {
   return {
     id: row.id,
-    clientName: row.client_name,
-    clientContact: row.client_contact,
+    clientId: row.client_id,
+    clientName: embeddedClient(row)?.name ?? '',
+    clientContact: embeddedClient(row)?.phone ?? '',
+    clientInstagram: embeddedClient(row)?.instagram ?? null,
+    clientTelegram: embeddedClient(row)?.telegram ?? null,
     date: row.date,
     // Postgres hands back `09:00:00`; the app and the design both speak HH:MM.
     // Trimmed here so no screen has to know the column's precision.
@@ -164,6 +247,7 @@ function toShoot(row: ShootRow): Shoot {
     status: row.status as ShootStatus,
     locationAddress: row.location_address,
     locationNote: row.location_note,
+    notes: row.notes,
     locationAttachment: row.location_attachment,
     rawFilesUrl: row.raw_files_url,
     finishedPhotosUrl: row.finished_photos_url,
@@ -221,12 +305,14 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
   const { error } = await supabase
     .from('shoots')
     .update({
+      client_id: input.clientId,
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
       location_address: input.locationAddress?.trim() || null,
       location_note: input.locationNote?.trim() || null,
       location_attachment: input.locationAttachment,
+      notes: input.notes?.trim() || null,
       // AC-3 — stored only if it is a link at all. The screen rejects a
       // malformed one with a message first (US-003 AC-2's rule, reused rather
       // than restated); this is the second guard, so a bad value cannot reach

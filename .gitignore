@@ -13,3 +13,12 @@ android/
 !.env.example
 .DS_Store
 
+# Design handoff bundles exported from the Claude Design project.
+#
+# Deliberately not committed (owner, 2026-08-31). A copy in the repo goes stale
+# the moment a design is edited, and a stale one is worse than none — the
+# `design_handoff_shoot_detail/` bundle looked current for half a session while
+# missing an entire screen. The project itself is the source; read it with
+# DesignSync.
+design_handoff_shoot_detail/
+design_handoff_shoot_detail.zip

@@ -1,11 +1,21 @@
 import { TextClassContext } from '@/components/ui/text';
+import { tapped } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Platform, Pressable } from 'react-native';
 
 const buttonVariants = cva(
   cn(
-    'group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none',
+    /*
+     * §3.7 — a button's press is a scale: the mockups all use
+     * `transform: scale(.98)`. The dim is added on top, because scale alone is
+     * the one thing iOS never does — every UIKit control fades on touch, and a
+     * control that only shrinks reads as a web page pretending.
+     *
+     * Applied to every variant, so the dashed and ghost ones respond too rather
+     * than only the filled ones.
+     */
+    'group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none active:scale-[0.98] active:opacity-80',
     Platform.select({
       web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     })
@@ -51,7 +61,7 @@ const buttonVariants = cva(
          * Belongs at the bottom of a screen, above the content, per §3.5 —
          * white competes with the white cards if it floats among them.
          */
-        cta: 'bg-cta active:bg-cta/90',
+        cta: 'bg-primary active:bg-primary/90',
         /*
          * The dashed placeholder: «Додати учасника», add tiles, «Незабаром».
          *
@@ -61,7 +71,7 @@ const buttonVariants = cva(
          * it, either with a react-native-svg rect or by accepting a solid
          * border there.
          */
-        dashed: 'bg-surface border-1.5 border-dashed border-surface-hair',
+        dashed: 'bg-card border-1.5 border-dashed border-border',
       },
       size: {
         default: cn('h-10 px-4 py-2 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
@@ -83,7 +93,8 @@ const buttonVariants = cva(
          * and widen the touch area, so callers pass hitSlop. RNR's stock
          * `icon` size is 40 and would break the row's proportions.
          */
-        circle: 'h-8 w-8 rounded-full',
+        // §3.7 gives the circular icon button a deeper press than the rest.
+        circle: 'h-8 w-8 rounded-full active:scale-95',
       },
     },
     defaultVariants: {
@@ -111,8 +122,8 @@ const buttonTextVariants = cva(
           Platform.select({ web: 'group-hover:text-accent-foreground' })
         ),
         secondary: 'text-secondary-foreground',
-        cta: 'text-cta-foreground text-subtitle font-semibold',
-        dashed: 'text-ink-muted text-body font-semibold',
+        cta: 'text-primary-foreground text-subtitle font-semibold',
+        dashed: 'text-muted-foreground text-body font-semibold',
         ghost: 'group-active:text-accent-foreground',
         link: cn(
           'text-primary group-active:underline',
@@ -140,12 +151,29 @@ const buttonTextVariants = cva(
 
 type ButtonProps = React.ComponentProps<typeof Pressable> & React.RefAttributes<typeof Pressable> & VariantProps<typeof buttonVariants>;
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
+function Button({ className, variant, size, onPress, ...props }: ButtonProps) {
   return (
     <TextClassContext.Provider value={buttonTextVariants({ variant, size })}>
       <Pressable
         className={cn(props.disabled && 'opacity-50', buttonVariants({ variant, size }), className)}
         role="button"
+        /*
+         * Haptics here rather than at each call site: this is the one component
+         * every button in the app goes through, so one wrapper gives the whole
+         * surface feedback and no screen has to remember.
+         *
+         * Fired before the handler, not after — the tick should answer the
+         * finger, not wait on whatever the press starts. A disabled button
+         * never reaches this, since Pressable does not call onPress at all.
+         */
+        onPress={
+          onPress
+            ? (event) => {
+                tapped();
+                onPress(event);
+              }
+            : undefined
+        }
         {...props}
       />
     </TextClassContext.Provider>

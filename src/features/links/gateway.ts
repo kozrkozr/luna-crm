@@ -47,12 +47,32 @@ export type CrewLinkPayload = {
   crewMemberId: string
   shoot: {
     date: string
+    /** `US-030`, carried since 2026-08-31 — the gateway had never sent them. */
+    startTime: string | null
+    endTime: string | null
     locationAddress: string | null
     locationNote: string | null
     locationAttachmentUrl: string | null
+    /**
+     * The shoot's production note — «Нотатки від організатора».
+     *
+     * **On this payload and never on `ClientLinkPayload`.** That is not a
+     * convention: `US-026` requires the field to be absent from a client's
+     * response, and the gateway's `clientPayload` does not select the column.
+     * The type mirrors the wire, so a screen cannot read it off a client
+     * payload without TypeScript objecting.
+     */
+    notes: string | null
   }
+  organizer: LinkOrganizer | null
   /** Who this link belongs to — «Ви: Ігор (Гафер)». */
-  viewer: { name: string; role: string; response: LinkCrewMember['response'] }
+  viewer: {
+    name: string
+    role: string
+    response: LinkCrewMember['response']
+    /** `US-008`, optional — «Причина — за бажанням». */
+    declineReason: string | null
+  }
   references: LinkReference[]
   crew: LinkCrewMember[]
 }
@@ -79,10 +99,14 @@ export type ClientLinkPayload = {
   shootId: string
   shoot: {
     date: string
+    startTime: string | null
+    endTime: string | null
     locationAddress: string | null
     locationNote: string | null
     locationAttachmentUrl: string | null
+    /* **No `notes` key.** See `CrewLinkPayload` and `US-026`. */
   }
+  organizer: LinkOrganizer | null
   /**
    * `US-024` — the creator's pasted external link, already checked by the
    * gateway. Null means "show the placeholder", and is the only thing this
@@ -97,6 +121,22 @@ export type ClientLinkPayload = {
   finishedPhotosUrl: string | null
   references: LinkReference[]
   crew: LinkClientCrewMember[]
+}
+
+/**
+ * Who organised the shoot — new on both payloads, 2026-08-31.
+ *
+ * **The first thing from `users` to reach an anonymous audience.** A call sheet
+ * whose recipient cannot reach the person who sent it is missing the point;
+ * `email` is still never sent, being the login credential and the crew-matching
+ * key.
+ */
+export type LinkOrganizer = {
+  name: string
+  role: string
+  phone: string | null
+  instagram: string | null
+  telegram: string | null
 }
 
 export type LinkPayload = CrewLinkPayload | ClientLinkPayload
@@ -135,34 +175,52 @@ export async function resolveLink(token: string): Promise<LinkPayload | null> {
  * the reader can reach, and locally the one it would guess is a Docker
  * hostname. Links keep their own absolute URLs untouched.
  */
+/**
+ * Storage URLs come back origin-relative; a browser and a phone both need them
+ * absolute.
+ *
+ * **Branched per audience, and it has to be.** A single shared `shoot` object
+ * spread into both payloads stopped compiling the moment `notes` existed on one
+ * of them and not the other — which is the type system enforcing `US-026` at the
+ * seam. Building each branch separately means the client's `shoot` is
+ * constructed without the field rather than trusting a spread to omit it.
+ */
 function absolutise(payload: LinkPayload, base: string): LinkPayload {
   const origin = base.replace(/\/+$/, '')
   const join = (url: string | null) => (url && url.startsWith('/') ? `${origin}${url}` : url)
+  const references = payload.references.map((reference) => ({
+    ...reference,
+    url: join(reference.url),
+  }))
 
-  const shoot = { ...payload.shoot, locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl) }
-  const references = payload.references.map((reference) => ({ ...reference, url: join(reference.url) }))
-
-  if (payload.audience === 'client') return { ...payload, shoot, references }
+  if (payload.audience === 'client') {
+    return {
+      ...payload,
+      shoot: {
+        ...payload.shoot,
+        locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl),
+      },
+      references,
+    }
+  }
 
   return {
     ...payload,
-    shoot,
+    shoot: {
+      ...payload.shoot,
+      locationAttachmentUrl: join(payload.shoot.locationAttachmentUrl),
+    },
     references,
     crew: payload.crew.map((member) => ({ ...member, noteImageUrl: join(member.noteImageUrl) })),
   }
 }
 
-/**
- * `US-008` — answer the invitation. `true` only if the answer was recorded.
- *
- * Every refusal is the same `false`: an invalid link, a revoked one, and one
- * already answered are indistinguishable here, as they are everywhere else on
- * this surface. The caller re-reads the payload afterwards rather than trusting
- * this to have told it the new state.
- */
 export async function respondToLink(
   token: string,
-  response: 'confirmed' | 'declined'
+  response: 'confirmed' | 'declined',
+  /** Optional, and only stored with a decline — the gateway clears it on a
+   *  confirm so a changed answer leaves no stale reason behind. */
+  reason?: string | null
 ): Promise<boolean> {
   const base = process.env.EXPO_PUBLIC_SUPABASE_URL
   const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
@@ -176,7 +234,7 @@ export async function respondToLink(
         authorization: `Bearer ${key}`,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ token, response }),
+      body: JSON.stringify({ token, response, reason: reason ?? null }),
     })
     if (!result.ok) return false
     const body = (await result.json()) as { ok?: boolean }
