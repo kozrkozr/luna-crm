@@ -1,34 +1,45 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
-import { Stack, useFocusEffect, useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Constants from 'expo-constants'
 import * as ImagePicker from 'expo-image-picker'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
+import type { LucideIcon } from 'lucide-react-native'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
+import Eye from 'lucide-react-native/icons/eye'
+// lucide ships no `instagram` glyph at this version; «@» matches the field's
+// own «@nickname» placeholder, and pairs with Telegram's paper plane.
+import AtSign from 'lucide-react-native/icons/at-sign'
+import Lock from 'lucide-react-native/icons/lock'
+import Mail from 'lucide-react-native/icons/mail'
 import Pencil from 'lucide-react-native/icons/pencil'
+import Send from 'lucide-react-native/icons/send'
+import Smartphone from 'lucide-react-native/icons/smartphone'
+import User from 'lucide-react-native/icons/user'
 import { Button } from '../../src/components/ui/button'
 import { Card } from '../../src/components/ui/card'
 import { Icon } from '../../src/components/ui/icon'
 import { Input } from '../../src/components/ui/input'
 import { Sheet } from '../../src/components/ui/sheet'
+import { Switch } from '../../src/components/ui/switch'
 import { Text } from '../../src/components/ui/text'
 import { Avatar } from '../../src/components/Avatar'
 import { LanguageSwitcher } from '../../src/components/LanguageSwitcher'
 import { SectionLabel } from '../../src/components/ShootFormFields'
 import { Toast } from '../../src/components/Toast'
-import { DestructiveAction } from '../../src/components/DestructiveAction'
+import { useDestructiveConfirm } from '../../src/components/DestructiveAction'
 import { ROLES_UK, uk } from '../../src/i18n/uk'
-import { useStrings } from '../../src/i18n/LanguageProvider'
+import { useLanguage, useStrings } from '../../src/i18n/LanguageProvider'
+import { formatDayMonth, toIsoDate } from '../../src/features/shoots/date'
 import { failed, selected as tickSelection, succeeded, tapped } from '../../src/lib/haptics'
 import { useProfile } from '../../src/features/auth/useProfile'
 import {
   deleteOwnAccount,
-  profileStats,
   signOut,
   signedAvatarUrl,
   updateProfile,
   uploadAvatar,
-  type ProfileStats,
 } from '../../src/features/auth/profile'
 
 /** The editable half of the profile — everything the save button writes. */
@@ -44,40 +55,61 @@ type Draft = {
 
 /**
  * `US-016` — the account's own profile, rebuilt against `Edit Profile.dc.html`
- * (owner, 2026-08-31).
+ * (owner, 2026-08-31), then against its **second pass** (owner, 2026-09-02).
  *
  * **It was read-only.** `US-016` is viewing a profile and this screen showed
  * five fields, a language switcher and a logout button. The design makes it an
  * editing surface; `US-016` needs amending, and so do `US-001` (roles are no
- * longer a fixed set) and `US-015` (see the «Мова» row below).
+ * longer a fixed set) and `US-015` (see the «Мова застосунку» row below).
  *
- * ── Three departures from the design ────────────────────────────────────────
+ * ── The second pass, in short ───────────────────────────────────────────────
  *
- * - **Email is read-only.** It is the login credential: changing it means
- *   `auth.updateUser`, `double_confirm_changes` mails both addresses, and
- *   `public.users.email` is the crew-matching key. Doing half of that would
- *   either show an address you cannot log in with, or leave crew matching on
- *   the old one. Owner's decision; the note in the row says so.
- * - **A «Мова» row exists**, which the design has none of. `US-015`'s switcher
- *   lives ONLY here — dropping it would make English selectable nowhere.
- * - **No «KULT Studio» and no version line.** There is no studio column, and
- *   the design's «версія 1.0» disagrees with `app.config.ts` (0.1.0) while
- *   spelling the product a fourth way (redesign-log A-6).
+ * - **Save moved into the header** (P-5). The artboard renders no save button
+ *   at all — its `onSave` is computed and consumed by nothing — and its scroll
+ *   padding shrank from 104px to 40px, which is the sticky bar's space being
+ *   deliberately reclaimed. A screen that cannot save is not a design, so the
+ *   button went to the one slot the header leaves empty.
+ * - **The stats row is gone** (P-8), and `profileStats()` with it.
+ * - **Four sections were added that nothing backs**: «Підписка», «Сповіщення»,
+ *   «Написати в підтримку» and a button to a public profile screen that does
+ *   not exist. All four are **UI-only stubs** (owner, 2026-09-02) — each is
+ *   marked below, and none of them writes anything or navigates anywhere.
+ *
+ * ── Departures that still stand ─────────────────────────────────────────────
+ *
+ * - **Email is read-only** (P-1, reaffirmed as P-6). It is the login
+ *   credential: changing it means `auth.updateUser`, `double_confirm_changes`
+ *   mails both addresses, and `public.users.email` is the crew-matching key.
+ *   The second pass makes the field editable with a re-confirmation notice;
+ *   that is a story with a migration, not a restyle.
+ * - **«KULT Studio» is still not in the subtitle** (P-3) — there is no studio
+ *   column — and the role chips are still `ROLES_UK`'s five rather than the
+ *   artboard's nine, which are stored values the glossary confirms.
  */
 export default function ProfileScreen() {
   const t = useStrings()
+  const language = useLanguage()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const state = useProfile()
 
   const [saved, setSaved] = useState<Draft | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [stats, setStats] = useState<ProfileStats | null>(null)
   const [avatarUri, setAvatarUri] = useState<string | null>(null)
   const [errors, setErrors] = useState<{ name?: string; phone?: string; role?: string }>({})
   const [busy, setBusy] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  /*
+    STUB — «Сповіщення» (owner, 2026-09-02). Local state and nothing else:
+    there is no `expo-notifications`, no push-token table, no column to store a
+    preference in and nothing that would send either kind of message. It resets
+    on every launch, which is the honest behaviour for a control that changes
+    nothing; persisting it would imply a setting that does something.
+  */
+  const [notifyReminders, setNotifyReminders] = useState(true)
+  const [notifyConfirmations, setNotifyConfirmations] = useState(true)
 
   // Seeded once the profile arrives. Not on every render: the reader may
   // already be typing by the time a refetch lands.
@@ -99,20 +131,6 @@ export default function ProfileScreen() {
     setDraft(loaded)
   }, [state, saved])
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true
-      void (async () => {
-        const counts = await profileStats()
-        // Not fatal: the three numbers are decoration on an editing form.
-        if (active && counts) setStats(counts)
-      })()
-      return () => {
-        active = false
-      }
-    }, [])
-  )
-
   // Re-signed whenever the stored path changes, including right after an upload.
   useEffect(() => {
     if (!draft?.avatarUrl) return setAvatarUri(null)
@@ -125,6 +143,24 @@ export default function ProfileScreen() {
       active = false
     }
   }, [draft?.avatarUrl])
+
+  /*
+    The one irreversible action in the product: `auth.users` cascades to every
+    shoot, client, crew member and access link. `useDestructiveConfirm` rather
+    than `DestructiveAction`, because the second pass moves delete into the
+    «Налаштування» card as a row — the hook exists for exactly this, so the
+    Alert-on-native / dialog-on-web split is not written twice.
+  */
+  const { ask: askDelete, dialog: deleteDialog } = useDestructiveConfirm<null>({
+    label: t.deleteAccount,
+    question: t.confirmDeleteAccount,
+    onConfirm: () => {
+      void (async () => {
+        if (await deleteOwnAccount()) router.replace('/(auth)/login')
+        else setToast(t.somethingWentWrong)
+      })()
+    },
+  })
 
   if (state.status === 'loading' || !draft || !saved) {
     return (
@@ -160,6 +196,23 @@ export default function ProfileScreen() {
   const dirty = changed.length > 0
 
   const resolvedRole = draft.role === uk.otherRole ? draft.customRole.trim() : draft.role
+
+  /*
+    «Українська · 19 вересня» — the design's sample line under «Мова
+    застосунку», showing what the choice actually changes.
+
+    Today's date through the app's own formatter, rather than the artboard's
+    fixed «19 вересня, 09:00»: a sample that is not the real format teaches the
+    wrong thing. The time is dropped because the app writes times as 24-hour in
+    both languages, so «09:00» would sit in the sample unchanged and imply a
+    difference that is not there.
+  */
+  const languageSample = `${language === 'uk' ? 'Українська' : 'English'} · ${formatDayMonth(
+    toIsoDate(new Date()),
+    t.monthsGenitive
+  )}`
+
+  const version = Constants.expoConfig?.version
 
   const pickPhoto = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -222,30 +275,58 @@ export default function ProfileScreen() {
     <View className="bg-background flex-1">
       <Stack.Screen options={{ headerShown: false }} />
 
+      {/*
+        «Скасувати · Мій профіль · Зберегти». Both sides are the same fixed
+        width so the title is centred on the SCREEN rather than on whatever is
+        left between two labels of different lengths.
+      */}
       <View
         className="bg-background border-border flex-row items-center border-b px-3 pb-2"
         style={{ paddingTop: insets.top }}
       >
         <Pressable
-          className="active:bg-secondary min-h-11 shrink-0 justify-center rounded-lg px-2"
+          className="active:bg-secondary min-h-11 w-[92px] shrink-0 justify-center rounded-lg px-2"
           onPress={() => {
             tapped()
             leave()
           }}
           role="button"
         >
-          <Text className="text-body-sm text-muted-foreground font-medium">{t.cancel}</Text>
+          <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
+            {t.cancel}
+          </Text>
         </Pressable>
+
         <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
           {t.myProfileTitle}
         </Text>
-        {/* A spacer the width of the control opposite, so the title is centred
-            on the screen rather than on what is left of it. */}
-        <View className="w-[74px] shrink-0" />
+
+        {/*
+          P-5 — save lives here now. It keeps the design's own three labels
+          («Зберегти» / «Зберігаємо…»), dimmed rather than relabelled when
+          there is nothing to save: «Немає змін» reads as a button in a bar, not
+          as a word in a header.
+        */}
+        <Pressable
+          className="active:bg-secondary min-h-11 w-[92px] shrink-0 items-end justify-center rounded-lg px-2"
+          disabled={!dirty || busy}
+          onPress={() => void save()}
+          role="button"
+          accessibilityState={{ disabled: !dirty || busy }}
+        >
+          <Text
+            className={`text-body-sm font-semibold ${
+              dirty && !busy ? 'text-foreground' : 'text-muted-foreground/50'
+            }`}
+            numberOfLines={1}
+          >
+            {busy ? t.savingProfile : t.save}
+          </Text>
+        </Pressable>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 104 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="gap-5 p-4">
@@ -281,21 +362,44 @@ export default function ProfileScreen() {
             <Text className="text-title-sm text-foreground font-semibold" numberOfLines={1}>
               {draft.name.trim() || state.profile.email}
             </Text>
+            {/* Role alone — the design appends « · KULT Studio», and there is
+                no studio column to append (P-3). */}
             <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
               {resolvedRole}
             </Text>
 
-            {/* Derived counts — see `profileStats`. «У команді» counts PEOPLE,
-                not crew rows: ADR-003 makes one colleague three rows across
-                three shoots. */}
-            {stats ? (
-              <View className="border-border mt-4 w-full flex-row border-t pt-4">
-                <Stat value={stats.shoots} label={t.statShoots} />
-                <Stat value={stats.clients} label={t.statClients} />
-                <Stat value={stats.crew} label={t.statCrew} />
-              </View>
-            ) : null}
+            {/*
+              STUB — `Public Profile.dc.html` is its own artboard and its own
+              story; there is no route to send anyone to. Drawn as the design
+              draws it, and inert, rather than wired to a screen that does not
+              exist.
+            */}
+            <View className="border-border mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5 opacity-60">
+              <Icon as={Eye} size={15} strokeWidth={1.7} className="text-muted-foreground" />
+              <Text className="text-body-sm text-foreground font-medium">
+                {t.viewPublicProfile}
+              </Text>
+            </View>
           </Card>
+
+          {/* ── Підписка ── STUB: no plan concept, no column, no billing. */}
+          <View className="gap-2">
+            <SectionLabel label={t.subscriptionSection} />
+            <Card variant="flat" className="gap-0 p-0">
+              <View className="min-h-14 flex-row items-center gap-3 px-4">
+                <Text className="text-body-sm text-muted-foreground flex-1">{t.planLabel}</Text>
+                <Text className="text-body-sm text-foreground">{t.planFree}</Text>
+                {/* Drawn as the design draws it (owner, 2026-09-02) even though
+                    the row leads nowhere yet — see the note on the section. */}
+                <Icon
+                  as={ChevronRight}
+                  size={15}
+                  strokeWidth={2}
+                  className="text-muted-foreground shrink-0"
+                />
+              </View>
+            </Card>
+          </View>
 
           {/* ── Акаунт ── */}
           <View className="gap-2">
@@ -310,6 +414,7 @@ export default function ProfileScreen() {
 
             <Card variant="flat" className="gap-0 p-0">
               <ProfileRow
+                icon={User}
                 label={t.name}
                 value={draft.name}
                 onChangeText={(value) => {
@@ -323,20 +428,21 @@ export default function ProfileScreen() {
               />
 
               {/*
-                Read-only (owner, 2026-08-31). Changing the login is
-                `auth.updateUser` with a double confirmation, and
+                Read-only (owner, 2026-08-31, reaffirmed 2026-09-02). Changing
+                the login is `auth.updateUser` with a double confirmation, and
                 `public.users.email` is the crew-matching key — see the note on
                 this screen and on `updateProfile`.
               */}
               <ProfileRow
+                icon={Mail}
                 label={t.email}
                 value={state.profile.email}
                 readOnly
-                note={t.emailIsLogin}
                 divided
               />
 
               <ProfileRow
+                icon={Smartphone}
                 label={t.phone}
                 value={draft.phone}
                 onChangeText={(value) => {
@@ -360,6 +466,9 @@ export default function ProfileScreen() {
                 }}
                 role="button"
               >
+                <View className="w-[18px] shrink-0 items-center">
+                  <Icon as={Lock} size={17} strokeWidth={1.7} className="text-muted-foreground" />
+                </View>
                 <Text className="text-body-sm text-muted-foreground flex-1">{t.password}</Text>
                 <Text className="text-body-sm text-foreground">{t.changePassword}</Text>
                 <Icon
@@ -369,17 +478,6 @@ export default function ProfileScreen() {
                   className="text-muted-foreground shrink-0"
                 />
               </Pressable>
-
-              {/*
-                «Мова» — NOT in the design, and kept because `US-015`'s switcher
-                exists nowhere else. Dropping it to match the drawing would make
-                English unreachable, which is a story regression rather than a
-                restyle.
-              */}
-              <View className="border-border min-h-14 flex-row items-center gap-3 border-t px-4 py-2">
-                <Text className="text-body-sm text-muted-foreground flex-1">{t.language}</Text>
-                <LanguageSwitcher />
-              </View>
             </Card>
           </View>
 
@@ -436,6 +534,7 @@ export default function ProfileScreen() {
             <SectionLabel label={t.socialSection} />
             <Card variant="flat" className="gap-0 p-0">
               <ProfileRow
+                icon={AtSign}
                 label={t.instagramLabel}
                 value={draft.instagram}
                 onChangeText={(value) => set('instagram', value)}
@@ -444,6 +543,7 @@ export default function ProfileScreen() {
                 changed={draft.instagram.trim() !== saved.instagram}
               />
               <ProfileRow
+                icon={Send}
                 label={t.telegramLabel}
                 value={draft.telegram}
                 onChangeText={(value) => set('telegram', value)}
@@ -454,65 +554,119 @@ export default function ProfileScreen() {
               />
             </Card>
             {/*
-              True as built: the gateway sends crew the shoot's crew list with
-              contacts. It does NOT send a client anything from `users` — that
-              is a shape built from named fields (ADR-013), and this row is not
-              among them.
+              Kept, though the second pass drops it: it is the only place the UI
+              says who sees these handles, which is an ADR-013 fact rather than
+              decoration. True as built — the gateway sends crew the shoot's
+              crew list with contacts, and sends a client nothing from `users`.
             */}
             <Text className="text-label text-muted-foreground px-0.5">{t.socialSeenByCrew}</Text>
           </View>
 
-          {/* ── Account actions ── */}
-          <View className="gap-1 pt-1">
-            <Button
-              variant="ghost"
-              size="block"
-              onPress={() => {
-                void (async () => {
-                  await signOut()
-                  router.replace('/(auth)/login')
-                })()
-              }}
-            >
-              <Text className="text-body text-destructive font-semibold">{t.logoutAction}</Text>
-            </Button>
-
-            {/*
-              The one irreversible action in the product: `auth.users` cascades
-              to every shoot, client, crew member and access link. It uses the
-              same confirmation `US-019` and `US-022` use — a real iOS alert on
-              device — and the question names what goes.
-            */}
-            <DestructiveAction
-              label={t.deleteAccount}
-              question={t.confirmDeleteAccount}
-              onConfirm={() => {
-                void (async () => {
-                  if (await deleteOwnAccount()) router.replace('/(auth)/login')
-                  else setToast(t.somethingWentWrong)
-                })()
-              }}
-            />
+          {/* ── Сповіщення ── STUB: see the state declaration above. */}
+          <View className="gap-2">
+            <SectionLabel label={t.notifications} />
+            <Card variant="flat" className="gap-0 p-0">
+              <ToggleRow
+                label={t.notifyShootReminders}
+                value={notifyReminders}
+                onChange={setNotifyReminders}
+              />
+              <ToggleRow
+                label={t.notifyNewConfirmations}
+                value={notifyConfirmations}
+                onChange={setNotifyConfirmations}
+                divided
+              />
+            </Card>
           </View>
+
+          {/* ── Налаштування ── */}
+          <View className="gap-2">
+            <SectionLabel label={t.settingsSection} />
+            <Card variant="flat" className="gap-0 p-0">
+              {/*
+                «Мова застосунку» — NOT in the first artboard, and moved here by
+                the second. `US-015`'s switcher lives ONLY on this screen, so it
+                survives wherever the design puts it: dropping it would make
+                English unreachable, which is a story regression rather than a
+                restyle (P-2).
+              */}
+              <View className="min-h-14 flex-row items-center gap-3 py-2 pl-4 pr-3">
+                <View className="flex-1">
+                  <Text className="text-body-sm text-muted-foreground">{t.appLanguage}</Text>
+                  <Text className="text-caption text-muted-foreground/70 mt-0.5">
+                    {languageSample}
+                  </Text>
+                </View>
+                <LanguageSwitcher />
+              </View>
+
+              {/* STUB — no support address exists anywhere in the repo, so this
+                  opens nothing. Drawn complete regardless (owner, 2026-09-02). */}
+              <View className="border-border min-h-14 flex-row items-center gap-3 border-t px-4">
+                <Text className="text-body-sm text-muted-foreground flex-1">
+                  {t.contactSupport}
+                </Text>
+                <Icon
+                  as={ChevronRight}
+                  size={15}
+                  strokeWidth={2}
+                  className="text-muted-foreground shrink-0"
+                />
+              </View>
+
+              {/*
+                The one irreversible action, moved into this card by the second
+                pass. Only the trigger changed — the confirmation is the same
+                one `US-019` and `US-022` use, and the question names what goes.
+              */}
+              <Pressable
+                className="active:bg-destructive/10 border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+                onPress={() => {
+                  tapped()
+                  askDelete(null)
+                }}
+                role="button"
+              >
+                <Text className="text-body-sm text-destructive flex-1">{t.deleteAccount}</Text>
+                <Icon
+                  as={ChevronRight}
+                  size={15}
+                  strokeWidth={2}
+                  className="text-destructive/60 shrink-0"
+                />
+              </Pressable>
+            </Card>
+          </View>
+
+          {/* Muted, not destructive — the second pass makes delete the one red
+              thing on the screen, and two competing reds was the weaker read. */}
+          <Button
+            variant="ghost"
+            size="block"
+            onPress={() => {
+              void (async () => {
+                await signOut()
+                router.replace('/(auth)/login')
+              })()
+            }}
+          >
+            <Text className="text-body text-muted-foreground font-semibold">{t.logoutAction}</Text>
+          </Button>
+
+          {/*
+            The design says «версія 1.0»; `app.config.ts` says 0.1.0. Read from
+            `expo-constants` so the two cannot drift again — but the wordmark is
+            still unsettled (redesign-log A-6: the handoffs spell the product
+            five ways).
+          */}
+          {version ? (
+            <Text className="text-caption text-muted-foreground/70 text-center">
+              {t.versionTemplate.replace('{version}', version)}
+            </Text>
+          ) : null}
         </View>
       </ScrollView>
-
-      {/* Sticky save, in the design's three states. */}
-      <View
-        className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-3"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        <Button
-          variant={dirty ? 'cta' : 'secondary'}
-          size="cta"
-          disabled={busy}
-          onPress={() => dirty && void save()}
-        >
-          <Text className={dirty ? undefined : 'text-muted-foreground'}>
-            {busy ? t.savingProfile : dirty ? t.saveChanges : t.noChanges}
-          </Text>
-        </Button>
-      </View>
 
       {/*
         The discard confirmation, as a bottom SHEET — the design draws one here,
@@ -553,70 +707,101 @@ export default function ProfileScreen() {
         </View>
       </Sheet>
 
+      {deleteDialog}
       <Toast message={toast} onDone={() => setToast(null)} />
     </View>
   )
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+/** One «Сповіщення» row: a label and a switch that currently persists nothing. */
+function ToggleRow({
+  label,
+  value,
+  onChange,
+  divided = false,
+}: {
+  label: string
+  value: boolean
+  onChange: (next: boolean) => void
+  divided?: boolean
+}) {
   return (
-    <View className="flex-1">
-      <Text className="text-title-sm text-foreground text-center font-semibold">
-        {String(value)}
-      </Text>
-      <Text className="text-caption text-muted-foreground mt-0.5 text-center">{label}</Text>
+    <View
+      className={`min-h-14 flex-row items-center gap-3 py-2 pl-4 pr-3.5 ${
+        divided ? 'border-border border-t' : ''
+      }`}
+    >
+      <Text className="text-body-sm text-muted-foreground flex-1">{label}</Text>
+      <Switch
+        checked={value}
+        onCheckedChange={(next) => {
+          tickSelection()
+          onChange(next)
+        }}
+        accessibilityLabel={label}
+      />
     </View>
   )
 }
 
 /**
- * One row of the account card: a label on the left, the value editable in place
- * on the right, and a dot when it differs from what was saved.
+ * One row of the account card: an icon, a label on the left, the value editable
+ * in place on the right, and a dot when it differs from what was saved.
  *
  * The input carries no border or fill of its own — the row IS the field, which
  * is what makes a list of these read as a settings table rather than a stack of
- * form controls.
+ * form controls. The second pass adds the leading icon and tints the whole row
+ * while it is focused, so the active field is legible without giving the input
+ * a box back.
  */
 function ProfileRow({
+  icon,
   label,
   value,
   onChangeText,
   placeholder,
   changed = false,
   error,
-  note,
   readOnly = false,
   divided = false,
   autoCapitalize,
   keyboardType,
 }: {
+  icon: LucideIcon
   label: string
   value: string
   onChangeText?: (value: string) => void
   placeholder?: string
   changed?: boolean
   error?: string
-  note?: string
   readOnly?: boolean
   divided?: boolean
   autoCapitalize?: 'none' | 'words'
   keyboardType?: 'phone-pad'
 }) {
+  const [focused, setFocused] = useState(false)
+
   return (
-    <View className={divided ? 'border-border border-t' : ''}>
+    <View
+      className={`${divided ? 'border-border border-t' : ''} ${
+        error ? 'bg-destructive/10' : focused ? 'bg-secondary/40' : ''
+      }`}
+    >
       <View className="min-h-14 flex-row items-center gap-3 px-4">
-        <Text className="text-body-sm text-muted-foreground w-24 shrink-0">{label}</Text>
+        <View className="w-[18px] shrink-0 items-center">
+          <Icon as={icon} size={17} strokeWidth={1.7} className="text-muted-foreground" />
+        </View>
+        <Text className="text-body-sm text-muted-foreground w-[78px] shrink-0">{label}</Text>
         {readOnly ? (
-          <Text
-            className="text-body text-muted-foreground flex-1 text-right"
-            numberOfLines={1}
-          >
+          <Text className="text-body text-muted-foreground flex-1 text-right" numberOfLines={1}>
             {value}
           </Text>
         ) : (
           <Input
             value={value}
             onChangeText={onChangeText}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             placeholder={placeholder}
             autoCapitalize={autoCapitalize}
             keyboardType={keyboardType}
@@ -629,11 +814,6 @@ function ProfileRow({
       </View>
       {error ? (
         <Text className="text-label text-destructive px-4 pb-2.5 text-right">{error}</Text>
-      ) : null}
-      {note ? (
-        <Text className="text-label text-muted-foreground px-4 pb-2.5 text-right leading-4">
-          {note}
-        </Text>
       ) : null}
     </View>
   )

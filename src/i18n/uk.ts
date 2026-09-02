@@ -46,12 +46,6 @@ export const uk = {
   unsavedCountTemplate: 'Незбережених змін: {count}',
   changePassword: 'Змінити',
   changePasswordTitle: 'Зміна пароля',
-  /*
-   * The email row is READ-ONLY (owner, 2026-08-31), so this replaces the
-   * design's «Надішлемо лист на нову адресу…» notice. That copy described an
-   * edit this screen does not perform — see src/features/auth/profile.ts.
-   */
-  emailIsLogin: 'Це ваш логін. Щоб змінити — напишіть нам.',
   socialSeenByCrew: 'Команда бачить ці контакти в деталях зйомки',
   profileSaved: 'Профіль оновлено',
   checkHighlightedFields: 'Перевірте виділені поля',
@@ -62,10 +56,27 @@ export const uk = {
   discardChangesAction: 'Відхилити зміни',
   keepEditingAction: 'Продовжити редагування',
   changesDiscarded: 'Зміни відхилено',
-  /* The three derived counts. */
-  statShoots: 'Зйомок',
-  statClients: 'Клієнтів',
-  statCrew: 'У команді',
+  /*
+   * ── Second pass against `Edit Profile.dc.html` (2026-09-02) ──
+   *
+   * `statShoots` / `statClients` / `statCrew` went with the stats row the
+   * artboard dropped — P-8 in docs/redesign-log.md.
+   *
+   * Four sections replaced them and **all four are UI-only stubs** (owner,
+   * 2026-09-02), so the copy below labels controls that write nothing yet.
+   */
+  viewPublicProfile: 'Переглянути публічний профіль',
+  subscriptionSection: 'Підписка',
+  planLabel: 'Тариф',
+  /** The only plan there is. A product name, so it is not translated. */
+  planFree: 'Free',
+  notifyShootReminders: 'Нагадування про зйомку',
+  notifyNewConfirmations: 'Нові підтвердження',
+  settingsSection: 'Налаштування',
+  appLanguage: 'Мова застосунку',
+  contactSupport: 'Написати в підтримку',
+  /** «LUNA CRM · версія 0.1.0» — the number comes from `expo-constants`. */
+  versionTemplate: 'LUNA CRM · версія {version}',
   phoneFormatInvalid: 'Перевірте номер телефону',
   /* Account actions. */
   logoutAction: 'Вийти з акаунту',
@@ -653,18 +664,18 @@ export const uk = {
    * the soft delete**; nothing notifies anyone. Logged.
    */
   menuEditShoot: 'Редагувати зйомку',
-  menuViewAsClient: 'Дивитись як клієнт',
+  /*
+   * «Дивитись як клієнт» and its banner were removed on 2026-08-31 (owner).
+   * The menu item was the mode's only entry point, so the state and every
+   * conditional it gated went with it.
+   *
+   * Nothing about what a client can actually see changes: that was never this
+   * screen's doing. The link gateway builds each payload from an explicit column
+   * list, and a client's has never carried a note (`ADR-013`, CLAUDE.md rule 2).
+   * The mode was a preview of that decision, not the decision.
+   */
   cancelShoot: 'Скасувати зйомку',
 
-  /*
-   * The client-view banner. This is a PREVIEW and never a guarantee: what a
-   * client may see is decided by the link gateway per audience (ADR-013,
-   * CLAUDE.md rule 2). Hiding a note on the creator's own screen protects
-   * nothing, and this copy is careful not to claim it does — it says what the
-   * reader is looking at, not what the client is prevented from seeing.
-   */
-  clientViewBanner: 'Ви дивитесь очима клієнта — нотатки й приватні контакти приховані',
-  exitClientView: 'Вийти',
 
   /** «Початок через 2 год 40 хв» — a live countdown to the shoot's start. */
   startsInPrefix: 'Початок через',

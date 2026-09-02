@@ -537,6 +537,120 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 
 ---
 
+## Profile, second pass against `Edit Profile.dc.html` (owner, 2026-09-02)
+
+`app/(app)/profile.tsx`, a new `src/components/ui/switch.tsx`,
+`src/components/LanguageSwitcher.tsx`, `src/features/auth/profile.ts`.
+
+The artboard moved after the 2026-08-31 rebuild. **Four sections were added that
+nothing in the repo backs** — «Підписка», «Сповіщення», «Написати в підтримку»,
+and a button to a public profile screen that does not exist — and two things the
+built screen has were dropped.
+
+### Decisions
+
+| # | Question | Answer |
+|---|---|---|
+| P-5 | The artboard renders **no save button**. `onSave`, `saveLabel`, `saveBg` and `saveFg` are all computed in `renderVals()` and nothing consumes them; the scroll container's bottom padding shrank from the build's 104px to 40px, so the sticky bar is *gone*, not hidden | **Save moved into the header**, opposite «Скасувати», in the 74px slot the design leaves empty. The sticky footer is deleted. The three states become weight and colour on a header word instead of a filled bar |
+| P-6 | The design makes **email editable** — `type=email`, format validation, and «Надішлемо лист на нову адресу — вхід зміниться після підтвердження.» plus an unverified state driven by a new `emailState` prop | **Not built. P-1 stands.** Editing the login means `auth.updateUser`, `double_confirm_changes = true` mails BOTH addresses, and `public.users.email` is the crew-matching key (`match_contact_to_user`). That is a story with a migration, not a restyle. The row stays read-only |
+| P-7 | Four sections with no data model, no column and no story | **All four built, UI only** (owner, 2026-09-02: "Do just stub on UI, thats it"). Nothing is persisted and nothing reaches Supabase. Each is marked in the source as a stub |
+| P-8 | The **stats row is no longer rendered**, though `stats: [24 Зйомок, 11 Клієнтів, 6 У команді]` is still computed in the artboard's script. The «Переглянути публічний профіль» button sits where they were | **Removed to match**, and `profileStats()` + `ProfileStats` deleted with it — this screen was their only caller. Reverses the "built" half of P-3 |
+
+### Two things in the artboard look like slips, and only one was treated as one
+
+`stats` and the save button are dead in exactly the same way: computed in
+`renderVals()`, consumed by no markup. They were resolved in **opposite
+directions** — the stats removed, the save button rebuilt in the header — and the
+reason is the bottom padding. It dropped from 104px to 40px, which is a
+deliberate edit to make room that a sticky bar no longer needs; nothing
+equivalent argues that the stats were meant to stay. A screen that cannot save is
+not a design, so the button had to go somewhere; the header slot is the one place
+the artboard leaves empty.
+
+Worth a glance from the owner all the same: if either reading is wrong, it is
+cheap to reverse now.
+
+### What the four stubs actually are
+
+- **Підписка** — one «Тариф · Free» row. Static. No plan concept, no column, and
+  billing contradicts `architecture.md` Stage 1's $0 development.
+- **Сповіщення** — «Нагадування про зйомку» and «Нові підтвердження», two
+  switches on local `useState`. Not persisted, so they reset every launch. There
+  is no `expo-notifications`, no push-token table and no sender.
+  `app/(app)/index.tsx:82` already recorded that the mockups imply a notification
+  system with no table behind it; this is the same gap, now with a control on it.
+- **Написати в підтримку** — a row. No support address exists anywhere in the
+  repo, so it opens nothing.
+- **Переглянути публічний профіль** — a button to `Public Profile.dc.html`, which
+  is its own artboard and its own story. No route.
+
+**No new switch existed.** `src/components/ui/` had checkbox but nothing
+toggle-shaped, so `switch.tsx` is new, built to the artboard's spec (42×26 track,
+22px knob, 160ms).
+
+### Smaller departures
+
+- **The «Це ваш логін. Щоб змінити — напишіть нам.» note is gone** (owner,
+  2026-09-02), and with it the `emailIsLogin` key in both dictionaries and
+  `ProfileRow`'s `note` prop, which had no other caller. This **supersedes
+  P-1's answer**, which was the read-only row *plus* that copy. The row is now
+  read-only and silent about why: closer to the artboard, which carries no such
+  line, but the reason a photographer cannot edit their own login is no longer
+  anywhere they can read it. If anyone asks, that is why.
+- **The role chips are now nine** in the design (adding Відеограф, Hair стиліст,
+  Модель, Асистент, Продюсер) against `ROLES_UK`'s five. Kept at five, on the
+  precedent already set for this control: they are stored values read back on
+  every surface, and the glossary confirms the list. This is the second time the
+  artboard's role set has grown — worth confirming the glossary has not moved.
+- **«KULT Studio» is back** in the subtitle (`displayRole` concatenates it).
+  Still no studio column; **P-3 stands** and the subtitle is role-only.
+- **«Вийти з акаунту» is muted grey in the design**, not the destructive red the
+  build used. Followed — delete is now the one red thing on the screen, and two
+  competing reds was always the weaker read.
+- **«Видалити акаунт» moved into the Налаштування card** as its last row, red
+  text with a red chevron. Only the trigger changed; it still wraps
+  `DestructiveAction`'s real iOS alert.
+- **Rows gained leading 18px icons** and tint on focus (`#121214`) and error
+  (`#1c1011`).
+- **«Мова» moved** out of Акаунт into the new Налаштування card and became a
+  segmented UA/EN control with a live sample line («Українська · 19 вересня,
+  09:00», from `src/features/shoots/date.ts`). **P-2 still stands** — the
+  switcher exists nowhere else, so it survives regardless of where the artboard
+  puts it.
+
+### Still open
+
+- **A-6, sharpened again.** The artboard's footer says «LUNA CRM · версія 1.0»
+  where `app.config.ts:11` says `0.1.0`. The version is now rendered from
+  `expo-constants` so it cannot drift, but the wordmark is a judgement call: the
+  handoffs have now spelled the product **five** ways, and the artboard's own
+  toast adds «Тарифи LunaCRM» to «LUNA CRM». One spelling needs picking.
+- **What the stub rows do on tap.** The artboard toasts. Built **inert**, and
+  nothing toasts: a toast naming a feature that does not exist is worse than a
+  row that does nothing.
+
+  They were first built without chevrons too, on the reasoning that a chevron
+  promises navigation. **Overruled by the owner, 2026-09-02** — «Тариф» and
+  «Написати в підтримку» carry their chevrons as drawn, and «Написати в
+  підтримку» is no longer dimmed. The stubs now *look* finished and are not, so
+  the gap is invisible on the screen and lives only here and in the source
+  comments. Worth remembering when someone taps one and nothing happens.
+
+  Still dimmed, and not raised: the «Переглянути публічний профіль» button
+  carries `opacity-60` for the same reason the support row used to. Say if it
+  should come up to full strength as well.
+- **Whether the Сповіщення toggles should survive a relaunch.** They do not.
+  Local state that resets reads as a bug; persisting it implies a preference that
+  changes nothing. Neither is right until there is a sender.
+- **`socialSeenByCrew` kept**, though the artboard drops it. It is the only place
+  the UI tells you who sees your handles, which is an `ADR-013` fact rather than
+  decoration.
+- **The «Незбережених змін: N» counter kept**, though the artboard drops the text
+  while keeping the flex wrapper that held it. With Save now a quiet header word
+  rather than a full-width bar, the counter does more work than it did.
+
+---
+
 ## Link view rebuilt against `Shoot Link Preview.dc.html` (owner, 2026-08-31)
 
 `app/s/[token]/index.tsx`, the link gateway, `src/features/links/gateway.ts`, a

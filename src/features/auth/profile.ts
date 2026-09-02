@@ -113,41 +113,6 @@ export async function signedAvatarUrl(path: string): Promise<string | null> {
   return error || !data ? null : data.signedUrl
 }
 
-export type ProfileStats = { shoots: number; clients: number; crew: number }
-
-/**
- * The three counts on the identity card.
- *
- * Derived, never stored. Every query is RLS-scoped to the caller, so "my
- * shoots" needs no `creator_id` filter that could be forgotten — and the
- * soft-delete filters live in the policies too (`ADR-014`, CLAUDE.md rule 3).
- *
- * `crew` counts **people, not rows**: `ADR-003` makes the same person on three
- * shoots three rows, so counting rows would report a crew of nine for three
- * colleagues. Deduplicated the way `listPastCrew` does it.
- */
-export async function profileStats(): Promise<ProfileStats | null> {
-  const [shoots, clients, crew] = await Promise.all([
-    supabase.from('shoots').select('id', { count: 'exact', head: true }),
-    supabase.from('clients').select('id', { count: 'exact', head: true }),
-    supabase.from('crew_members').select('name, phone, email'),
-  ])
-
-  if (shoots.error || clients.error || crew.error || !crew.data) return null
-
-  const people = new Set(
-    (crew.data as { name: string; phone: string | null; email: string | null }[]).map(
-      (row) => `${row.name.trim().toLowerCase()}|${row.phone ?? row.email ?? ''}`
-    )
-  )
-
-  return {
-    shoots: shoots.count ?? 0,
-    clients: clients.count ?? 0,
-    crew: people.size,
-  }
-}
-
 /**
  * Change the password of the signed-in user.
  *

@@ -1,16 +1,19 @@
-import { View } from 'react-native'
-import { Button } from './ui/button'
+import { Pressable, View } from 'react-native'
 import { Text } from './ui/text'
 import { useLanguageSwitch } from '../i18n/LanguageProvider'
+import { selected as tickSelection } from '../lib/haptics'
 import type { Language } from '../i18n'
 
 /**
- * `US-015` — the UA / EN toggle, from the prototype's `langSwitchHtml`: two
- * short codes in the account header with the current one marked.
+ * `US-015` — the UA / EN toggle.
+ *
+ * Rebuilt as a **segmented control** for `Edit Profile.dc.html`'s second pass
+ * (owner, 2026-09-02): two pills sharing one recessed track, the current one
+ * filled. It was two loose buttons, which read as two things to press rather
+ * than one setting with two positions.
  *
  * The labels are not translated and are not in the dictionary. «UA» and «EN»
- * name the languages themselves, so they read the same in either — the
- * prototype writes them as literals for the same reason.
+ * name the languages themselves, so they read the same in either.
  *
  * Renders nothing without a provider, which is how `EP-05`'s scope holds: on
  * the link surface and the auth screens there is no account to remember a
@@ -24,14 +27,21 @@ export function LanguageSwitcher() {
   const { language, setLanguage } = context
 
   return (
-    <View className="flex-row gap-1">
+    <View
+      className="bg-secondary border-border shrink-0 flex-row gap-[3px] rounded-lg border p-[3px]"
+      role="radiogroup"
+    >
       {(['uk', 'en'] as const).map((code) => (
         <Option
           key={code}
           code={code}
           label={code === 'uk' ? 'UA' : 'EN'}
           active={language === code}
-          onPress={() => void setLanguage(code)}
+          onPress={() => {
+            if (language === code) return
+            tickSelection()
+            void setLanguage(code)
+          }}
         />
       ))}
     </View>
@@ -50,23 +60,24 @@ function Option({
   onPress: () => void
 }) {
   return (
-    <Button
-      variant={active ? 'secondary' : 'ghost'}
-      size="sm"
+    <Pressable
+      className={`min-h-[34px] min-w-[44px] items-center justify-center rounded-md px-3 ${
+        active ? 'bg-primary' : 'active:bg-background/40'
+      }`}
       onPress={onPress}
+      role="radio"
       // Named for a screen reader, and distinct per language so a test — and a
       // person — can tell the two apart by more than their position.
       accessibilityLabel={code === 'uk' ? 'Українська' : 'English'}
       accessibilityState={{ selected: active }}
     >
-      {/* In the navigation header, so on the frame (ADR-017). */}
       <Text
-        className={
-          active ? 'text-caption text-foreground font-bold' : 'text-caption text-muted-foreground'
-        }
+        className={`text-caption font-semibold ${
+          active ? 'text-primary-foreground' : 'text-muted-foreground'
+        }`}
       >
         {label}
       </Text>
-    </Button>
+    </Pressable>
   )
 }
