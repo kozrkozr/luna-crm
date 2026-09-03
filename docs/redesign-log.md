@@ -536,6 +536,103 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+## «Новий контакт» aligned with `Shoot Detail v3.dc.html` (owner, 2026-09-03)
+
+`app/(app)/shoot/[id]/crew/add.tsx` and both dictionaries.
+
+Most of the form already matched v3's `isInvite`: the field order, the role
+chips (36pt, radius 8), the trailing «Контакт збережеться в системі…» line, and
+both CTA labels («Зберегти й додати» / «Зберегти», «Додати до команди (N)» /
+«Виберіть учасників») are the same strings the artboard computes. Three gaps.
+
+### The note now says who can read it
+
+v3 puts an eye icon and «Нотатки бачите тільки ви — вони не показуються
+учаснику.» under the notes field. Built as drawn.
+
+**It is true by construction rather than by the label.** The link gateway
+selects `crew_members.note` for **nobody** — not a client (CLAUDE.md rule 2,
+`ADR-013`) and not a crew member either, because `US-023` is not built. So the
+box reports what the gateway does, which is the only kind of privacy claim worth
+putting on a screen.
+
+**`US-023` would falsify it, and that is the thing to remember.** That story
+hands a crew member the crew list **with** notes. The day it ships,
+«не показуються учаснику» becomes a lie — so the copy has to move in the same
+change, not after it. A grep for `crewNotesPrivate` is the reminder.
+
+### Smaller
+
+- **The notes placeholder** was «напр. привозить свій набір» — one example of a
+  note — and is now v3's «Особливості, побажання, що варто врахувати», which
+  asks for the substance instead.
+- The textarea's minimum height goes 80 → 88, as drawn.
+
+### «Мої контакти» leads with the people already on the shoot
+
+Owner, 2026-09-03. `listPastCrew` hands contacts over most-recent-first;
+`filterContacts` now partitions that list — already on this shoot, then everyone
+else — and recency survives inside each group. A partition rather than a sort,
+so an unstable comparator can never shuffle the recency order underneath it.
+
+**It puts the unpickable rows first.** A contact already on the shoot is shown
+dimmed with «У команді» and cannot be selected, so the top of the list is now
+things you cannot act on. That is the intent — "who is already here" answered
+before "who else could be" — but on a long list it pushes the rows you came to
+tap further down, and it is worth revisiting if the contact list ever grows past
+a screenful.
+
+### Not followed
+
+| # | What v3 does | Why not |
+|---|---|---|
+| S-28 | «Телефон — необовʼязково» | ~~Not followed.~~ **Followed** (owner, 2026-09-03) — see below. It deletes an acceptance criterion |
+| S-29 | No Telegram field | Ours keeps it (owner, 2026-08-31; migration `20260831140000`). The gateway still does not send it where it does send `instagram` — the safe default, logged then and unchanged |
+| S-30 | No note image | Unchanged: `US-005` collects an image with the note and the way in is still missing, though the column, the gateway's `noteImageUrl` and the crew link view all still work for rows that have one. Same shape as S-10 |
+
+### The contact became optional, and that deleted `US-005` AC-2
+
+The field was «Телефон або email» and **required**; v3 draws «Телефон —
+необовʼязково» and the owner asked for it as drawn. It is not a restyle:
+
+- **`US-005` AC-2 is marked *(required)*** and says "When neither a phone number
+  nor an email is provided (an Instagram handle alone is not enough) — then
+  saving is blocked and the creator is asked for a phone number or email."
+  **It has to be amended in the discovery repo**, and the whole criterion goes:
+  there is no weaker version of "saving is blocked" once the field is optional.
+- **`crew_members_contact_required` is dropped** (migration
+  `20260903140000_crew_contact_optional.sql`). Without that, an optional field
+  would have produced a rejected insert — a failure at save rather than a soft
+  one.
+
+**What it costs.** `match_contact_to_user(email, phone)` is the only route from
+a manually-entered crew row to a registered account, and it keys on exactly
+those two columns. A crew member saved with neither can **never** be matched —
+`US-009`'s whole mechanism, the only reason a crew member would ever register,
+is silently unavailable for that person. Nothing warns anyone.
+
+**The label no longer says an email is accepted**, though the field still takes
+one: `splitContact` routes by the `@` and `keyboardType` stays `email-address`.
+That is the artboard's wording. The quiet cost is that fewer people will think
+to type an email, which is one of the two things matching keys on.
+
+**Reversible only while no contactless rows exist.** Re-adding the constraint
+later means deciding what to do with every row already saved without one.
+
+`hasContact` and `contactRequired` are deleted — AC-2's rule has nothing left to
+enforce. `crewContact` («Телефон або email») survives as its own key because the
+shoot's client field still uses it.
+
+### Verified
+
+`tsc --noEmit` clean. **The acceptance suite was not run** (standing instruction),
+and **`us005-check.mjs` changed shape**: its three AC-2 checks asserted the
+refusal and now assert the inverse — a crew member with a handle and no contact
+saves, and the database accepts a row with neither. The migration is **not
+applied**; `npm run db:push` is needed before either behaviour is real.
+
+---
+
 ## Shoot detail + edit against `Shoot Detail v3.dc.html` (owner, 2026-09-03)
 
 `app/(app)/shoot/[id]/index.tsx`, `src/components/ShootDetailHeader.tsx`,

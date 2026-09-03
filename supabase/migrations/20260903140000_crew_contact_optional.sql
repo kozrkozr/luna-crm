@@ -1,0 +1,34 @@
+-- A crew member no longer needs a phone or an email.
+--
+-- **This deletes an acceptance criterion, not a constraint.** `US-005` AC-2 is
+-- marked *(required)* and says outright: "When neither a phone number nor an
+-- email is provided (an Instagram handle alone is not enough) — then saving is
+-- blocked and the creator is asked for a phone number or email." The owner
+-- asked for `Shoot Detail v3.dc.html`'s «Телефон — необовʼязково» as drawn
+-- (2026-09-03), which cannot coexist with it.
+--
+-- **`US-005` AC-2 has to be amended in the discovery repo**, and the whole
+-- criterion goes rather than being softened — there is no weaker version of
+-- "saving is blocked" left once the field is optional.
+alter table public.crew_members
+  drop constraint crew_members_contact_required;
+
+-- ── What this costs, stated once ───────────────────────────────────────────
+--
+-- **A crew member with no contact can never be matched to an account.**
+-- `match_contact_to_user(email, phone)` (20260827100000) is the only route from
+-- a manually-entered crew row to a registered `users` row, and it keys on
+-- exactly those two columns; the trigger on insert now has nothing to match on
+-- when both are null, so `user_id` stays null forever. That is `US-009`'s whole
+-- mechanism — the reason a crew member would ever register — and it is silently
+-- unavailable for these rows.
+--
+-- Nothing else breaks. The access link is per crew member and keyed by a token,
+-- not by a contact, so such a person can still be sent their link and still see
+-- the shoot; `splitContact` already returns `{null, null}` for an empty string,
+-- so no writer needed changing.
+--
+-- **Reversible only while no contactless rows exist.** Re-adding the constraint
+-- means deciding what to do with every row saved without one — delete them,
+-- invent a placeholder, or leave the constraint off. Worth knowing before this
+-- ships to anyone.

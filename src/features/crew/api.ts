@@ -63,11 +63,6 @@ export function splitContact(contact: string): { phone: string | null; email: st
   return trimmed.includes('@') ? { phone: null, email: trimmed } : { phone: trimmed, email: null }
 }
 
-/** AC-2's rule, in one place so the screen and the insert cannot disagree. */
-export function hasContact(contact: string): boolean {
-  const { phone, email } = splitContact(contact)
-  return !!(phone || email)
-}
 
 function toCrewMember(row: {
   id: string

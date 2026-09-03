@@ -4,6 +4,7 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import Check from 'lucide-react-native/icons/check'
+import Eye from 'lucide-react-native/icons/eye'
 import { Badge } from '../../../../../src/components/ui/badge'
 import { Button } from '../../../../../src/components/ui/button'
 import { Card } from '../../../../../src/components/ui/card'
@@ -21,7 +22,6 @@ import { toastOnNextScreen } from '../../../../../src/lib/nextScreenToast'
 import {
   addCrewMember,
   crewIdentity,
-  hasContact,
   listCrew,
   listPastCrew,
   type PastCrewMember,
@@ -176,9 +176,12 @@ export default function AddCrewScreen() {
     // The name is required too. The schema says so (`name text not null`) and
     // AC-1 lists it, but no story supplies copy for its absence — the same gap
     // US-002 hit with the client's name.
-    const nextErrors = { name: !name.trim(), contact: !hasContact(phone) }
+    // Contact is optional since 2026-09-03 — see the migration
+    // `20260903140000_crew_contact_optional.sql`. Only the name is required,
+    // and only because `crew_members.name` is NOT NULL.
+    const nextErrors = { name: !name.trim() }
     setErrors(nextErrors)
-    if (nextErrors.name || nextErrors.contact) {
+    if (nextErrors.name) {
       setFormError(null)
       return
     }
@@ -202,13 +205,13 @@ export default function AddCrewScreen() {
   }
 
   /*
-    The «Новий контакт» CTA is ready only when the row would actually insert —
-    name AND a contact. The design keys its label off the name alone, which
-    would show a white, ready-looking button that then refuses for a missing
-    phone. Looking ready and being ready are the same thing here.
+    The «Новий контакт» CTA is ready when the row would actually insert. That
+    used to mean name AND a contact; since the contact became optional
+    (2026-09-03) the name is the whole rule, which is also what the artboard
+    keys its label off. Looking ready and being ready are the same thing here.
   */
-  const newReady = name.trim().length > 1 && hasContact(phone)
-  const contacts = filterContacts(past ?? [], query)
+  const newReady = name.trim().length > 1
+  const contacts = filterContacts(past ?? [], query, onShoot)
 
   return (
     <View className="bg-background flex-1">
@@ -288,10 +291,7 @@ export default function AddCrewScreen() {
                 setErrors((e) => ({ ...e, name: false }))
               }}
               phone={phone}
-              onPhone={(value) => {
-                setPhone(value)
-                setErrors((e) => ({ ...e, contact: false }))
-              }}
+              onPhone={setPhone}
               instagram={instagram}
               onInstagram={setInstagram}
               telegram={telegram}
@@ -348,13 +348,36 @@ export default function AddCrewScreen() {
 }
 
 /** Name or role, case-insensitively — the two fields the design's search covers. */
-function filterContacts(contacts: PastCrewMember[], query: string): PastCrewMember[] {
+/**
+ * The saved contacts, narrowed by the search and ordered for this shoot.
+ *
+ * **People already on the shoot come first** (owner, 2026-09-03), then everyone
+ * else. `listPastCrew` hands them over most-recent-first and that order survives
+ * inside each group — partitioning rather than sorting, so recency is never
+ * shuffled by a comparator that happens to be unstable.
+ *
+ * Worth knowing: a row that is already on the shoot is shown dimmed and cannot
+ * be picked, so this puts the unpickable rows at the top. That is the point —
+ * "who is already here" is answered before "who else could be" — but it does
+ * push the rows you came to tap further down a long list.
+ */
+function filterContacts(
+  contacts: PastCrewMember[],
+  query: string,
+  onShoot: Set<string>
+): PastCrewMember[] {
   const term = query.trim().toLowerCase()
-  if (!term) return contacts
-  return contacts.filter(
-    (person) =>
-      person.name.toLowerCase().includes(term) || person.role.toLowerCase().includes(term)
-  )
+  const matched = term
+    ? contacts.filter(
+        (person) =>
+          person.name.toLowerCase().includes(term) || person.role.toLowerCase().includes(term)
+      )
+    : contacts
+
+  return [
+    ...matched.filter((person) => onShoot.has(person.key)),
+    ...matched.filter((person) => !onShoot.has(person.key)),
+  ]
 }
 
 /* ───────────────────────────── «Мої контакти» ──────────────────────────── */
@@ -538,7 +561,7 @@ function NewContactTab({
   onRole: (role: Role) => void
   note: string
   onNote: (value: string) => void
-  errors: { name?: boolean; contact?: boolean }
+  errors: { name?: boolean }
 }) {
   const t = useStrings()
 
@@ -560,14 +583,17 @@ function NewContactTab({
 
       <View className="gap-2">
         {/*
-          No «— необовʼязково» here, though the design writes one: `US-005` AC-2
-          requires a phone or an email and `crew_members_contact_required`
-          enforces it, so the row would be refused. The label carries the app's
-          existing «Телефон або email» wording rather than the design's
-          «Телефон», because that is what the field actually accepts —
-          `splitContact` decides by the `@`.
+          «Телефон — необовʼязково», as v3 draws it (owner, 2026-09-03). It was
+          «Телефон або email» and required, because `US-005` AC-2 said so and
+          `crew_members_contact_required` enforced it; the constraint is dropped
+          and **AC-2 has to be amended** — see the migration for what that costs.
+
+          The field still accepts an email: `splitContact` routes by the `@`, and
+          `keyboardType` stays `email-address` for the same reason. The label no
+          longer says so, which is the artboard's wording rather than a claim
+          about what the field takes.
         */}
-        <Label htmlFor="crew-contact">{t.crewContact}</Label>
+        <FieldLabel label={t.crewPhoneLabel} optional />
         <Input
           id="crew-contact"
           value={phone}
@@ -576,9 +602,6 @@ function NewContactTab({
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        {errors.contact ? (
-          <Text className="text-destructive text-sm">{t.contactRequired}</Text>
-        ) : null}
       </View>
 
       <View className="gap-2">
@@ -656,8 +679,30 @@ function NewContactTab({
           onChangeText={onNote}
           placeholder={t.crewNotesPlaceholder}
           numberOfLines={4}
-          className="min-h-20"
+          className="min-h-[88px]"
         />
+        {/*
+          «Нотатки бачите тільки ви» — the note's audience, said on the form
+          that collects it (`Shoot Detail v3.dc.html`, 2026-09-03).
+
+          **True by construction, not by this box.** The link gateway selects
+          `crew_members.note` for nobody: not a client (CLAUDE.md rule 2,
+          `ADR-013`) and not a crew member either, because `US-023` is not built.
+          The label is a report of what the gateway does, which is the only kind
+          of privacy claim worth putting on a screen.
+
+          **`US-023` would falsify it.** That story hands a crew member the crew
+          list WITH notes; the day it ships, «не показуються учаснику» becomes a
+          lie and this copy has to move with it. Logged.
+        */}
+        <View className="bg-secondary border-border flex-row items-start gap-[7px] rounded-md border px-2.5 py-[7px]">
+          <View className="mt-px shrink-0">
+            <Icon as={Eye} size={13} strokeWidth={2} className="text-muted-foreground" />
+          </View>
+          <Text className="text-caption text-muted-foreground flex-1 leading-4">
+            {t.crewNotesPrivate}
+          </Text>
+        </View>
       </View>
 
       <Text className="text-label text-muted-foreground leading-5">{t.contactWillBeSaved}</Text>

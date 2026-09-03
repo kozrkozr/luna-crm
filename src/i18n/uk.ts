@@ -457,8 +457,24 @@ export const uk = {
   addCrewTitle: 'Додати учасника команди',
   crewNamePlaceholder: 'напр. Наталія',
   crewContactPlaceholder: '+380… або email',
-  crewNotesPlaceholder: 'напр. привозить свій набір',
-  contactRequired: 'Вкажіть телефон або email',
+  /*
+   * `Shoot Detail v3.dc.html`'s «Новий контакт» wording (2026-09-03), which
+   * asks for the substance rather than showing one example of it.
+   */
+  crewNotesPlaceholder: 'Особливості, побажання, що варто врахувати',
+  /*
+   * The note's visibility, said on the form that collects it.
+   *
+   * **True by construction today**, and not because of this line: the link
+   * gateway selects `crew_members.note` for NOBODY — not a client (CLAUDE.md
+   * rule 2, ADR-013) and not a crew member either, because `US-023` is not
+   * built (link-gateway/index.ts, `crewPayload`).
+   *
+   * **`US-023` would falsify it.** That story gives a crew member the crew
+   * list WITH notes; the moment it ships, «не показуються учаснику» stops
+   * being true and this copy has to change with it. Logged.
+   */
+  crewNotesPrivate: 'Нотатки бачите тільки ви — вони не показуються учаснику.',
   // A crew member's answer to their invitation (US-008). Shown from US-005
   // onward because the column exists and defaults to pending.
   responsePending: 'Очікує',
@@ -857,6 +873,18 @@ export const uk = {
   addedCrewCountTemplate: 'Додано учасників: {count}',
 
   crewNameExample: 'Наприклад, Дмитро Марчук',
+  /*
+   * «Телефон» alone, as `Shoot Detail v3.dc.html` labels the field (owner,
+   * 2026-09-03), now that it is optional. `crewContact` («Телефон або email»)
+   * is kept as its own key on the `accessDetailsLabel` rule — the shoot's
+   * client field still uses it, and the two would drift if shared.
+   *
+   * The field still ACCEPTS an email — `splitContact` routes by the `@` —
+   * and this label no longer says so. That is the artboard's wording, and
+   * the cost is logged: an email is how `match_contact_to_user` links a
+   * crew member to an account, and fewer people will think to type one.
+   */
+  crewPhoneLabel: 'Телефон',
   crewPhonePlaceholder: '+380 __ ___ ____',
   crewInstagramLabel: 'Інстаграм',
   crewInstagramPlaceholder: '@nickname',

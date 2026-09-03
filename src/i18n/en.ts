@@ -277,8 +277,8 @@ export const en: Strings = {
   addCrewTitle: 'Add crew member',
   crewNamePlaceholder: 'e.g. Natalia',
   crewContactPlaceholder: '+380… or email',
-  crewNotesPlaceholder: 'e.g. brings their own kit',
-  contactRequired: 'Enter a phone number or email',
+  crewNotesPlaceholder: 'Anything worth knowing — preferences, kit, access',
+  crewNotesPrivate: 'Only you see these notes — they are not shown to the participant.',
   responsePending: 'Pending',
   responseConfirmed: 'Confirmed',
   responseDeclined: 'Declined',
@@ -447,6 +447,7 @@ export const en: Strings = {
   addedCrewCountTemplate: 'People added: {count}',
 
   crewNameExample: 'e.g. Dmytro Marchuk',
+  crewPhoneLabel: 'Phone',
   crewPhonePlaceholder: '+380 __ ___ ____',
   crewInstagramLabel: 'Instagram',
   crewInstagramPlaceholder: '@nickname',
