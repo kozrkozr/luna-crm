@@ -114,13 +114,21 @@ export function upcomingShoots(shoots: Shoot[], today: Date = new Date()): Shoot
 }
 
 /**
- * Distinct locations from the creator's own past shoots — the «Локація» quick
- * chips on the new-shoot form.
+ * Distinct venue NAMES from the creator's own past shoots — the chips under
+ * «Назва» on the shoot forms.
  *
  * Same argument as `listPastCrew`: derived from what the creator already wrote,
  * single-sided, private, self-populating, and no new table. There is no
  * locations entity and this does not create one — the chip just fills the text
- * field, which still writes a plain `location_address`.
+ * field, which writes a plain `location_name`.
+ *
+ * **It read `location_address` until 2026-09-03**, when `New Shoot.dc.html`
+ * split «Назва» from «Адреса» and the chips moved under the former. A chip has
+ * always held a venue name («Студія KULT») rather than a street address, so
+ * this follows the value rather than the column it used to live in — but
+ * `location_name` is new, so **the chips are empty until names are entered**.
+ * Nothing backfills them: there is no way to tell which half of an existing
+ * `location_address` was the name.
  *
  * Most recent first, so the studio someone used last week leads. Capped,
  * because this is a row of chips and not a directory.
@@ -130,19 +138,22 @@ export function pastLocations(shoots: Shoot[], limit = 6): string[] {
   const out: string[] = []
   // `listShoots` orders by date ascending, so walk it backwards for recency.
   for (let i = shoots.length - 1; i >= 0; i--) {
-    const address = shoots[i].locationAddress?.trim()
-    if (!address) continue
-    const key = address.toLowerCase()
+    const name = shoots[i].locationName?.trim()
+    if (!name) continue
+    const key = name.toLowerCase()
     if (seen.has(key)) continue
     seen.add(key)
-    out.push(address)
+    out.push(name)
     if (out.length === limit) break
   }
   return out
 }
 
 /**
- * Shoots on `isoDate` whose time range overlaps `[start, start + minutes)`.
+ * Shoots on `isoDate` whose time range overlaps `[startTime, endTime)`.
+ *
+ * It took a duration in minutes until 2026-09-03, when the forms stopped
+ * deriving the end from a stepper and started collecting it directly.
  *
  * **No story asks for this.** The owner did (2026-08-30), after
  * `Time Picker Options.dc.html` drew «Перетин із «Ілона Козер» 10:00–13:00» on
@@ -161,14 +172,14 @@ export function overlappingShoots(
   shoots: Shoot[],
   isoDate: string,
   startTime: string,
-  minutes: number
+  endTime: string
 ): Shoot[] {
   const toMinutes = (value: string) => {
     const [h, m] = value.split(':').map(Number)
     return h * 60 + m
   }
   const from = toMinutes(startTime)
-  const to = from + minutes
+  const to = toMinutes(endTime)
 
   return shoots.filter((shoot) => {
     if (shoot.date !== isoDate || !shoot.startTime || !shoot.endTime) return false

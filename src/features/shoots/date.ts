@@ -122,8 +122,22 @@ export function formatDuration(
   units: { hours: string; minutes: string }
 ): string | null {
   const span = minutesBetween(start, end)
-  if (span === null) return null
+  return span === null ? null : formatMinutes(span, units)
+}
 
+/**
+ * «2 год 30 хв» from a span already counted in minutes.
+ *
+ * Split out of `formatDuration` on 2026-09-03 for the shoot forms' time range,
+ * which holds its span as a number and would otherwise have to round-trip it
+ * through two `HH:MM` strings — and could not express 24 hours at all that way.
+ *
+ * `New Shoot.dc.html` writes this as `m < 60 ? m + ' хв' : (m % 60 === 0 ? …
+ * ' год' : Math.floor(m / 60) + ' год 30 хв')`, which hardcodes «30 хв» for
+ * every non-zero remainder. Ours prints the real remainder; at a 60-minute
+ * grid step the two only differ on a range that came from stored data.
+ */
+export function formatMinutes(span: number, units: { hours: string; minutes: string }): string {
   const hours = Math.floor(span / 60)
   const minutes = span % 60
   return [hours ? `${hours} ${units.hours}` : null, minutes ? `${minutes} ${units.minutes}` : null]

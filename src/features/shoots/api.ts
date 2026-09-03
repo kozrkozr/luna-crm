@@ -32,8 +32,14 @@ export type Shoot = {
   startTime: string | null
   endTime: string | null
   status: ShootStatus
+  /**
+   * `20260903120000` — the venue's name («Студія KULT»), which `locationAddress`
+   * used to carry alongside the street address. Not on the link surface: see
+   * the migration.
+   */
+  locationName: string | null
   locationAddress: string | null
-  /** Free text — directions and the like (US-018 AC-2). */
+  /** «Деталі» on the forms — how to get IN (US-018 AC-2). */
   locationNote: string | null
   /**
    * The shoot's own note — what the client wants, what to bring.
@@ -77,6 +83,8 @@ export type UpdateShootInput = {
   /** `US-030` AC-5 — editable, under the same rules as creation. */
   startTime: string // HH:MM
   endTime: string // HH:MM
+  /** `20260903120000` — «Назва», beside the address. */
+  locationName: string | null
   locationAddress: string | null
   locationNote: string | null
   locationAttachment: string | null
@@ -98,7 +106,7 @@ export type UpdateShootInput = {
  * subject to the same RLS as a direct read of `clients`.
  */
 const SHOOT_COLUMNS =
-  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, status, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, status, location_name, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url'
 
 export type CreateShootInput = {
   /**
@@ -127,6 +135,10 @@ export type CreateShootInput = {
    * has always been nullable and `US-018` still owns editing it.
    */
   locationAddress: string | null
+  /** `20260903120000` — «Назва», collected on the create form beside it. */
+  locationName: string | null
+  /** `20260830160000` — how to get in; «Деталі» on the form. */
+  locationNote: string | null
   /** `20260830160000` — the shoot's own note, collected on the create form. */
   notes: string | null
 }
@@ -155,7 +167,9 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
-      location_address: input.locationAddress,
+      location_name: input.locationName?.trim() || null,
+      location_address: input.locationAddress?.trim() || null,
+      location_note: input.locationNote?.trim() || null,
       notes: input.notes?.trim() || null,
     })
     .select('id')
@@ -210,6 +224,7 @@ type ShootRow = {
   start_time: string | null
   end_time: string | null
   status: string
+  location_name: string | null
   location_address: string | null
   location_note: string | null
   location_attachment: string | null
@@ -245,6 +260,7 @@ function toShoot(row: ShootRow): Shoot {
     startTime: row.start_time ? row.start_time.slice(0, 5) : null,
     endTime: row.end_time ? row.end_time.slice(0, 5) : null,
     status: row.status as ShootStatus,
+    locationName: row.location_name,
     locationAddress: row.location_address,
     locationNote: row.location_note,
     notes: row.notes,
@@ -309,6 +325,7 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
       date: input.date,
       start_time: input.startTime,
       end_time: input.endTime,
+      location_name: input.locationName?.trim() || null,
       location_address: input.locationAddress?.trim() || null,
       location_note: input.locationNote?.trim() || null,
       location_attachment: input.locationAttachment,

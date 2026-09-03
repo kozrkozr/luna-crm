@@ -1,0 +1,41 @@
+-- The location's NAME, beside its address.
+--
+-- **No story defines this field.** `New Shoot.dc.html`'s second pass splits
+-- «Локація» into «Назва» («Наприклад, Студія KULT»), «Адреса» («Вулиця,
+-- будинок, місто») and «Деталі»; the owner asked for the column (2026-09-03).
+-- `US-002` and `US-018` need amending.
+--
+-- It resolves a conflation rather than adding a concept. `location_address` has
+-- carried both since the field's placeholder was «Назва або адреса» — the
+-- location chips (`pastLocations`) put a venue name in it («Студія KULT») while
+-- the shoot-detail screen offers to open the same value in Maps and to copy it
+-- as an address. Those are two different values and one column.
+--
+-- `location_note` is untouched and is the third field, «Деталі». It already
+-- meant "how to get in" (`US-018` AC-2) and the edit screen already collected
+-- it as «Нотатки (як доїхати тощо)»; only its label moves.
+alter table public.shoots
+  add column location_name text;
+
+-- No policy or grant change: `shoots_select_own` / `shoots_update_own` scope
+-- every row to its creator, and this column inherits both.
+
+-- ── Not on the link surface, deliberately ───────────────────────────────────
+--
+-- The link gateway is NOT changed, so no crew member and no client receives
+-- this value today. Every `shoots` SELECT in `link-gateway/index.ts` names its
+-- columns explicitly and none names this one, and the same is true of
+-- `crew_shoots()` (20260827100000) and of the ICS export in
+-- `src/features/links/calendar.ts`.
+--
+-- That is the same stance `shoots.notes` took (20260830160000) and for the same
+-- reason: no story says who may see a venue's name, and the omission is
+-- reversible in the cheap direction. Adding it to `crewPayload` — or beside
+-- `location_address` in the ICS `location` field — is one line whenever a story
+-- asks. Un-shipping it from a payload that already went out is not.
+--
+-- So a photographer who fills in «Назва» today sees it nowhere at all: the two
+-- forms collect it and no screen reads it back (the shoot-detail card was
+-- written to and then reverted — see docs/redesign-log.md). If any of this is
+-- wrong, it is wrong in the direction that can be fixed without a notification
+-- to anyone.

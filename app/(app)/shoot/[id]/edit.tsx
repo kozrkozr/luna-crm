@@ -42,12 +42,9 @@ import {
 import { overlappingShoots, pastLocations } from '../../../../src/features/shoots/home'
 import { createClient, updateClient } from '../../../../src/features/clients/api'
 import {
-  DEFAULT_DURATION_MINUTES,
-  LocationChips,
   SectionLabel,
+  ShootLocationFields,
   ShootWhenFields,
-  durationBetween,
-  endOf,
 } from '../../../../src/components/ShootFormFields'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { toIsoDate } from '../../../../src/features/shoots/date'
@@ -99,7 +96,15 @@ type Draft = {
    * which is not what "the next edit collects them" means.
    */
   start: string | null
-  durationMinutes: number
+  /**
+   * The end, stored rather than derived (2026-09-03). It was
+   * `durationMinutes`, because variant 2b collected a duration and computed the
+   * end at save; the range grid collects both, so the draft holds what the
+   * columns hold.
+   */
+  end: string | null
+  /** `location_name` — the venue («Студія KULT»), new in 20260903120000. */
+  locationName: string
   address: string
   /** `location_note` — how to get in. Not the shoot's own note below. */
   note: string
@@ -160,7 +165,6 @@ export default function EditShootScreen() {
   const [formError, setFormError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
-  const [exactOpen, setExactOpen] = useState(false)
   /** Every shoot, for the location chips and the clash warning. */
   const [existing, setExisting] = useState<Shoot[]>([])
 
@@ -194,11 +198,10 @@ export default function EditShootScreen() {
           // can land on the previous day west of Greenwich.
           date: fromIsoDate(shoot.date),
           start: shoot.startTime,
-          durationMinutes: durationBetween(
-            shoot.startTime,
-            shoot.endTime,
-            DEFAULT_DURATION_MINUTES
-          ),
+          // Taken as stored. A shoot saved at 09:30 keeps its half hour — the
+          // grid cannot highlight it, but nothing here rewrites it either.
+          end: shoot.endTime,
+          locationName: shoot.locationName ?? '',
           address: shoot.locationAddress ?? '',
           note: shoot.locationNote ?? '',
           notes: shoot.notes ?? '',
@@ -348,8 +351,9 @@ export default function EditShootScreen() {
     const ok = await updateShoot(id, {
       clientId,
       date: toIsoDate(draft.date),
-      startTime: draft.start,
-      endTime: endOf(draft.start, draft.durationMinutes),
+      startTime: draft.start as string,
+      endTime: draft.end as string,
+      locationName: draft.locationName,
       locationAddress: draft.address,
       locationNote: draft.note,
       locationAttachment: draft.attachment,
@@ -416,12 +420,12 @@ export default function EditShootScreen() {
     it is in `existing` too, at the very times the form is showing.
   */
   const clashes =
-    draft.date && draft.start
+    draft.date && draft.start && draft.end
       ? overlappingShoots(
           existing.filter((shoot) => shoot.id !== id),
           toIsoDate(draft.date),
           draft.start,
-          draft.durationMinutes
+          draft.end
         )
       : []
 
@@ -607,9 +611,10 @@ export default function EditShootScreen() {
 
           {/*
             ── Дата й час ── The same component the create form uses (owner,
-            2026-08-30). It replaces a `DateField` row plus a Початок/Завершення
-            pair: a month grid, a rail of half-hour slots behind «Інший час», a
-            ± duration stepper, the summary bar, and the clash warning.
+            2026-08-30): a month grid, the time range grid, the summary bar and
+            the clash warning. The control inside it changed on 2026-09-03 —
+            see `ShootWhenFields` — and it changed for both screens at once,
+            which is the point of sharing it.
 
             `allowPastDates` is the one difference between the two screens, and
             it is not cosmetic — a shoot that has already happened is still
@@ -625,54 +630,36 @@ export default function EditShootScreen() {
             dateInvalid={dateError}
             allowPastDates
             start={draft.start}
-            onStartChange={(value) => {
-              set('start', value)
+            end={draft.end}
+            onRangeChange={(nextStart, nextEnd) => {
+              setDraft((current) =>
+                current ? { ...current, start: nextStart, end: nextEnd } : current
+              )
               setStartError(false)
             }}
-            startInvalid={startError}
-            exactOpen={exactOpen}
-            onToggleExact={() => setExactOpen((open) => !open)}
-            durationMinutes={draft.durationMinutes}
-            onDurationChange={(minutes) => set('durationMinutes', minutes)}
+            timeInvalid={startError}
             clashes={clashes}
           />
 
-          {/* ── Локація ── */}
+          {/*
+            ── Локація ── «Назва» · «Адреса» · «Деталі», shared with the create
+            form since 2026-09-03. «Деталі» is the same `location_note` this
+            screen already collected as «Нотатки (як доїхати тощо)» — only the
+            label moved. «Назва» is the new column.
+
+            The attachment controls below are the one part of «Локація» that is
+            not common to both screens, so they stay here.
+          */}
           <View className="gap-3.5">
-            <SectionLabel label={t.locationSection} />
-
-            <View className="gap-2">
-              <Label htmlFor="address">{t.address}</Label>
-              <Input
-                id="address"
-                value={draft.address}
-                onChangeText={(value) => set('address', value)}
-                placeholder={t.locationPlaceholder}
-              />
-              {/* The same one-tap chips the create form offers. */}
-              <LocationChips
-                places={chips}
-                value={draft.address}
-                onPick={(place) => set('address', place)}
-              />
-            </View>
-
-            {/*
-              The handoff splits this into «Код доступу» and «Охорона». One
-              free-text column is what exists, and it is where a creator already
-              writes exactly that — see the header note.
-            */}
-            <View className="gap-2">
-              <Label htmlFor="location-note">{t.locationNotes}</Label>
-              <Textarea
-                id="location-note"
-                value={draft.note}
-                onChangeText={(value) => set('note', value)}
-                placeholder={t.locationNotesPlaceholder}
-                numberOfLines={5}
-                className="min-h-24"
-              />
-            </View>
+            <ShootLocationFields
+              name={draft.locationName}
+              onNameChange={(value) => set('locationName', value)}
+              address={draft.address}
+              onAddressChange={(value) => set('address', value)}
+              details={draft.note}
+              onDetailsChange={(value) => set('note', value)}
+              chips={chips}
+            />
 
             {/*
               The attachment, ABOVE the two buttons that change it: what is
@@ -1004,7 +991,8 @@ function sameDraft(a: Draft, b: Draft): boolean {
     a.status === b.status &&
     sameDay(a.date, b.date) &&
     a.start === b.start &&
-    a.durationMinutes === b.durationMinutes &&
+    a.end === b.end &&
+    a.locationName === b.locationName &&
     a.address === b.address &&
     a.note === b.note &&
     a.notes === b.notes &&

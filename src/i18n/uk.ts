@@ -125,7 +125,6 @@ export const uk = {
    * `dateRequired`, which docs/open-questions.md item 1 already records as
    * placeholders — same status, same note.
    */
-  timeStart: 'Початок',
   /*
    * «Завершення», not «Кінець» — the shoot-detail handoff's word, adopted
    * 2026-08-30. It is the same field label, so it changes on `new-shoot` too
@@ -133,7 +132,6 @@ export const uk = {
    */
   timeEnd: 'Завершення',
   pickTime: 'Обрати час',
-  startTimeRequired: 'Вкажіть початок зйомки',
   endTimeRequired: 'Вкажіть кінець зйомки',
   /*
    * ADR-017's design system supplies these two strings itself, from its
@@ -275,14 +273,27 @@ export const uk = {
   dateAndTime: 'Дата й час',
   pickDateError: 'Виберіть дату',
   clientRequiredShort: 'Вкажіть клієнта',
-  /* The rail ↔ exact-field toggle. Each label names where the tap LEADS. */
-  otherTime: 'Інший час',
-  fromRail: 'Зі стрічки',
-  duration: 'Тривалість',
+  /*
+   * The time range grid (2026-09-03), which replaced variant 2b's rail, its
+   * «Інший час» toggle and its ± duration stepper — so `otherTime`, `fromRail`,
+   * `duration`, `timeStart` and `startTimeRequired` lost their only consumers.
+   */
+  resetTime: 'Скинути',
+  timeHintPickStart: 'Торкніться початку',
+  timeHintPickEnd: 'Тепер — кінця',
+  pickTimeError: 'Виберіть час',
   /** The summary bar's left half when no date has been picked yet. */
   noDatePicked: 'Дата не вибрана',
   shootWord: 'Зйомка',
-  locationPlaceholder: 'Назва або адреса',
+  /*
+   * «Локація», split into three by the second pass. `locationPlaceholder`
+   * («Назва або адреса») named the conflation these resolve, and is gone.
+   */
+  locationNameLabel: 'Назва',
+  locationNamePlaceholder: 'Наприклад, Студія KULT',
+  locationAddressPlaceholder: 'Вулиця, будинок, місто',
+  locationDetails: 'Деталі',
+  locationDetailsPlaceholder: 'Поверх, код домофону, вхід, паркування',
   notesSection: 'Нотатки',
   clientCannotSee: 'Клієнт не бачить',
   shootNotesPlaceholder: 'Побажання клієнта, обладнання, що взяти',
@@ -378,8 +389,6 @@ export const uk = {
   referenceCategories: ['Світло', 'Пози', 'Стиль'],
   address: 'Адреса',
   addressPlaceholder: 'напр. Студія, Київ',
-  locationNotes: 'Нотатки (як доїхати тощо)',
-  locationNotesPlaceholder: 'напр. Заїзд з двору, домофон 45',
   attachImage: '+ Зображення',
   attachVideo: '+ Відео',
   /*

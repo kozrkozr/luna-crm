@@ -5,15 +5,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Badge } from '../../src/components/ui/badge'
 import { Button } from '../../src/components/ui/button'
 import { Input } from '../../src/components/ui/input'
-import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
 import { Textarea } from '../../src/components/ui/textarea'
 import {
-  DEFAULT_DURATION_MINUTES,
-  LocationChips,
   SectionLabel,
+  ShootLocationFields,
   ShootWhenFields,
-  endOf,
 } from '../../src/components/ShootFormFields'
 import { ClientField } from '../../src/components/ClientField'
 import { Toast } from '../../src/components/Toast'
@@ -71,19 +68,18 @@ export default function NewShootScreen() {
   const [telegram, setTelegram] = useState('')
   const [date, setDate] = useState<Date | null>(null)
   /*
-    `New Shoot.dc.html` variant **2b** (owner's choice, 2026-08-30, from the six
-    in `Time Picker Options.dc.html`): a rail of half-hour slots is the primary
-    control, «Інший час» swaps it for a real picker, and the END is derived from
-    a duration rather than entered.
-
-    `US-030` still stores both — `endTime` is computed at save, so the column and
-    AC-5 are unaffected. What changed is only how the pair is collected.
+    `New Shoot.dc.html`'s second pass (owner, 2026-09-03): a **range grid** of
+    hourly slots, where variant 2b had a rail plus a derived duration. Both ends
+    are collected now, and both start unset — so `US-030` AC-2's "required field
+    left empty" stays a state a user can reach for the end as well as the start.
   */
-  const [start, setStart] = useState('09:00')
-  const [exactOpen, setExactOpen] = useState(false)
-  // One hour, shared with the edit form — see `DEFAULT_DURATION_MINUTES`.
-  const [durationMinutes, setDurationMinutes] = useState(DEFAULT_DURATION_MINUTES)
+  const [start, setStart] = useState<string | null>(null)
+  const [end, setEnd] = useState<string | null>(null)
+  /* «Локація», split into three by the second pass — `location_name` is new
+     (migration 20260903120000). */
+  const [locationName, setLocationName] = useState('')
   const [address, setAddress] = useState('')
+  const [locationDetails, setLocationDetails] = useState('')
   const [notes, setNotes] = useState('')
   /** Every shoot, for the location chips and the overlap warning. */
   const [existing, setExisting] = useState<Shoot[]>([])
@@ -110,7 +106,7 @@ export default function NewShootScreen() {
   const [errors, setErrors] = useState<{
     client?: boolean
     date?: boolean
-    startTime?: boolean
+    time?: boolean
   }>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -146,14 +142,16 @@ export default function NewShootScreen() {
     // created. Validated before the request for exactly that reason.
     //
     // Not checked, deliberately: whether the end is before the start. US-030
-    // AC-3 is unwritten (02-product/open-questions.md item 14).
+    // AC-3 is unwritten (02-product/open-questions.md item 14) — and the range
+    // grid can legitimately produce one, since a shoot ending at 24:00 is
+    // stored as 00:00.
     const nextErrors = {
       client: !client && !typedName.trim(),
       date: !date,
-      // No end-time error: the duration stepper always holds a value, so an end
-      // can always be computed. That removes one of the four ways this form
-      // used to be refusable.
-      startTime: !start,
+      // Both ends, now that the grid collects both. 2b derived the end from a
+      // stepper that always held a value, which removed this refusal; the
+      // second pass puts it back.
+      time: !start || !end,
     }
     setErrors(nextErrors)
     if (Object.values(nextErrors).some(Boolean)) {
@@ -194,11 +192,13 @@ export default function NewShootScreen() {
     const result = await createShoot({
       clientId: target.id,
       date: toIsoDate(date as Date),
-      startTime: start,
-      // `US-030` AC-5 still stores both ends. The form collects a start and a
-      // duration; the column pair is what it saves.
-      endTime: endOf(start, durationMinutes),
+      // `US-030` AC-5 stores both ends, and the grid now collects both — no
+      // derivation between the form and the column.
+      startTime: start as string,
+      endTime: end as string,
+      locationName: locationName.trim() || null,
       locationAddress: address.trim() || null,
+      locationNote: locationDetails.trim() || null,
       notes: notes.trim() || null,
     })
     setSubmitting(false)
@@ -214,8 +214,9 @@ export default function NewShootScreen() {
     router.back()
   }
 
-  const valid = !!(client || typedName.trim().length > 1) && !!date && !!start
-  const clashes = date ? overlappingShoots(existing, isoOf(date), start, durationMinutes) : []
+  const valid = !!(client || typedName.trim().length > 1) && !!date && !!start && !!end
+  const clashes =
+    date && start && end ? overlappingShoots(existing, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
 
   return (
@@ -285,6 +286,7 @@ export default function NewShootScreen() {
                   form. `US-029` built it; nothing here re-implements it. */}
               <ClientField
                 value={client}
+                invalid={!!errors.client}
                 onLink={link}
                 onUnlink={() => {
                   setClient(null)
@@ -356,30 +358,26 @@ export default function NewShootScreen() {
             }}
             dateInvalid={!!errors.date}
             start={start}
-            onStartChange={setStart}
-            startInvalid={!!errors.startTime}
-            exactOpen={exactOpen}
-            onToggleExact={() => setExactOpen((open) => !open)}
-            durationMinutes={durationMinutes}
-            onDurationChange={setDurationMinutes}
+            end={end}
+            onRangeChange={(nextStart, nextEnd) => {
+              setStart(nextStart)
+              setEnd(nextEnd)
+              setErrors((current) => ({ ...current, time: false }))
+            }}
+            timeInvalid={!!errors.time}
             clashes={clashes}
           />
 
-          {/* ── Локація ── */}
-          <View className="gap-3">
-            <SectionLabel label={t.locationSection} />
-            <Input
-              id="address"
-              value={address}
-              onChangeText={setAddress}
-              placeholder={t.locationPlaceholder}
-            />
-            {/*
-              Quick chips of places already used, from the creator's own past
-              shoots. Shared with the edit screen.
-            */}
-            <LocationChips places={chips} value={address} onPick={setAddress} />
-          </View>
+          {/* ── Локація ── «Назва» · «Адреса» · «Деталі», shared with edit. */}
+          <ShootLocationFields
+            name={locationName}
+            onNameChange={setLocationName}
+            address={address}
+            onAddressChange={setAddress}
+            details={locationDetails}
+            onDetailsChange={setLocationDetails}
+            chips={chips}
+          />
 
           {/* ── Нотатки ── */}
           <View className="gap-2.5">

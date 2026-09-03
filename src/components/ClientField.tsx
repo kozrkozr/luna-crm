@@ -40,9 +40,23 @@ type Props = {
   /** What is typed while no client is linked; becomes a new client on save. */
   typedName: string
   onTypedNameChange: (name: string) => void
+  /**
+   * The destructive border `New Shoot.dc.html` gives a required field after a
+   * refused save (`clientLine` → `#7f1d1d`). The message below it was already
+   * there; the border was not, so a reader scrolling back up had nothing
+   * marking WHICH field had failed.
+   */
+  invalid?: boolean
 }
 
-export function ClientField({ value, onLink, onUnlink, typedName, onTypedNameChange }: Props) {
+export function ClientField({
+  value,
+  onLink,
+  onUnlink,
+  typedName,
+  onTypedNameChange,
+  invalid = false,
+}: Props) {
   const t = useStrings()
   const inputRef = useRef<TextInput>(null)
   const [anchor, setAnchor] = useState<LayoutRectangle | null>(null)
@@ -141,6 +155,8 @@ export function ClientField({ value, onLink, onUnlink, typedName, onTypedNameCha
         autoCapitalize="words"
         autoComplete="off"
         placeholder={t.clientNameSearchPlaceholder}
+        // Same treatment `MonthPicker` gives its own failed required field.
+        className={invalid ? 'border-destructive/60' : undefined}
       />
 
       {/* AC-2 — nothing matched. Not an error, and save is not blocked: the

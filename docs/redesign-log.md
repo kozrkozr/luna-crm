@@ -536,6 +536,130 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+
+## New Shoot, second pass against `New Shoot.dc.html` (owner, 2026-09-03)
+
+`src/components/ShootFormFields.tsx`, `app/(app)/new-shoot.tsx`,
+`app/(app)/shoot/[id]/edit.tsx`, `app/(app)/shoot/[id]/index.tsx`,
+`src/components/ClientField.tsx`, `src/features/shoots/api.ts`,
+`src/features/shoots/home.ts`, `src/features/shoots/date.ts`, both
+dictionaries, and migration `20260903120000_shoot_location_name.sql`.
+
+Two structural changes, and both reach past this screen: the time control is
+different, and «Локація» is three fields where it was one. `ShootWhenFields` and
+the location block are shared with the **edit** screen by construction
+(2026-08-30), so both moved together — which is the point of sharing them.
+
+### The time control was replaced, superseding the 2026-08-30 choice
+
+The owner picked variant **2b** of `Time Picker Options.dc.html` on 2026-08-30:
+a horizontal rail of half-hour slots, «Інший час» for the platform picker, and a
+± duration stepper with the end **derived**. `New Shoot.dc.html` now embeds a
+**range grid** — 24 hourly cells, six to a row; tap the start, tap the end —
+with a «Скинути» control and a hint line that names the state
+(«Торкніться початку» → «Тепер — кінця» → «3 год»).
+
+**Taken as drawn, hourly** (owner, 2026-09-03). Three consequences, all
+deliberate:
+
+| # | Question | Answer |
+|---|---|---|
+| S-13 | The artboard's step is 60, so **09:30 becomes unexpressible** | **As drawn.** Its own `rangePicker(from, to, step)` takes a step and is called with 60; a 30-minute version would be 48 cells over eight rows. A shoot already stored at `09:30` **keeps its value** — nothing rounds it — and the summary line reports the truth, but the grid cannot highlight a cell that does not exist, so the highlight starts at the next full hour. Any tap replaces the pair with whole hours |
+| S-14 | The end is entered rather than derived | So a shoot can be missing one again, and both forms validate for it. That **reinstates a refusal 2b had removed** — the log recorded 2b as removing "one of the four ways this form used to be refusable", and this puts it back. `US-030` AC-5 always stored both, so the columns never changed |
+| S-15 | 23:00 + one step is 24:00 | Stored as `00:00`, which is an end **before** its start. `US-030` AC-3 is unwritten (02-product/open-questions.md item 14) so nothing forbids it, and the artboard does the same thing (`fmtM(to % 1440)`). The highlight normalises it back to 1440 rather than collapsing to an empty range |
+
+`HALF_HOURS`, `DEFAULT_DURATION_MINUTES`, `durationBetween`, `endOf`, the
+`TimeSlot` rail and the `StepperButton` are all gone; so are `timeStart`,
+`startTimeRequired`, `otherTime`, `fromRail` and `duration`, which had no other
+consumers. `formatMinutes` was split out of `formatDuration` in `date.ts` so the
+duration can be formatted from a number instead of round-tripping through two
+`HH:MM` strings — which could not express 24 hours at all.
+
+**One departure inside the departure.** The artboard's `durLabel` is
+`m < 60 ? m + ' хв' : (m % 60 === 0 ? … ' год' : Math.floor(m / 60) + ' год 30 хв')`
+— it hardcodes «30 хв» for every non-zero remainder. Ours prints the real one.
+At a 60-minute step the two only differ on a range that came from stored data,
+which is exactly the case the artboard's shortcut gets wrong.
+
+### «Локація» is three fields now, and one is a new column
+
+| # | Question | Answer |
+|---|---|---|
+| S-16 | «Назва» has no column | **`location_name` added** (owner, 2026-09-03; migration `20260903120000`). **No story defines it** — `US-002` and `US-018` need amending. It resolves a conflation rather than adding a concept: `location_address`'s placeholder was literally «Назва або адреса», the location chips put a venue name in it, and the shoot-detail screen offers to open that same value in Maps |
+| S-17 | «Деталі» | **`location_note`, unchanged.** It already meant "how to get in" (`US-018` AC-2) and the edit screen already collected it as «Нотатки (як доїхати тощо)». Only the label moved, and the create form collects it now too |
+
+**The new column is NOT on the link surface, and that is the part to check first
+if anything changes.** The link gateway is untouched: every `shoots` SELECT in
+`link-gateway/index.ts` names its columns explicitly and none names this one,
+and the same is true of `crew_shoots()` (20260827100000) and of the ICS export
+in `src/features/links/calendar.ts`. So a photographer who fills in «Назва»
+today sees it only in the app — no crew member and no client receives it.
+
+That is the same stance `shoots.notes` took (20260830160000) and for the same
+reason: **no story says who may see a venue's name**, and the omission is
+reversible in the cheap direction. Adding it to `crewPayload`, or beside
+`location_address` in the ICS `location` field, is one line whenever a story
+asks. Un-shipping it from a payload that already went out is not.
+
+**Nothing displays it yet, so the column is write-only.** The shoot-detail
+location card was written to lead with it, above the address — and then reverted
+(owner, 2026-09-03): `app/(app)/shoot/[id]/index.tsx` was carrying unrelated
+uncommitted work, and three display hunks in that file would have gone into this
+commit on top of it. Re-applying them is three lines whenever that file is
+clear. Until then «Назва» is collected, saved, and invisible.
+
+**`pastLocations` now reads `location_name`.** The chips have always held a
+venue name («Студія KULT») rather than a street address, and the artboard puts
+them under «Назва», so they follow the value rather than the column they used to
+live in. Consequence: **the chips are empty until names are entered.** Nothing
+backfills them, because there is no way to tell which half of an existing
+`location_address` was the name.
+
+`overlappingShoots` takes an end instead of a duration, now that the forms
+collect one.
+
+### Smaller alignments
+
+- **The client field gets the artboard's error border.** `clientLine` → `#7f1d1d`
+  on a refused save; `ClientField` takes an `invalid` prop and uses the same
+  `border-destructive/60` `MonthPicker` already uses. The message was there
+  before, the border was not — so a reader scrolling back up had nothing marking
+  *which* field had failed.
+- **The summary bar names today and tomorrow.** «Сьогодні, 19 вересня» /
+  «Завтра, 19 вересня», as drawn. `todayWord` / `tomorrowWord` already existed.
+- All three location fields carry the artboard's 13/500 label, via a new shared
+  `FieldLabel`. The single field had none at all.
+
+### Not followed
+
+| # | What the artboard does | Why not |
+|---|---|---|
+| S-11 | Weekday row **Sunday-first** | Unchanged. Ukrainian weeks start Monday; same US default leaking through the prototype's `Date` maths as C-3 |
+| S-12 | `renderVals` carries `crewChips`, `crewCount`, `moreOpen`, `toggleMore`, `moreHint` | **Still none is referenced in its own markup** — leftovers, exactly as on the first pass. Picking crew at creation time has no column and no story |
+| S-18 | The header lets «Скасувати» and «Зберегти» size naturally, with the title on `flex:1` | Ours keeps fixed side slots so the title is centred on the SCREEN rather than on what is left between two labels of different lengths. Same reasoning as the profile header |
+| C-10 | The CTA sits on a **gradient fade** | **Still not built**, on this screen as on the calendar. It needs `expo-linear-gradient`, which is not a dependency |
+
+### Verified
+
+`tsc --noEmit` clean; `expo export -p web` builds. **The acceptance suite was
+not run** (standing instruction for this phase). **The migration has not been
+applied** — `npm run db:push` is needed before either form will save.
+
+### Two suites that were already broken, and one kept working
+
+`us018-check.mjs` drives `#address` and `#location-note`. The refactor would
+have dropped both ids, so they are set explicitly on the shared fields — the ids
+cost nothing and the assertions keep working.
+
+`us030-check.mjs` drives `#date`, `#start-time` and `#end-time`. **Those ids have
+not existed since `4a8d8bf`**, when the first ADR-017 pass replaced that row with
+`MonthPicker` plus the rail — `git log -S'id="start-time"'` confirms it. It is a
+pre-existing break, untouched here, and fixing it means rewriting what the test
+drives rather than what it reads. Its display assertion («09:00 – 12:00») still
+holds.
+
+---
+
 ## Calendar, second pass against `Calendar.dc.html` (owner, 2026-09-03)
 
 `src/components/ShootCalendar.tsx`, `app/(app)/shoots.tsx`,
@@ -616,7 +740,7 @@ than removed, and are candidates for deletion.
 |---|---|---|
 | C-3 | Weekdays are `['НД','ПН',…]`, Sunday-first, `startOfWeek` on `getDay()` | **Unchanged from the first pass.** Ukrainian weeks start on Monday; the artboard's order is a US default leaking through its plain `Date` arithmetic |
 | C-4 | Three statuses — `planned` / `progress` / `done` | Two. `shoot_status` is an enum of two and `US-020` AC-2 says there is no way to reach a third. The artboard reserves white for `progress`, so our stripe uses only its two quiet tones |
-| C-8 | Weekday letters are **uppercase** | Kept as «Пн Вт Ср». `t.weekdays` feeds `MonthPicker` as well as this card, so uppercasing means either two cases for one dictionary or a second component restyled in passing — and it rewrites the literal that **five** acceptance assertions match on (`us004` ×3, `us014`, `us015`). Cheap to do deliberately, not worth doing as a side effect of a 10px label |
+| C-8 | Weekday letters are **uppercase** | Kept as «Пн Вт Ср» — but **the stated reason was wrong** (corrected 2026-09-03). It said uppercasing would mean "two cases for one dictionary"; `MonthPicker.tsx` **already uppercases the same array**, so the app is already inconsistent and `ShootCalendar` is the odd one out. What actually holds it back is narrower: the weekday literal is what **five** acceptance assertions match on (`us004` ×3, `us014`, `us015`). Aligning it is a deliberate five-line change to those suites, not a side effect of a 10px label |
 | C-9 | The week label reads «13 вересня — 19 вересня» | Ours drops the repeated month: «13 — 19 вересня». The artboard formats both ends through one helper that has no same-month case — an artifact of the prototype's arithmetic rather than a drawn decision, same class as C-3 |
 | C-10 | The pinned CTA sits on a **gradient fade** (`#09090b 62%` → transparent), no border | **Not built.** Ours stays a solid `background` bar with `border-t`. The fade needs `expo-linear-gradient`, which is not a dependency, and adding one was not part of this ask. One `npx expo install` away |
 
