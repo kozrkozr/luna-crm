@@ -536,6 +536,109 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+## Calendar, second pass against `Calendar.dc.html` (owner, 2026-09-03)
+
+`src/components/ShootCalendar.tsx`, `app/(app)/shoots.tsx`,
+`src/components/StatusPill.tsx`, both dictionaries, and two acceptance suites.
+
+**The bottom tab bar is deliberately not built** (owner, 2026-09-03: "ignore
+navigation which appeared at the bottom, we will implement it later,
+separately"). The artboard's four tabs and the `bottom:74px` they push the CTA
+to are out of scope here; see the note at the end of the profile second-pass
+entry for what a tab bar costs.
+
+### The grid was the whole gap
+
+| | Artboard | Was |
+|---|---|---|
+| month cell | `aspect-ratio:1` square, radius 8, 4px gaps, whole cell fills on select | fixed `h-11` row holding a 32pt **circle**, no gaps |
+| today | 1px `#3f3f46` border on the cell | **not marked at all** |
+| day with shoots | number brightens to `#fafafa`, empty days sit at `#a1a1aa` | every number the same colour |
+| dot on a selected cell | inverts to `#18181b` | stayed `muted-foreground` on the fill |
+| week mode | shares the weekday header above; cells are `9px 0` rects | weekday letter **inside** each cell, own 30pt circle |
+
+The weekday header sits outside the artboard's `isMonth` / `isWeek` branches, so
+it belongs to the card rather than to the month grid. Ours was inside
+`MonthGrid`, which is why the week strip had grown a second copy of the letters.
+Moving it out removed that duplication.
+
+A month cell is now ~46pt wide on a 402pt frame (346 − 24 of gaps, over seven),
+so §6.3's 44pt minimum still holds without the fixed height that used to
+guarantee it. **Worth re-checking on a smaller device**: on a 375pt frame it
+works out to ~42pt, and the cell no longer has a floor.
+
+### Decisions
+
+| # | Question | Answer |
+|---|---|---|
+| C-6 | The status badge is a radius-6 rect in the artboard; `StatusPill` was a full pill, and `Badge` already drew the artboard's shape | **`StatusPill` changed globally** (owner). `rounded-md px-2 py-[3px]`, caption/semibold — the two controls agree now instead of one being the last pill-shaped chip. It restyles the **shoot-detail** badge too, and that frame has not been re-diffed |
+| C-7 | The artboard labels statuses «Заплановано» / «Завершена»; the app said «Нова» / «Закінчена» | **The artboard's words** (owner). The enum stays `new` / `finished` — CLAUDE.md rule 5 keeps identifiers on the glossary, and only what the reader sees moved. This is `US-020` copy and reaches every screen showing a status: the shoot detail, the home card, the edit screen's segment |
+
+`markNew` / `markFinished` moved with them. Both have had **no consumer** since
+the edit screen's toggle became a `Tabs` segment; they are kept in step rather
+than removed, and are candidates for deletion.
+
+### Agenda row
+
+- **The avatar rings were the wrong colour.** `AvatarStack` ringed with
+  `border-card` (`#1F1F22`) — a leftover from when the row was `bg-card` — while
+  the row is `bg-background` (`#0A0A0A`), so every crew avatar carried a halo.
+  The artboard writes `border:2px solid {{ s.cardBg }}`, and that value *differs
+  per row*: a clash row lifts to `secondary`. The row passes its own surface
+  down now.
+- **Time column fixed at 48pt**, was `minWidth: 52`. A growing column moved the
+  hairline beside it from row to row; the artboard's is one width throughout.
+- Spacing to the artboard's: location `margin-top:4`, crew stack `10`, time
+  weight 600 rather than bold.
+- **Spacing by `gap`, not trailing margins.** A row's `mb-2` added to the next
+  group's `mt-4`, so groups sat 24px apart where the artboard has 16.
+- `CrewRow` lost its `rounded-[14px]` override — `AgendaRow` beside it is 12,
+  and the artboard draws one radius for every row in the list. The claim in that
+  component's own comment that it is "the same card as AgendaRow" is now true.
+
+### Three smaller alignments
+
+- **The filter bar's clear is a bare ✕.** C-5 recorded «Показати всі ✕» as
+  "built as drawn"; the artboard puts the glyph alone and the words in
+  `aria-label`. **C-5 is corrected**: the label is now the accessibility name,
+  which is the only reader that needed it beside a row already headed «Зйомки ·
+  19 вересня».
+- **The empty card lost its button.** It carried an outline «+ Нова зйомка»
+  which the artboard's empty card does not have — and the pinned CTA sits a few
+  pixels below, so the card offered the same action twice.
+- **`+ Нова зйомка`, one space.** It was written `+  ` with two. The home
+  screen's identical CTA (`app/(app)/index.tsx`) still has two — one character,
+  left alone because that screen is not in this pass.
+
+### Not followed
+
+| # | What the artboard does | Why not |
+|---|---|---|
+| C-3 | Weekdays are `['НД','ПН',…]`, Sunday-first, `startOfWeek` on `getDay()` | **Unchanged from the first pass.** Ukrainian weeks start on Monday; the artboard's order is a US default leaking through its plain `Date` arithmetic |
+| C-4 | Three statuses — `planned` / `progress` / `done` | Two. `shoot_status` is an enum of two and `US-020` AC-2 says there is no way to reach a third. The artboard reserves white for `progress`, so our stripe uses only its two quiet tones |
+| C-8 | Weekday letters are **uppercase** | Kept as «Пн Вт Ср». `t.weekdays` feeds `MonthPicker` as well as this card, so uppercasing means either two cases for one dictionary or a second component restyled in passing — and it rewrites the literal that **five** acceptance assertions match on (`us004` ×3, `us014`, `us015`). Cheap to do deliberately, not worth doing as a side effect of a 10px label |
+| C-9 | The week label reads «13 вересня — 19 вересня» | Ours drops the repeated month: «13 — 19 вересня». The artboard formats both ends through one helper that has no same-month case — an artifact of the prototype's arithmetic rather than a drawn decision, same class as C-3 |
+| C-10 | The pinned CTA sits on a **gradient fade** (`#09090b 62%` → transparent), no border | **Not built.** Ours stays a solid `background` bar with `border-t`. The fade needs `expo-linear-gradient`, which is not a dependency, and adding one was not part of this ask. One `npx expo install` away |
+
+### Verified
+
+`tsc --noEmit` clean; `expo export -p web` builds. **The acceptance suite was
+not run** (still the owner's standing instruction for this phase), so the two
+suites edited below are updated but unproven.
+
+### Tests touched, and one that was already broken
+
+`us020-check.mjs` and `us009-check.mjs` match on the status words as literals,
+so C-7 required updating them: «Нова» → «Заплановано», «Закінчена» →
+«Завершена», in assertions and messages alike.
+
+`us020-check.mjs` also asserts on «Позначити як «Завершена»» — a string with **no
+consumer in the app**, since that toggle became a `Tabs` segment. The literal was
+updated in step, which leaves the assertion exactly as stale as it already was.
+It is a pre-existing break, not one this pass caused, and fixing it means
+rewriting what the test drives rather than what it reads.
+
+---
 
 ## Profile, second pass against `Edit Profile.dc.html` (owner, 2026-09-02)
 
@@ -1258,7 +1361,7 @@ verbatim from the design.
 |---|---|---|
 | C-3 | Weekday row is **`['НД','ПН','ВТ',…]`** — Sunday first, and `startOfWeek` uses `getDay()` | **Ukrainian weeks start on Monday.** The app is Monday-first throughout and the dictionaries' `weekdays` is ordered that way; the design's is a US default leaking through the prototype's plain `Date` arithmetic. Kept Monday-first |
 | C-4 | Three statuses — `planned` / `progress` / `done` | Two, for the reason already logged as H-11: `shoot_status` is an enum of two and `US-020` AC-2 says there is no way to reach a third |
-| C-5 | The filter bar's clear reads **«Показати всі ✕»** | Built as drawn. Note it now differs from `allShoots` («Всі зйомки»), the older label on the pill this replaced — that key is now unused |
+| C-5 | The filter bar's clear reads **«Показати всі ✕»** | ~~Built as drawn.~~ **Corrected 2026-09-03** — the artboard draws the ✕ alone and carries «Показати всі» in `aria-label`, so the words were never visible text. The clear is a bare glyph with that accessibility name now. `allShoots` («Всі зйомки»), the older label on the pill this replaced, remains unused |
 
 ---
 

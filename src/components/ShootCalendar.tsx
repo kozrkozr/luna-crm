@@ -10,12 +10,17 @@ import { selected as tickSelection } from '../lib/haptics'
 
 /**
  * `US-004`'s calendar, rebuilt as «Варіант 3» of
- * `calendar-ux-variants.html` (ADR-017).
+ * `calendar-ux-variants.html` (ADR-017), then re-aligned to
+ * `Calendar.dc.html`'s grid (owner, 2026-09-03).
  *
- * A card holding month navigation,
- * and then either a month grid or a single week strip. Cells are 44pt with a
- * 32pt number circle and a dot beneath for "has a shoot" — the design's §5.12,
- * and the one touch target in the whole mockup set that already cleared 44pt.
+ * A card holding period navigation, a weekday header, and then either a month
+ * grid or a single week strip.
+ *
+ * **The cells are square rounded rects, not circles** (2026-09-03). They were a
+ * 44pt row holding a 32pt circle; the artboard draws `aspect-ratio:1` cells with
+ * a radius of 8, separated by 4px gaps, and fills the WHOLE cell on selection.
+ * A cell is ~46pt wide on a 402pt frame, so §6.3's 44pt minimum still holds
+ * without a fixed height.
  *
  * Acceptance criteria carried over unchanged: AC-1 marks the dates that have a
  * shoot; AC-2 renders unmarked rather than disappearing when there are none;
@@ -23,16 +28,22 @@ import { selected as tickSelection } from '../lib/haptics'
  * filter on. Every date is tappable, marked or not (AC-4, owner's decision) —
  * an empty day is a real result, not a dead tap.
  *
- * ── Two places this does NOT follow the mockup ───────────────────────────────
+ * ── Three places this does NOT follow the mockup ─────────────────────────────
  *
- * **Weeks start on Monday.** All three variants draw `НД ПН ВТ …` and compute
- * with `d.getDay()`, and the design system's own §9 calls that a defect: in
- * Ukraine the week starts on Monday. Following the mockup here would ship a
- * calendar whose columns are wrong by one day.
+ * **Weeks start on Monday.** Every mockup draws `НД ПН ВТ …` and computes with
+ * `d.getDay()`, and the design system's own §9 calls that a defect: in Ukraine
+ * the week starts on Monday. Following it would ship a calendar whose columns
+ * are wrong by one day (logged as C-3).
  *
- * **The arrows move months in month mode.** In the mockup `v3prev()`/`v3next()`
- * return early unless the mode is `week`, so month navigation silently does
- * nothing. `US-004` AC-3 requires it. Both logged in docs/redesign-log.md.
+ * **The arrows move months in month mode.** In the prototype `v3prev()`/
+ * `v3next()` return early unless the mode is `week`, so month navigation
+ * silently does nothing. `US-004` AC-3 requires it.
+ *
+ * **The week label drops a repeated month.** `Calendar.dc.html` formats both
+ * ends through the same helper and gets «13 вересня — 19 вересня»; its `fmt`
+ * simply has no same-month case. Ours writes «13 — 19 вересня», which is the
+ * same information without saying the month twice. An artifact of the
+ * prototype's arithmetic rather than a drawn decision — same class as C-3.
  */
 export type CalendarMode = 'month' | 'week'
 
@@ -67,6 +78,7 @@ export function ShootCalendar({
 }: Props) {
   const t = useStrings()
   const marked = new Set(shootDates)
+  const today = toIsoDate(new Date())
 
   const step = (delta: number) => {
     const moved = new Date(focus)
@@ -96,21 +108,48 @@ export function ShootCalendar({
           <NavButton direction="next" onPress={() => step(1)} />
         </View>
 
+        {/*
+          The weekday header, shared by BOTH modes since 2026-09-03 — the
+          artboard puts it outside its `isMonth` / `isWeek` branches. It used to
+          live inside the month grid, which is why the week strip had grown a
+          second copy of the letters inside each of its own cells.
+
+          RN letterSpacing is absolute, never em: 0.04em at 10px is 0.4.
+
+          **Not uppercased**, though the artboard's are. `t.weekdays` is «Пн Вт
+          Ср», and it feeds `MonthPicker` as well as this card — so uppercasing
+          means either two cases for one dictionary or a second component
+          restyled on the way past. It also rewrites the weekday literal five
+          acceptance assertions match on. Cheap to do deliberately; not worth
+          doing as a side effect of a 10px label.
+        */}
+        <View className="mb-1.5 flex-row gap-1">
+          {t.weekdays.map((day) => (
+            <Text
+              key={day}
+              className="text-micro text-muted-foreground flex-1 text-center font-semibold"
+              style={{ letterSpacing: 0.4 }}
+            >
+              {day}
+            </Text>
+          ))}
+        </View>
+
         {mode === 'month' ? (
           <MonthGrid
             year={focus.getFullYear()}
             month={focus.getMonth()}
-            weekdays={t.weekdays}
             marked={marked}
             selected={selected}
+            today={today}
             onSelect={onSelect}
           />
         ) : (
           <WeekStrip
             anchor={focus}
-            weekdays={t.weekdays}
             marked={marked}
             selected={selected}
+            today={today}
             onSelect={onSelect}
           />
         )}
@@ -122,16 +161,16 @@ export function ShootCalendar({
 function MonthGrid({
   year,
   month,
-  weekdays,
   marked,
   selected,
+  today,
   onSelect,
 }: {
   year: number
   month: number
-  weekdays: readonly string[]
   marked: Set<string>
   selected: string | null
+  today: string
   onSelect: (iso: string) => void
 }) {
   // `(getDay() + 6) % 7` shifts JavaScript's Sunday-first week to Monday-first.
@@ -150,25 +189,14 @@ function MonthGrid({
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
 
   return (
-    <>
-      <View className="mb-1.5 flex-row">
-        {weekdays.map((day) => (
-          <Text
-            key={day}
-            className="text-caption text-muted-foreground flex-1 text-center font-semibold"
-          >
-            {day}
-          </Text>
-        ))}
-      </View>
-
+    <View className="gap-1">
       {weeks.map((week, weekIndex) => (
-        <View key={weekIndex} className="flex-row">
+        <View key={weekIndex} className="flex-row gap-1">
           {week.map((day, dayIndex) => {
             // An absent day is an empty cell of the SAME size, never nothing:
             // the design system's §5.12 warns that `display:none` here (a
             // missing View, in RN) collapses the grid.
-            if (day === null) return <View key={dayIndex} className="h-11 flex-1" />
+            if (day === null) return <View key={dayIndex} className="aspect-square flex-1" />
             // toIsoDate rather than a hand-built string: it is the one place
             // that turns a local calendar day into the YYYY-MM-DD the rows use.
             const iso = toIsoDate(new Date(year, month, day))
@@ -177,29 +205,31 @@ function MonthGrid({
                 key={dayIndex}
                 iso={iso}
                 day={day}
+                shape="month"
                 hasShoot={marked.has(iso)}
                 isSelected={selected === iso}
+                isToday={iso === today}
                 onSelect={onSelect}
               />
             )
           })}
         </View>
       ))}
-    </>
+    </View>
   )
 }
 
 function WeekStrip({
   anchor,
-  weekdays,
   marked,
   selected,
+  today,
   onSelect,
 }: {
   anchor: Date
-  weekdays: readonly string[]
   marked: Set<string>
   selected: string | null
+  today: string
   onSelect: (iso: string) => void
 }) {
   const start = startOfWeek(anchor)
@@ -209,34 +239,17 @@ function WeekStrip({
         const date = new Date(start)
         date.setDate(start.getDate() + i)
         const iso = toIsoDate(date)
-        const isSelected = selected === iso
-        const hasShoot = marked.has(iso)
         return (
-          <Pressable
+          <DayCell
             key={iso}
-            className="flex-1 items-center gap-1 rounded-lg py-2 active:opacity-70"
-            onPress={() => {
-              tickSelection()
-              onSelect(iso)
-            }}
-            role="button"
-            accessibilityLabel={iso}
-            accessibilityState={{ selected: isSelected }}
-          >
-            <Text className="text-micro text-muted-foreground font-semibold">{weekdays[i]}</Text>
-            <View
-              className={`h-[30px] w-[30px] items-center justify-center rounded-full ${
-                isSelected ? 'bg-primary' : ''
-              }`}
-            >
-              <Text
-                className={`text-body ${isSelected ? 'text-primary-foreground font-semibold' : 'text-card-foreground'}`}
-              >
-                {date.getDate()}
-              </Text>
-            </View>
-            <Dot visible={hasShoot} />
-          </Pressable>
+            iso={iso}
+            day={date.getDate()}
+            shape="week"
+            hasShoot={marked.has(iso)}
+            isSelected={selected === iso}
+            isToday={iso === today}
+            onSelect={onSelect}
+          />
         )
       })}
     </View>
@@ -244,29 +257,52 @@ function WeekStrip({
 }
 
 /**
- * One day: a 44pt target, a 32pt circle, a dot beneath.
+ * One day: a square cell in month mode, a taller one in the week strip.
  *
- * Selection and "has a shoot" are different things and must not look alike — a
- * filtered-to date with no shoots still has to read as selected, and a marked
- * date nobody has tapped must not read as filtered. So selection is the dark
- * circle and a shoot is the dot, rather than both being fills.
+ * Three states have to stay distinguishable, which is why each uses a different
+ * channel:
+ *
+ * - **selected** — the whole cell fills (`primary`), and the dot inverts so it
+ *   stays visible on the fill.
+ * - **today** — a `border-strong` edge and a heavier number. Nothing else in
+ *   the grid is bordered, so it reads without competing with the fill. This was
+ *   missing entirely before 2026-09-03.
+ * - **has a shoot** — the number brightens to `foreground` where an empty day
+ *   sits at `muted-foreground`, plus the dot. Two channels, because the dot
+ *   alone is 4px.
+ *
+ * A filtered-to date with no shoots still has to read as selected, and a marked
+ * date nobody has tapped must not read as filtered — hence a fill for one and a
+ * dot for the other rather than two fills.
  */
 function DayCell({
   iso,
   day,
+  shape,
   hasShoot,
   isSelected,
+  isToday,
   onSelect,
 }: {
   iso: string
   day: number
+  shape: 'month' | 'week'
   hasShoot: boolean
   isSelected: boolean
+  isToday: boolean
   onSelect: (iso: string) => void
 }) {
   return (
     <Pressable
-      className="h-11 flex-1 items-center justify-center active:opacity-70"
+      className={`flex-1 items-center justify-center rounded-lg border active:opacity-70 ${
+        shape === 'month' ? 'aspect-square gap-1' : 'gap-[5px] py-[9px]'
+      } ${
+        isSelected
+          ? 'bg-primary border-primary'
+          : isToday
+            ? 'border-border-strong'
+            : 'border-transparent'
+      }`}
       onPress={() => {
         // A selection tick, not an impact: picking a day changes a value
         // inside a control, which is the drier feedback iOS uses for that.
@@ -277,22 +313,21 @@ function DayCell({
       accessibilityLabel={iso}
       accessibilityState={{ selected: isSelected }}
     >
-      <View
-        className={`h-8 w-8 items-center justify-center rounded-full ${
-          isSelected ? 'bg-primary' : ''
+      <Text
+        className={`${shape === 'month' ? 'text-body-sm' : 'text-subtitle'} ${
+          isSelected
+            ? 'text-primary-foreground font-semibold'
+            : `${hasShoot ? 'text-foreground' : 'text-muted-foreground'} ${
+                isToday ? 'font-semibold' : ''
+              }`
         }`}
       >
-        <Text
-          className={`text-body ${isSelected ? 'text-primary-foreground font-semibold' : 'text-card-foreground'}`}
-        >
-          {day}
-        </Text>
-      </View>
-      <Dot visible={hasShoot} />
+        {day}
+      </Text>
+      <Dot state={isSelected ? 'onFill' : hasShoot ? 'marked' : 'none'} />
     </Pressable>
   )
 }
-
 
 /**
  * The 4px dot under a day that has something on it.
@@ -301,11 +336,20 @@ function DayCell({
  * conditionally: a cell that grew a dot would shift its number by two pixels,
  * and a month grid of numbers that jump as you scan it is worse than a dot that
  * is sometimes invisible.
+ *
+ * `onFill` is the selected cell — the dot has to invert there or it disappears
+ * into the `primary` fill it sits on.
  */
-function Dot({ visible }: { visible: boolean }) {
+function Dot({ state }: { state: 'onFill' | 'marked' | 'none' }) {
   return (
     <View
-      className={`mt-1 h-1 w-1 rounded-full ${visible ? 'bg-muted-foreground' : 'bg-transparent'}`}
+      className={`h-1 w-1 rounded-full ${
+        state === 'onFill'
+          ? 'bg-primary-foreground'
+          : state === 'marked'
+            ? 'bg-muted-foreground'
+            : 'bg-transparent'
+      }`}
     />
   )
 }

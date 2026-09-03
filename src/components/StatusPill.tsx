@@ -55,12 +55,16 @@ export function StatusPill({ value }: { value: ShootStatus }) {
     // shrink-0 and numberOfLines: «Заплановано» is 11 characters and sits
     // beside a name on a card. Without both, either the pill squeezes the name
     // or it wraps onto two lines (§5.3).
-    <View
-      className={`shrink-0 rounded-full px-2.5 py-1 ${TONE[value]}`}
-    >
+    //
+    // **Radius 6, not a pill** (owner, 2026-09-03). `Calendar.dc.html` draws
+    // every status badge as a `4px 8px` rounded rect, which is what `Badge`
+    // already renders — so the two agree now instead of this being the one
+    // remaining pill-shaped chip. It restyles the shoot-detail badge too; that
+    // frame has not been re-diffed.
+    <View className={`shrink-0 rounded-md px-2 py-[3px] ${TONE[value]}`}>
       <Text
         numberOfLines={1}
-        className={`text-caption font-bold ${TONE_TEXT[value]}`}
+        className={`text-caption font-semibold ${TONE_TEXT[value]}`}
       >
         {LABEL[value]}
       </Text>

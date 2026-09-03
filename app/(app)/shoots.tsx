@@ -66,7 +66,7 @@ type Row =
  *
  * There are now two different empty lists, and they must not share copy:
  * AC-2's «У вас ще немає зйомок.» means this account has no shoots at all,
- * while AC-4's «На цю дату зйомок немає.» means only that this date is free.
+ * while AC-4's «Немає зйомок на цю дату» means only that this date is free.
  * Showing the first when a date is simply empty would tell the photographer
  * their shoots had vanished.
  *
@@ -191,17 +191,22 @@ export default function ShootListScreen() {
               <Text className="text-body-sm text-foreground flex-1 font-medium">
                 {`${t.shootsWord} · ${formatDayMonth(selectedDate, t.monthsGenitive)}`}
               </Text>
+              {/*
+                A bare ✕ (2026-09-03). The artboard draws the glyph alone and
+                puts «Показати всі» in `aria-label` — so the words are still
+                there for a screen reader, which is the only reader that needed
+                them beside a row already headed «Зйомки · 19 вересня».
+              */}
               <Pressable
                 onPress={() => {
                   tapped()
                   setSelectedDate(null)
                 }}
-                hitSlop={8}
+                hitSlop={12}
                 role="button"
+                accessibilityLabel={t.showAllShoots}
               >
-                <Text className="text-label text-muted-foreground font-medium">
-                  {`${t.showAllShoots} ✕`}
-                </Text>
+                <Text className="text-label text-muted-foreground px-1 font-medium">✕</Text>
               </Pressable>
             </View>
           ) : null}
@@ -222,6 +227,12 @@ export default function ShootListScreen() {
               them, so the story's own empty state is still what an empty account
               sees.
             */
+            /*
+              Text only since 2026-09-03. It carried an outline «+ Нова зйомка»
+              button, which the artboard's empty card does not — and the pinned
+              CTA sits a few pixels below it, so the card was offering the same
+              action twice.
+            */
             <Card variant="flat" className="items-center px-4 py-7">
               <Text className="text-body-sm text-muted-foreground text-center">
                 {all.length === 0
@@ -232,13 +243,6 @@ export default function ShootListScreen() {
                       ? t.emptyWeek
                       : t.emptyMonth}
               </Text>
-              <Button
-                variant="outline"
-                className="mt-3.5 h-10"
-                onPress={() => router.push('/(app)/new-shoot')}
-              >
-                <Text className="text-body-sm font-medium">{`+  ${t.newShootTitle}`}</Text>
-              </Button>
             </Card>
           ) : (
             /*
@@ -269,7 +273,7 @@ export default function ShootListScreen() {
         style={{ paddingBottom: insets.bottom + 12 }}
       >
         <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
-          <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
+          <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
         </Button>
       </View>
     </View>
@@ -382,11 +386,12 @@ function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
       rather than as a distinction. No mockup covers this row at all: `US-009`'s
       commitments are the app's own addition.
 
-      The `row` variant supplies the fill and, since 2026-08-30, the border too —
-      only the 14px radius is overridden, the variant's own being 12. Text takes
+      The `row` variant supplies the fill, the border and — since 2026-09-03 —
+      the radius: the 14px override is gone, because `AgendaRow` beside it is 12
+      and the artboard draws one radius for every row in this list. Text takes
       Card's `card-foreground` context, so it needs nothing.
     */
-    <Card variant="row" className="mb-2 flex-row items-center gap-3 rounded-[14px]">
+    <Card variant="row" className="flex-row items-center gap-3">
       <View className="flex-1 gap-0.5">
         <Text className="text-title-sm text-card-foreground font-semibold">
           {entry.locationAddress ?? entry.date}
@@ -434,7 +439,14 @@ function Agenda({
   t: ReturnType<typeof useStrings>
 }) {
   return (
-    <View>
+    /*
+      Spacing by `gap` since 2026-09-03, not by trailing margins on the rows.
+      The artboard separates groups by 12px, puts 4px above a heading and 8px
+      below it, and 8px between rows; the margin version added a row's bottom
+      margin to the next group's top one, so the space between groups was 24px
+      where it should be 16.
+    */
+    <View className="gap-3">
       {groups.map((group) => (
         <View key={group.date}>
           {/*
@@ -442,7 +454,7 @@ function Agenda({
             an absolute value — RN's letterSpacing is not relative, so `.03em`
             at 13px has to be written as the 0.39px it works out to.
           */}
-          <View className="mb-2 mt-4 flex-row items-baseline gap-2 px-0.5">
+          <View className="mb-2 mt-1 flex-row items-baseline gap-2 px-0.5">
             {/* 12/600 uppercase at 0.04em — the handoff's section label, which
                 every other screen now uses at the same values. «· сьогодні» is
                 appended for the current day, as drawn. */}
@@ -463,19 +475,25 @@ function Agenda({
             ) : null}
           </View>
 
-          {group.rows.map((row, index) =>
-            row.kind === 'created' ? (
-              <AgendaRow
-                key={row.shoot.id}
-                shoot={row.shoot}
-                crew={crewNames[row.shoot.id] ?? []}
-                tooSoon={followsTooSoon(group.rows, index)}
-                t={t}
-              />
-            ) : (
-              <CrewRow key={`crew-${row.entry.shootId}`} entry={row.entry} badge={t.crewShootBadge} />
-            )
-          )}
+          <View className="gap-2">
+            {group.rows.map((row, index) =>
+              row.kind === 'created' ? (
+                <AgendaRow
+                  key={row.shoot.id}
+                  shoot={row.shoot}
+                  crew={crewNames[row.shoot.id] ?? []}
+                  tooSoon={followsTooSoon(group.rows, index)}
+                  t={t}
+                />
+              ) : (
+                <CrewRow
+                  key={`crew-${row.entry.shootId}`}
+                  entry={row.entry}
+                  badge={t.crewShootBadge}
+                />
+              )
+            )}
+          </View>
         </View>
       ))}
     </View>
@@ -539,7 +557,7 @@ function AgendaRow({
             ring was the last thing on this screen using `warning` as a surface,
             and the scale now survives only on the tag inside.
           */
-          className={`mb-2 flex-row overflow-hidden rounded-xl border ${
+          className={`flex-row overflow-hidden rounded-xl border ${
             tooSoon ? 'bg-secondary border-border-strong' : 'bg-background border-border'
           }`}
         >
@@ -548,12 +566,15 @@ function AgendaRow({
           <View className={`w-[3px] self-stretch ${STRIPE[shoot.status]}`} />
 
           <View className="flex-1 flex-row gap-3 px-3.5 py-3">
-            {/* The time column. minWidth 52 so «09:00» and «до 12:00» cannot
-                reflow the body beside them as the hours change. */}
-            <View style={{ minWidth: 52 }} className="shrink-0">
-              <Text className="text-title-sm text-card-foreground font-bold">{shoot.startTime ?? '—'}</Text>
+            {/* The time column: a fixed 48pt, as drawn. It was `minWidth: 52`,
+                which let the column grow and shift the hairline beside it from
+                row to row — the artboard's is one width for every row. */}
+            <View className="w-12 shrink-0 pt-px">
+              <Text className="text-title-sm text-card-foreground font-semibold">
+                {shoot.startTime ?? '—'}
+              </Text>
               {shoot.endTime ? (
-                <Text className="text-caption text-muted-foreground mt-0.5 font-semibold">
+                <Text className="text-caption text-muted-foreground mt-[3px]">
                   {`${t.untilShort} ${shoot.endTime}`}
                 </Text>
               ) : null}
@@ -588,12 +609,23 @@ function AgendaRow({
               </View>
 
               {shoot.locationAddress ? (
-                <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
+                <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
                   {shoot.locationAddress}
                 </Text>
               ) : null}
 
-              {crew.length > 0 ? <AvatarStack names={crew} /> : null}
+              {/*
+                The ring colour is the colour of THIS row, which is not one
+                colour: a clash row lifts to `secondary`. It was hardcoded to
+                `border-card` — a leftover from when the row was `bg-card` — so
+                every avatar carried a `#1F1F22` halo against the `#0A0A0A` row.
+              */}
+              {crew.length > 0 ? (
+                <AvatarStack
+                  names={crew}
+                  ringClass={tooSoon ? 'border-secondary' : 'border-background'}
+                />
+              ) : null}
             </View>
           </View>
         </View>
@@ -605,20 +637,21 @@ function AgendaRow({
 /**
  * Overlapping crew avatars (§5.8).
  *
- * The ring colour is the colour of the card BEHIND the stack — `card`, which is
- * literally what `.avatars .a`'s `border:2px solid var(--card)` asks for. It is
- * stated rather than inherited on purpose: the design system warns that assuming
- * white puts halos on the purple client card.
+ * The ring colour is the colour of the surface BEHIND the stack, which is why
+ * the caller supplies it — `Calendar.dc.html` writes `border:2px solid
+ * {{ s.cardBg }}`, and that value differs per row: a clash row lifts to
+ * `secondary`. Passing it in rather than assuming one colour is the same
+ * warning the design system gives about assuming white.
  */
-function AvatarStack({ names }: { names: string[] }) {
+function AvatarStack({ names, ringClass }: { names: string[]; ringClass: string }) {
   return (
-    <View className="mt-2 flex-row">
+    <View className="mt-2.5 flex-row">
       {names.map((name, index) => (
         <Avatar
           key={`${name}-${index}`}
           name={name}
           size={26}
-          className={`border-2 border-card ${index > 0 ? '-ml-[7px]' : ''}`}
+          className={`border-2 ${ringClass} ${index > 0 ? '-ml-[7px]' : ''}`}
         />
       ))}
     </View>

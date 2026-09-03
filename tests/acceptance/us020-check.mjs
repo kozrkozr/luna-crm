@@ -26,10 +26,10 @@ const wait = () => B.settle()
 const tap = B.tap
 
 // The status PILL, not the page text: the toggle's label contains the other
-// status word («Позначити як «Нова»»), so a whole-body substring check cannot
+// status word («Позначити як «Заплановано»»), so a whole-body substring check cannot
 // tell the two apart. Leaf elements only, so the pill's own Text is matched.
 const pillText = () => ev(`(()=>{
-  const hit=[...document.querySelectorAll('*')].filter(e=>e.children.length===0 && ['Нова','Закінчена'].includes((e.textContent||'').trim()));
+  const hit=[...document.querySelectorAll('*')].filter(e=>e.children.length===0 && ['Заплановано','Завершена'].includes((e.textContent||'').trim()));
   return hit.length ? hit[0].textContent.trim() : 'none';
 })()`)
 const byText=(label)=>`[...document.querySelectorAll('div[role=button],button,a[role=link]')].find(e=>e.innerText.trim()===${JSON.stringify(label)})`
@@ -46,8 +46,8 @@ await B.settle()
 await B.navigate(`${APP_URL}/shoot/`+SHOOT)
 
 let body = await ev('document.body.innerText')
-ok('starts as Нова with a toggle offering Закінчена',
-   (await pillText()) === 'Нова' && body.includes('Позначити як «Закінчена»'),
+ok('starts as Заплановано with a toggle offering Завершена',
+   (await pillText()) === 'Заплановано' && body.includes('Позначити як «Завершена»'),
    body.replace(/\n/g,' | ').slice(0,120))
 
 // ---------- AC-2: the control is a toggle, not a picker ----------
@@ -58,10 +58,10 @@ ok('AC-2 no select/combobox anywhere on the screen',
    (await ev(`document.querySelectorAll('select,[role=combobox],[role=listbox]').length`)) === 0)
 
 // ---------- AC-1: change to Finished ----------
-await tap(byText('Позначити як «Закінчена»'))
+await tap(byText('Позначити як «Завершена»'))
 body = await ev('document.body.innerText')
-ok('AC-1 status becomes Закінчена on the shoot', (await pillText()) === 'Закінчена', 'pill = ' + (await pillText()))
-ok('AC-1 the toggle now offers the way back', body.includes('Позначити як «Нова»'))
+ok('AC-1 status becomes Завершена on the shoot', (await pillText()) === 'Завершена', 'pill = ' + (await pillText()))
+ok('AC-1 the toggle now offers the way back', body.includes('Позначити як «Заплановано»'))
 
 let { data: row } = await db.from('shoots').select('status').eq('id', SHOOT).single()
 ok('AC-1 persisted to the row', row?.status === 'finished', JSON.stringify(row))
@@ -69,13 +69,13 @@ ok('AC-1 persisted to the row', row?.status === 'finished', JSON.stringify(row))
 // ---------- AC-1: shown wherever the status is displayed ----------
 await B.navigate(`${APP_URL}/`)
 body = await ev('document.body.innerText')
-ok('AC-1 the list shows Закінчена too', body.includes('Закінчена'), body.replace(/\n/g,' | ').slice(-90))
+ok('AC-1 the list shows Завершена too', body.includes('Завершена'), body.replace(/\n/g,' | ').slice(-90))
 
 // ---------- AC-1: and back again ----------
 await B.navigate(`${APP_URL}/shoot/`+SHOOT)
-await tap(byText('Позначити як «Нова»'))
+await tap(byText('Позначити як «Заплановано»'))
 body = await ev('document.body.innerText')
-ok('AC-1 changes back to Нова', (await pillText()) === 'Нова', 'pill = ' + (await pillText()))
+ok('AC-1 changes back to Заплановано', (await pillText()) === 'Заплановано', 'pill = ' + (await pillText()))
 ;({ data: row } = await db.from('shoots').select('status').eq('id', SHOOT).single())
 ok('AC-1 the change back persisted', row?.status === 'new', JSON.stringify(row))
 

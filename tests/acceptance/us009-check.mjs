@@ -111,7 +111,7 @@ await B.settle()
 await B.login(APP, photoA.email)
 body = await ev('document.body.innerText')
 ok("a creator's own list still shows their client and status",
-   body.includes('Клієнт А') && body.includes('Нова'), body.replace(/\n/g, ' | ').slice(0, 130))
+   body.includes('Клієнт А') && body.includes('Заплановано'), body.replace(/\n/g, ' | ').slice(0, 130))
 ok("and carries no В команді rows", !body.includes('В команді'), body.replace(/\n/g, ' | ').slice(0, 130))
 
 // ---------- ADR-014 ----------

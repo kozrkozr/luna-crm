@@ -413,12 +413,18 @@ export const uk = {
   addRefBtn: 'Додати',
   pickFromGallery: '🖼',
   back: '← Назад',
-  statusNew: 'Нова',
-  statusFinished: 'Закінчена',
+  /* `Calendar.dc.html`'s own words (owner, 2026-09-03), replacing «Нова» /
+     «Закінчена». The ENUM is still `new` / `finished` — CLAUDE.md rule 5 keeps
+     identifiers on the glossary; only what the reader sees changed. */
+  statusNew: 'Заплановано',
+  statusFinished: 'Завершена',
   // US-020 — the toggle's label names the status it moves TO, not the one the
   // shoot is in. Verbatim from the prototype, nested guillemets included.
-  markFinished: 'Позначити як «Закінчена»',
-  markNew: 'Позначити як «Нова»',
+  /* No consumer since the edit screen's toggle became a `Tabs` segment on
+     `statusNew` / `statusFinished`. Kept in step with them; candidates for
+     removal. */
+  markFinished: 'Позначити як «Завершена»',
+  markNew: 'Позначити як «Заплановано»',
   // US-019, verbatim from the prototype.
   deleteShoot: 'Видалити зйомку',
   confirmDeleteShoot: 'Видалити цю зйомку? Це незворотньо.',
@@ -566,7 +572,9 @@ export const uk = {
   // docs/open-questions.md #24.
   crewShootBadge: 'В команді',
   allShoots: 'Всі зйомки',
-  noShootsOnDay: 'На цю дату зйомок немає.',
+  /* Reworded to the artboard's own line (2026-09-03), which drops the full
+     stop the two keys below also go without. */
+  noShootsOnDay: 'Немає зйомок на цю дату',
   /* `Calendar.dc.html`'s two period-scoped empty states, verbatim. */
   emptyWeek: 'На цьому тижні немає зйомок',
   emptyMonth: 'У цьому місяці ще немає зйомок',
