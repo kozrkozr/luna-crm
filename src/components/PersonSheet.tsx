@@ -222,7 +222,7 @@ function messageLink(
  * Shared by «Написати» and by the rows above it, so the button and the row for
  * the same handle cannot lead to different places.
  */
-function handleUrl(kind: 'telegram' | 'instagram', raw: string | null): string | null {
+export function handleUrl(kind: 'telegram' | 'instagram', raw: string | null): string | null {
   const handle = raw?.trim().replace(/^@/, '')
   if (!handle) return null
   if (/^https?:\/\//i.test(handle)) return handle

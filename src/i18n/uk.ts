@@ -462,8 +462,20 @@ export const uk = {
   // A crew member's answer to their invitation (US-008). Shown from US-005
   // onward because the column exists and defaults to pending.
   responsePending: 'Очікує',
-  responseConfirmed: 'Підтвердив',
-  responseDeclined: 'Відмовився',
+  /*
+   * «Підтверджено», not «Підтвердив», since 2026-09-03 — the artboard's own
+   * word, and impersonal, which is the point. «Підтвердив» is masculine past
+   * tense and read wrong on «Соломія Дяк» from the day it shipped; we store
+   * one name and no gender, so no personal form can be right for everyone.
+   *
+   * `responseDeclined` had the identical fault («Відмовився») and took the same
+   * treatment (owner, 2026-09-03): «Відмовлено» is about the invitation rather
+   * than about the person, so it needs no gender either. v3 draws no declined
+   * chip at all, so there was no artboard word to copy — that one is the
+   * owner's, not the handoff's.
+   */
+  responseConfirmed: 'Підтверджено',
+  responseDeclined: 'Відмовлено',
   /*
    * `copyLinkTitle` («Скопіювати посилання») was removed on 2026-08-31. It
    * labelled the crew row's copy icon, which went when the shoot detail was
@@ -571,6 +583,9 @@ export const uk = {
   // unsupported file type but supplies neither, and the prototype has no
   // rejection copy at all. Placeholders; see docs/open-questions.md item 13.
   referenceLinkInvalid: 'Вкажіть коректне посилання — воно має починатися з http або https',
+  /* `Shoot Detail v3.dc.html`'s inline link editor on «Матеріали». */
+  pasteLink: 'Вставте посилання',
+  editLinkLabel: 'Змінити посилання',
   referenceTypeUnsupported: 'Цей тип файлу не підтримується. Оберіть зображення.',
   referenceAddFailed: 'Не вдалося додати референс. Спробуйте ще раз.',
   // US-004 AC-4. The story requires a way back to the full list and an empty
@@ -671,7 +686,17 @@ export const uk = {
    */
   shootDetailTitle: 'Деталі зйомки',
   tabDetails: 'Деталі',
-  tabPeople: 'Люди',
+  /*
+   * «Команда», not «Люди», since 2026-09-03 — `Shoot Detail v3.dc.html` labels
+   * this tab `Команда` and the first pass had missed it.
+   *
+   * Same word as `crew` below and still a key of its own, on the rule
+   * `accessDetailsLabel` states: a tab label and a section label that happen
+   * to agree would drift the moment either is reworded. The key keeps its
+   * name because `DetailTab`'s `'people'` member and `tabCounts.people` are
+   * named for it, and renaming three identifiers buys nothing.
+   */
+  tabPeople: 'Команда',
   tabMaterials: 'Матеріали',
 
   /*
@@ -767,6 +792,13 @@ export const uk = {
   callPerson: 'Зателефонувати',
   copyPersonLink: 'Посилання на зйомку',
   removeFromCrew: 'Видалити з команди',
+  /*
+   * `Shoot Detail v3.dc.html`'s expanded crew row (2026-09-03) reuses the short
+   * `remove` above; `removeFromCrew` is the long form the sheet used, where the
+   * row had the width for it.
+   */
+  /** A row to a participant profile screen that does not exist yet. */
+  crewProfile: 'Профіль учасника',
   /*
    * The undo toast. The handoff writes the name in the **accusative**
    * («Соломію Дяк видалено з команди»); the prototype carries a hand-written

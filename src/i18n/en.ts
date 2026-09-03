@@ -342,6 +342,8 @@ export const en: Strings = {
   clientContactRequired: "Enter the client's contact",
   shootCreateFailed: 'Could not create the shoot. Please try again.',
   referenceLinkInvalid: 'Enter a valid link — it must start with http or https',
+  pasteLink: 'Paste a link',
+  editLinkLabel: 'Change the link',
   referenceTypeUnsupported: 'This file type is not supported. Choose an image.',
   referenceAddFailed: 'Could not add the reference. Please try again.',
   crewShootBadge: 'On the crew',
@@ -388,7 +390,7 @@ export const en: Strings = {
   // ── Shoot detail + edit redesign — see the notes in uk.ts ──
   shootDetailTitle: 'Shoot details',
   tabDetails: 'Details',
-  tabPeople: 'People',
+  tabPeople: 'Crew',
   tabMaterials: 'Materials',
   menuEditShoot: 'Edit shoot',
   cancelShoot: 'Cancel shoot',
@@ -414,6 +416,7 @@ export const en: Strings = {
   callPerson: 'Call',
   copyPersonLink: 'Link to the shoot',
   removeFromCrew: 'Remove from crew',
+  crewProfile: 'Participant profile',
   removedFromCrewTemplate: '{name} removed from the crew',
 
   editTitle: 'Edit',

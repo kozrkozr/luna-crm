@@ -9,23 +9,31 @@ import * as ImagePicker from 'expo-image-picker'
  * Deep per-icon imports, never the `lucide-react-native` barrel — Metro does not
  * tree-shake it and it doubled the web bundle once (S-2 F-5). See select.tsx.
  */
+import ChevronDown from 'lucide-react-native/icons/chevron-down'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
+import Copy from 'lucide-react-native/icons/copy'
 import FolderOpen from 'lucide-react-native/icons/folder-open'
+import LinkIcon from 'lucide-react-native/icons/link'
+import Pencil from 'lucide-react-native/icons/pencil'
 import Plus from 'lucide-react-native/icons/plus'
+import Trash from 'lucide-react-native/icons/trash'
+import UserIcon from 'lucide-react-native/icons/user'
 import { Badge } from '../../../../src/components/ui/badge'
 import { Button } from '../../../../src/components/ui/button'
+import { Input } from '../../../../src/components/ui/input'
 import { Card } from '../../../../src/components/ui/card'
 import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
 } from '../../../../src/components/ui/dropdown-menu'
 import { Icon } from '../../../../src/components/ui/icon'
 import { Text } from '../../../../src/components/ui/text'
 import { Avatar } from '../../../../src/components/Avatar'
 import { ImageViewer } from '../../../../src/components/ImageViewer'
-import { PersonSheet, type SheetPerson } from '../../../../src/components/PersonSheet'
+// `PersonSheet` itself is gone (2026-09-03): v3 expands a crew row in place
+// rather than opening a sheet. Its type survives as the shape `copyLinkFor`
+// and `removePerson` still take.
+import { handleUrl, type SheetPerson } from '../../../../src/components/PersonSheet'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
+import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { ReferenceGrid } from '../../../../src/components/ReferenceGrid'
 import { ResponsePill } from '../../../../src/components/ResponsePill'
 import { ShootDetailHeader, type DetailTab } from '../../../../src/components/ShootDetailHeader'
@@ -40,10 +48,16 @@ import {
 } from '../../../../src/features/shoots/date'
 import { pluralUk } from '../../../../src/features/shoots/home'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
-import { succeeded, tapped } from '../../../../src/lib/haptics'
+import { failed, succeeded, tapped } from '../../../../src/lib/haptics'
 import { takePendingToast } from '../../../../src/lib/nextScreenToast'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
-import { deleteShoot, getShoot, type Shoot } from '../../../../src/features/shoots/api'
+import {
+  deleteShoot,
+  getShoot,
+  updateShootLink,
+  type Shoot,
+  type ShootLinkField,
+} from '../../../../src/features/shoots/api'
 import {
   addImageReference,
   listReferences,
@@ -98,9 +112,7 @@ export default function ShootDetailScreen() {
 
   const [state, setState] = useState<State>({ status: 'loading' })
   const [tab, setTab] = useState<DetailTab>('details')
-  const [menuOpen, setMenuOpen] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(0)
-  const [selected, setSelected] = useState<SheetPerson | null>(null)
   const [toast, setToast] = useState<ToastState>(null)
 
   /*
@@ -199,6 +211,42 @@ export default function ShootDetailScreen() {
     }
   }, [commitRemoval])
 
+  /*
+    `US-019` — «Скасувати зйомку», moved out of the ⋯ menu and onto the «Деталі»
+    tab by v3.
+
+    **It now confirms, and it did not before.** The menu item called
+    `deleteShoot` on a single tap; its own comment claimed AC-2's confirmation
+    was "kept", and `DropdownMenuItem` has never had one. AC-2 is required, and a
+    full-width button is easier to hit than a menu row, so this goes through the
+    same hook `US-019`/`US-022` use elsewhere — a real iOS alert on device.
+
+    «Скасувати зйомку» is still a rename rather than a new action: this
+    soft-deletes the row and revokes every link on it (ADR-014). Nobody is
+    notified; the handoff's «Команда й клієнт отримають повідомлення про
+    скасування» is not built, because nothing sends it.
+
+    **It has to sit above the loading and error returns.** It is a hook, and it
+    was first written beside `removePerson` — below them — which crashed the
+    screen with "Rendered more hooks than during the previous render" the moment
+    a shoot finished loading: the first render returned early and never called
+    it.
+  */
+  const { ask: askCancelShoot, dialog: cancelShootDialog } = useDestructiveConfirm<null>({
+    label: t.cancelShoot,
+    question: t.confirmDeleteShoot,
+    onConfirm: () => {
+      void (async () => {
+        if (!(await deleteShoot(id))) return
+        // AC-1 — it disappears from the list, which refetches on focus. Never
+        // `push`: the deleted shoot must not stay on the stack to be swiped
+        // back to. `back` only when there is something to go back to.
+        if (router.canGoBack()) router.back()
+        else router.replace('/(app)/shoots')
+      })()
+    },
+  })
+
   if (state.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
@@ -274,17 +322,15 @@ export default function ShootDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <ShootDetailHeader
-        subtitle={detailSubtitle(shoot, t)}
         tab={tab}
         onTabChange={setTab}
         tabCounts={{
-          // The client counts as a person in this tab, because the tab shows
-          // them: «Люди» is crew plus the one client.
-          people: String(crew.length + 1),
+          // Crew alone since 2026-09-03. It was `crew.length + 1`, because the
+          // tab showed the client too; v3 moved the client onto «Деталі», so
+          // counting them here would promise a person who is not in the list.
+          people: String(crew.length),
           materials: String(references.length + fileCount),
         }}
-        menuOpen={menuOpen}
-        onToggleMenu={() => setMenuOpen((open) => !open)}
         onHeight={setHeaderHeight}
       />
 
@@ -304,7 +350,8 @@ export default function ShootDetailScreen() {
               shoot={shoot}
               countdown={countdown}
               crew={crew}
-              onCopied={showToast}
+              onEdit={() => router.push(`/(app)/shoot/${shoot.id}/edit`)}
+              onCancelShoot={() => askCancelShoot(null)}
             />
           ) : null}
 
@@ -312,7 +359,8 @@ export default function ShootDetailScreen() {
             <PeopleTab
               shoot={shoot}
               crew={crew}
-              onOpenPerson={setSelected}
+              onCopyLink={(person) => void copyLinkFor(person)}
+              onRemove={removePerson}
             />
           ) : null}
 
@@ -338,70 +386,19 @@ export default function ShootDetailScreen() {
                 )
               }
               onCopied={showToast}
+              onLinkSaved={(field, url) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? { ...current, shoot: { ...current.shoot, [field]: url } }
+                    : current
+                )
+              }
             />
           ) : null}
         </View>
       </ScrollView>
 
-      <PersonSheet
-        person={selected}
-        onClose={() => setSelected(null)}
-        onCopyLink={(person) => {
-          setSelected(null)
-          void copyLinkFor(person)
-        }}
-        onRemove={(person) => {
-          setSelected(null)
-          removePerson(person)
-        }}
-      />
-
-      {/*
-        Anchored under the «⋯» button rather than under the whole header: the
-        button sits in the first 40pt row after the status-bar inset, so this is
-        the one measurement that does NOT need `headerHeight` — and using that
-        would drop the menu below the tabs, a long way from what opened it.
-      */}
-      <DropdownMenu open={menuOpen} onClose={() => setMenuOpen(false)} top={insets.top + 46}>
-        <DropdownMenuItem
-          label={t.menuEditShoot}
-          onPress={() => {
-            setMenuOpen(false)
-            router.push(`/(app)/shoot/${shoot.id}/edit`)
-          }}
-        />
-        <DropdownMenuSeparator />
-        {/*
-          `US-019`'s delete, wearing the handoff's word for it.
-
-          **«Скасувати зйомку» is a rename, not a new action** — this still calls
-          `deleteShoot`, which soft-deletes the row and revokes every link on it
-          (ADR-014). Nobody is notified; the handoff's edit screen promises
-          «Команда й клієнт отримають повідомлення про скасування» and that note
-          is not built, because nothing sends it.
-
-          The confirmation is `US-019` AC-2's and is kept, though the handoff
-          draws none here — an accidental tap in a menu must not destroy a shoot,
-          and unlike the crew removal below there is no undo to fall back on.
-        */}
-        <DropdownMenuItem
-          destructive
-          label={t.cancelShoot}
-          onPress={() => {
-            setMenuOpen(false)
-            void (async () => {
-              if (await deleteShoot(shoot.id)) {
-                // AC-1 — it disappears from the list, which refetches on focus.
-                // Never `push`: the deleted shoot must not stay on the stack to
-                // be swiped back to. `back` only when there is something to go
-                // back to — a deep link leaves the stack empty.
-                if (router.canGoBack()) router.back()
-                else router.replace('/(app)/shoots')
-              }
-            })()
-          }}
-        />
-      </DropdownMenu>
+      {cancelShootDialog}
 
       <Toast
         message={toast?.message ?? null}
@@ -420,18 +417,6 @@ export default function ShootDetailScreen() {
  * on a narrow phone. The weekday is on the card's Дата row, which has the width
  * for it.
  */
-function detailSubtitle(shoot: Shoot, t: ReturnType<typeof useStrings>): string {
-  const day = formatDayMonth(shoot.date, t.monthsGenitive)
-  return shoot.startTime ? `${day} · ${shoot.startTime}` : day
-}
-
-/**
- * Restores a removed member to where they were, rather than to the end.
- *
- * The undo puts a row back into a list it was spliced out of, and appending
- * would move a person who had done nothing but be un-removed. `original` is the
- * order the server returned.
- */
 function byOriginalOrder(original: CrewMember[]) {
   const index = new Map(original.map((member, position) => [member.id, position]))
   return (a: CrewMember, b: CrewMember) =>
@@ -440,23 +425,77 @@ function byOriginalOrder(original: CrewMember[]) {
 
 /* ────────────────────────────── Tab «Деталі» ───────────────────────────── */
 
+
+/**
+ * The «Деталі» tab, rebuilt against `Shoot Detail v3.dc.html` (owner,
+ * 2026-09-03).
+ *
+ * Four changes from the first pass:
+ *
+ * - **The subtitle line is gone.** It read «Зйомка · 3 год»; v3 drops it and
+ *   moves the duration into the «Час» row, where the number it qualifies is.
+ * - **The «Команда» row is gone**, and its count is the «Команда» section
+ *   heading on the «Команда» tab instead — beside the list it describes rather
+ *   than two tabs away from it.
+ * - **The client's contacts moved here**, into the shoot card, from the «Команда»
+ *   tab's «Клієнт» section.
+ * - **Two actions were added** — the ⋯ menu's whole contents, now full-width
+ *   buttons at the foot of the tab, as v3 draws them.
+ */
 function DetailsTab({
   shoot,
   countdown,
   crew,
-  onCopied,
+  onEdit,
+  onCancelShoot,
 }: {
   shoot: Shoot
   countdown: string | null
   crew: CrewMember[]
-  onCopied: (message: string) => void
+  onEdit: () => void
+  onCancelShoot: () => void
 }) {
   const t = useStrings()
   const duration = formatDuration(shoot.startTime, shoot.endTime, {
     hours: t.hoursShort,
     minutes: t.minutesShort,
   })
-  const confirmed = crew.filter((member) => member.response === 'confirmed').length
+  const range = formatTimeRange(shoot.startTime, shoot.endTime)
+
+  /*
+    The client's own contacts, as v3 has them: label on the left, the value on
+    the right, and a tap that opens it.
+
+    **The «Лише власник» badge went with the move.** The fact it stated is
+    unchanged and is not enforced by any label: the link gateway's `ShootRow`
+    has never selected the client's contact, so no crew member and no client has
+    ever received it (`ADR-018`). If a story ever puts it in a payload, that is
+    what has to change — a badge on the creator's own screen was a rehearsal of
+    a guarantee made elsewhere, which is the same reason client view went.
+  */
+  const contacts: { label: string; value: string; url: string | null }[] = [
+    shoot.clientContact
+      ? {
+          label: t.phoneField,
+          value: shoot.clientContact,
+          url: `tel:${shoot.clientContact.replace(/[^+\d]/g, '')}`,
+        }
+      : null,
+    shoot.clientInstagram
+      ? {
+          label: t.instagramLabel,
+          value: shoot.clientInstagram,
+          url: handleUrl('instagram', shoot.clientInstagram),
+        }
+      : null,
+    shoot.clientTelegram
+      ? {
+          label: t.telegramLabel,
+          value: shoot.clientTelegram,
+          url: handleUrl('telegram', shoot.clientTelegram),
+        }
+      : null,
+  ].filter((row): row is { label: string; value: string; url: string | null } => row !== null)
 
   return (
     <>
@@ -466,8 +505,8 @@ function DetailsTab({
         and the opposite of this app's lifted `--card`.
       */}
       <Card variant="flat" className="gap-0 p-0">
-        <View className="gap-1 p-4 pb-3.5">
-          <View className="flex-row items-center gap-2">
+        <View className="p-4 pb-3.5">
+          <View className="mb-2.5 flex-row items-center gap-2">
             <StatusPill value={shoot.status} />
             {countdown ? (
               <Text className="text-label text-muted-foreground">{countdown}</Text>
@@ -477,14 +516,11 @@ function DetailsTab({
               `-0.01em` becomes an absolute value because RN's letterSpacing is
               never em (tailwind.config.js). */}
           <Text
-            className="text-title-lg text-foreground mt-2 font-semibold"
+            className="text-title-lg text-foreground font-semibold"
             style={{ letterSpacing: -0.2 }}
             numberOfLines={2}
           >
             {shoot.clientName}
-          </Text>
-          <Text className="text-body-sm text-muted-foreground">
-            {[t.clientShootLabel, duration].filter(Boolean).join(' · ')}
           </Text>
         </View>
 
@@ -493,22 +529,21 @@ function DetailsTab({
           value={formatDayMonthWeekday(shoot.date, t.monthsGenitive, t.weekdaysFull)}
         />
         {/* `US-030` AC-6 — a shoot created before that story has no range, and
-            the row is left out rather than showing half of one. */}
-        {formatTimeRange(shoot.startTime, shoot.endTime) ? (
-          <SeparatorRow
-            label={t.timeLabel}
-            value={formatTimeRange(shoot.startTime, shoot.endTime) as string}
+            the row is left out rather than showing half of one. The duration
+            trails the range here rather than sitting in a subtitle. */}
+        {range ? <SeparatorRow label={t.timeLabel} value={range} trailing={duration} /> : null}
+
+        {contacts.map((contact) => (
+          <ContactRow
+            key={contact.label}
+            label={contact.label}
+            value={contact.value}
+            url={contact.url}
           />
-        ) : null}
-        <SeparatorRow
-          label={t.crew}
-          value={t.confirmedOfTemplate
-            .replace('{done}', String(confirmed))
-            .replace('{total}', String(crew.length))}
-        />
+        ))}
       </Card>
 
-      <LocationCard shoot={shoot} onCopied={onCopied} />
+      <LocationCard shoot={shoot} />
 
       {/*
         The «Нотатки» card, restored 2026-08-30.
@@ -534,39 +569,100 @@ function DetailsTab({
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.notes}</Text>
         </Card>
       ) : null}
+
+      {/*
+        The ⋯ menu's two items, as v3's two full-width buttons. `crew` is unused
+        by the card now that the confirmation count moved to the «Команда» tab, but
+        the prop stays: the tab is the natural owner of "how many people are on
+        this shoot" and the next thing that needs it will need it here.
+      */}
+      <View className="mt-1 gap-2">
+        <Pressable
+          className="border-border active:bg-secondary min-h-12 flex-row items-center justify-center gap-2 rounded-lg border"
+          onPress={() => {
+            tapped()
+            onEdit()
+          }}
+          role="button"
+        >
+          <Icon as={Pencil} size={16} strokeWidth={1.8} className="text-muted-foreground" />
+          <Text className="text-body-sm text-foreground font-semibold">{t.menuEditShoot}</Text>
+        </Pressable>
+
+        <Pressable
+          className="border-border active:bg-destructive/10 min-h-12 flex-row items-center justify-center rounded-lg border"
+          onPress={() => {
+            tapped()
+            onCancelShoot()
+          }}
+          role="button"
+        >
+          <Text className="text-body-sm text-destructive font-semibold">{t.cancelShoot}</Text>
+        </Pressable>
+      </View>
     </>
   )
 }
 
-/** One of the shoot card's label/value rows, under a hairline. */
-function SeparatorRow({ label, value }: { label: string; value: string }) {
+/**
+ * One of the shoot card's label/value rows, under a hairline.
+ *
+ * `trailing` is v3's dimmer suffix — «09:00 – 12:00 · 3 год» — which is one row
+ * carrying two facts rather than a duration stranded in a subtitle.
+ */
+function SeparatorRow({
+  label,
+  value,
+  trailing,
+}: {
+  label: string
+  value: string
+  trailing?: string | null
+}) {
   return (
-    <View className="border-border flex-row items-center justify-between border-t px-4 py-3">
+    <View className="border-border flex-row items-center justify-between gap-3 border-t px-4 py-3">
       <Text className="text-body-sm text-muted-foreground">{label}</Text>
-      <Text className="text-body-sm text-foreground shrink pl-3 text-right font-medium">
+      <Text className="text-body-sm text-foreground font-medium">
         {value}
+        {trailing ? (
+          <Text className="text-label text-muted-foreground font-normal">{` · ${trailing}`}</Text>
+        ) : null}
       </Text>
     </View>
   )
 }
 
-/**
- * `US-018` — the location, wherever it is displayed (AC-1, AC-2).
- *
- * **The handoff's name / access code / security phone are not built.** It draws
- * a venue name above the address and a sentence with the door code and the
- * guard's number in bold; `shoots` has `location_address` and one free-text
- * `location_note`, which is where a creator has been putting exactly that
- * sentence. Splitting it into three columns is a migration and an edit form, not
- * a restyle — so the note is rendered as the «Деталі» block, unparsed.
- *
- * «Маршрут» is likewise absent: it is derivable from the address, and no story
- * asks for a map. Logged (redesign-log S-4).
- *
- * Renders nothing when there is no address, note or attachment — an empty card
- * would read as a section that failed to load.
- */
-function LocationCard({ shoot, onCopied }: { shoot: Shoot; onCopied: (m: string) => void }) {
+/** A client contact row: the value is the control, where there is one. */
+function ContactRow({
+  label,
+  value,
+  url,
+}: {
+  label: string
+  value: string
+  url: string | null
+}) {
+  const body = (
+    <View className="border-border flex-row items-center gap-2.5 border-t px-4 py-3">
+      <Text className="text-body-sm text-muted-foreground shrink-0">{label}</Text>
+      <Text
+        className="text-body-sm text-foreground min-w-0 flex-1 text-right font-medium"
+        numberOfLines={1}
+      >
+        {value}
+      </Text>
+    </View>
+  )
+
+  if (!url) return body
+  return (
+    <Pressable className="active:bg-secondary" onPress={() => void openExternalUrl(url)} role="link">
+      {body}
+    </Pressable>
+  )
+}
+
+function LocationCard({ shoot }: { shoot: Shoot }) {
   const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
   const [viewing, setViewing] = useState<string | null>(null)
@@ -586,7 +682,9 @@ function LocationCard({ shoot, onCopied }: { shoot: Shoot; onCopied: (m: string)
     }, [attachment])
   )
 
-  if (!shoot.locationAddress && !shoot.locationNote && !attachment) return null
+  if (!shoot.locationName && !shoot.locationAddress && !shoot.locationNote && !attachment) {
+    return null
+  }
 
   const kind = attachment ? attachmentKind(attachment) : null
 
@@ -594,53 +692,31 @@ function LocationCard({ shoot, onCopied }: { shoot: Shoot; onCopied: (m: string)
     <Card variant="flat" className="gap-0 p-0">
       <View className="gap-3 p-4">
         <SectionLabel label={t.locationSection} />
-        {shoot.locationAddress ? (
-          <Text className="text-body-sm text-muted-foreground">{shoot.locationAddress}</Text>
+        {/* The venue leads, the address supports it — which is the order v3
+            draws and the reason the two are separate columns
+            (`location_name`, migration 20260903120000). */}
+        {shoot.locationName ? (
+          <Text className="text-subtitle text-foreground font-semibold">
+            {shoot.locationName}
+          </Text>
         ) : null}
         {shoot.locationAddress ? (
-          /* The handoff's buttons row: 40px high, gap 8, «Маршрут» primary and
-             «Копіювати адресу» outline beside it. */
-          <View className="flex-row gap-2">
-            {/*
-              **«Маршрут» is a stub** (owner, 2026-08-30) — it is drawn as
-              designed and does nothing when tapped.
-
-              It was left out of the first pass because no story asks for a map
-              (redesign-log S-4) and the owner then asked for it back as a stub.
-              This is the same arrangement as the auth screen's «Забули пароль?»
-              (redesign-log A-2): the control ships so the screen matches the
-              design, and it is inert so nothing claims a feature that does not
-              exist.
-
-              **Wiring it is one line** — the address is right here, and
-              `openExternalUrl` would take a `maps:` or `geo:` URL built from it.
-              That is deliberately not done: which map app, and what happens on
-              the static web export where `maps:` does not resolve, are product
-              decisions nobody has made.
-            */}
-            <Button
-              className="h-10 flex-1"
-              onPress={() => {
-                // Intentionally empty — see above.
-              }}
-            >
-              <Text className="text-body-sm font-semibold">{t.route}</Text>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-10 flex-1"
-              onPress={() => {
-                void (async () => {
-                  await Clipboard.setStringAsync(shoot.locationAddress as string)
-                  succeeded()
-                  onCopied(t.addressCopied)
-                })()
-              }}
-            >
-              <Text className="text-body-sm font-semibold">{t.copyAddress}</Text>
-            </Button>
-          </View>
+          <Text className="text-body-sm text-muted-foreground leading-5">
+            {shoot.locationAddress}
+          </Text>
         ) : null}
+        {/*
+          **The card has no buttons**, as v3 draws it. «Маршрут» went first — it
+          was a stub the owner asked for on 2026-08-30 and never did anything
+          when tapped — and «Копіювати адресу» followed on the owner's word,
+          though it worked. Which map app, and what a `maps:` URL does on the
+          static web export, remain the unanswered questions behind «Маршрут»
+          (S-4).
+
+          The address is still copyable where a reader without the app needs it:
+          the link view draws its own «Копіювати адресу» (`uk.copyAddress`), and
+          that one is untouched.
+        */}
       </View>
 
       {shoot.locationNote ? (
@@ -698,141 +774,115 @@ function LocationCard({ shoot, onCopied }: { shoot: Shoot; onCopied: (m: string)
   )
 }
 
-/* ─────────────────────────────── Tab «Люди» ────────────────────────────── */
+/* ─────────────────────────────── Tab «Команда» ────────────────────────────── */
 
+/**
+ * The «Команда» tab, rebuilt against `Shoot Detail v3.dc.html` (owner,
+ * 2026-09-03).
+ *
+ * **The «Клієнт» section is gone**, and with it the sheet. v3 has one section
+ * here — «Команда» — with the client's own contacts moved onto the «Деталі»
+ * tab's shoot card, and each crew row expanding **in place** rather than
+ * opening `PersonSheet`.
+ *
+ * Expanding in place is the change worth knowing about. The sheet showed the
+ * same four things (contacts, a profile link, copy-link, remove) over a
+ * backdrop that hid the list; an expanded row keeps the person in the list they
+ * were found in, which is what makes «2 з 4 підтвердили» above it legible while
+ * you work through them.
+ *
+ * The confirmation count is that heading now, rather than a «Команда» row two
+ * tabs away on «Деталі».
+ */
 function PeopleTab({
   shoot,
   crew,
-  onOpenPerson,
+  onCopyLink,
+  onRemove,
 }: {
   shoot: Shoot
   crew: CrewMember[]
-  onOpenPerson: (person: SheetPerson) => void
+  onCopyLink: (person: SheetPerson) => void
+  onRemove: (person: SheetPerson) => void
 }) {
   const t = useStrings()
+  // One at a time: two open rows push the second one off the screen, and the
+  // list is the thing being scanned.
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const confirmed = crew.filter((member) => member.response === 'confirmed').length
 
   return (
-    <>
-      {/*
-        **The confirmation card is not built** (owner, 2026-08-30).
+    <View className="gap-2">
+      <View className="flex-row items-baseline justify-between px-0.5">
+        <SectionLabel label={t.crew} />
+        {crew.length > 0 ? (
+          <Text className="text-label text-muted-foreground">
+            {t.confirmedOfTemplate
+              .replace('{done}', String(confirmed))
+              .replace('{total}', String(crew.length))}
+          </Text>
+        ) : null}
+      </View>
 
-        The handoff opens this tab with it: «2 з 4 підтвердили», a progress bar,
-        «Очікують: Марія, Соломія» and a reminder button. The owner removed it,
-        so the tab leads with «Клієнт».
-
-        Nothing is lost by it. The same count is a row on the «Деталі» tab
-        («Команда → 2 з 3 підтвердили»), and each person's own answer is the
-        `ResponsePill` on their row below — the card was a summary of what is
-        already on the screen twice. The reminder button it carried was never
-        built either: there is no notification mechanism in this product.
-      */}
-
-      <View className="gap-2">
-        <SectionLabel label={t.clientSection} />
-        <Card variant="flat" className="gap-0 p-0">
+      <Card variant="flat" className="gap-0 p-0">
+        {crew.map((member, index) => (
           <PersonRow
-            name={shoot.clientName}
-            /* «Клієнт · Бачить команду, без нотаток» — what this person actually
-               receives through their link, said on the screen where it is
-               decided. Factual, not decoration: the gateway sends a client the
-               crew list and never a note (ADR-013, CLAUDE.md rule 2). */
-            meta={`${t.clientRole} · ${t.clientSeesCrew}`}
-            /* No badge. The handoff draws «Очікує» on the client; a client has
-               no response state (redesign-log S-2). */
-            badge={null}
-            onPress={() =>
-              onOpenPerson({
-                id: shoot.clientId,
-                name: shoot.clientName,
-                role: `${t.clientRole} · ${t.clientSeesCrew}`,
-                phone: shoot.clientContact || null,
-                instagram: shoot.clientInstagram,
-                telegram: shoot.clientTelegram,
+            key={member.id}
+            divided={index > 0}
+            member={member}
+            open={expanded === member.id}
+            onToggle={() => setExpanded((current) => (current === member.id ? null : member.id))}
+            onCopyLink={() =>
+              onCopyLink({
+                id: member.id,
+                name: member.name,
+                role: member.role,
+                phone: member.phone,
+                instagram: member.instagram,
+                telegram: member.telegram,
                 badge: null,
-                removable: false,
+                removable: true,
               })
             }
+            onRemove={() => {
+              setExpanded(null)
+              onRemove({
+                id: member.id,
+                name: member.name,
+                role: member.role,
+                phone: member.phone,
+                instagram: member.instagram,
+                telegram: member.telegram,
+                badge: null,
+                removable: true,
+              })
+            }}
           />
-          {/*
-            The owner-only sub-row. The badge is factual rather than
-            decorative: the link gateway's ShootRow has never selected the
-            client's contact, so no crew member and no client has ever received
-            it (ADR-018). If a story ever puts it in a payload, that is what has
-            to change, not this label.
-          */}
-          {shoot.clientContact || shoot.clientInstagram ? (
-            <View className="border-border flex-row flex-wrap items-center gap-2 border-t px-4 py-2.5">
-              <Badge variant="muted" label={t.ownerOnly} />
-              {shoot.clientContact ? (
-                <Text className="text-label text-muted-foreground">{shoot.clientContact}</Text>
-              ) : null}
-              {shoot.clientInstagram ? (
-                <Text className="text-label text-muted-foreground">{shoot.clientInstagram}</Text>
-              ) : null}
-            </View>
-          ) : null}
-        </Card>
-      </View>
+        ))}
 
-      <View className="gap-2">
-        <View className="flex-row items-baseline justify-between">
-          <SectionLabel label={t.crew} />
-          <Text className="text-label text-muted-foreground">
-            {`${crew.length} ${pluralUk(crew.length, t.participantForms)}`}
-          </Text>
-        </View>
-
-        <Card variant="flat" className="gap-0 p-0">
-          {crew.map((member, index) => (
-            <PersonRow
-              key={member.id}
-              divided={index > 0}
-              name={member.name}
-              meta={[member.role, member.phone ?? member.email].filter(Boolean).join(' · ')}
-              badge={<ResponsePill value={member.response} label={responseLabel(member, t)} />}
-              onPress={() =>
-                onOpenPerson({
-                  id: member.id,
-                  name: member.name,
-                  role: member.role,
-                  phone: member.phone,
-                  instagram: member.instagram,
-                  telegram: member.telegram,
-                  badge: {
-                    label: responseLabel(member, t),
-                    variant: member.response === 'confirmed' ? 'solid' : 'outline',
-                  },
-                  removable: true,
-                })
-              }
-            />
-          ))}
-
-          <Link href={`/(app)/shoot/${shoot.id}/crew/add`} asChild>
-            <Pressable
-              /* Centred, as the handoff draws it (`justify-content:center` on
-                 its «+ Додати учасника» row). It read left-aligned here, which
-                 made it look like another crew row rather than the action that
-                 closes the list. */
-              className={`flex-row items-center justify-center gap-2 px-4 py-3.5 active:bg-secondary ${
-                crew.length > 0 ? 'border-border border-t' : ''
-              }`}
-              onPress={tapped}
-              role="button"
-            >
-              <Icon as={Plus} size={16} strokeWidth={2.2} className="text-muted-foreground" />
-              <Text className="text-body-sm text-muted-foreground font-medium">
-                {t.addCrewMember}
-              </Text>
-            </Pressable>
-          </Link>
-        </Card>
-      </View>
-    </>
+        <Link href={`/(app)/shoot/${shoot.id}/crew/add`} asChild>
+          <Pressable
+            /* Centred, as the handoff draws it (`justify-content:center` on its
+               «+ Додати учасника» row). It read left-aligned here, which made it
+               look like another crew row rather than the action that closes the
+               list. */
+            className={`flex-row items-center justify-center gap-2 px-4 py-3.5 active:bg-secondary ${
+              crew.length > 0 ? 'border-border border-t' : ''
+            }`}
+            onPress={tapped}
+            role="button"
+          >
+            <Icon as={Plus} size={16} strokeWidth={2.2} className="text-muted-foreground" />
+            <Text className="text-body-sm text-muted-foreground font-medium">
+              {t.addCrewMember}
+            </Text>
+          </Pressable>
+        </Link>
+      </Card>
+    </View>
   )
 }
 
-/** The three `US-008` answers, named. */
 function responseLabel(member: CrewMember, t: ReturnType<typeof useStrings>): string {
   return member.response === 'confirmed'
     ? t.responseConfirmed
@@ -847,47 +897,163 @@ function responseLabel(member: CrewMember, t: ReturnType<typeof useStrings>): st
  * **The row itself is the affordance now.** The previous version put a copy
  * button and a remove button in each row; the handoff has neither, and moves
  * both into the sheet the row opens. `min-h-16` is its 64px.
+
+/**
+ * One crew member: a 64pt row that expands to show what the sheet used to.
+ *
+ * The avatar is **not** a link. v3 wraps it in an `<a>` to a participant
+ * profile, and «Профіль учасника» below points at the same place — there is no
+ * such route in this app, so the row is drawn and inert (the precedent the
+ * owner set on 2026-09-02 for controls whose destination does not exist yet).
+ * Making the avatar a second dead link would add nothing.
  */
 function PersonRow({
-  name,
-  meta,
-  badge,
-  onPress,
+  member,
+  open,
+  onToggle,
+  onCopyLink,
+  onRemove,
   divided = false,
 }: {
-  name: string
-  meta: string
-  badge: React.ReactNode
-  onPress: () => void
+  member: CrewMember
+  open: boolean
+  onToggle: () => void
+  onCopyLink: () => void
+  onRemove: () => void
   divided?: boolean
 }) {
+  const t = useStrings()
+
+  const contacts: { label: string; value: string }[] = [
+    member.phone ? { label: t.phoneField, value: member.phone } : null,
+    member.email ? { label: t.email, value: member.email } : null,
+    member.instagram ? { label: t.instagramLabel, value: member.instagram } : null,
+    member.telegram ? { label: t.telegramLabel, value: member.telegram } : null,
+  ].filter((row): row is { label: string; value: string } => row !== null)
+
   return (
-    <Pressable
-      className={`min-h-16 flex-row items-center gap-3 px-4 py-3 active:bg-secondary ${
-        divided ? 'border-border border-t' : ''
-      }`}
-      onPress={() => {
-        tapped()
-        onPress()
-      }}
-      role="button"
-      accessibilityLabel={name}
-    >
-      <Avatar name={name} size={40} />
-      <View className="min-w-0 flex-1 gap-0.5">
-        <Text className="text-body text-foreground font-semibold" numberOfLines={1}>
-          {name}
-        </Text>
-        <Text className="text-label text-muted-foreground" numberOfLines={1}>
-          {meta}
-        </Text>
-      </View>
-      {badge}
-    </Pressable>
+    <View className={`${divided ? 'border-border border-t' : ''} ${open ? 'bg-secondary/30' : ''}`}>
+      <Pressable
+        className="active:bg-secondary min-h-16 flex-row items-center gap-3 px-4 py-3"
+        onPress={() => {
+          tapped()
+          onToggle()
+        }}
+        role="button"
+        accessibilityState={{ expanded: open }}
+      >
+        <Avatar name={member.name} size={40} />
+        <View className="min-w-0 flex-1">
+          <Text className="text-subtitle text-foreground font-semibold" numberOfLines={1}>
+            {member.name}
+          </Text>
+          <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
+            {member.role}
+          </Text>
+        </View>
+        <ResponsePill value={member.response} label={responseLabel(member, t)} />
+        {/*
+          **One chevron that turns**, not two that swap. v3 draws a single
+          border-square caret at `rotate(45deg)` collapsed — pointing DOWN — and
+          `rotate(-135deg)` open, which is the same glyph turned through 180°.
+          This was `open ? ChevronDown : ChevronRight`, so it pointed right until
+          you tapped it.
+
+          The artboard's `transition:transform 160ms ease` is not animated here:
+          it would want an `Animated.Value` per row, and the two end states are
+          what carries the meaning.
+
+          **The rotation is on a wrapping `View`, never on `Icon`.** `Icon` runs
+          `cssInterop` with `className` targeting `style` and `nativeStyleToProp`
+          mapping that style's width and height onto the `size` prop
+          (src/components/ui/icon.tsx). An explicit `style` prop collides with
+          the generated one and takes the colour and the size mapping with it —
+          the icon then renders invisibly, which is exactly what it did when the
+          transform was passed to `Icon` directly.
+        */}
+        <View style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
+          <Icon
+            as={ChevronDown}
+            size={16}
+            strokeWidth={2}
+            className="text-muted-foreground shrink-0"
+          />
+        </View>
+      </Pressable>
+
+      {open ? (
+        <View className="gap-2 px-4 pb-3.5">
+          {contacts.length > 0 ? (
+            <View className="border-border overflow-hidden rounded-lg border">
+              {contacts.map((contact, index) => (
+                <View
+                  key={contact.label}
+                  className={`flex-row items-center justify-between gap-2.5 px-3 py-2.5 ${
+                    index > 0 ? 'border-border border-t' : ''
+                  }`}
+                >
+                  <Text className="text-label text-muted-foreground shrink-0">{contact.label}</Text>
+                  <Text
+                    className="text-body-sm text-foreground min-w-0 flex-1 text-right font-medium"
+                    numberOfLines={1}
+                  >
+                    {contact.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {/* STUB — no participant-profile route exists. Drawn as v3 draws it
+              and inert, rather than wired to a screen that is not there. */}
+          <View className="border-border min-h-11 flex-row items-center gap-2.5 rounded-lg border px-3 opacity-60">
+            <Icon as={UserIcon} size={14} strokeWidth={1.8} className="text-muted-foreground" />
+            <Text className="text-label text-muted-foreground flex-1">{t.crewProfile}</Text>
+            <Icon
+              as={ChevronRight}
+              size={13}
+              strokeWidth={2}
+              className="text-muted-foreground/50 shrink-0"
+            />
+          </View>
+
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              className="active:bg-secondary min-h-10 min-w-0 flex-1 flex-row items-center justify-center gap-1.5 rounded-lg"
+              onPress={() => {
+                tapped()
+                onCopyLink()
+              }}
+              role="button"
+            >
+              <Icon as={LinkIcon} size={14} strokeWidth={1.8} className="text-muted-foreground" />
+              <Text className="text-label text-muted-foreground font-semibold" numberOfLines={1}>
+                {t.copyPersonLink}
+              </Text>
+            </Pressable>
+
+            {/*
+              `US-022`'s removal. No confirmation, deliberately: it is undoable
+              for four seconds through the toast, which AC-2 accepts where the
+              shoot's own deletion cannot.
+            */}
+            <Pressable
+              className="active:bg-destructive/10 min-h-10 shrink-0 flex-row items-center justify-center gap-1.5 rounded-lg px-3"
+              onPress={() => {
+                tapped()
+                onRemove()
+              }}
+              role="button"
+            >
+              <Icon as={Trash} size={14} strokeWidth={1.8} className="text-destructive" />
+              <Text className="text-label text-destructive font-semibold">{t.remove}</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+    </View>
   )
 }
-
-/* ───────────────────────────── Tab «Матеріали» ─────────────────────────── */
 
 function MaterialsTab({
   shoot,
@@ -895,16 +1061,22 @@ function MaterialsTab({
   onAdded,
   onRemoved,
   onCopied,
+  onLinkSaved,
 }: {
   shoot: Shoot
   references: Reference[]
   onAdded: (reference: Reference) => void
   onRemoved: (id: string) => void
   onCopied: (message: string) => void
+  /** One of the two file links was written — see `updateShootLink`. */
+  onLinkSaved: (field: ShootLinkField, url: string | null) => void
 }) {
   const t = useStrings()
-  const router = useRouter()
   const [category, setCategory] = useState<string | null>(null)
+  // Which file link is open for editing, if any. One at a time: the two rows
+  // sit on top of each other and a second open editor would push the first
+  // off-screen mid-paste.
+  const [editingLink, setEditingLink] = useState<ShootLinkField | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -953,7 +1125,7 @@ function MaterialsTab({
   /*
     Removing a reference asks first (owner, 2026-08-30).
 
-    Unlike the crew removal on the «Люди» tab, which the handoff gives a 4-second
+    Unlike the crew removal on the «Команда» tab, which the handoff gives a 4-second
     undo instead of a question, and unlike the edit screen's location ✕, which is
     only a draft change until «Зберегти» — a ✕ here writes immediately and
     `soft_remove_reference` has no inverse. So it takes the same guarantee
@@ -977,9 +1149,9 @@ function MaterialsTab({
     },
   })
 
-  const files = [
-    { title: t.sourceFilesSection, url: shoot.rawFilesUrl },
-    { title: t.finishedFilesSection, url: shoot.finishedPhotosUrl },
+  const files: { field: ShootLinkField; title: string; url: string | null }[] = [
+    { field: 'rawFilesUrl', title: t.sourceFilesSection, url: shoot.rawFilesUrl },
+    { field: 'finishedPhotosUrl', title: t.finishedFilesSection, url: shoot.finishedPhotosUrl },
   ]
   const setLinks = files.filter((file) => file.url).length
 
@@ -1027,7 +1199,7 @@ function MaterialsTab({
           onRemove={askRemove}
           trailing={
             <Pressable
-              className="border-border h-[84px] w-[84px] items-center justify-center rounded-lg border active:bg-secondary"
+              className="border-border aspect-square w-full items-center justify-center rounded-[10px] border active:bg-secondary"
               disabled={busy}
               onPress={() => void pickFromGallery()}
               role="button"
@@ -1061,11 +1233,22 @@ function MaterialsTab({
         <Card variant="flat" className="gap-0 p-0">
           {files.map((file, index) => (
             <FileRow
-              key={file.title}
+              key={file.field}
               title={file.title}
               url={file.url}
               divided={index > 0}
-              onEdit={() => router.push(`/(app)/shoot/${shoot.id}/edit`)}
+              editing={editingLink === file.field}
+              onStartEdit={() => setEditingLink(file.field)}
+              onCancelEdit={() => setEditingLink(null)}
+              onSave={async (value) => {
+                const ok = await updateShootLink(shoot.id, file.field, value)
+                if (!ok) return false
+                // The row reads from `shoot`, so the screen has to hear about
+                // it — a refetch would work too and would blink the whole tab.
+                onLinkSaved(file.field, value.trim() || null)
+                setEditingLink(null)
+                return true
+              }}
               onCopied={onCopied}
             />
           ))}
@@ -1075,7 +1258,7 @@ function MaterialsTab({
       {/*
         The sticky CTA belongs to this tab alone.
 
-        The handoff gives «Люди» one too — «Скопіювати для тих, хто не
+        The handoff gives «Команда» one too — «Скопіювати для тих, хто не
         підтвердив (2)» — and it is not built: copying for a GROUP is a feature
         that does not exist (redesign-log S-5), and per-person copy lives in the
         sheet. «Деталі» has none in the handoff either.
@@ -1144,60 +1327,164 @@ function FileRow({
   title,
   url,
   divided,
-  onEdit,
+  editing,
+  onStartEdit,
+  onCancelEdit,
+  onSave,
   onCopied,
 }: {
   title: string
   url: string | null
   divided: boolean
-  onEdit: () => void
+  editing: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSave: (value: string) => Promise<boolean>
   onCopied: (message: string) => void
 }) {
   const t = useStrings()
+  const [draft, setDraft] = useState('')
+  const [invalid, setInvalid] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  // Seeded when the editor opens, not on every render — the reader may already
+  // be typing by the time the parent re-renders for something else.
+  useEffect(() => {
+    if (editing) {
+      setDraft(url ?? '')
+      setInvalid(false)
+    }
+  }, [editing, url])
+
+  const save = () => {
+    const value = draft.trim()
+    // Empty clears the link, which is a real thing to want; anything else has
+    // to be a link. `US-003` AC-2's rule, reused rather than restated.
+    if (value && !isValidReferenceLink(value)) {
+      failed()
+      setInvalid(true)
+      return
+    }
+    void (async () => {
+      setBusy(true)
+      const ok = await onSave(value)
+      setBusy(false)
+      if (ok) succeeded()
+      else setInvalid(true)
+    })()
+  }
 
   return (
-    <View
-      className={`flex-row items-center gap-3 p-3.5 ${divided ? 'border-border border-t' : ''}`}
-    >
-      <View className="bg-secondary h-[34px] w-[34px] items-center justify-center rounded-lg">
-        <Icon as={FolderOpen} size={16} strokeWidth={1.8} className="text-foreground" />
+    <View className={`gap-2.5 p-3.5 ${divided ? 'border-border border-t' : ''}`}>
+      <View className="flex-row items-center gap-3">
+        <View className="bg-secondary h-[34px] w-[34px] items-center justify-center rounded-lg">
+          <Icon as={FolderOpen} size={16} strokeWidth={1.8} className="text-foreground" />
+        </View>
+
+        <Pressable
+          className="min-w-0 flex-1 gap-0.5 active:opacity-60"
+          onPress={() => {
+            tapped()
+            if (url) void openExternalUrl(url)
+            else onStartEdit()
+          }}
+          role={url ? 'link' : 'button'}
+          accessibilityLabel={title}
+        >
+          <Text className="text-body-sm text-foreground font-semibold" numberOfLines={1}>
+            {title}
+          </Text>
+          {/* The link itself is the editor's business while it is open — v3
+              hides this line behind `f.idle` for exactly that reason. */}
+          {!editing ? (
+            <Text className="text-label text-muted-foreground" numberOfLines={1}>
+              {url ? displayLink(url) : t.inDevelopment}
+            </Text>
+          ) : null}
+        </Pressable>
+
+        {!editing ? (
+          <>
+            {/*
+              An icon, not v3's «Копіювати» text button (owner, 2026-09-03). It
+              sits beside the pencil, and two controls that do the same KIND of
+              thing to the same row read better as a matched pair than as a word
+              next to a glyph — which is also what stops the row from wrapping
+              once a title is long. The word survives as the accessibility name.
+            */}
+            {url ? (
+              <Pressable
+                className="active:bg-secondary h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                onPress={() => {
+                  tapped()
+                  void (async () => {
+                    await Clipboard.setStringAsync(url)
+                    succeeded()
+                    onCopied(`${t.linkCopied} — ${title}`)
+                  })()
+                }}
+                role="button"
+                accessibilityLabel={t.copyWord}
+              >
+                <Icon as={Copy} size={15} strokeWidth={1.8} className="text-muted-foreground" />
+              </Pressable>
+            ) : null}
+            {/*
+              The pencil, which used to push to the edit screen and now opens
+              the row (v3). Editing a link where you can see it is the whole
+              point of the change; the edit screen still owns the same two
+              fields for anyone who arrives that way.
+            */}
+            <Pressable
+              className="active:bg-secondary h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+              onPress={() => {
+                tapped()
+                onStartEdit()
+              }}
+              role="button"
+              accessibilityLabel={t.editLinkLabel}
+            >
+              <Icon as={Pencil} size={15} strokeWidth={1.8} className="text-muted-foreground" />
+            </Pressable>
+          </>
+        ) : null}
       </View>
 
-      <Pressable
-        className="min-w-0 flex-1 gap-0.5 active:opacity-60"
-        onPress={() => {
-          tapped()
-          if (url) void openExternalUrl(url)
-          else onEdit()
-        }}
-        role={url ? 'link' : 'button'}
-        accessibilityLabel={title}
-      >
-        <Text className="text-body-sm text-foreground font-semibold" numberOfLines={1}>
-          {title}
-        </Text>
-        <Text className="text-label text-muted-foreground" numberOfLines={1}>
-          {url ? displayLink(url) : t.inDevelopment}
-        </Text>
-      </Pressable>
-
-      {url ? (
-        <Button
-          variant="outline"
-          className="h-9 shrink-0 px-3"
-          onPress={() => {
-            void (async () => {
-              await Clipboard.setStringAsync(url)
-              succeeded()
-              onCopied(`${t.linkCopied} — ${title}`)
-            })()
-          }}
-        >
-          <Text className="text-label font-semibold">{t.copyWord}</Text>
-        </Button>
-      ) : (
-        <Icon as={ChevronRight} size={16} strokeWidth={1.8} className="text-muted-foreground" />
-      )}
+      {editing ? (
+        <View className="gap-2">
+          <Input
+            value={draft}
+            onChangeText={(value) => {
+              setDraft(value)
+              setInvalid(false)
+            }}
+            placeholder={t.pasteLink}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            className={invalid ? 'border-destructive/60' : undefined}
+          />
+          {invalid ? (
+            <Text className="text-label text-destructive">{t.referenceLinkInvalid}</Text>
+          ) : null}
+          <View className="flex-row items-center gap-2">
+            <Button variant="cta" className="h-10 flex-1" disabled={busy} onPress={save}>
+              <Text className="text-label font-semibold">{t.done}</Text>
+            </Button>
+            <Button
+              variant="ghost"
+              className="h-10 shrink-0 px-3"
+              disabled={busy}
+              onPress={() => {
+                tapped()
+                onCancelEdit()
+              }}
+            >
+              <Text className="text-label text-muted-foreground font-semibold">{t.cancel}</Text>
+            </Button>
+          </View>
+        </View>
+      ) : null}
     </View>
   )
 }

@@ -31,7 +31,7 @@ export type TabItem<T extends string> = {
   value: T
   label: string
   /**
-   * The handoff puts a count beside each tab label — «Люди 4», «Матеріали 8» —
+   * The handoff puts a count beside each tab label — «Команда 4», «Матеріали 8» —
    * in 11px, dimmer than the label and dimmer again when the tab is inactive.
    * Optional: the edit screen's status segment has no counts.
    */

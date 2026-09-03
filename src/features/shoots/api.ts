@@ -354,6 +354,46 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
  * often than it caught dead ones. Owner's decision, 2026-08-27; recorded
  * against docs/open-questions.md #7.
  */
+/** The two link columns `US-024` and `US-025` own, by the names the app uses. */
+export type ShootLinkField = 'rawFilesUrl' | 'finishedPhotosUrl'
+
+const LINK_COLUMN: Record<ShootLinkField, 'raw_files_url' | 'finished_photos_url'> = {
+  rawFilesUrl: 'raw_files_url',
+  finishedPhotosUrl: 'finished_photos_url',
+}
+
+/**
+ * Write ONE of the two file links.
+ *
+ * `Shoot Detail v3.dc.html` edits these in place on the «Матеріали» tab, and
+ * `updateShoot` cannot serve that: it takes the whole `UpdateShootInput`, so
+ * saving one link from a row would mean re-sending the client, the date, both
+ * times, three location fields and the notes — every one of them a chance to
+ * write back a value the reader never touched, from a screen that never loaded
+ * the form.
+ *
+ * So this writes a single column and nothing else. It is not a general partial
+ * update and should not become one: the two links are a pair of independent
+ * scalars a story already owns, which is what makes one-column writes safe here
+ * and unsafe for the rest of the row.
+ *
+ * The value is normalised the same way `updateShoot` normalises it, so a link
+ * cannot enter through this door in a shape the other one would reject. Callers
+ * validate first and say why; this is the second guard.
+ */
+export async function updateShootLink(
+  id: string,
+  field: ShootLinkField,
+  value: string | null
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('shoots')
+    .update({ [LINK_COLUMN[field]]: normaliseFilesLink(value) })
+    .eq('id', id)
+
+  return !error
+}
+
 export function normaliseFilesLink(value: string | null): string | null {
   const trimmed = value?.trim()
   if (!trimmed) return null

@@ -66,16 +66,27 @@ export function ReferenceGrid({
 
   return (
     <>
-      <View className="flex-row flex-wrap items-start gap-2">
+      {/*
+        A three-column grid of square tiles since 2026-09-03, where this was a
+        wrapping row of fixed 84pt ones — `Shoot Detail v3.dc.html` draws
+        `repeat(3,1fr)` with `aspect-ratio:1`, so a tile is ~118pt on a 402pt
+        frame instead of 84 and the row always divides evenly.
+
+        The gutter is padding INSIDE each cell, offset by a negative margin on
+        the container, rather than `gap` on percentage widths — `w-1/3` plus a
+        gap overflows the row by the gap. Same arrangement `MonthPicker` uses.
+      */}
+      <View className="-m-1 flex-row flex-wrap items-start">
         {references.map((reference) => (
-          <ReferenceThumb
-            key={reference.id}
-            reference={reference}
-            onOpenImage={setViewing}
-            onRemove={onRemove}
-          />
+          <View key={reference.id} className="w-1/3 p-1">
+            <ReferenceThumb
+              reference={reference}
+              onOpenImage={setViewing}
+              onRemove={onRemove}
+            />
+          </View>
         ))}
-        {trailing}
+        {trailing ? <View className="w-1/3 p-1">{trailing}</View> : null}
       </View>
       <ImageViewer uri={viewing} onClose={() => setViewing(null)} />
     </>
@@ -119,7 +130,7 @@ function ReferenceThumb({
   const tile =
     reference.kind === 'image' ? (
       <Pressable
-        className="bg-muted h-[84px] w-[84px] overflow-hidden rounded-xl active:opacity-70"
+        className="bg-muted aspect-square w-full overflow-hidden rounded-[10px] active:opacity-70"
         // Not tappable until the URL is signed: there would be nothing to show,
         // and the thumbnail is blank at that point anyway.
         disabled={!uri}
@@ -134,7 +145,7 @@ function ReferenceThumb({
       </Pressable>
     ) : (
       <Pressable
-        className="bg-muted h-[84px] w-[84px] justify-end rounded-xl p-2 active:opacity-70"
+        className="bg-muted aspect-square w-full justify-end rounded-[10px] p-2 active:opacity-70"
         onPress={() => void openExternalUrl(reference.urlOrPath)}
         role="button"
         accessibilityLabel={hostOf(reference.urlOrPath)}

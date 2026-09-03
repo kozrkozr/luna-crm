@@ -1,4 +1,7 @@
 import { View } from 'react-native'
+// Deep per-icon import — see the note in src/components/ui/select.tsx.
+import CircleCheck from 'lucide-react-native/icons/circle-check'
+import { Icon } from './ui/icon'
 import { Text } from './ui/text'
 import type { CrewMember } from '../features/crew/api'
 
@@ -12,33 +15,30 @@ import type { CrewMember } from '../features/crew/api'
  * styles nothing, so the pills went transparent rather than failing loudly.
  * That is the argument for one copy.
  *
- * **Monochrome since 2026-08-30** (owner), and this is exactly the pair the
- * shoot-detail handoff draws:
+ * ── Rebuilt against `Shoot Detail v3.dc.html` (owner, 2026-09-03) ────────────
  *
- * - `confirmed` — **solid `#fafafa` with `#18181b` text**, i.e. `primary` and
- *   `primary-foreground`. The brightest thing in a crew row, which is right:
- *   it is the answer the row exists to report.
- * - `pending` — **outlined**, border `#3f3f46` (`border-strong`), text
- *   `#d4d4d8`. It stays the one bordered chip in the app, as it was when it was
- *   amber; only the hue is gone.
- * - `declined` — `destructive`, still the one state no mockup covers. It keeps
- *   its hue because `--destructive` survived the monochrome pass: the handoff
- *   has a red of its own for refusals.
+ * **«Очікує» is not drawn any more.** v3 gates the badge on `hasBadge`, which is
+ * true only when a person has confirmed — so a crew member who has not answered
+ * carries no chip at all. The count above the list («2 з 4 підтвердили») is what
+ * reports the shortfall, and it does it once rather than once per row.
  *
- * The green `confirmed` and amber `pending` scales this used are gone from
- * src/theme/global.css.
+ * That is a quieter list, and the reasoning holds: a row with nothing on it is
+ * the default state, and marking the default is what made three chips compete
+ * for attention when only one of them is news.
+ *
+ * **`declined` keeps its chip**, which v3 has no case for. Its fixture crew are
+ * only `confirmed: true | false`, so the artboard never had to decide — but
+ * `US-008` defines three answers, and a refusal is not the same news as a
+ * silence. Hiding it would make a crew member who said no look exactly like one
+ * who has not opened their link, which is the one confusion this row exists to
+ * prevent. Logged rather than followed.
+ *
+ * The shape is v3's: radius 6 rather than a full pill, `4px 8px`, 11px/500, and
+ * a 12px check inside the confirmed chip.
  */
-const TONE: Record<CrewMember['response'], string> = {
-  pending: 'border-border-strong border',
-  confirmed: 'bg-primary',
-  declined: 'bg-destructive/10',
-}
 
-const TONE_TEXT: Record<CrewMember['response'], string> = {
-  pending: 'text-foreground/85',
-  confirmed: 'text-primary-foreground',
-  declined: 'text-destructive',
-}
+/** v3's check-circle, 12px, inside the confirmed chip at a 5px gap. */
+const CHECK_SIZE = 12
 
 export function ResponsePill({
   value,
@@ -47,9 +47,31 @@ export function ResponsePill({
   value: CrewMember['response']
   label: string
 }) {
+  // No chip for a silence — see the note above.
+  if (value === 'pending') return null
+
+  const confirmed = value === 'confirmed'
+
   return (
-    <View className={`shrink-0 rounded-full px-2.5 py-1 ${TONE[value]}`}>
-      <Text numberOfLines={1} className={`text-caption font-bold ${TONE_TEXT[value]}`}>
+    <View
+      className={`shrink-0 flex-row items-center gap-[5px] rounded-md border px-2 py-1 ${
+        confirmed ? 'bg-primary border-primary' : 'bg-destructive/10 border-destructive/40'
+      }`}
+    >
+      {confirmed ? (
+        <Icon
+          as={CircleCheck}
+          size={CHECK_SIZE}
+          strokeWidth={2}
+          className="text-primary-foreground"
+        />
+      ) : null}
+      <Text
+        numberOfLines={1}
+        className={`text-caption font-medium ${
+          confirmed ? 'text-primary-foreground' : 'text-destructive'
+        }`}
+      >
         {label}
       </Text>
     </View>

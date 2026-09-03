@@ -536,6 +536,202 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+## Shoot detail + edit against `Shoot Detail v3.dc.html` (owner, 2026-09-03)
+
+`app/(app)/shoot/[id]/index.tsx`, `src/components/ShootDetailHeader.tsx`,
+`app/(app)/shoot/[id]/edit.tsx`, `src/components/ReferenceGrid.tsx`,
+`src/components/PersonSheet.tsx`, both dictionaries.
+
+The artboard is **five screens**, not one — `isDetail` with three tabs,
+`isEdit`, `isAdd`, `isContacts`, `isInvite`. Scoped to the detail screen and the
+edit screen (owner, 2026-09-03); add-crew, contacts and invite are the add-crew
+flow and have their own entry.
+
+### Two things wrong with the artboard, found on the way in
+
+**v3 had already deleted client view's entry point.** `enterClientView` and
+`menuOpen` survive in its logic but **nothing in its markup references either** —
+the ⋯ menu is gone from the header and an empty div sits where it was. So the
+`clientView` banner and the `showPrivate` / `showNotes` gating are leftovers of a
+feature whose way in the artboard had already removed. The owner's separate
+removal (committed as `1acd054`) agrees with it rather than contradicting it.
+
+**Its Materials CTA renders an empty white bar.** `showCta` is
+`st.tab === 'Матеріали'`, but `ctaByTab` defines only a `'Деталі'` entry, so
+`cta` falls through to `{ label: '', action: noop }` on the one tab that shows
+it — while «Скопіювати посилання для всіх», defined for «Деталі», never appears
+at all. The keys look swapped. **Not followed either way**: this tab keeps its
+own «Додати референс або файл», which is a real action, and a group copy-link is
+still a feature that does not exist (S-5).
+
+### Decisions
+
+| # | Question | Answer |
+|---|---|---|
+| S-19 | v3's header has no ⋯ menu and no subline | **Both removed.** The menu's two items are v3's two full-width buttons at the foot of «Деталі», so nothing is lost, and the date and time the subline carried are the card's own rows. The title moves left of centre — there is no second button left to centre it against |
+| S-20 | The client's contacts | **Moved into the shoot card** on «Деталі», out of the «Команда» tab's «Клієнт» section, which v3 does not have. The **«Лише власник» badge went with them**: the fact it stated is unchanged and was never enforced by the label — the gateway's `ShootRow` has never selected the client's contact (`ADR-018`). A badge on the creator's own screen was a rehearsal of a guarantee made elsewhere, which is exactly why client view went |
+| S-21 | v3 expands a crew row in place | **Built, and `PersonSheet` is retired.** The sheet showed the same four things over a backdrop that hid the list; an expanded row keeps the person among the others, which is what makes «2 з 4 підтвердили» above them legible while you work through them. The confirmation count is that heading now rather than a «Команда» row two tabs away |
+| S-22 | «Профіль учасника», and the avatar as a link to the same place | **Drawn and inert.** There is no participant-profile route — `app/(app)/` has `client/[id]` and nothing else — and `Client Profile.dc.html` / `Public Profile.dc.html` are their own artboards and their own story. Follows the precedent the owner set on 2026-09-02 for controls whose destination does not exist. The **avatar is not a link**: a second dead link to the same missing screen adds nothing |
+| S-23 | «Скасувати зйомку» on the edit screen | **Moved to the detail screen**, where v3 puts it beside «Редагувати зйомку». v3's edit screen carries no destructive action at all, which is the better arrangement anyway: it used to sit one divider below «Зберегти», inside the form for editing the shoot you were cancelling |
+| S-24 | Reference tiles | **A three-column grid of square tiles**, where this was a wrapping row of fixed 84pt ones. A tile is ~118pt on a 402pt frame and the row always divides evenly. `ReferenceGrid` is shared, so `shoot/[id]/references.tsx` follows |
+
+### `US-019` AC-2's confirmation did not exist, and now does
+
+The ⋯ menu's «Скасувати зйомку» called `deleteShoot` **on a single tap**. Its own
+comment claimed "the confirmation is `US-019` AC-2's and is kept";
+`DropdownMenuItem` has never had one and takes only a `destructive` flag that
+changes its colour. AC-2 is *required*, so the screen has been in breach since
+the menu was built.
+
+It goes through `useDestructiveConfirm` now — a real `UIAlertController` on
+device, a dialog on web — the same hook `US-022`'s crew removal and the
+profile's account deletion use. A full-width button is easier to hit than a menu
+row, so this was not optional.
+
+**«Скасувати зйомку» is still a rename, not a new action.** It soft-deletes the
+row and revokes every link on it (`ADR-014`). Nobody is notified; the handoff's
+«Команда й клієнт отримають повідомлення про скасування» is not built, because
+nothing sends it.
+
+### Smaller alignments
+
+- **The duration moved into the «Час» row** as a dimmer suffix — «09:00 – 12:00
+  · 3 год» — where it was a «Зйомка · 3 год» subtitle under the title. One row
+  carrying two facts rather than a duration stranded above the rows.
+- **The location card has no buttons.** «Маршрут» went first — drawn as
+  designed and doing nothing when tapped, a stub the owner asked for on
+  2026-08-30 — and «Копіювати адресу» followed (S-27). Which map app, and what
+  `maps:` does on the static web export, remain the unanswered questions behind
+  «Маршрут» (S-4). `LocationCard` no longer takes an `onCopied`, and neither
+  does `DetailsTab`, which only passed it through.
+- **The location card leads with the venue name.** `location_name` from
+  yesterday's migration finally has a reader — the three display lines were
+  written, reverted (that file was carrying uncommitted work) and are now back.
+- **The «Команда» tab count is crew alone.** It was `crew.length + 1` because the
+  tab showed the client too; counting them there now would promise a person who
+  is not in the list.
+- **The tab is «Команда», not «Люди»** (2026-09-03). v3 labels it that and the
+  first pass of this entry had missed it. `tabPeople` keeps its key name on the
+  rule `accessDetailsLabel` states — a tab label and the section label it now
+  agrees with would drift the moment either is reworded — and because
+  `DetailTab`'s `'people'` member and `tabCounts.people` are named for it.
+  Renaming three identifiers buys nothing.
+
+### The response chip: only «Підтверджено» now
+
+v3 gates the crew badge on `hasBadge`, true **only when a person has confirmed**
+— so a crew member who has not answered carries no chip at all, and the count
+above the list («2 з 4 підтвердили») is what reports the shortfall. Built as
+drawn: `ResponsePill` returns `null` for `pending`.
+
+The shape changed with it — radius 6 rather than a full pill, `4px 8px`, 11px/500,
+and a 12px check inside the confirmed chip.
+
+**`declined` keeps its chip, against the artboard.** v3's fixture crew are only
+`confirmed: true | false`, so it never had to decide — but `US-008` defines
+three answers, and a refusal is not the same news as a silence. Hiding it would
+make a crew member who said no look exactly like one who has not opened their
+link, which is the one confusion this row exists to prevent.
+
+**A gender bug went out with the old word.** `responseConfirmed` was
+«Підтвердив» — masculine past tense, wrong on «Соломія Дяк» from the day it
+shipped, and unfixable in that form because we store one name and no gender.
+v3's «Підтверджено» is impersonal, so taking the artboard's word fixes it.
+`responseDeclined` had the identical fault and took the same treatment (owner,
+2026-09-03): **«Відмовлено»**, about the invitation rather than about the person,
+so it needs no gender either. v3 draws no declined chip at all, so that word is
+the owner's rather than the handoff's.
+
+### Two things the collapsed crew row no longer shows
+
+Both are consequences of S-21 that the entry above did not call out, and one may
+be an acceptance regression.
+
+- **The contact left the row.** It was `role · phone`; v3's collapsed row is
+  `p.role` alone, with contacts inside the expansion. `US-005` AC-1 says a crew
+  member "appears in the shoot's crew list **with that contact info** and note",
+  which now means one tap away — **followed as drawn** (owner, 2026-09-03), on
+  the reading that a row you can open is still the list. `us005-check.mjs`
+  asserted the number on the collapsed body and now opens the row first.
+  **`US-005` AC-1 is worth a word in the docs pass**: it is satisfied by
+  navigation rather than by the row, which is a weaker guarantee than it was.
+- **«Очікує» is gone**, per the section above. `us005-check.mjs` asserted it was
+  shown; `US-005` AC-1 requires no response pill at all, so that was the suite
+  over-specifying rather than an AC being broken, and the assertion is removed.
+  `us010-check.mjs`'s negative check kept its stale «Підтвердив» literal and now
+  names «Підтверджено».
+
+### Not followed
+
+| # | What v3 does | Why not |
+|---|---|---|
+| S-4 | The «Деталі» block is a sentence with the door code and the guard's number **in bold** | Unchanged. `location_note` is one free-text column and is where a creator writes exactly that sentence, so it renders unparsed. Splitting it into `code` and `security` is a migration and two form fields |
+| S-25 | File rows edit their link **inline** — «Копіювати», a pencil, then an input with «Готово» / «Скасувати» | ~~Not built.~~ **Built** (owner, 2026-09-03) — see below |
+| S-26 | «Запрошення на зйомку» on the expanded row | Kept as **«Посилання на зйомку»**. An `AccessLink` is a *посилання* — the confirmed glossary term (2026-08-25, CLAUDE.md rule 4) — and the wording was deliberated once already on 2026-08-31. «Запрошення» reframes the artifact rather than translating it |
+| S-27 | «Копіювати адресу» is not drawn | ~~Kept.~~ **Removed** (owner, 2026-09-03). It was kept on the argument that it worked and an uncopyable address is worse than one extra control; the owner overruled it, so the location card now has no buttons at all, exactly as v3 draws it. The address is still copyable where a reader without the app needs it — the link view draws its own «Копіювати адресу» (`uk.copyAddress`), untouched |
+
+### Inline link editing, and the one-column write it needed
+
+The pencil on a file row opened the edit screen; v3 opens the row. Built as
+drawn — «Копіювати» beside a pencil while idle, an input with «Готово» and
+«Скасувати» while editing, and the link line hidden behind `f.idle` because the
+editor is showing the same value.
+
+**It needed a write path that did not exist.** `updateShoot` takes the whole
+`UpdateShootInput`, so saving one link from here would have meant re-sending the
+client, the date, both times, three location fields and the notes — every one of
+them a chance to write back a value the reader never touched, from a screen that
+never loaded the form. `updateShootLink(id, field, value)` writes a single
+column instead.
+
+**It is deliberately not a general partial update**, and should not become one.
+The two file links are a pair of independent scalars that `US-024` and `US-025`
+already own, which is what makes a one-column write safe here and unsafe for the
+rest of the row. The value goes through the same `normaliseFilesLink` the full
+update uses, so nothing can enter by this door in a shape the other one rejects.
+
+Empty clears the link, which is a real thing to want; anything else has to pass
+`isValidReferenceLink` and says so in place (`US-003` AC-2's rule, reused rather
+than restated). The row patches the screen's `shoot` on success rather than
+refetching — a refetch would blink the whole tab for one field.
+
+**«Копіювати» is an icon, not v3's text button** (owner, 2026-09-03). It sits
+beside the pencil, and two controls doing the same kind of thing to the same row
+read better as a matched pair than as a word next to a glyph — which also stops
+the row wrapping once a file title runs long. The word survives as the
+accessibility name, so nothing is lost to a screen reader.
+
+The edit screen still owns the same two fields for anyone arriving that way;
+this adds a second door, not a replacement.
+
+**Kept although v3 draws none of them**, because each is real functionality with
+a story behind it: the «Статус» segment on the edit screen (`US-020`), the two
+file links (`US-024`, `US-025`), and the location attachment and its «Фото
+локації» tile (`US-018`).
+
+### Worth knowing
+
+- **`PersonSheet`'s component is now dead code.** Its only caller was this
+  screen. The module survives because two things in it are still used — the
+  `SheetPerson` shape that `copyLinkFor` and `removePerson` take, and
+  `handleUrl`, now exported for the client contact rows. Deleting the component
+  and renaming the module is a follow-up, not part of this pass.
+- `t.route` («Маршрут») is **not** dead despite the button going: the link view
+  reads `uk.route` directly at `app/s/[token]/index.tsx:204`. It was removed and
+  restored on the way through — a `t.route` grep misses the link surface, which
+  is Ukrainian-only and imports the dictionary by name.
+- New keys: `crewProfile`. `remove` already existed and is reused for the short
+  «Видалити» beside «Посилання на зйомку».
+
+### Verified
+
+`tsc --noEmit` clean; `expo export -p web` builds. **The acceptance suite was
+not run** (standing instruction for this phase) — and `us010-check.mjs` asserts
+`!body.includes('Позначити як')` and `us021-check.mjs` filters on «Показати
+всі» / «Позначити як», neither of which this pass touches. Anything driving the
+⋯ menu or the person sheet will need updating; nothing was found that does.
+
+---
 
 ## New Shoot, second pass against `New Shoot.dc.html` (owner, 2026-09-03)
 

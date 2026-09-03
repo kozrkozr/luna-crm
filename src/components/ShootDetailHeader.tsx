@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
  * deep icon import ever passes typecheck and breaks the build, this is why.
  */
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
-import Ellipsis from 'lucide-react-native/icons/ellipsis'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
 import { Tabs, type TabItem } from './ui/tabs'
@@ -23,13 +22,13 @@ export type DetailTab = 'details' | 'people' | 'materials'
 /**
  * The shoot-detail screen's own header.
  *
- * Hand-drawn rather than the navigator's, which is a change from the previous
- * pass — that one kept `Stack.Screen`'s native header and put a pencil in
- * `headerRight`. Three things in the handoff make a native header impossible
- * here: the title carries a **subline** («19 вересня · 09:00»), the segmented
- * Tabs control sits **below** the title inside the same fixed block, and a
- * banner **grows** the whole thing by ~53px in client view. None of the three is
- * expressible through `screenOptions`.
+ * Hand-drawn rather than the navigator's. What makes a native header impossible
+ * is the segmented Tabs control, which sits **below** the title inside the same
+ * fixed block — not expressible through `screenOptions` at all.
+ *
+ * Two other reasons have since gone: the client-view banner that grew the block
+ * (removed 2026-08-31) and the title's subline (removed 2026-09-03, below). The
+ * Tabs row alone still settles it.
  *
  * It is the same trade `app/(app)/index.tsx` already makes and for the same
  * reason (see the note in app/(app)/_layout.tsx): iOS centres a native title as
@@ -43,25 +42,29 @@ export type DetailTab = 'details' | 'people' | 'materials'
  * outright: "measure, don't hardcode".
  *
  * It varied by more until 2026-08-31, when «Дивитись як клієнт» was removed
- * (owner) and took its banner with it. Measuring is still right; the range is
- * just narrower.
+ * (owner) and took its banner with it, and narrower again on 2026-09-03 with the
+ * subline. Measuring is still right; the range is just smaller.
+ *
+ * ── Second pass against `Shoot Detail v3.dc.html` (owner, 2026-09-03) ────────
+ *
+ * **The subline and the ⋯ menu are both gone.** v3 draws a back chevron, the
+ * title, and nothing else — the title sits LEFT of centre in a `flex:1` slot
+ * rather than centred between two buttons, because there is no longer a second
+ * button to centre it against.
+ *
+ * Nothing was lost with the menu: its two items are now full-width buttons at
+ * the foot of the «Деталі» tab, which is where v3 puts them. The date and time
+ * the subline carried are the card's own «Дата» and «Час» rows.
  */
 export function ShootDetailHeader({
-  subtitle,
   tab,
   onTabChange,
   tabCounts,
-  menuOpen,
-  onToggleMenu,
   onHeight,
 }: {
-  /** «19 вересня · 09:00» — null for a shoot with no times (`US-030` AC-6). */
-  subtitle: string | null
   tab: DetailTab
   onTabChange: (tab: DetailTab) => void
   tabCounts: { people: string; materials: string }
-  menuOpen: boolean
-  onToggleMenu: () => void
   onHeight: (height: number) => void
 }) {
   const t = useStrings()
@@ -80,9 +83,9 @@ export function ShootDetailHeader({
       style={{ paddingTop: insets.top }}
       onLayout={(event) => onHeight(event.nativeEvent.layout.height)}
     >
-      <View className="flex-row items-center px-2">
+      <View className="flex-row items-center gap-1.5 px-2.5 pb-2 pt-1">
         <Pressable
-          className="h-10 w-10 items-center justify-center rounded-lg active:bg-secondary"
+          className="h-10 w-10 shrink-0 items-center justify-center rounded-lg active:bg-secondary"
           onPress={() => {
             tapped()
             // `canGoBack` first: arriving here from a deep link leaves an empty
@@ -96,34 +99,17 @@ export function ShootDetailHeader({
           <Icon as={ChevronLeft} size={22} strokeWidth={1.9} className="text-foreground" />
         </Pressable>
 
-        <View className="flex-1 items-center">
-          <Text className="text-title-sm text-foreground font-semibold" numberOfLines={1}>
-            {t.shootDetailTitle}
-          </Text>
-          {subtitle ? (
-            <Text className="text-caption text-muted-foreground" numberOfLines={1}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
-
-        <Pressable
-          className={`h-10 w-10 items-center justify-center rounded-lg active:bg-secondary ${
-            menuOpen ? 'bg-secondary' : ''
-          }`}
-          onPress={() => {
-            tapped()
-            onToggleMenu()
-          }}
-          role="button"
-          accessibilityState={{ expanded: menuOpen }}
-          accessibilityLabel={t.edit}
+        {/* Left of centre, in a `flex:1` slot — v3 has no second button for a
+            centred title to balance against. */}
+        <Text
+          className="text-title-sm text-foreground min-w-0 flex-1 font-semibold"
+          numberOfLines={1}
         >
-          <Icon as={Ellipsis} size={20} strokeWidth={2} className="text-foreground" />
-        </Pressable>
+          {t.shootDetailTitle}
+        </Text>
       </View>
 
-      <View className="px-4 pb-2.5 pt-1.5">
+      <View className="mx-3 mb-2.5">
         <Tabs items={items} value={tab} onChange={onTabChange} />
       </View>
 

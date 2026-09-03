@@ -63,8 +63,25 @@ await tap(byText('Зберегти')); await B.settle()
 body=await ev('document.body.innerText')
 ok('AC-1 back on the shoot after saving', body.includes('Референси') || body.includes('Команда'))
 ok('AC-1 the crew member appears in the list', body.includes('Наталія'), body.replace(/\n/g,' | ').slice(0,160))
-ok('AC-1 the row shows role and contact', body.includes('+380501234567'))
-ok('AC-1 a response pill is shown', body.includes('Очікує'))
+/*
+  The crew row collapses to name + role since 2026-09-03 (`Shoot Detail v3`),
+  so the contact has to be opened to be asserted — AC-1's "with that contact
+  info" is one tap away rather than on the row (owner's call; redesign-log
+  S-21).
+
+  `byText` matches innerText exactly and the row carries two lines, so this
+  matches on the first of them instead.
+*/
+const crewRow=(n)=>`[...document.querySelectorAll('div[role=button]')].find(e=>e.innerText.trim().startsWith(${JSON.stringify(n)}))`
+await tap(crewRow('Наталія')); await wait()
+body=await ev('document.body.innerText')
+ok('AC-1 the expanded row shows the contact', body.includes('+380501234567'))
+/*
+  **No response-pill assertion.** An unanswered invitation carries no chip now:
+  v3 badges only «Підтверджено», and the shortfall is reported once by
+  «N з M підтвердили» above the list. `US-005` AC-1 never required a pill — that
+  was this suite over-specifying.
+*/
 
 ;({data:rows}=await db.from('crew_members').select('name, role, phone, email, instagram, note, response').eq('shoot_id',sid))
 ok('AC-1 phone stored in the phone column, not email',

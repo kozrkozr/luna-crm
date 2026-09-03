@@ -68,7 +68,7 @@ ok('AC-1 no edit controls anywhere',
    !body.includes('Редагувати') && !body.includes('Видалити') && !body.includes('Додати') && !body.includes('Позначити як'),
    body.replace(/\n/g,' | ').slice(0,110))
 ok('AC-1 no confirm/decline — that is the crew\'s', !body.includes('Підтвердити') && !body.includes('Відмовитись'))
-ok('the client is not shown response pills', !body.includes('Очікує') && !body.includes('Підтвердив'))
+ok('the client is not shown response pills', !body.includes('Очікує') && !body.includes('Підтверджено'))
 ok('the removed person is not on screen', !body.includes('Видалений'))
 
 // the "see all" link must work for a client too

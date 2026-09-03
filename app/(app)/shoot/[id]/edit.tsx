@@ -31,7 +31,6 @@ import { succeeded, tapped } from '../../../../src/lib/haptics'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
 import { toastOnNextScreen } from '../../../../src/lib/nextScreenToast'
 import {
-  deleteShoot,
   getShoot,
   listShoots,
   setShootStatus,
@@ -756,22 +755,18 @@ export default function EditShootScreen() {
           {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
 
           {/*
-            `US-019`'s delete, under a divider and last — the handoff's placement
-            and the previous version's reasoning both: a destructive action
-            sitting under everything else is harder to hit by accident than one
-            next to the things you came here to use.
+            **`US-019`'s delete left this screen on 2026-09-03.** `Shoot Detail
+            v3.dc.html` puts «Редагувати зйомку» and «Скасувати зйомку» side by
+            side at the foot of the detail screen's «Деталі» tab, and its edit
+            screen carries no destructive action at all — which is the better
+            arrangement anyway: you cancelled a shoot from inside the form for
+            editing it, one divider away from «Зберегти».
 
-            The confirmation is AC-2's and is a real iOS alert on device
-            (`DestructiveAction` is not reused here only because the handoff
-            draws this as a bordered destructive button rather than that
-            component's filled one — the confirmation it wraps is below).
-
-            The handoff's note under it — «Команда й клієнт отримають
-            повідомлення про скасування» — is NOT built. Nothing notifies anyone.
+            The confirmation moved with it and is now `useDestructiveConfirm`,
+            the same hook `US-022` uses. The handoff's note — «Команда й клієнт
+            отримають повідомлення про скасування» — is still NOT built. Nothing
+            notifies anyone.
           */}
-          <View className="border-border mt-2 border-t pt-5">
-            <CancelShootButton shootId={id} />
-          </View>
         </View>
       </ScrollView>
 
@@ -916,71 +911,6 @@ function AttachmentField({ path, onRemove }: { path: string; onRemove: () => voi
   )
 }
 
-/**
- * `US-019` AC-2's confirmation, under the handoff's destructive-outline button.
- *
- * Split out so the dialog's open state does not sit among the form's twelve
- * other pieces of state.
- */
-function CancelShootButton({ shootId }: { shootId: string }) {
-  const t = useStrings()
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
-
-  return (
-    <>
-      <Button
-        variant="outline"
-        className="border-destructive/60 h-11 w-full active:bg-destructive/15"
-        disabled={busy}
-        onPress={() => setOpen(true)}
-      >
-        <Text className="text-body-sm text-destructive font-semibold">{t.cancelShoot}</Text>
-      </Button>
-
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t.confirmDeleteShoot}</AlertDialogTitle>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              <Text>{t.cancel}</Text>
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive"
-              onPress={() => {
-                void (async () => {
-                  setBusy(true)
-                  const ok = await deleteShoot(shootId)
-                  setBusy(false)
-                  setOpen(false)
-                  // AC-1 — it disappears from the list. `/(app)/shoots`, not
-                  // `back`: back would land on the detail screen of a shoot that
-                  // no longer exists.
-                  if (ok) router.replace('/(app)/shoots')
-                })()
-              }}
-            >
-              <Text className="text-destructive-foreground">{t.cancelShoot}</Text>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  )
-}
-
-/**
- * Whether two drafts are the same — what `dirty` is built on.
- *
- * Field by field rather than `JSON.stringify`, which the prototype uses: `date`
- * is a `Date`, and stringify would compare it by its full ISO instant. The
- * picker returns a NEW Date on every interaction, so a reader who opened it and
- * chose the same day would have made the form dirty. Comparing the values that
- * are actually saved is the only thing that matches what "changed" means here.
- */
 function sameDraft(a: Draft, b: Draft): boolean {
   return (
     a.clientId === b.clientId &&
