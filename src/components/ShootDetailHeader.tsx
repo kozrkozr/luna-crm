@@ -38,9 +38,13 @@ export type DetailTab = 'details' | 'people' | 'materials'
  *
  * **`onHeight` is why this is a component and not markup.** The content below
  * scrolls under a fixed header, so it needs the header's height as top padding —
- * and that height is not a constant: it changes with the banner, with the
- * device's status-bar inset, and with a two-line title on a narrow screen. The
- * handoff says so outright: "measure, don't hardcode".
+ * and that height is not a constant: it changes with the device's status-bar
+ * inset and with a two-line title on a narrow screen. The handoff says so
+ * outright: "measure, don't hardcode".
+ *
+ * It varied by more until 2026-08-31, when «Дивитись як клієнт» was removed
+ * (owner) and took its banner with it. Measuring is still right; the range is
+ * just narrower.
  */
 export function ShootDetailHeader({
   subtitle,
@@ -49,8 +53,6 @@ export function ShootDetailHeader({
   tabCounts,
   menuOpen,
   onToggleMenu,
-  clientView,
-  onExitClientView,
   onHeight,
 }: {
   /** «19 вересня · 09:00» — null for a shoot with no times (`US-030` AC-6). */
@@ -60,8 +62,6 @@ export function ShootDetailHeader({
   tabCounts: { people: string; materials: string }
   menuOpen: boolean
   onToggleMenu: () => void
-  clientView: boolean
-  onExitClientView: () => void
   onHeight: (height: number) => void
 }) {
   const t = useStrings()
@@ -127,28 +127,6 @@ export function ShootDetailHeader({
         <Tabs items={items} value={tab} onChange={onTabChange} />
       </View>
 
-      {/*
-        The client-view banner. It sits INSIDE the measured block on purpose —
-        it is what makes the header taller, and the content's top padding has to
-        follow it. That is the whole reason the height is measured rather than
-        written down.
-      */}
-      {clientView ? (
-        <View className="bg-secondary border-border flex-row items-center gap-3 border-t px-4 py-2.5">
-          <Text className="text-label text-foreground/85 flex-1">{t.clientViewBanner}</Text>
-          <Pressable
-            className="shrink-0 active:opacity-60"
-            hitSlop={10}
-            onPress={() => {
-              tapped()
-              onExitClientView()
-            }}
-            role="button"
-          >
-            <Text className="text-label text-foreground font-semibold">{t.exitClientView}</Text>
-          </Pressable>
-        </View>
-      ) : null}
     </View>
   )
 }

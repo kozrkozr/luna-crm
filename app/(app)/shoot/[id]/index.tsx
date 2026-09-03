@@ -98,7 +98,6 @@ export default function ShootDetailScreen() {
 
   const [state, setState] = useState<State>({ status: 'loading' })
   const [tab, setTab] = useState<DetailTab>('details')
-  const [clientView, setClientView] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [headerHeight, setHeaderHeight] = useState(0)
   const [selected, setSelected] = useState<SheetPerson | null>(null)
@@ -286,8 +285,6 @@ export default function ShootDetailScreen() {
         }}
         menuOpen={menuOpen}
         onToggleMenu={() => setMenuOpen((open) => !open)}
-        clientView={clientView}
-        onExitClientView={() => setClientView(false)}
         onHeight={setHeaderHeight}
       />
 
@@ -307,7 +304,6 @@ export default function ShootDetailScreen() {
               shoot={shoot}
               countdown={countdown}
               crew={crew}
-              clientView={clientView}
               onCopied={showToast}
             />
           ) : null}
@@ -316,7 +312,6 @@ export default function ShootDetailScreen() {
             <PeopleTab
               shoot={shoot}
               crew={crew}
-              clientView={clientView}
               onOpenPerson={setSelected}
             />
           ) : null}
@@ -325,7 +320,6 @@ export default function ShootDetailScreen() {
             <MaterialsTab
               shoot={shoot}
               references={references}
-              clientView={clientView}
               onAdded={(reference) =>
                 setState((current) =>
                   current.status === 'loaded'
@@ -374,14 +368,6 @@ export default function ShootDetailScreen() {
           onPress={() => {
             setMenuOpen(false)
             router.push(`/(app)/shoot/${shoot.id}/edit`)
-          }}
-        />
-        <DropdownMenuItem
-          label={t.menuViewAsClient}
-          onPress={() => {
-            setMenuOpen(false)
-            setSelected(null)
-            setClientView(true)
           }}
         />
         <DropdownMenuSeparator />
@@ -458,13 +444,11 @@ function DetailsTab({
   shoot,
   countdown,
   crew,
-  clientView,
   onCopied,
 }: {
   shoot: Shoot
   countdown: string | null
   crew: CrewMember[]
-  clientView: boolean
   onCopied: (message: string) => void
 }) {
   const t = useStrings()
@@ -535,12 +519,11 @@ function DetailsTab({
         the label, the «Клієнт не бачить» badge, and the body preserving line
         breaks.
 
-        **Hidden in client view**, with the private contacts. That is a preview,
-        not the guarantee — the guarantee is that the link gateway selects this
-        column for nobody (ADR-013, CLAUDE.md rule 2). Hiding it here protects
-        nothing on its own and is not relied on to.
+        The «Клієнт не бачить» badge is true by construction, not by anything
+        this screen does: the link gateway selects this column for `crewPayload`
+        and never for `clientPayload` (ADR-013, CLAUDE.md rule 2).
       */}
-      {shoot.notes && !clientView ? (
+      {shoot.notes ? (
         <Card variant="flat" className="gap-2.5">
           <View className="flex-row items-center gap-2">
             <View className="flex-1">
@@ -720,12 +703,10 @@ function LocationCard({ shoot, onCopied }: { shoot: Shoot; onCopied: (m: string)
 function PeopleTab({
   shoot,
   crew,
-  clientView,
   onOpenPerson,
 }: {
   shoot: Shoot
   crew: CrewMember[]
-  clientView: boolean
   onOpenPerson: (person: SheetPerson) => void
 }) {
   const t = useStrings()
@@ -773,13 +754,13 @@ function PeopleTab({
             }
           />
           {/*
-            The owner-only sub-row. Hidden in client view — which is a PREVIEW
-            and not the guarantee: the link gateway's ShootRow has never selected
-            the client's contact, so no crew member and no client has ever
-            received it (ADR-018). If a story ever puts it in a payload, that is
-            what has to change, not this.
+            The owner-only sub-row. The badge is factual rather than
+            decorative: the link gateway's ShootRow has never selected the
+            client's contact, so no crew member and no client has ever received
+            it (ADR-018). If a story ever puts it in a payload, that is what has
+            to change, not this label.
           */}
-          {!clientView && (shoot.clientContact || shoot.clientInstagram) ? (
+          {shoot.clientContact || shoot.clientInstagram ? (
             <View className="border-border flex-row flex-wrap items-center gap-2 border-t px-4 py-2.5">
               <Badge variant="muted" label={t.ownerOnly} />
               {shoot.clientContact ? (
@@ -827,27 +808,24 @@ function PeopleTab({
             />
           ))}
 
-          {/* Hidden in client view, with every other add control. */}
-          {!clientView ? (
-            <Link href={`/(app)/shoot/${shoot.id}/crew/add`} asChild>
-              <Pressable
-                /* Centred, as the handoff draws it (`justify-content:center` on
-                   its «+ Додати учасника» row). It read left-aligned here,
-                   which made it look like another crew row rather than the
-                   action that closes the list. */
-                className={`flex-row items-center justify-center gap-2 px-4 py-3.5 active:bg-secondary ${
-                  crew.length > 0 ? 'border-border border-t' : ''
-                }`}
-                onPress={tapped}
-                role="button"
-              >
-                <Icon as={Plus} size={16} strokeWidth={2.2} className="text-muted-foreground" />
-                <Text className="text-body-sm text-muted-foreground font-medium">
-                  {t.addCrewMember}
-                </Text>
-              </Pressable>
-            </Link>
-          ) : null}
+          <Link href={`/(app)/shoot/${shoot.id}/crew/add`} asChild>
+            <Pressable
+              /* Centred, as the handoff draws it (`justify-content:center` on
+                 its «+ Додати учасника» row). It read left-aligned here, which
+                 made it look like another crew row rather than the action that
+                 closes the list. */
+              className={`flex-row items-center justify-center gap-2 px-4 py-3.5 active:bg-secondary ${
+                crew.length > 0 ? 'border-border border-t' : ''
+              }`}
+              onPress={tapped}
+              role="button"
+            >
+              <Icon as={Plus} size={16} strokeWidth={2.2} className="text-muted-foreground" />
+              <Text className="text-body-sm text-muted-foreground font-medium">
+                {t.addCrewMember}
+              </Text>
+            </Pressable>
+          </Link>
         </Card>
       </View>
     </>
@@ -914,14 +892,12 @@ function PersonRow({
 function MaterialsTab({
   shoot,
   references,
-  clientView,
   onAdded,
   onRemoved,
   onCopied,
 }: {
   shoot: Shoot
   references: Reference[]
-  clientView: boolean
   onAdded: (reference: Reference) => void
   onRemoved: (id: string) => void
   onCopied: (message: string) => void
@@ -1048,20 +1024,17 @@ function MaterialsTab({
 
         <ReferenceGrid
           references={shown}
-          /* Hidden in client view with every other add/remove affordance. */
-          onRemove={clientView ? undefined : askRemove}
+          onRemove={askRemove}
           trailing={
-            clientView ? null : (
-              <Pressable
-                className="border-border h-[84px] w-[84px] items-center justify-center rounded-lg border active:bg-secondary"
-                disabled={busy}
-                onPress={() => void pickFromGallery()}
-                role="button"
-                accessibilityLabel={t.addReferenceOrFile}
-              >
-                <Icon as={Plus} size={20} strokeWidth={2} className="text-muted-foreground" />
-              </Pressable>
-            )
+            <Pressable
+              className="border-border h-[84px] w-[84px] items-center justify-center rounded-lg border active:bg-secondary"
+              disabled={busy}
+              onPress={() => void pickFromGallery()}
+              role="button"
+              accessibilityLabel={t.addReferenceOrFile}
+            >
+              <Icon as={Plus} size={20} strokeWidth={2} className="text-muted-foreground" />
+            </Pressable>
           }
         />
 
@@ -1107,17 +1080,15 @@ function MaterialsTab({
         that does not exist (redesign-log S-5), and per-person copy lives in the
         sheet. «Деталі» has none in the handoff either.
       */}
-      {!clientView ? (
-        <Button
-          variant="cta"
-          size="cta"
-          className="mt-2"
-          disabled={busy}
-          onPress={() => void pickFromGallery()}
-        >
-          <Text>{t.addReferenceOrFile}</Text>
-        </Button>
-      ) : null}
+      <Button
+        variant="cta"
+        size="cta"
+        className="mt-2"
+        disabled={busy}
+        onPress={() => void pickFromGallery()}
+      >
+        <Text>{t.addReferenceOrFile}</Text>
+      </Button>
     </>
   )
 }
