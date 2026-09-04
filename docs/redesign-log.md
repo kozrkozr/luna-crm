@@ -836,6 +836,77 @@ No test asserts «Менеджер зйомок»; the fixtures use Фотогр
 
 ---
 
+## «Публічний профіль», and the contacts directory behind it (owner, 2026-09-04)
+
+Migration `20260904100000_crew_contacts_directory.sql`,
+`src/features/contacts/api.ts`, `src/features/contacts/PublicProfile.tsx`,
+`app/(app)/public-profile.tsx`, `app/(app)/contact/[id].tsx`, plus the two stubs
+it makes live and `src/features/crew/api.ts`.
+
+`Public Profile.dc.html` needed something to profile, and that turned out to be
+the whole story: **the artboard's «Учасник» mode is a contacts screen.** Its
+back, edit and delete all point at `Contacts.dc.html`, and its delete dialog
+promises to remove somebody from «Мої контакти» while leaving their shoots
+alone. None of that was possible — «Мої контакти» deduplicated `crew_members` in
+memory and `PastCrewMember.key` was synthetic, with its own comment saying "these
+are not rows of their own". The owner chose to build the directory.
+
+### `contacts` — `ADR-003`'s deferred crew directory
+
+That ADR ruled out a searchable two-sided marketplace with visible
+availability. This is not that: it is one photographer's private address book,
+`creator_id = auth.uid()` on every policy, in no link payload, populated by
+their own work. Which is the fallback the owner named in the same conversation.
+
+**`US-005` and `US-029` need amending** — adding a crew member now also lands
+them in a directory neither story describes.
+
+| Decision | |
+|---|---|
+| **The note is a new column** | `crew_members.note` is per-shoot — "brings their own kit on this one" — and somebody on three shoots has three. The artboard's «Нотатки» card is about the person, so `contacts.note` is its own field. The backfill deliberately copies **no** note: the newest one would be presented as a fact about the person |
+| **Backfilled in the migration** | Replaying the same dedupe `listPastCrew` did, so nobody's list changed on the way across. Without it the table ships empty — the cold start `ADR-003` was decided to avoid, reintroduced by the fix for it |
+| **Two rule-3 filters deliberately absent** | The backfill checks neither `crew_members.removed_at` nor `shoots.deleted_at`, because `listPastCrew` never did: the list people see today includes someone removed from one shoot. Both are right for an address book — being taken off a job does not make you a stranger — and filtering would silently shrink every existing list. Rule 3 exists so a removed person cannot reach a live shoot; nothing here reaches one |
+| **Soft delete** | `ADR-014`. It also makes the artboard's promise true by construction: deleting a contact cannot touch a shoot, because they are different rows |
+
+`listPastCrew` reads the table now and its callers are unchanged — except that
+`key` is a real id, which is the whole reason a contact can be opened at all.
+
+### The screen
+
+Read-only, two readers. **self** from `users`, reached from the profile's
+«Переглянути публічний профіль»; **contact** from `contacts`, reached from a
+crew row's «Профіль учасника». Both stubs had been drawn and inert since
+2026-09-02.
+
+- **No «KULT Studio»** — the role line is the role. No studio column anywhere
+  (P-3, L-4).
+- **No email row for a contact.** Not an omission: the artboard's own note says
+  «Email та налаштування акаунту приховані від інших», and this screen is what
+  others see. The account holder sees their own, where the reader and the
+  subject are the same person.
+- **The «Контакти» card disappears when empty**, which a contact can now be —
+  the crew form's contact field became optional on 2026-09-03.
+- **A crew member need not have a contact.** They may predate the backfill, or
+  their contact may have been deleted. The row sends `by-identity` with what it
+  knows; the screen resolves on the same key `upsertContact` matches, and falls
+  back to those params rather than dead-ending. Finding the contact is what puts
+  the note on screen.
+
+**Deferred:** «Редагувати контакт» and «Видалити контакт», to a
+`Contacts.dc.html` pass where the list, edit and delete belong together. The
+directory ships readable and self-populating, not yet editable.
+
+### A bug this uncovered
+
+`addCrewMember` still refused a crew member with neither phone nor email —
+`US-005` AC-2's guard, ahead of the CHECK constraint. **Both were supposed to go
+on 2026-09-03** when the owner made the contact optional; the constraint did and
+this did not. So the form offered an optional field and the insert returned
+`null`, and the screen reported «Не вдалося додати учасника» on a row it was
+right to accept. Removed.
+
+---
+
 ## One form for creating and editing a shoot (owner, 2026-09-03)
 
 `src/features/shoots/ShootForm.tsx` is new; `app/(app)/new-shoot.tsx` and

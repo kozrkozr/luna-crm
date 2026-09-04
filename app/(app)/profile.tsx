@@ -366,18 +366,21 @@ export default function ProfileScreen() {
               {resolvedRole}
             </Text>
 
-            {/*
-              STUB — `Public Profile.dc.html` is its own artboard and its own
-              story; there is no route to send anyone to. Drawn as the design
-              draws it, and inert, rather than wired to a screen that does not
-              exist.
-            */}
-            <View className="border-border mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5 opacity-60">
+            {/* Live since 2026-09-04 — it was drawn and inert for two days,
+                waiting for `app/(app)/public-profile.tsx`. */}
+            <Pressable
+              className="border-border active:bg-secondary mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5"
+              onPress={() => {
+                tapped()
+                router.push('/(app)/public-profile')
+              }}
+              role="button"
+            >
               <Icon as={Eye} size={15} strokeWidth={1.7} className="text-muted-foreground" />
               <Text className="text-body-sm text-foreground font-medium">
                 {t.viewPublicProfile}
               </Text>
-            </View>
+            </Pressable>
           </Card>
 
           {/* ── Підписка ── STUB: no plan concept, no column, no billing. */}

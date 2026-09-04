@@ -102,6 +102,15 @@ function AppStack() {
           a centred title, with the save pinned to the bottom. So does the
           change-password screen it leads to. */}
       <Stack.Screen name="profile" options={{ headerShown: false }} />
+      {/*
+        «Публічний профіль», both readers — the account holder previewing
+        themselves and a person from «Мої контакти». Each draws its own header:
+        a back control labelled for where it came from, a centred title, and a
+        subline under it saying what the reader is looking at. A native header
+        holds none of the three.
+      */}
+      <Stack.Screen name="public-profile" options={{ headerShown: false }} />
+      <Stack.Screen name="contact/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="password" options={{ headerShown: false }} />
       {/*
         The shoot's two screens draw their own headers (2026-08-30), which makes

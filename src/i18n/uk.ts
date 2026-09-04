@@ -516,6 +516,14 @@ export const uk = {
   // US-027 — the shoot's client, and the link that belongs to them. «Клієнт»
   // and «Контакт клієнта» are the prototype's own words for these fields.
   clientSection: 'Клієнт',
+  /* ── «Публічний профіль», from `Public Profile.dc.html` (2026-09-04) ── */
+  publicProfileTitle: 'Публічний профіль',
+  /** Under the title: what the reader is looking at. */
+  publicProfileSelfSubline: 'Так вас бачать інші учасники зйомок',
+  publicProfileOtherSubline: 'Публічні дані учасника зйомки',
+  contactsSection: 'Контакти',
+  /** Why `users.email` is not on a screen called «Публічний профіль». */
+  emailHiddenFromOthers: 'Email та налаштування акаунту приховані від інших.',
   /** «Зйомка з Марією Литвин · 3 години» — the link view's meta line. */
   shootWithTemplate: 'Зйомка з {name}',
   /*

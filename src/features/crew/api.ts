@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase/client'
+import { listContacts, upsertContact } from '../contacts/api'
 
 const BUCKET = 'shoot-media'
 const SIGNED_URL_TTL_SECONDS = 3600
@@ -117,9 +118,14 @@ export async function addCrewMember(
   input: AddCrewMemberInput
 ): Promise<CrewMember | null> {
   const { phone, email } = splitContact(input.contact)
-  // AC-2 — refused before the request. The CHECK constraint would refuse it
-  // too, but a database error is not a message a photographer can act on.
-  if (!phone && !email) return null
+  /*
+    **The AC-2 guard is gone.** It refused a crew member with neither a phone
+    nor an email, ahead of the CHECK constraint that would have refused it too.
+    Both went on 2026-09-03 when the owner made the contact optional (migration
+    `20260903140000`) — but this one was missed that day, so the form offered an
+    optional field and the insert returned `null` for it. The form reported
+    «Не вдалося додати учасника» on a row it was right to accept.
+  */
 
   const { data, error } = await supabase
     .from('crew_members')
@@ -140,6 +146,27 @@ export async function addCrewMember(
     .single()
 
   if (error || !data) return null
+
+  /*
+    Remember them (owner, 2026-09-03). Adding somebody to a shoot puts them in
+    «Мої контакти», which is what keeps the book populated by work rather than
+    by data entry — `ADR-003`'s answer to the cold start it warned about.
+
+    **Awaited but not checked.** The crew member is saved; the address book is a
+    convenience, and a shoot that succeeded must not report failure because
+    remembering the person afterwards did not. `upsertContact` updates a
+    returning contact rather than duplicating them, and never touches their
+    note.
+  */
+  await upsertContact({
+    name: input.name,
+    role: input.role,
+    phone,
+    email,
+    instagram: input.instagram,
+    telegram: input.telegram,
+  })
+
   return toCrewMember(data)
 }
 
@@ -251,7 +278,11 @@ export async function listCrewNamesForShoots(
  * add-crew screen offers instead of retyping someone for the fourth time.
  */
 export type PastCrewMember = {
-  /** Synthetic, from the identity below — these are not rows of their own. */
+  /**
+   * The contact's id, since 2026-09-04. It was synthetic — computed from the
+   * name and contact method, because the list was a dedupe rather than a
+   * table — which is why nothing could link to a contact until now.
+   */
   key: string
   name: string
   role: string
@@ -279,63 +310,27 @@ export function crewIdentity(name: string, phone: string | null, email: string |
 }
 
 /**
- * Everyone on the creator's own past shoots, deduplicated.
+ * «Мої контакти» — now a read of the `contacts` table.
  *
- * **This does not reopen `ADR-003`.** That decision rejected a *searchable crew
- * marketplace* — a two-sided directory of strangers with availability, which
- * "is empty at launch" and "doesn't help anyone". This is neither: it is the
- * creator's own history, single-sided, private to them, self-populating, and
- * useful from their second shoot. It is exactly the argument
- * `20260829100000_clients.sql` used to add `clients` while leaving ADR-003
- * standing — and it leaves it standing here too, because **picking someone
- * still inserts a new `crew_members` row**. A person on three shoots is still
- * three rows; this only saves the typing.
+ * **It deduplicated `crew_members` in memory until 2026-09-04.** That is why
+ * `PastCrewMember.key` was synthetic and why a contact could not be opened: the
+ * list was computed, so there was nothing to link to. Migration
+ * `20260904100000` made it a table and backfilled it from exactly this dedupe,
+ * so nobody's list changed on the way across.
  *
- * No new table and no policy change. `crew_members_via_shoot` already scopes
- * every read to shoots the caller created, so "my past crew" is what this query
- * returns by construction — there is no filter here that could be forgotten
- * (`ADR-014`, CLAUDE.md rule 3), and no way to reach anyone else's crew.
- *
- * Deduplication is by `crewIdentity`, and the most recent row wins — so a
- * corrected phone number replaces an old one rather than appearing twice.
- *
- * The note is **deliberately not selected**. It belongs to the shoot it was
- * written on — «привозить свій набір» on one shoot is not a fact about the
- * person — and `ADR-013` gives every reason to move it around as little as
- * possible.
+ * The shape is unchanged for callers — the add-crew picker and its search read
+ * the same fields — except that `key` is a real id now.
  */
 export async function listPastCrew(): Promise<PastCrewMember[] | null> {
-  const { data, error } = await supabase
-    .from('crew_members')
-    .select('name, role, phone, email, instagram, telegram, created_at')
-    .order('created_at', { ascending: false })
-
-  if (error || !data) return null
-
-  const seen = new Map<string, PastCrewMember>()
-  for (const row of data as {
-    name: string
-    role: string
-    phone: string | null
-    email: string | null
-    instagram: string | null
-    telegram: string | null
-  }[]) {
-    const key = crewIdentity(row.name, row.phone, row.email)
-    // Rows arrive newest first, so the first sighting is the one to keep.
-    if (seen.has(key)) continue
-    seen.set(key, {
-      key,
-      name: row.name,
-      role: row.role,
-      phone: row.phone,
-      email: row.email,
-      instagram: row.instagram,
-      telegram: row.telegram,
-    })
-  }
-
-  // Alphabetical, which is what a list you scan for a name wants — the query's
-  // recency ordering exists only to settle duplicates.
-  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name, 'uk'))
+  const contacts = await listContacts()
+  if (!contacts) return null
+  return contacts.map((contact) => ({
+    key: contact.id,
+    name: contact.name,
+    role: contact.role,
+    phone: contact.phone,
+    email: contact.email,
+    instagram: contact.instagram,
+    telegram: contact.telegram,
+  }))
 }

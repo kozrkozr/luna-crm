@@ -989,6 +989,7 @@ function PersonRow({
   divided?: boolean
 }) {
   const t = useStrings()
+  const router = useRouter()
 
   const contacts: { label: string; value: string }[] = [
     member.phone ? { label: t.phoneField, value: member.phone } : null,
@@ -1070,9 +1071,37 @@ function PersonRow({
             </View>
           ) : null}
 
-          {/* STUB — no participant-profile route exists. Drawn as v3 draws it
-              and inert, rather than wired to a screen that is not there. */}
-          <View className="border-border min-h-11 flex-row items-center gap-2.5 rounded-lg border px-3 opacity-60">
+          {/*
+            Live since 2026-09-04 — inert for two days, waiting for
+            `app/(app)/contact/[id].tsx`.
+
+            **The params are the fallback, not a cache.** A crew member need not
+            have a contact: they may predate the directory's backfill, or their
+            contact may since have been deleted. `contactId` is `'unknown'` in
+            that case, and what this row knows is passed alongside so the screen
+            can render the person rather than an error.
+          */}
+          <Pressable
+            className="border-border active:bg-secondary min-h-11 flex-row items-center gap-2.5 rounded-lg border px-3"
+            onPress={() => {
+              tapped()
+              router.push({
+                pathname: '/(app)/contact/[id]',
+                params: {
+                  // A crew member holds no contact id. The screen resolves one
+                  // by identity from these, exactly as `upsertContact` does.
+                  id: 'by-identity',
+                  name: member.name,
+                  role: member.role,
+                  ...(member.phone ? { phone: member.phone } : {}),
+                  ...(member.email ? { email: member.email } : {}),
+                  ...(member.instagram ? { instagram: member.instagram } : {}),
+                  ...(member.telegram ? { telegram: member.telegram } : {}),
+                },
+              })
+            }}
+            role="button"
+          >
             <Icon as={UserIcon} size={14} strokeWidth={1.8} className="text-muted-foreground" />
             <Text className="text-label text-muted-foreground flex-1">{t.crewProfile}</Text>
             <Icon
@@ -1081,7 +1110,7 @@ function PersonRow({
               strokeWidth={2}
               className="text-muted-foreground/50 shrink-0"
             />
-          </View>
+          </Pressable>
 
           <View className="flex-row items-center gap-2">
             <Pressable
