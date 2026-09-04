@@ -113,9 +113,26 @@ const signed = async (supabase: Supabase, path: string | null): Promise<string |
   }
 }
 
+/** The client, as PostgREST embeds them through `shoots.client_id`. */
+type EmbeddedClient = { name: string; instagram: string | null }
+
 type ShootRow = {
   id: string
   date: string
+  /**
+   * **On the link surface since 2026-09-03** (owner), and the first thing from
+   * `clients` ever to cross to an anonymous reader — `ADR-018`'s Visibility note
+   * recorded that nothing from that table had.
+   *
+   * Both audiences, because both are shown «Зйомка з …»; a crew member is
+   * additionally shown the «Клієнт» section, which is where the handle is read.
+   * `US-007` AC-1 enumerates what a crew member sees and does not list the
+   * client, so **it needs amending**.
+   *
+   * PostgREST returns an embedded row as an object or an array depending on how
+   * it resolves the relationship, hence both shapes.
+   */
+  clients: EmbeddedClient | EmbeddedClient[] | null
   /** `US-030`. Selected for both audiences since 2026-08-31. */
   start_time: string | null
   end_time: string | null
@@ -128,6 +145,15 @@ type ShootRow = {
    * `clientPayload` never asks for this column.
    */
   notes: string | null
+  /**
+   * `20260903120000`. **On the link surface since 2026-09-03** (owner): the
+   * artboard puts the venue above the address, and a reader who has never been
+   * there needs the name more than the creator does.
+   *
+   * Both audiences, like `location_address` — it is a venue's name, not a note
+   * and not a contact, so `ADR-013`'s split does not divide on it.
+   */
+  location_name: string | null
   location_address: string | null
   location_note: string | null
   location_attachment: string | null
@@ -236,6 +262,17 @@ async function organizer(supabase: Supabase, creatorId: string) {
  * makes that true. **Adding `notes` to `clientPayload`'s select is the single
  * edit that would break `ADR-013` and CLAUDE.md rule 2.**
  */
+/** The embedded client, whichever shape PostgREST handed back. */
+function embeddedClient(row: ShootRow): EmbeddedClient | null {
+  if (!row.clients) return null
+  return Array.isArray(row.clients) ? (row.clients[0] ?? null) : row.clients
+}
+
+/** `09:00:00` → `09:00`. Postgres's precision is neither the app's nor the design's. */
+function trimTime(value: string | null): string | null {
+  return value ? value.slice(0, 5) : null
+}
+
 async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRow) {
   const { data: shoot } = await supabase
     .from('shoots')
@@ -253,7 +290,7 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
       been able to show a time.
     */
     .select(
-      'id, date, start_time, end_time, creator_id, location_address, location_note, location_attachment, notes'
+      'id, date, start_time, end_time, creator_id, location_name, location_address, location_note, location_attachment, notes, clients(name, instagram)'
     )
     .eq('id', shootId)
     .is('deleted_at', null)
@@ -264,7 +301,7 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
 
   const { data: references } = await supabase
     .from('shoot_references')
-    .select('id, kind, url_or_path')
+    .select('id, kind, url_or_path, category')
     .eq('shoot_id', shootId)
     // ADR-014, by hand again: `shoot_references.removed_at` (migration
     // 20260830140000) is filtered by the table's policy for the app, and this
@@ -291,8 +328,14 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
     crewMemberId: viewer.id,
     shoot: {
       date: row.date,
-      startTime: row.start_time,
-      endTime: row.end_time,
+      // Postgres hands back `09:00:00`; the app and the design both speak
+      // HH:MM. Trimmed here, as `toShoot` does for the creator's side — this
+      // was the one reader that never trimmed, so every link view has shown
+      // «08:00:00 – 11:00:00» since times reached this payload.
+      startTime: trimTime(row.start_time),
+      endTime: trimTime(row.end_time),
+      client: embeddedClient(row),
+      locationName: row.location_name,
       locationAddress: row.location_address,
       locationNote: row.location_note,
       locationAttachmentUrl: await signed(supabase, row.location_attachment),
@@ -312,6 +355,10 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
       (references ?? []).map(async (reference) => ({
         id: reference.id,
         kind: reference.kind,
+        // `20260830120000`. On the link surface since 2026-09-03 so the
+        // grid can group by it, as the artboard draws. A label the
+        // creator typed — neither a note nor a contact.
+        category: reference.category,
         // A link keeps its URL; an image becomes a signed one. The storage path
         // never leaves the server — it is not useful to a browser and it names
         // the shoot.
@@ -425,7 +472,7 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       `ADR-013` and CLAUDE.md rule 2.
     */
     .select(
-      'id, date, start_time, end_time, creator_id, location_address, location_note, location_attachment, raw_files_url, finished_photos_url'
+      'id, date, start_time, end_time, creator_id, location_name, location_address, location_note, location_attachment, raw_files_url, finished_photos_url, clients(name, instagram)'
     )
     .eq('id', shootId)
     .is('deleted_at', null)
@@ -436,7 +483,7 @@ async function clientPayload(supabase: Supabase, shootId: string) {
 
   const { data: references } = await supabase
     .from('shoot_references')
-    .select('id, kind, url_or_path')
+    .select('id, kind, url_or_path, category')
     .eq('shoot_id', shootId)
     // ADR-014, by hand again: `shoot_references.removed_at` (migration
     // 20260830140000) is filtered by the table's policy for the app, and this
@@ -458,8 +505,37 @@ async function clientPayload(supabase: Supabase, shootId: string) {
     ok: true,
     audience: 'client' as const,
     shootId: row.id,
+    /*
+      **The organizer reaches a client from 2026-09-03** (owner), where the card
+      was crew-only. `ClientLinkPayload` has declared the field all along and
+      this builder never set it — the same gap the times had, and found the same
+      way: the type described a payload assembled by hand in another process.
+
+      It is the first thing from `users` a client receives. `ADR-018`'s note that
+      "the gateway sends a client nothing from `users`" no longer holds, and
+      `socialSeenByCrew` on the profile screen — «Команда бачить ці контакти в
+      деталях зйомки» — is now **false**: the client sees them too. That copy
+      needs the owner.
+
+      A client reaching their own photographer is the most ordinary thing in
+      this product, and the shoot is theirs; what is widened is the handles
+      rather than the fact of contact.
+    */
+    organizer: await organizer(supabase, row.creator_id),
     shoot: {
       date: row.date,
+      /*
+        **These were selected and never mapped.** `ClientLinkPayload` has
+        declared them since 2026-08-31 and the SELECT has always fetched them,
+        but the object built here skipped both — so a client's link has carried
+        `undefined` where its times should be, while TypeScript read the
+        declaration and believed otherwise. `US-030` gives a client the times
+        exactly as it gives them to a crew member.
+      */
+      startTime: trimTime(row.start_time),
+      endTime: trimTime(row.end_time),
+      client: embeddedClient(row),
+      locationName: row.location_name,
       locationAddress: row.location_address,
       // US-018 AC-2 shows the location note "wherever the location is
       // displayed", and US-010 gives the client the location. A client finding
@@ -478,6 +554,10 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       (references ?? []).map(async (reference) => ({
         id: reference.id,
         kind: reference.kind,
+        // `20260830120000`. On the link surface since 2026-09-03 so the
+        // grid can group by it, as the artboard draws. A label the
+        // creator typed — neither a note nor a contact.
+        category: reference.category,
         url:
           reference.kind === 'image'
             ? await signed(supabase, reference.url_or_path)
@@ -545,7 +625,7 @@ Deno.serve(async (req) => {
   // for it (US-019 AC-1) through exactly this check.
   const { data: shoot } = await supabase
     .from('shoots')
-    .select('id, date, location_address, location_note, location_attachment')
+    .select('id, date, location_name, location_address, location_note, location_attachment')
     .eq('id', link.shoot_id)
     .is('deleted_at', null)
     .maybeSingle()

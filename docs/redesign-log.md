@@ -536,6 +536,425 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+## Link preview copy, second pass (owner, 2026-09-03)
+
+`app/s/[token]/index.tsx`, `src/components/ResponsePill.tsx`, both dictionaries.
+
+A copy-level diff against `Shoot Link Preview.dc.html` rather than a rebuild —
+the screen was aligned to the same artboard on 2026-08-31 and its structure still
+matches. Five differences were real; two more were found and deliberately not
+built.
+
+| | Artboard | Was |
+|---|---|---|
+| The reader's own unanswered row | «Ваша черга» | «Очікує», like everyone's |
+| Anyone else's unanswered row | no badge at all | «Очікує» |
+| Declined | «Відмова» | «Відмовлено» |
+| ~~The reader's own role~~ | «Гафер · це ви» | **Reverted same day** (owner): the «ВИ» badge beside the name already says whose row it is, and saying it twice on one row is noise. `itsYouSuffix` deleted |
+| Crew heading | «3 · 2 підтвердили» (crew) / «3 людини» (client) | a bare `3` for both |
+
+### Two of those were a day old, and mine
+
+`responseDeclined` became «Відмовлено» earlier today, and `ResponsePill` learned
+to hide the pending chip. **`ResponsePill`'s only caller was the detail screen**,
+and the link view draws its own badges from the same three keys — so the two
+screens spent the day disagreeing about the declined word and about whether an
+unanswered row shows anything.
+
+The link view uses `ResponsePill` now. One control decides the shape, the tick
+and which states earn a chip, and the pair cannot drift again. `showPending` is
+the one thing the link view needs beyond it: the reader's own row, and only that
+row, carries a chip while unanswered.
+
+«Відмова» replaces «Відмовлено» on both, which reverses this morning's choice —
+both avoid the gendered «Відмовився» that started it, and the artboard settles
+which.
+
+### The location block is an address and one copy icon
+
+Owner, 2026-09-03, on seeing it deployed. It was two full-width buttons —
+«Маршрут» and «Копіювати адресу» — where the artboard draws the address with a
+single 44pt copy icon beside it.
+
+**«Маршрут» worked here.** On the creator's screen the same button was an inert
+stub and deleting it lost nothing (S-4); on the link surface it opened Google
+Maps on the address. So an anonymous reader — the audience least likely to know
+where they are going — loses the one-tap route. The artboard's own `onRoute`
+survives in its logic with no markup calling it, the same dead-value pattern as
+the missing save button on `Edit Profile`, so this is the drawing dropping a
+control rather than a considered removal. **Restoring it is four lines.**
+
+`uk.route` had one consumer, this button, and is deleted with it.
+
+**The artboard also puts a venue NAME above the address**, and there is nothing
+to render: `location_name` is deliberately not on the link surface (migration
+`20260903120000`). Unchanged.
+
+### Two gateway bugs the deployed link surfaced
+
+Both found by looking at the real thing, and neither was a design question.
+
+- **«08:00:00 – 11:00:00».** The gateway handed Postgres's `time` through
+  untouched. `toShoot` trims it to `HH:MM` for the creator's side and always
+  has; the gateway was the one reader that never did, so **every link view has
+  shown seconds** since times reached that payload on 2026-08-31. Trimmed at the
+  source, in a `trimTime` helper both audiences use, rather than in the screen —
+  no reader should have to know the column's precision.
+- **A client's link had no times at all.** `ClientLinkPayload` has declared
+  `startTime` / `endTime` since 2026-08-31 and the client SELECT has always
+  fetched the columns, but the object built from that row **skipped both**. The
+  declaration said `string | null`, the runtime value was `undefined`, and
+  TypeScript could not see the gap because the payload crosses the network as
+  JSON. `US-030` gives a client the times exactly as it gives them to crew.
+
+The second is the more instructive one: a type that describes a payload built by
+hand, in another process, is a statement of intent rather than a check. The
+first `US-030` pass added the field to the type and to one of the two builders.
+
+### The date line reads «Субота, 19 вересня 2026»
+
+Weekday first, and a year — `formatWeekdayDayMonthYear`, beside the existing
+`formatDayMonthWeekday` («19 вересня, пʼятниця») rather than replacing it. They
+answer different questions: a creator knows roughly when their own shoot is and
+wants the date; someone opening a link may be reading weeks ahead, and the day
+of the week is what decides whether they can come. The weekday keeps its capital
+because it opens the line here.
+
+### The organizer card reaches the client link
+
+Owner, 2026-09-03. It rendered for crew only — not because the screen gated it
+(`{payload.organizer ? … }` never checked the audience) but because
+**`clientPayload` never set the field**. `ClientLinkPayload` has declared
+`organizer: LinkOrganizer | null` all along. That is the third instance tonight
+of the same shape: a payload type describing an object assembled by hand in
+another process, where a missing key reads as `null` and nothing complains.
+
+It is **the first thing from `users` a client receives** — name, role, phone,
+Instagram and Telegram. `ADR-018`'s note that the gateway "sends a client
+nothing from `users`" no longer holds.
+
+**And it makes a label on the profile screen false.** `socialSeenByCrew` reads
+«Команда бачить ці контакти в деталях зйомки»; a client sees them now too, so
+the sentence under-reports its audience — the wrong direction for a visibility
+label to be wrong in. **The copy has not been changed**, because the replacement
+is a decision rather than a correction: «Команда й клієнт бачать…» promises
+something different from what the photographer agreed to when they typed the
+handle. **Needs the owner.** The comment at the field says so in place.
+
+A client reaching their own photographer is the most ordinary thing in this
+product, and the shoot is theirs; what widened is the handles rather than the
+fact of contact.
+
+### `clients` reaches the link surface for the first time
+
+Owner, 2026-09-03, asked for the artboard's «Зйомка з Марією Литвин · 3 години»
+on **both** audiences, and for the «Клієнт» section the artboard puts under
+«Додати в календар».
+
+**`ADR-018`'s Visibility note recorded that nothing from `clients` had ever
+crossed to an anonymous reader.** That is no longer true. Both payloads now
+carry `client: { name, instagram }`, joined through `shoots.client_id`.
+
+- **The name** goes to both, because both are shown the meta line.
+- **The section** is crew only, as the artboard gates it (`showClient: isTeam`)
+  — a client has no use for a card about themselves — and it is where the handle
+  is read.
+- **`US-007` AC-1 needs amending.** It enumerates what a crew member sees — the
+  date, the location, the references, the crew list — and the client is not on
+  that list. The story is narrower than the screen now.
+- `US-026` is untouched: a client's payload still has no `notes` key, and the
+  handle a client receives is their own.
+
+The artboard is inconsistent here and it is worth knowing which half was
+followed: its `shootTitle` is gated `isTeam`, while `shootMeta` carries the
+client's name unconditionally. The unconditional one was taken, on the owner's
+word.
+
+### «3 години», spelled out
+
+The link view writes the duration in full, declined — «1 година», «2 години»,
+«5 годин» — where the creator's screens keep `formatDuration`'s «3 год». The
+reader here does not use this app daily and the line has the width.
+
+`durationWords` is local to the screen rather than in `date.ts`: the pluraliser
+lives in `features/shoots/home.ts`, and `home.ts` already imports `date.ts`, so
+putting it there would close a cycle.
+
+### «Команда», and references grouped by category
+
+Two more from looking at the deployed page (owner, 2026-09-03).
+
+**The crew section is «Команда»**, where it read «Хто на зйомці». Its own key
+still — the creator's «Команда» and this one agree today and would drift the
+moment either is reworded (`accessDetailsLabel`'s rule).
+
+**References group by category**, as the artboard draws: a label and a count
+(«Світло · 3 фото») over a row of 58pt tiles, replacing one flat grid of 96pt
+ones. `reference.category` reaches the link surface for the first time — a label
+the creator typed, neither a note nor a contact, so `ADR-013`'s split does not
+divide on it.
+
+**Most shoots will see no grouping at all, and that is correct.** The column is
+nullable and `20260830120000` deliberately did not backfill it — "assigning them
+a category, even a plausible one, would be writing data" — so every reference
+created before that migration is uncategorised. Those render as a headingless
+row, which is the flat grid this replaced. **Naming that group would mean
+inventing a word for "the ones nobody sorted"**, so it has no heading, and it
+sorts last: a heading followed by headingless tiles reads as a mistake, where
+tiles followed by headed groups reads as a list.
+
+### The Instagram mark is drawn now
+
+`src/components/ui/instagram-icon.tsx`. lucide ships no `instagram` glyph at
+this version, so every field collecting a handle stood in `at-sign` — «@» — and
+that reads as "a handle" rather than as Instagram, with Telegram's paper plane
+beside it looking like the only branded one. The artboards draw the real mark as
+inline SVG; `react-native-svg` is a direct dependency, so it is drawn.
+
+**Shaped as a lucide icon rather than beside one.** It takes `LucideProps` and
+forwards a ref, so it goes through `Icon` like any other and inherits the
+`cssInterop` that compiles `className` into `style` — which is what lets
+`react-native-svg` resolve `currentColor`. Standing it next to `Icon` would have
+meant a second interop registration and two ways to colour an icon.
+
+Applied everywhere the stand-in was: the link view's client section, the
+profile's Instagram row, and `PersonSheet` (whose component is dead but whose
+glyph would have been wrong the day it came back).
+
+### How this was missed, which matters more than the button
+
+Tonight's copy pass diffed **one way**: every string the artboard draws, checked
+against the dictionary. That finds copy we lack. It cannot find controls we draw
+that the artboard does not — «Копіювати адресу» was in both, so the row passed,
+and «Маршрут» was never looked at because nothing in the artboard mentions it.
+
+The reverse pass — ours against the artboard — has not been run on this screen.
+Anything else this screen renders that the drawing dropped is still there.
+
+### Not built, and why
+
+- **«Нагадаємо за день до зйомки»** — the confirmed card's subtitle. It promises
+  a reminder, and **nothing sends one**: there is no notification mechanism in
+  this product, recorded three times now (H-5, M-3, `app/(app)/index.tsx:82`).
+  This is the app making a commitment to someone outside it that it cannot keep,
+  which is worse than a missing sentence.
+- **«Дарина отримала відповідь»** — gendered past tense against an organiser
+  whose gender nothing holds. **L-2**, already settled with neutral wording.
+
+L-1 («Діє до…»), L-3 («чекає відповідь до…») and L-4 («KULT Studio») are all
+still in the artboard and still undisplayable — no expiry column by design
+(`ADR-014`), no deadline anywhere, no studio column.
+
+### `ADR-013` is untouched
+
+Nothing here changes what the gateway sends. The badges stay behind
+`isCrew && 'response' in member`, the notes block behind `isCrew`, and the new
+crew heading uses the confirmation count for a crew reader and a plain people
+count for a client — the same `US-026` line the badges follow (L-5). The
+reference grouping the artboard draws is still **not built**: it would need
+`category` in the anonymous payload, which is a widening and the owner's call.
+
+---
+
+## Removing a crew member confirms again (owner, 2026-09-03)
+
+`app/(app)/shoot/[id]/index.tsx`.
+
+**`US-022` AC-2 is marked *required*** — "an accidental tap must not silently cut
+someone out", and *nothing is removed* until the creator confirms. The «Команда»
+tab removed on a single tap and offered four seconds of undo instead, which
+removes first and asks after. The comment on the button asserted that AC-2
+accepted the trade. It does not.
+
+`confirmRemoveCrew` («Видалити цю людину зі зйомки?») already existed, so nothing
+was invented; it goes through `useDestructiveConfirm`, the same hook the shoot's
+own cancellation and the reference removal use — a real iOS alert on device.
+
+**`Shoot Detail v3` draws no confirmation here**, so this is a deliberate
+departure from the artboard in favour of the story.
+
+### The undo toast stays, and is now belt-and-braces
+
+AC-2's Out of scope calls re-adding someone "just `US-005` again, **no special
+undo flow**", so the toast was never what the story asked for. It is kept behind
+the confirmation because losing a colleague from a shoot is worth two chances —
+not because AC-2 wants it. Worth knowing there is still a four-second window
+where the row is hidden and the row is not yet deleted.
+
+### A test that has been failing, and now should not
+
+`us022-check.mjs` asserts «AC-2 removing asks for confirmation» and drives the
+dialog's «Скасувати» and «Видалити». It has been failing since the confirmation
+was dropped. It addresses the trigger as `[role=button][aria-label="Видалити"]`,
+which the rebuilt row did not set — the button carried its word as text only —
+so `accessibilityLabel` is set explicitly now.
+
+---
+
+## One role list, from `Edit Profile.dc.html` (owner, 2026-09-03)
+
+`src/i18n/uk.ts` and `app/(app)/shoot/[id]/crew/add.tsx`.
+
+`ROLES_UK` is the artboard's list verbatim — **nine**, where it was five:
+
+    Фотограф · Відеограф · Стиліст · Hair стиліст · Візажист
+    Гафер · Модель · Асистент · Продюсер
+
+Every pass until now had kept the five, on the grounds that these are stored
+values the glossary confirms rather than labels the artboards get to set (C-4's
+sibling, logged three times). The owner has now taken the artboard's list, so
+that reasoning is retired.
+
+### «Менеджер зйомок» is gone, and it was glossary-confirmed
+
+`US-001` defers the list to "the glossary's confirmed roles as the starting
+list", and the glossary confirms makeup artist, stylist, gaffer and **shoot
+manager**. The artboard has no equivalent, so taking it verbatim drops one.
+
+- **Existing rows keep it.** `users.role` and `crew_members.role` are `text`,
+  and every screen renders what it finds. Nobody's stored role changed.
+- **It resolves to «Інша роль» where an unknown value is handled** — the profile
+  opens the chip set on «Інша роль» with the stored text beside it, and so does
+  registration. The value survives a round trip through either form.
+- **Nobody can choose it again**, and a saved contact carrying it re-adds fine,
+  because picking from «Мої контакти» passes the stored role straight to
+  `addCrewMember` without touching the chips.
+
+**`US-001` and the glossary need amending, or the role needs adding back.**
+
+### «Інша роль» is on all three forms now
+
+Registration and the profile have had it since 2026-08-31. The **new-crew form
+was the one place a role had to come from the list** — which meant a crew member
+could be given a job the person filling the form could not name. It now has the
+same escape: the chip opens a free-text field, `resolvedRole` writes whatever
+was typed, and the CTA stays dim until something resolves, so the button cannot
+look ready and then refuse.
+
+No test asserts «Менеджер зйомок»; the fixtures use Фотограф, Стиліст, Гафер and
+Візажист, all of which survive.
+
+---
+
+## One form for creating and editing a shoot (owner, 2026-09-03)
+
+`src/features/shoots/ShootForm.tsx` is new; `app/(app)/new-shoot.tsx` and
+`app/(app)/shoot/[id]/edit.tsx` are wrappers around it. 1409 lines became 652.
+
+The owner asked for the create form to serve both, with **the edit form's fields
+replaced wholesale**: "reuse New Shoot for Edit Shoot, dont save nothing from
+Edit Shoot form, all fields exactly as on New Shoot Form."
+
+**A concern was raised first and overruled**, which is the right record to keep.
+The objection was that the two screens differ in seven places — the client
+control, `US-029`'s phone-match dialog, status, files, attachment, past dates
+and which API saves — and that one component gating all of them is what
+`MonthPicker`'s own docblock warns about: "One component doing both would be a
+pile of flags." Taking the fields as well as the frame is what made it tractable:
+four of those seven differences went away with the sections that carried them,
+and `mode` now decides four things — what loads, whether the past is pickable,
+which API the save calls, and two words.
+
+### Two features have no way in any more
+
+Both were checked before deleting and both are deliberate (owner, 2026-09-03,
+asked explicitly and answered "drop both — exactly as asked").
+
+| Feature | State |
+|---|---|
+| **`US-020` — a shoot's status** | **Cannot be changed anywhere.** `setShootStatus` has no caller. The value is still *displayed* — `StatusPill` on the detail screen and in the list — so a shoot shows a status nobody can move |
+| **`US-018` AC-2 — the location attachment** | **Cannot be set.** `uploadLocationAttachment` has no caller. Rows that already have one still render everywhere, including on the link surface; nothing can add another |
+| `US-024` / `US-025` — the file links | **Lost nothing.** They are edited in place on the «Матеріали» tab (S-25, earlier today) |
+
+Both stories need amending, or the two controls need re-homing — status onto the
+«Деталі» tab where it used to be a pill, and the attachment onto «Матеріали»
+where media already lives. Neither is done.
+
+### A third thing went quietly, and is worth a decision
+
+**The edit form no longer warns about unsaved changes.** It had dirty tracking
+and a discard dialog; the create form never did, and "all fields exactly as on
+New Shoot Form" took it. Tapping «Скасувати» now discards silently.
+
+That is a worse trade on edit than it would be on create: a create form
+abandoned loses something you never had, an edit form abandoned loses a change
+to something real, and one field among nine can be edited without the loss being
+obvious. `discardChangesTitle`, `discardChangesBody`, `keepEditing` and
+`discardChanges` are deleted with it. Restoring the guard is ~20 lines and does
+not reintroduce a field.
+
+### «Клієнт не бачить» is a sentence in a box now, on both forms
+
+Owner, 2026-09-03: make the shoot's notes field match the crew form's. It was an
+outline `Badge` beside the «Нотатки» heading — a tag shape doing a sentence's
+job — and is now the eye-and-text box under the field, which is what
+`Shoot Detail v3` draws on the crew form.
+
+**`VisibilityNote` already existed for exactly this** (`src/components/Visibility.tsx`)
+and had **no callers**; the crew form was carrying a hand-rolled copy of it from
+earlier today. Boxing the component and pointing both screens at it removes the
+duplicate and gives a dead component its job back. `Badge`'s import went with it.
+
+**The wording is unchanged, deliberately.** The crew form's box says who *does*
+see the note as well as who does not; the shoot's note has a different audience —
+crew receive it, where a crew member's own note reaches nobody — so the same
+sentence would be wrong here and a new one is a copy decision. «Клієнт не бачить»
+stays as it was, and is still true by construction: `shoots.notes` is selected
+for `crewPayload` and never for `clientPayload`.
+
+### The client name is a plain input — `US-029`'s search is gone
+
+Owner, 2026-09-03. «Ім'я клієнта» was `ClientField`: a debounced search over
+existing clients, a floating suggestion list through the `PortalHost`, and a row
+that filled the form with the picked client. It is a plain `Input` now.
+
+**What it costs.** `ADR-018` made the client a row so that a client has an
+identity across shoots. The search was how a second shoot for «Марія Литвин»
+attached to the same row; without it, **a name typed twice is two client rows**,
+and the client's history splits silently. `US-029` AC-1 through AC-3 — search,
+no-match, and picking a client to fill the form — describe a control that no
+longer exists and need amending.
+
+**The phone match is untouched**, and is now the only thing joining a shoot to
+an existing client: AC-4/AC-5's «цей номер належить…» dialog still runs on the
+phone field, and accepting it links the shoot and fills the name. Worth knowing
+that half of `US-029` survives, because it is easy to assume the whole story went
+with the search.
+
+**Editing the name still moves the shoot rather than renaming the client.**
+`submit` keeps the linked client only while the typed name still matches it —
+the edit screen's rule before the merge, unchanged, and the reason the loader
+still fetches the real client row. What is new is that creating a shoot now
+takes the create-a-client path every time.
+
+`ClientField` and `searchClientsByName` have no callers. Both are kept rather
+than deleted: the edit screen's own search was "parked for a discussion, not
+deleted" on 2026-08-31, and this is the same feature going the same way.
+
+### A mislabel this surfaced
+
+`app/(app)/shoot/[id]/index.tsx` labels the **play** button for an existing
+location video with `t.attachVideo` — «**+ Відео**». A plus on a control that
+opens a video was always wrong; it is worse now that nothing can add one, since
+the label promises exactly the thing that no longer exists. It predates this
+change and is **not fixed**: the right word is a copy decision. `attachImage`
+went with its button; `attachVideo` survives only on this mislabelled control.
+
+### Also now dead
+
+`src/components/DateField.tsx` has no caller — the range grid replaced its last
+use this morning. Kept as a primitive rather than deleted, the same call
+`ui/progress.tsx` got (H-18).
+
+### Verified
+
+`tsc --noEmit` clean; `expo export -p web` builds. **Not run:** the acceptance
+suite, and no screen was exercised — `us030-check.mjs` drives `#date`,
+`#start-time` and `#end-time`, ids that have not existed since `4a8d8bf`, so it
+was already failing before this.
+
+---
+
 ## «Новий контакт» aligned with `Shoot Detail v3.dc.html` (owner, 2026-09-03)
 
 `app/(app)/shoot/[id]/crew/add.tsx` and both dictionaries.
@@ -672,6 +1091,31 @@ still a feature that does not exist (S-5).
 | S-23 | «Скасувати зйомку» on the edit screen | **Moved to the detail screen**, where v3 puts it beside «Редагувати зйомку». v3's edit screen carries no destructive action at all, which is the better arrangement anyway: it used to sit one divider below «Зберегти», inside the form for editing the shoot you were cancelling |
 | S-24 | Reference tiles | **A three-column grid of square tiles**, where this was a wrapping row of fixed 84pt ones. A tile is ~118pt on a 402pt frame and the row always divides evenly. `ReferenceGrid` is shared, so `shoot/[id]/references.tsx` follows |
 
+### The client's link, on the «Деталі» tab
+
+`Shoot Detail v3.dc.html` gained a «Запрошення на зйомку» row after this screen
+was built against it (owner, 2026-09-03). It sits at the foot of the shoot card,
+inside `showPrivate`, under the client's contact rows — a full-width centred
+control with a link glyph.
+
+Built there. It is `US-027`'s share reached from the client rather than from a
+menu, which makes "copy this person's link" one gesture wherever the person is
+on screen: the «Команда» tab already gives each crew member the same control.
+`clientLinkToken` needed nothing — the retired `PersonSheet` used it, so no new
+token path exists.
+
+**Labelled «Запрошення на зйомку»** — the artboard's word, applied to the crew
+rows in the same change (owner, 2026-09-03). One key, `copyPersonLink`, so the
+two cannot diverge.
+
+**S-26 is withdrawn, and the reasoning behind it was weak.** It argued the
+glossary confirms «посилання» for *link* and so the control had to say it. The
+glossary rule forbids the loanword «лінк» as a **synonym** for посилання;
+«запрошення» is not a synonym for link at all — it names the thing being sent,
+which happens to contain one. `AccessLink`'s vocabulary is untouched:
+`copyLinkTitle` («Скопіювати посилання») is still the crew row's accessibility
+label, and the entity is still a *посилання* wherever it is discussed.
+
 ### `US-019` AC-2's confirmation did not exist, and now does
 
 The ⋯ menu's «Скасувати зйомку» called `deleteShoot` **on a single tap**. Its own
@@ -764,7 +1208,7 @@ be an acceptance regression.
 |---|---|---|
 | S-4 | The «Деталі» block is a sentence with the door code and the guard's number **in bold** | Unchanged. `location_note` is one free-text column and is where a creator writes exactly that sentence, so it renders unparsed. Splitting it into `code` and `security` is a migration and two form fields |
 | S-25 | File rows edit their link **inline** — «Копіювати», a pencil, then an input with «Готово» / «Скасувати» | ~~Not built.~~ **Built** (owner, 2026-09-03) — see below |
-| S-26 | «Запрошення на зйомку» on the expanded row | Kept as **«Посилання на зйомку»**. An `AccessLink` is a *посилання* — the confirmed glossary term (2026-08-25, CLAUDE.md rule 4) — and the wording was deliberated once already on 2026-08-31. «Запрошення» reframes the artifact rather than translating it |
+| ~~S-26~~ | «Запрошення на зйомку» on the expanded row | ~~Kept as «Посилання на зйомку».~~ **Withdrawn 2026-09-03** — the artboard's word is used on the crew rows and the client's row alike. See «The client's link, on the «Деталі» tab» for why the glossary objection did not hold |
 | S-27 | «Копіювати адресу» is not drawn | ~~Kept.~~ **Removed** (owner, 2026-09-03). It was kept on the argument that it worked and an uncopyable address is worse than one extra control; the owner overruled it, so the location card now has no buttons at all, exactly as v3 draws it. The address is still copyable where a reader without the app needs it — the link view draws its own «Копіювати адресу» (`uk.copyAddress`), untouched |
 
 ### Inline link editing, and the one-column write it needed

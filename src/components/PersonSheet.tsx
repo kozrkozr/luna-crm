@@ -1,8 +1,8 @@
 import { Pressable, View } from 'react-native'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
-import AtSign from 'lucide-react-native/icons/at-sign'
 import Send from 'lucide-react-native/icons/send'
 import { Icon } from './ui/icon'
+import { InstagramIcon } from './ui/instagram-icon'
 import { Avatar } from './Avatar'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -144,7 +144,7 @@ export function PersonSheet({
               >
                 {messageTarget ? (
                   <Icon
-                    as={messageTarget.kind === 'telegram' ? Send : AtSign}
+                    as={messageTarget.kind === 'telegram' ? Send : InstagramIcon}
                     size={15}
                     strokeWidth={2}
                   />

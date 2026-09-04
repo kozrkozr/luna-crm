@@ -8,9 +8,6 @@ import * as ImagePicker from 'expo-image-picker'
 import type { LucideIcon } from 'lucide-react-native'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Eye from 'lucide-react-native/icons/eye'
-// lucide ships no `instagram` glyph at this version; «@» matches the field's
-// own «@nickname» placeholder, and pairs with Telegram's paper plane.
-import AtSign from 'lucide-react-native/icons/at-sign'
 import Lock from 'lucide-react-native/icons/lock'
 import Mail from 'lucide-react-native/icons/mail'
 import Pencil from 'lucide-react-native/icons/pencil'
@@ -20,6 +17,7 @@ import User from 'lucide-react-native/icons/user'
 import { Button } from '../../src/components/ui/button'
 import { Card } from '../../src/components/ui/card'
 import { Icon } from '../../src/components/ui/icon'
+import { InstagramIcon } from '../../src/components/ui/instagram-icon'
 import { Input } from '../../src/components/ui/input'
 import { Sheet } from '../../src/components/ui/sheet'
 import { Switch } from '../../src/components/ui/switch'
@@ -534,7 +532,7 @@ export default function ProfileScreen() {
             <SectionLabel label={t.socialSection} />
             <Card variant="flat" className="gap-0 p-0">
               <ProfileRow
-                icon={AtSign}
+                icon={InstagramIcon}
                 label={t.instagramLabel}
                 value={draft.instagram}
                 onChangeText={(value) => set('instagram', value)}
@@ -556,8 +554,18 @@ export default function ProfileScreen() {
             {/*
               Kept, though the second pass drops it: it is the only place the UI
               says who sees these handles, which is an ADR-013 fact rather than
-              decoration. True as built — the gateway sends crew the shoot's
-              crew list with contacts, and sends a client nothing from `users`.
+              decoration.
+
+              **The sentence is now wrong and the copy has not been changed.**
+              «Команда бачить ці контакти» was true until 2026-09-03, when the
+              organizer card reached the client link (owner) — a client receives
+              the same name, role, phone and handles a crew member does. Saying
+              «Команда» to the photographer under-reports who sees them, which is
+              the wrong direction for a visibility label to be wrong in.
+
+              Not reworded here because the replacement is a copy decision:
+              «Команда й клієнт бачать…» reads differently from the promise this
+              made. **Needs the owner** — logged in docs/redesign-log.md.
             */}
             <Text className="text-label text-muted-foreground px-0.5">{t.socialSeenByCrew}</Text>
           </View>

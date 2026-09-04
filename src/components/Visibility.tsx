@@ -53,21 +53,33 @@ export function OwnerOnlyTag({ label }: { label: string }) {
 }
 
 /**
- * «Бачить лише команда, клієнт не бачить» — a sentence, not a chip.
+ * Who can read the field above — a sentence in a quiet box, not a chip.
  *
- * Sits under a heading to explain a section's audience.
+ * **Boxed since 2026-09-03**, and it has callers again. `Shoot Detail v3`'s
+ * crew form draws this as `7px 9px` on `#18181b` inside `#27272a`, and the same
+ * treatment now carries «Клієнт не бачить» under the shoot's notes — where that
+ * was an outline `Badge` sitting beside the heading, saying the same thing in a
+ * shape that reads as a tag rather than as an explanation.
+ *
+ * It had none between the shoot-detail rebuild and now, which is why the
+ * boxed version could replace the bare one without a second look.
+ *
+ * `items-start`, not centred: two lines of text should begin level with the
+ * eye rather than straddle it.
  */
 export function VisibilityNote({ label }: { label: string }) {
   return (
-    <View className="flex-row items-center gap-2.5">
+    <View className="bg-secondary border-border flex-row items-start gap-[7px] rounded-md border px-2.5 py-[7px]">
       {/*
         The frame's 13px stroked eye (node 1:26), not the 👁 emoji this drew. The
         note above about lucide not being wired through cssInterop is out of
         date: `Icon` does exactly that, and an emoji could never take the muted
         tone of the sentence beside it.
       */}
-      <Icon as={Eye} size={13} strokeWidth={1.7} className="text-muted-foreground" />
-      <Text className="text-label text-muted-foreground flex-1">{label}</Text>
+      <View className="mt-px shrink-0">
+        <Icon as={Eye} size={13} strokeWidth={1.7} className="text-muted-foreground" />
+      </View>
+      <Text className="text-caption text-muted-foreground flex-1 leading-4">{label}</Text>
     </View>
   )
 }

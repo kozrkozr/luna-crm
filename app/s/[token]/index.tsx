@@ -5,6 +5,7 @@ import * as Clipboard from 'expo-clipboard'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import CalendarIcon from 'lucide-react-native/icons/calendar'
 import Check from 'lucide-react-native/icons/check'
+import Copy from 'lucide-react-native/icons/copy'
 import Lock from 'lucide-react-native/icons/lock'
 import X from 'lucide-react-native/icons/x'
 import { Avatar } from '../../../src/components/Avatar'
@@ -16,6 +17,8 @@ import { Sheet } from '../../../src/components/ui/sheet'
 import { Text } from '../../../src/components/ui/text'
 import { Toast } from '../../../src/components/Toast'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
+import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
+import { ResponsePill } from '../../../src/components/ResponsePill'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { uk } from '../../../src/i18n/uk'
 import { openExternalUrl } from '../../../src/lib/openExternalUrl'
@@ -24,7 +27,7 @@ import {
   formatDuration,
   formatTimeRange,
 } from '../../../src/features/shoots/date'
-import { daysUntil, distanceLabel } from '../../../src/features/shoots/home'
+import { daysUntil, distanceLabel, pluralUk } from '../../../src/features/shoots/home'
 import {
   calendarEvent,
   googleCalendarUrl,
@@ -121,10 +124,18 @@ export default function LinkView() {
 
   const event = calendarEvent(payload, `${uk.shootFor} · ${shoot.locationAddress ?? ''}`.trim())
   const range = formatTimeRange(shoot.startTime, shoot.endTime)
-  const duration = formatDuration(shoot.startTime, shoot.endTime, {
-    hours: uk.hoursShort,
-    minutes: uk.minutesShort,
-  })
+  /*
+    «3 години», not «3 год» — the artboard spells the unit out, and this screen
+    is read by someone who does not use the app daily and has the width for it.
+    The creator's screens keep `formatDuration`'s short forms.
+  */
+  const duration = durationWords(shoot.startTime, shoot.endTime)
+  const shootMeta = [
+    shoot.client ? uk.shootWithTemplate.replace('{name}', shoot.client.name) : null,
+    duration,
+  ]
+    .filter(Boolean)
+    .join(' · ')
   const days = daysUntil(shoot.date)
 
   return (
@@ -182,40 +193,76 @@ export default function LinkView() {
                     {range}
                   </Text>
                 ) : null}
-                {duration ? (
-                  <Text className="text-body-sm text-muted-foreground mt-1">{duration}</Text>
+                {/*
+                  «Зйомка з Марією Литвин · 3 години». The client's name reaches
+                  both audiences as of 2026-09-03 (owner) — see the gateway.
+                  Either half stands alone: a shoot with no times shows the name,
+                  and a shoot whose client row is missing shows the duration.
+                */}
+                {shootMeta ? (
+                  <Text className="text-body-sm text-muted-foreground mt-1">{shootMeta}</Text>
                 ) : null}
               </View>
 
-              {shoot.locationAddress ? (
-                <View className="border-border border-t p-4">
-                  <Text className="text-body text-foreground font-semibold">
-                    {shoot.locationAddress}
-                  </Text>
-                  <View className="mt-3 flex-row gap-2">
-                    <Button
-                      className="h-10 flex-1"
-                      onPress={() =>
-                        void openExternalUrl(
-                          `https://maps.google.com/?q=${encodeURIComponent(shoot.locationAddress ?? '')}`
-                        )
-                      }
-                    >
-                      <Text className="text-body-sm font-medium">{uk.route}</Text>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-10 flex-1"
-                      onPress={() => {
-                        void (async () => {
-                          await Clipboard.setStringAsync(shoot.locationAddress ?? '')
-                          setToast(uk.addressCopied)
-                        })()
-                      }}
-                    >
-                      <Text className="text-body-sm font-medium">{uk.copyAddress}</Text>
-                    </Button>
+              {/*
+                The address, and one 44pt copy button beside it — the artboard's
+                arrangement (owner, 2026-09-03). It was two full-width buttons,
+                «Маршрут» and «Копіювати адресу».
+
+                **«Маршрут» worked here**, unlike the creator's screen where it
+                was an inert stub: it opened Google Maps on the address. The
+                artboard drops it — its `onRoute` survives in the logic and no
+                markup calls it, the same dead-value pattern as the missing save
+                button on `Edit Profile` — so an anonymous reader loses the
+                one-tap route to the venue. That is the audience least likely to
+                know where they are going. Restoring it is this comment plus four
+                lines; logged.
+
+                The venue name leads the block since 2026-09-03. It reached the
+                link surface in the same change — `location_name` is now selected
+                for BOTH audiences in the gateway, on the grounds that a venue's
+                name is neither a note nor a contact, so `ADR-013`'s split does
+                not divide on it. The address falls back to the prominent line
+                when there is no name, so shoots saved before the column keep
+                the layout they had.
+              */}
+              {shoot.locationName || shoot.locationAddress ? (
+                <View className="border-border flex-row items-start gap-3 border-t p-4">
+                  <View className="min-w-0 flex-1">
+                    {/* The venue leads, the address supports it — the order the
+                        artboard draws, and the reason they are two columns. */}
+                    {shoot.locationName ? (
+                      <Text className="text-body text-foreground font-semibold">
+                        {shoot.locationName}
+                      </Text>
+                    ) : null}
+                    {shoot.locationAddress ? (
+                      <Text
+                        className={`leading-5 ${
+                          shoot.locationName
+                            ? 'text-body-sm text-muted-foreground mt-1'
+                            : 'text-body text-foreground font-semibold'
+                        }`}
+                      >
+                        {shoot.locationAddress}
+                      </Text>
+                    ) : null}
                   </View>
+                  {shoot.locationAddress ? (
+                  <Pressable
+                    className="border-border active:bg-secondary h-11 w-11 shrink-0 items-center justify-center rounded-lg border"
+                    onPress={() => {
+                      void (async () => {
+                        await Clipboard.setStringAsync(shoot.locationAddress ?? '')
+                        setToast(uk.addressCopied)
+                      })()
+                    }}
+                    role="button"
+                    accessibilityLabel={uk.copyAddress}
+                  >
+                    <Icon as={Copy} size={17} strokeWidth={1.8} className="text-muted-foreground" />
+                  </Pressable>
+                  ) : null}
                 </View>
               ) : null}
 
@@ -278,13 +325,74 @@ export default function LinkView() {
             <Text className="text-body-sm font-medium">{uk.addToCalendar}</Text>
           </Button>
 
+          {/*
+            «Клієнт» — CREW ONLY, as the artboard gates it (`showClient: isTeam`).
+            A client has no use for a section about themselves, and the handle
+            below is the one piece of `clients` data that exists to be acted on:
+            a crew member who needs to tag the shoot knows where to look.
+
+            `US-007` AC-1 lists what a crew member sees and the client is not on
+            it — **the story needs amending**, recorded in docs/redesign-log.md.
+          */}
+          {isCrew && shoot.client ? (
+            <View className="gap-2">
+              <SectionLabel label={uk.clientSection} />
+              <Card variant="flat" className="gap-0 p-0">
+                <View className="flex-row items-center gap-3 p-4">
+                  <Avatar name={shoot.client.name} size={38} />
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-body text-foreground font-semibold" numberOfLines={1}>
+                      {shoot.client.name}
+                    </Text>
+                    <Text className="text-label text-muted-foreground mt-0.5">
+                      {uk.clientRole}
+                    </Text>
+                  </View>
+                </View>
+                {shoot.client.instagram ? (
+                  <View className="border-border flex-row items-center gap-2.5 border-t px-4 py-3">
+                    <View className="w-[18px] shrink-0 items-center">
+                      <Icon
+                        as={InstagramIcon}
+                        size={16}
+                        className="text-muted-foreground"
+                      />
+                    </View>
+                    <Text className="text-body-sm text-muted-foreground flex-1">
+                      {uk.instagramLabel}
+                    </Text>
+                    <Text className="text-body-sm text-foreground font-medium">
+                      {shoot.client.instagram}
+                    </Text>
+                  </View>
+                ) : null}
+              </Card>
+            </View>
+          ) : null}
+
           {/* Хто на зйомці. The client sees this list too — `US-026` gives them
               the crew, minus notes. */}
           <View className="gap-2">
             <View className="flex-row items-baseline justify-between px-0.5">
               <SectionLabel label={uk.whoIsOnTheShoot} />
+              {/*
+                Per audience, as drawn: a crew member sees how many have
+                answered, a client sees only how many people there are — the
+                same `US-026` line the badges follow (L-5).
+              */}
               <Text className="text-label text-muted-foreground">
-                {String(payload.crew.length)}
+                {isCrew
+                  ? uk.crewCountConfirmed
+                      .replace('{total}', String(payload.crew.length))
+                      .replace(
+                        '{done}',
+                        String(
+                          payload.crew.filter(
+                            (m) => 'response' in m && m.response === 'confirmed'
+                          ).length
+                        )
+                      )
+                  : `${payload.crew.length} ${pluralUk(payload.crew.length, uk.peopleForms)}`}
               </Text>
             </View>
             <Card variant="flat" className="gap-0 p-0">
@@ -308,6 +416,11 @@ export default function LinkView() {
                         </Text>
                         {isYou ? <Badge variant="solid" label={uk.youBadge} /> : null}
                       </View>
+                      {/* The role alone. The artboard also appends « · це ви»
+                          here, and it was built and then removed (owner,
+                          2026-09-03): the «ВИ» badge beside the name already
+                          says whose row this is, and saying it twice on one row
+                          is noise. */}
                       <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
                         {member.role}
                       </Text>
@@ -316,17 +429,29 @@ export default function LinkView() {
                       Response badges on the CREW link only. A client is not shown
                       who has and has not answered — `US-026` gives them the crew
                       list, and nothing says an internal confirmation state is
-                      theirs to read.
+                      theirs to read (L-5).
+
+                      `ResponsePill`, not a hand-rolled `Badge`, since 2026-09-03:
+                      the creator's screen and this one drew the same three states
+                      from the same three keys and had already drifted apart on
+                      two of them. One control now decides the shape, the tick and
+                      which states are worth a chip at all.
+
+                      **Only the reader's own row shows a pending chip**, reading
+                      «Ваша черга». Someone else's silence is not news; the
+                      reader's own is the thing the respond bar below is asking
+                      about.
                     */}
                     {isCrew && 'response' in member ? (
-                      <Badge
-                        variant={member.response === 'confirmed' ? 'solid' : 'outline'}
+                      <ResponsePill
+                        value={member.response}
+                        showPending={isYou}
                         label={
                           member.response === 'confirmed'
                             ? uk.responseConfirmed
                             : member.response === 'declined'
                               ? uk.responseDeclined
-                              : uk.responsePending
+                              : uk.yourTurn
                         }
                       />
                     ) : null}
@@ -577,4 +702,31 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
       </Card>
     </View>
   )
+}
+
+/**
+ * «3 години» / «1 година 30 хвилин» — the duration in full, declined.
+ *
+ * Local to this screen rather than in `date.ts`, because the pluraliser lives in
+ * `features/shoots/home.ts` and `home.ts` already imports `date.ts`; putting it
+ * there would close a cycle. `formatDuration` stays where it is and keeps
+ * serving the creator's screens with «год» / «хв».
+ */
+function durationWords(start: string | null, end: string | null): string | null {
+  if (!start || !end) return null
+  const minutesOf = (value: string) => {
+    const [h, m] = value.split(':').map(Number)
+    return h * 60 + m
+  }
+  const span = minutesOf(end) - minutesOf(start)
+  if (span <= 0) return null
+
+  const hours = Math.floor(span / 60)
+  const minutes = span % 60
+  return [
+    hours ? `${hours} ${pluralUk(hours, uk.hourForms)}` : null,
+    minutes ? `${minutes} ${pluralUk(minutes, uk.minuteForms)}` : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
 }

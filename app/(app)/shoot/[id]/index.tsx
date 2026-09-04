@@ -352,6 +352,18 @@ export default function ShootDetailScreen() {
               crew={crew}
               onEdit={() => router.push(`/(app)/shoot/${shoot.id}/edit`)}
               onCancelShoot={() => askCancelShoot(null)}
+              onCopyClientLink={() =>
+                void copyLinkFor({
+                  id: shoot.clientId,
+                  name: shoot.clientName,
+                  role: t.clientRole,
+                  phone: shoot.clientContact || null,
+                  instagram: shoot.clientInstagram,
+                  telegram: shoot.clientTelegram,
+                  badge: null,
+                  removable: false,
+                })
+              }
             />
           ) : null}
 
@@ -448,12 +460,14 @@ function DetailsTab({
   crew,
   onEdit,
   onCancelShoot,
+  onCopyClientLink,
 }: {
   shoot: Shoot
   countdown: string | null
   crew: CrewMember[]
   onEdit: () => void
   onCancelShoot: () => void
+  onCopyClientLink: () => void
 }) {
   const t = useStrings()
   const duration = formatDuration(shoot.startTime, shoot.endTime, {
@@ -541,6 +555,34 @@ function DetailsTab({
             url={contact.url}
           />
         ))}
+
+        {/*
+          The client's own link, at the foot of the card the client's details
+          live in (owner, 2026-09-03 — added to `Shoot Detail v3` after the
+          screen was built against it).
+
+          It is `US-027`'s share, reached from the client rather than from a
+          menu: the same control the «Команда» tab gives each crew member, so
+          «поділитися посиланням» is one gesture wherever the person is on
+          screen. `clientLinkToken` already existed — the retired `PersonSheet`
+          used it — so nothing new writes a token.
+
+          «Запрошення на зйомку», the artboard's word, on this row and the crew
+          rows alike (owner, 2026-09-03) — one key, so they cannot diverge.
+        */}
+        <Pressable
+          className="active:bg-secondary border-border min-h-11 flex-row items-center justify-center gap-[7px] border-t p-2"
+          onPress={() => {
+            tapped()
+            void onCopyClientLink()
+          }}
+          role="button"
+        >
+          <Icon as={LinkIcon} size={14} strokeWidth={1.8} className="text-muted-foreground" />
+          <Text className="text-label text-muted-foreground font-semibold">
+            {t.copyPersonLink}
+          </Text>
+        </Pressable>
       </Card>
 
       <LocationCard shoot={shoot} />
@@ -811,6 +853,37 @@ function PeopleTab({
   const [expanded, setExpanded] = useState<string | null>(null)
   const confirmed = crew.filter((member) => member.response === 'confirmed').length
 
+  /*
+    `US-022` AC-2 — **required**, and it was not being met: "an accidental tap
+    must not silently cut someone out", and nothing is removed before the
+    creator confirms.
+
+    The row removed on a single tap and offered four seconds of undo instead.
+    That is not what AC-2 asks for — it removes first and asks after — and the
+    comment on the button claimed AC-2 accepted the trade, which it does not.
+    `Shoot Detail v3` draws no confirmation here either; the owner asked for one
+    (2026-09-03).
+
+    Generic over the member so the question carries which one all the way to
+    `onConfirm`, rather than a second piece of state that could drift from what
+    the dialog is asking about.
+  */
+  const { ask: askRemove, dialog: removeDialog } = useDestructiveConfirm<CrewMember>({
+    label: t.remove,
+    question: t.confirmRemoveCrew,
+    onConfirm: (member) =>
+      onRemove({
+        id: member.id,
+        name: member.name,
+        role: member.role,
+        phone: member.phone,
+        instagram: member.instagram,
+        telegram: member.telegram,
+        badge: null,
+        removable: true,
+      }),
+  })
+
   return (
     <View className="gap-2">
       <View className="flex-row items-baseline justify-between px-0.5">
@@ -846,16 +919,7 @@ function PeopleTab({
             }
             onRemove={() => {
               setExpanded(null)
-              onRemove({
-                id: member.id,
-                name: member.name,
-                role: member.role,
-                phone: member.phone,
-                instagram: member.instagram,
-                telegram: member.telegram,
-                badge: null,
-                removable: true,
-              })
+              askRemove(member)
             }}
           />
         ))}
@@ -879,6 +943,8 @@ function PeopleTab({
           </Pressable>
         </Link>
       </Card>
+
+      {removeDialog}
     </View>
   )
 }
@@ -1033,9 +1099,15 @@ function PersonRow({
             </Pressable>
 
             {/*
-              `US-022`'s removal. No confirmation, deliberately: it is undoable
-              for four seconds through the toast, which AC-2 accepts where the
-              shoot's own deletion cannot.
+              `US-022`'s removal. **It confirms now** (owner, 2026-09-03) — AC-2
+              is marked *required* and says nothing is removed until the creator
+              has confirmed, which a remove-then-undo does not satisfy.
+
+              The four-second undo toast stays behind the confirmation. AC-2's
+              Out of scope calls re-adding someone "just `US-005` again, no
+              special undo flow", so the toast is not what the story asked for
+              and is now belt-and-braces; it is kept because losing a colleague
+              from a shoot is worth two chances, not because AC-2 wants it.
             */}
             <Pressable
               className="active:bg-destructive/10 min-h-10 shrink-0 flex-row items-center justify-center gap-1.5 rounded-lg px-3"
@@ -1044,6 +1116,11 @@ function PersonRow({
                 onRemove()
               }}
               role="button"
+              /* Named as well as labelled: the button carries its word, but
+                 `us022-check.mjs` addresses it by `aria-label`, and an icon
+                 button that only reads as its text is one restyle away from
+                 announcing nothing. */
+              accessibilityLabel={t.remove}
             >
               <Icon as={Trash} size={14} strokeWidth={1.8} className="text-destructive" />
               <Text className="text-label text-destructive font-semibold">{t.remove}</Text>

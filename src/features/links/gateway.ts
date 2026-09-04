@@ -12,6 +12,8 @@ export type LinkReference = {
   kind: 'link' | 'image'
   /** The external link, or a signed URL for an image. Null if signing failed. */
   url: string | null
+  /** `20260830120000` — null on every reference created before it. */
+  category: string | null
 }
 
 /**
@@ -50,6 +52,9 @@ export type CrewLinkPayload = {
     /** `US-030`, carried since 2026-08-31 — the gateway had never sent them. */
     startTime: string | null
     endTime: string | null
+    /** `2026-09-03` — the first thing from `clients` on this surface. */
+    client: { name: string; instagram: string | null } | null
+    locationName: string | null
     locationAddress: string | null
     locationNote: string | null
     locationAttachmentUrl: string | null
@@ -101,6 +106,9 @@ export type ClientLinkPayload = {
     date: string
     startTime: string | null
     endTime: string | null
+    /** `2026-09-03` — the first thing from `clients` on this surface. */
+    client: { name: string; instagram: string | null } | null
+    locationName: string | null
     locationAddress: string | null
     locationNote: string | null
     locationAttachmentUrl: string | null

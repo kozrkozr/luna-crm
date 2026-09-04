@@ -43,19 +43,33 @@ const CHECK_SIZE = 12
 export function ResponsePill({
   value,
   label,
+  showPending = false,
 }: {
   value: CrewMember['response']
   label: string
+  /**
+   * Render a chip for `pending` too, using `label`.
+   *
+   * The link view needs it for **one** row: the viewer's own, which reads
+   * «Ваша черга» rather than «Очікує» — «Очікує» is what other people are
+   * doing, and the person reading is the one who has to act. Every other
+   * unanswered row stays bare, on both screens.
+   */
+  showPending?: boolean
 }) {
-  // No chip for a silence — see the note above.
-  if (value === 'pending') return null
+  // No chip for a silence — see the note above — unless it is the reader's own.
+  if (value === 'pending' && !showPending) return null
 
   const confirmed = value === 'confirmed'
 
   return (
     <View
       className={`shrink-0 flex-row items-center gap-[5px] rounded-md border px-2 py-1 ${
-        confirmed ? 'bg-primary border-primary' : 'bg-destructive/10 border-destructive/40'
+        confirmed
+          ? 'bg-primary border-primary'
+          : value === 'declined'
+            ? 'bg-destructive/10 border-destructive/40'
+            : 'border-border-strong'
       }`}
     >
       {confirmed ? (
@@ -69,7 +83,11 @@ export function ResponsePill({
       <Text
         numberOfLines={1}
         className={`text-caption font-medium ${
-          confirmed ? 'text-primary-foreground' : 'text-destructive'
+          confirmed
+            ? 'text-primary-foreground'
+            : value === 'declined'
+              ? 'text-destructive'
+              : 'text-foreground/85'
         }`}
       >
         {label}

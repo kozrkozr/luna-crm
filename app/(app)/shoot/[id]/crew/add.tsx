@@ -4,7 +4,6 @@ import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-rou
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import Check from 'lucide-react-native/icons/check'
-import Eye from 'lucide-react-native/icons/eye'
 import { Badge } from '../../../../../src/components/ui/badge'
 import { Button } from '../../../../../src/components/ui/button'
 import { Card } from '../../../../../src/components/ui/card'
@@ -15,7 +14,8 @@ import { Tabs } from '../../../../../src/components/ui/tabs'
 import { Text } from '../../../../../src/components/ui/text'
 import { Textarea } from '../../../../../src/components/ui/textarea'
 import { Avatar } from '../../../../../src/components/Avatar'
-import { ROLES_UK, type Role } from '../../../../../src/i18n/uk'
+import { ROLES_UK, uk } from '../../../../../src/i18n/uk'
+import { VisibilityNote } from '../../../../../src/components/Visibility'
 import { useStrings } from '../../../../../src/i18n/LanguageProvider'
 import { succeeded, tapped } from '../../../../../src/lib/haptics'
 import { toastOnNextScreen } from '../../../../../src/lib/nextScreenToast'
@@ -83,7 +83,9 @@ export default function AddCrewScreen() {
   const [phone, setPhone] = useState('')
   const [instagram, setInstagram] = useState('')
   const [telegram, setTelegram] = useState('')
-  const [role, setRole] = useState<Role>(ROLES_UK[0])
+  const [role, setRole] = useState<string>(ROLES_UK[0])
+  /** Only read when `role` is «Інша роль» — see `resolvedRole`. */
+  const [customRole, setCustomRole] = useState('')
   const [note, setNote] = useState('')
   const [errors, setErrors] = useState<{ name?: boolean; contact?: boolean }>({})
 
@@ -179,9 +181,9 @@ export default function AddCrewScreen() {
     // Contact is optional since 2026-09-03 — see the migration
     // `20260903140000_crew_contact_optional.sql`. Only the name is required,
     // and only because `crew_members.name` is NOT NULL.
-    const nextErrors = { name: !name.trim() }
+    const nextErrors = { name: !name.trim(), role: !resolvedRole }
     setErrors(nextErrors)
-    if (nextErrors.name) {
+    if (nextErrors.name || nextErrors.role) {
       setFormError(null)
       return
     }
@@ -189,7 +191,7 @@ export default function AddCrewScreen() {
     setBusy(true)
     const added = await addCrewMember(id, {
       name,
-      role,
+      role: resolvedRole,
       contact: phone,
       instagram,
       telegram,
@@ -210,7 +212,13 @@ export default function AddCrewScreen() {
     (2026-09-03) the name is the whole rule, which is also what the artboard
     keys its label off. Looking ready and being ready are the same thing here.
   */
-  const newReady = name.trim().length > 1
+  /*
+    «Інша роль» resolves to whatever was typed, exactly as it does on
+    registration and the profile — `crew_members.role` is a `text` column, so
+    the free-text value stores like any other.
+  */
+  const resolvedRole = role === uk.otherRole ? customRole.trim() : role
+  const newReady = name.trim().length > 1 && !!resolvedRole
   const contacts = filterContacts(past ?? [], query, onShoot)
 
   return (
@@ -298,6 +306,8 @@ export default function AddCrewScreen() {
               onTelegram={setTelegram}
               role={role}
               onRole={setRole}
+              customRole={customRole}
+              onCustomRole={setCustomRole}
               note={note}
               onNote={setNote}
               errors={errors}
@@ -545,6 +555,8 @@ function NewContactTab({
   onTelegram,
   role,
   onRole,
+  customRole,
+  onCustomRole,
   note,
   onNote,
   errors,
@@ -557,11 +569,13 @@ function NewContactTab({
   onInstagram: (value: string) => void
   telegram: string
   onTelegram: (value: string) => void
-  role: Role
-  onRole: (role: Role) => void
+  role: string
+  onRole: (role: string) => void
+  customRole: string
+  onCustomRole: (value: string) => void
   note: string
   onNote: (value: string) => void
-  errors: { name?: boolean }
+  errors: { name?: boolean; role?: boolean }
 }) {
   const t = useStrings()
 
@@ -638,16 +652,18 @@ function NewContactTab({
       <View className="gap-2">
         <Label>{t.crewRoleOnShoot}</Label>
         {/*
-          Chips, replacing the `Select` this form used. The design draws a
-          wrapping row of them, and with five roles that is one fewer tap than a
-          picker and shows every option at once.
+          Chips, replacing the `Select` this form used, and **«Інша роль» with
+          them since 2026-09-03** — the same escape registration and the profile
+          have offered since 2026-08-31. This form was the one place a role had
+          to come from the list, which meant a crew member could be given a job
+          the person filling the form could not name.
 
-          `ROLES_UK`, not the design's six — these are values written to
+          `ROLES_UK`, not the dictionary — these are values written to
           `crew_members.role` and read back on the Ukrainian-only link views, so
           they are not the dictionary's to translate. See the note on ROLES_UK.
         */}
         <View className="flex-row flex-wrap gap-1.5">
-          {ROLES_UK.map((option) => (
+          {[...ROLES_UK, uk.otherRole].map((option) => (
             <RoleChip
               key={option}
               label={option}
@@ -656,6 +672,16 @@ function NewContactTab({
             />
           ))}
         </View>
+        {role === uk.otherRole ? (
+          <Input
+            value={customRole}
+            onChangeText={onCustomRole}
+            placeholder={uk.otherRolePlaceholder}
+          />
+        ) : null}
+        {errors.role ? (
+          <Text className="text-destructive text-sm">{uk.otherRoleRequired}</Text>
+        ) : null}
       </View>
 
       {/*
@@ -695,14 +721,7 @@ function NewContactTab({
           list WITH notes; the day it ships, «не показуються учаснику» becomes a
           lie and this copy has to move with it. Logged.
         */}
-        <View className="bg-secondary border-border flex-row items-start gap-[7px] rounded-md border px-2.5 py-[7px]">
-          <View className="mt-px shrink-0">
-            <Icon as={Eye} size={13} strokeWidth={2} className="text-muted-foreground" />
-          </View>
-          <Text className="text-caption text-muted-foreground flex-1 leading-4">
-            {t.crewNotesPrivate}
-          </Text>
-        </View>
+        <VisibilityNote label={t.crewNotesPrivate} />
       </View>
 
       <Text className="text-label text-muted-foreground leading-5">{t.contactWillBeSaved}</Text>

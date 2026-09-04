@@ -20,22 +20,22 @@ alter table public.shoots
 -- No policy or grant change: `shoots_select_own` / `shoots_update_own` scope
 -- every row to its creator, and this column inherits both.
 
--- ── Not on the link surface, deliberately ───────────────────────────────────
+-- ── On the link surface since 2026-09-03 ────────────────────────────────────
 --
--- The link gateway is NOT changed, so no crew member and no client receives
--- this value today. Every `shoots` SELECT in `link-gateway/index.ts` names its
--- columns explicitly and none names this one, and the same is true of
--- `crew_shoots()` (20260827100000) and of the ICS export in
--- `src/features/links/calendar.ts`.
+-- This column was deliberately kept OFF the anonymous payload when it was
+-- added, on the stance `shoots.notes` set (20260830160000): no story says who
+-- may see a venue's name, and omitting it is the reversible direction.
 --
--- That is the same stance `shoots.notes` took (20260830160000) and for the same
--- reason: no story says who may see a venue's name, and the omission is
--- reversible in the cheap direction. Adding it to `crewPayload` — or beside
--- `location_address` in the ICS `location` field — is one line whenever a story
--- asks. Un-shipping it from a payload that already went out is not.
+-- The owner asked for it the same day, after seeing the deployed link view show
+-- an address with no venue above it. It is selected for **both** audiences now —
+-- a venue's name is neither a note nor a contact, so `ADR-013`'s split does not
+-- divide on it, and both audiences already receive `location_address` and
+-- `location_note`. `US-026`'s "no notes field, not even an empty one" is
+-- untouched.
 --
--- So a photographer who fills in «Назва» today sees it nowhere at all: the two
--- forms collect it and no screen reads it back (the shoot-detail card was
--- written to and then reverted — see docs/redesign-log.md). If any of this is
--- wrong, it is wrong in the direction that can be fixed without a notification
--- to anyone.
+-- **Still NOT in the ICS export** (`src/features/links/calendar.ts`), whose
+-- `location` field carries the address alone. Nothing asked for it there and a
+-- calendar entry wants something a map can resolve.
+--
+-- `crew_shoots()` (20260827100000) does not select it either — that function
+-- feeds the creator's own «мої зйомки» list, which reads the column directly.

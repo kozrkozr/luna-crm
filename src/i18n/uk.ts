@@ -379,6 +379,16 @@ export const uk = {
   locationPhotoLabel: 'Фото локації',
   /** учасник / учасники / учасників */
   participantForms: ['учасник', 'учасники', 'учасників'],
+  /** «3 людини» — the client's crew count, which does not name confirmations. */
+  peopleForms: ['людина', 'людини', 'людей'],
+  /*
+   * The link view's crew heading, per audience: a crew member sees how many
+   * have answered, a client sees only how many people there are (`US-026` —
+   * an internal confirmation state is not theirs to read, L-5).
+   */
+  crewCountConfirmed: '{total} · {done} підтвердили',
+  /** The viewer's own unanswered row — «Очікує» is what OTHERS are doing. */
+  yourTurn: 'Ваша черга',
   /*
    * The reference groups the frame draws. **No story supplies these** — they are
    * the file's own copy, taken as drawn like every other prototype string this
@@ -389,7 +399,6 @@ export const uk = {
   referenceCategories: ['Світло', 'Пози', 'Стиль'],
   address: 'Адреса',
   addressPlaceholder: 'напр. Студія, Київ',
-  attachImage: '+ Зображення',
   attachVideo: '+ Відео',
   /*
    * home-screen-2.html's «Порожньо» state, verbatim except for one word: the
@@ -491,7 +500,12 @@ export const uk = {
    * owner's, not the handoff's.
    */
   responseConfirmed: 'Підтверджено',
-  responseDeclined: 'Відмовлено',
+  /*
+   * «Відмова» — `Shoot Link Preview.dc.html`'s word (owner, 2026-09-03),
+   * replacing «Відмовлено» from earlier the same day. Both avoid the gendered
+   * past tense «Відмовився» that started this; the artboard settles which.
+   */
+  responseDeclined: 'Відмова',
   /*
    * `copyLinkTitle` («Скопіювати посилання») was removed on 2026-08-31. It
    * labelled the crew row's copy icon, which went when the shoot detail was
@@ -502,6 +516,8 @@ export const uk = {
   // US-027 — the shoot's client, and the link that belongs to them. «Клієнт»
   // and «Контакт клієнта» are the prototype's own words for these fields.
   clientSection: 'Клієнт',
+  /** «Зйомка з Марією Литвин · 3 години» — the link view's meta line. */
+  shootWithTemplate: 'Зйомка з {name}',
   /*
    * The three copy confirmations. All PAST tense: a toast reports what
    * happened, and the button that caused it already said what it would do.
@@ -537,7 +553,14 @@ export const uk = {
   addToCalendar: 'Додати в календар',
   googleCalendar: 'Google Calendar',
   appleOutlookIcs: 'Apple / Outlook (.ics)',
-  whoIsOnTheShoot: 'Хто на зйомці',
+  /*
+   * «Команда», not «Хто на зйомці», since 2026-09-03 — the artboard's label.
+   * Its own key rather than a reuse of `crew`, on the rule
+   * `accessDetailsLabel` states: the creator's section and this one agree
+   * today and would drift the moment either is reworded. The key keeps its
+   * name because renaming it buys nothing.
+   */
+  whoIsOnTheShoot: 'Команда',
   /** The badge on the reader's own row. */
   youBadge: 'ВИ',
   organizerNotes: 'Нотатки від організатора',
@@ -738,6 +761,13 @@ export const uk = {
   /** «Початок через 2 год 40 хв» — a live countdown to the shoot's start. */
   startsInPrefix: 'Початок через',
   hoursShort: 'год',
+  /*
+   * Full words for the link view, which has the width for them and is read
+   * by someone who does not use this app daily — «3 години», not «3 год».
+   * The creator's own screens keep the short forms.
+   */
+  hourForms: ['година', 'години', 'годин'],
+  minuteForms: ['хвилина', 'хвилини', 'хвилин'],
   minutesShort: 'хв',
   /** «Клієнтська зйомка · 3 год» — the shoot card's subline. */
   clientShootLabel: 'Клієнтська зйомка',
@@ -763,7 +793,6 @@ export const uk = {
    * the three confirmations in the app read alike. Logged.
    */
   confirmRemoveReference: 'Видалити цей референс? Це незворотньо.',
-  route: 'Маршрут',
   copyAddress: 'Копіювати адресу',
   /**
    * The access-details block inside the location card. Same word as the first
@@ -795,18 +824,22 @@ export const uk = {
    * it: "the per-person URL that gives a crew member or client access to one
    * shoot without an account or an app".
    *
-   * The word itself stays; it is confirmed vocabulary and «лінк» is forbidden
-   * (glossary, 2026-08-25). It is the destination that was missing, and the
-   * verb goes because a button already implies one — «на зйомку» buys more than
-   * «Копіювати» did.
+   * **«Запрошення на зйомку» since 2026-09-03** (owner), taking `Shoot Detail
+   * v3`'s word on both the crew rows and the client's row at once.
    *
-   * Deliberately still not `copyLinkTitle` («Скопіювати посилання»), which is
-   * the accessibility label on the crew row's icon button.
+   * It was «Посилання на зйомку», kept for a while on the reading that the
+   * glossary confirms «посилання» for *link*. That objection was weaker than it
+   * looked: the glossary rule forbids the loanword «лінк» as a synonym, and
+   * «запрошення» is not a synonym for link at all — it names the thing being
+   * sent, which happens to be a link. Nothing about `AccessLink`'s vocabulary
+   * changes; `copyLinkTitle` («Скопіювати посилання») is still the crew row's
+   * accessibility label, and the entity is still a *посилання* everywhere it is
+   * discussed.
    */
   instagramLabel: 'Інстаграм',
   writeTo: 'Написати',
   callPerson: 'Зателефонувати',
-  copyPersonLink: 'Посилання на зйомку',
+  copyPersonLink: 'Запрошення на зйомку',
   removeFromCrew: 'Видалити з команди',
   /*
    * `Shoot Detail v3.dc.html`'s expanded crew row (2026-09-03) reuses the short
@@ -826,17 +859,11 @@ export const uk = {
 
   // ── Screen 2, «Редагувати» ──
   editTitle: 'Редагувати',
-  basicSection: 'Основне',
   timeSection: 'Час',
-  statusLabel: 'Статус',
   /** «Тривалість: 3 год», recomputed as the two time fields change. */
   durationPrefix: 'Тривалість:',
   saveChanges: 'Зберегти зміни',
   noChanges: 'Немає змін',
-  discardChangesTitle: 'Відхилити зміни?',
-  discardChangesBody: 'Незбережені зміни буде втрачено.',
-  keepEditing: 'Продовжити',
-  discardChanges: 'Відхилити',
   changesSaved: 'Зміни збережено',
 
   /*
@@ -906,10 +933,21 @@ export type CopyKey = keyof typeof uk
 
 
 /**
- * Professional roles offered at registration (US-001). The story defers the
- * list to "the glossary's confirmed roles as the starting list"; the glossary
- * confirms makeup artist, stylist, gaffer and shoot manager, and the gated
- * prototype adds Фотограф and fixes the Ukrainian labels.
+ * Professional roles, offered wherever a role is chosen — registration
+ * (`US-001`), the profile, and a new crew contact.
+ *
+ * **`Edit Profile.dc.html`'s list, verbatim** (owner, 2026-09-03). It was the
+ * five the glossary confirmed; the artboard draws nine, and every pass until now
+ * had kept the five on the grounds that they are stored values.
+ *
+ * **«Менеджер зйомок» is gone, and it was glossary-confirmed.** `US-001` defers
+ * the list to "the glossary's confirmed roles as the starting list", and the
+ * glossary confirms makeup artist, stylist, gaffer and **shoot manager**. The
+ * artboard has no equivalent, so taking it verbatim drops one. Rows already
+ * holding it keep it — the column is `text` and every screen renders what it
+ * finds — but nobody can choose it again, and it shows up under «Інша роль» on
+ * the two screens that resolve an unknown value that way. **`US-001` and the
+ * glossary need amending, or the role needs adding back.**
  *
  * **Deliberately NOT in the dictionary.** These are values written to
  * `crew_members.role` and `users.role` and read back on every surface,
@@ -920,10 +958,14 @@ export type CopyKey = keyof typeof uk
  */
 export const ROLES_UK = [
   'Фотограф',
+  'Відеограф',
   'Стиліст',
-  'Гафер',
+  'Hair стиліст',
   'Візажист',
-  'Менеджер зйомок',
+  'Гафер',
+  'Модель',
+  'Асистент',
+  'Продюсер',
 ] as const
 
 export type Role = (typeof ROLES_UK)[number]
