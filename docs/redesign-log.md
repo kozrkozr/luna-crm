@@ -609,10 +609,43 @@ on the shoot, or a policy that lets the join see removed rows.
 |---|---|---|
 | K-5 | Role chips are its own **six** («Оператор» among them) | **`ROLES_UK`'s nine**, following the 2026-09-03 decision to take `Edit Profile.dc.html`'s list verbatim. These are values written to a `role` column and read back on the Ukrainian-only link views. «Оператор» is therefore not offerable — the list has «Відеограф» — and «Інша роль» is here for exactly that gap |
 | K-6 | «Тип контакту» is editable on an existing contact | **Shown and disabled when editing.** Moving a saved person between the two is moving a row between tables, and the delete half of that blanks shoots (K-3) |
-| K-7 | A client's second line is a role («Портретні зйомки») | `clients` has no role column — a client is not cast on a shoot, they are who it is for. The row shows **the shoot count** instead, which is the line the shoot form's client picker already shows for the same rows: existing copy rather than invented copy. The profile card drops the line entirely rather than repeating it |
+| K-7 | A client's second line is a role («Портретні зйомки») | `clients` has no role column — a client is not cast on a shoot, they are who it is for. The row shows **the shoot count** instead, which is the line the shoot form's client picker already shows for the same rows: existing copy rather than invented copy. The profile card drops the line entirely rather than repeating it. **The owner then asked for the count on crew as well** — see below |
 | K-8 | The delete confirmation is an in-page dialog | `useDestructiveConfirm` — a real iOS alert, the machinery `US-019` and `US-022` use. R-1's answer applied again. The hook **gained a `message`** for the artboard's explanatory sentence; every existing caller is unchanged |
 | K-9 | The list CTA sits on a gradient fade | Still not built, on this screen as on the calendar and the shoot form. It needs `expo-linear-gradient`, which is not a dependency (C-10) |
 | K-10 | «Нотатки бачите тільки ви — вони не показуються **контакту**» | `crewNotesPrivate` already says «…**учаснику**». Reused rather than the app carrying two near-identical sentences |
+
+### The shoot count, on both halves (owner, 2026-09-04)
+
+A crew row reads «Фотограф · 6 зйомок» — the role, then the same line a client
+gets. Asked for after the screen was first built, on the grounds that it answers
+the same question for either kind of person.
+
+A client's count rides along on `listClients` as a `shoots(count)` aggregate over
+a foreign key. **A crew contact has no such key:** `ADR-003` makes a person on
+three shoots three unrelated `crew_members` rows, matched to their directory row
+by name-plus-contact. So `countShootsPerContact` reads those rows and counts
+**distinct shoot ids** per identity — distinct because nothing stops the same
+person being added to one shoot twice, and "4 shoots" must not become 5.
+
+**Both filters rule 3 would ask for are already in the policy.**
+`crew_members_via_shoot` is `removed_at is null AND exists(shoot … creator =
+auth.uid() AND deleted_at is null)`, so somebody taken off a shoot stops being
+counted for it and a deleted shoot stops counting for anyone — without a filter
+written in the query, and matching what a client's aggregate already does.
+
+Two things worth knowing about it:
+
+- **Its failure is not the screen's.** A null leaves crew rows showing the role
+  alone, the way the calendar's rows survive a failed avatar-stack query. It is
+  a third request for one line of text.
+- **A miss is possible.** The key is `name|phone ?? email ?? ''`, so a crew row
+  carrying a phone will not match a contact holding only an email. Backfilled
+  contacts cannot disagree — the migration derived them from these rows with
+  this key — and a hand-made contact has no crew rows to count.
+
+**0 is shown, not hidden**: «Візажист · 0 зйомок» on somebody entered by hand is
+true, and it is the rule the client picker has always followed for a client with
+no shoots.
 
 ### Copy
 

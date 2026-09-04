@@ -29,12 +29,15 @@ export type DirectoryPerson = {
   /**
    * The row's second line.
    *
-   * A crew member's role, as drawn. **A client's is their shoot count**, which
-   * is a departure: the artboard shows a role there («Портретні зйомки») and
-   * `clients` has no role column — a client is not cast on a shoot, they are
-   * who it is for. The count is the line the client picker on the shoot form
-   * already shows for the same rows, so it is existing copy rather than
-   * invented copy.
+   * **A shoot count for both kinds** (owner, 2026-09-04), and a role in front
+   * of it for crew: «Фотограф · 6 зйомок».
+   *
+   * The count is a departure for a client and an addition for crew. The
+   * artboard shows a role on every row, and `clients` has no role column — a
+   * client is not cast on a shoot, they are who it is for — so the count took
+   * that line; the owner then asked for the same line on crew, where the
+   * question it answers is the same one. `shootCountLabel` is the client
+   * picker's own copy, so neither is invented.
    */
   sub: string
   phone: string | null
@@ -43,13 +46,16 @@ export type DirectoryPerson = {
   /** `clients.notes` or `contacts.note` — the creator's own, either way. */
   note: string | null
   /**
-   * How many shoots a client has. `null` for crew, whose shoots are
-   * `crew_members` rows nothing here counts.
+   * How many shoots this person is on — `clients.shoots(count)` for a client,
+   * `countShootsPerContact` for crew.
    *
-   * Read by the profile screen to decide whether «Видалити контакт» is offered
-   * at all — see `deleteClient`.
+   * **It gates «Видалити контакт» for a client only** (see `deleteClient`): a
+   * client with shoots cannot be removed without blanking their name on every
+   * one of them, while a crew contact can always be removed because
+   * `crew_members` rows are different rows. So a crew member's count is a fact
+   * on a row, not a permission.
    */
-  shootCount: number | null
+  shootCount: number
 }
 
 /** Which half of the list to show — the artboard's three chips. */
@@ -63,9 +69,9 @@ export type DirectoryGroup = {
 /**
  * A client as a directory row.
  *
- * `shootCountForms` is the dictionary's plural table for «зйомка», passed in so
- * this module reads no dictionary of its own — the same arrangement
- * `features/shoots/home.ts` uses.
+ * `shootCountLabel` is passed in rather than imported so this module reads no
+ * dictionary of its own — the same arrangement `features/shoots/home.ts` uses,
+ * and what keeps these functions testable without a language provider.
  */
 export function clientPerson(
   client: Client,
@@ -84,27 +90,38 @@ export function clientPerson(
   }
 }
 
-/** A crew contact as a directory row. */
-export function crewPerson(contact: Contact): DirectoryPerson {
+/**
+ * A crew contact as a directory row: the role, then the shoot count.
+ *
+ * `shootCount` comes from `countShootsPerContact`, and **0 is shown**, not
+ * hidden — «Візажист · 0 зйомок» on somebody entered by hand is true, and it is
+ * the rule the client picker has always followed for a client with none.
+ */
+export function crewPerson(
+  contact: Contact,
+  shootCount: number,
+  shootCountLabel: (count: number) => string
+): DirectoryPerson {
   return {
     id: contact.id,
     kind: 'crew',
     name: contact.name,
-    sub: contact.role,
+    sub: [contact.role, shootCountLabel(shootCount)].filter(Boolean).join(' · '),
     phone: contact.phone,
     instagram: contact.instagram,
     telegram: contact.telegram,
     note: contact.note,
-    shootCount: null,
+    shootCount,
   }
 }
 
 /**
- * The artboard's search: name or role, case-insensitively, on the trimmed term.
+ * The artboard's search: the name or the second line, case-insensitively, on the
+ * trimmed term.
  *
- * The same two fields the add-crew screen's search covers, and for a client the
- * second field is the shoot-count line — searching «зйомк» would match every
- * client, which is harmless and not worth a special case.
+ * The second line now carries the shoot count for everybody, so «зйомк» matches
+ * every row. Harmless, and not worth a special case — the placeholder promises
+ * «за імʼям або роллю», and both of those still work.
  */
 export function matchesQuery(person: DirectoryPerson, query: string): boolean {
   const term = query.trim().toLowerCase()

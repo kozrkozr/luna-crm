@@ -334,3 +334,53 @@ export async function listPastCrew(): Promise<PastCrewMember[] | null> {
     telegram: contact.telegram,
   }))
 }
+
+/**
+ * How many shoots each person in «Команда» is actually on, keyed by the same
+ * identity `contactIdentity` computes.
+ *
+ * «Мої контакти» shows a client's shoot count from `clients.shoots(count)`, an
+ * aggregate over a foreign key. A crew contact has no such key: `ADR-003` makes
+ * a person on three shoots three unrelated `crew_members` rows, and the
+ * directory row that represents them is matched by name-plus-contact. So the
+ * counting happens here (owner asked for parity, 2026-09-04).
+ *
+ * **Both filters rule 3 asks for are already in the policy.**
+ * `crew_members_via_shoot` is `removed_at is null AND exists(shoot … creator =
+ * auth.uid() AND deleted_at is null)`, so this select returns only live rows on
+ * the creator's own live shoots — someone taken off a shoot stops being counted
+ * for it, and a deleted shoot stops counting for everyone, without a filter
+ * written here. That matches what a client's count does, where the shoots
+ * SELECT policy excludes deleted shoots from the aggregate.
+ *
+ * **Distinct shoots, not rows.** Nothing stops the same person being added to
+ * one shoot twice, and "on 4 shoots" must not become 5 because of it.
+ *
+ * A miss is possible and harmless: the key is `name|phone ?? email ?? ''`, so a
+ * crew row carrying a phone will not match a contact that has only an email.
+ * Backfilled contacts cannot disagree — the migration derived them from these
+ * rows with this key — and a contact created by hand has no crew rows to count.
+ * The row then shows its role alone, which is what it showed before.
+ */
+export async function countShootsPerContact(): Promise<Record<string, number> | null> {
+  const { data, error } = await supabase
+    .from('crew_members')
+    .select('shoot_id, name, phone, email')
+
+  if (error || !data) return null
+
+  const shootsByIdentity: Record<string, Set<string>> = {}
+  for (const row of data as {
+    shoot_id: string
+    name: string
+    phone: string | null
+    email: string | null
+  }[]) {
+    const key = crewIdentity(row.name, row.phone, row.email)
+    ;(shootsByIdentity[key] ??= new Set()).add(row.shoot_id)
+  }
+
+  const counts: Record<string, number> = {}
+  for (const [key, shoots] of Object.entries(shootsByIdentity)) counts[key] = shoots.size
+  return counts
+}

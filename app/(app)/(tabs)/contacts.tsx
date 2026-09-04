@@ -15,12 +15,13 @@ import { Avatar } from '../../../src/components/Avatar'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { Toast } from '../../../src/components/Toast'
 import { bottomNavHeight } from '../../../src/components/BottomNav'
+import { shootCountLabel } from '../../../src/components/ClientField'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
-import { pluralUk } from '../../../src/features/shoots/home'
 import { tapped } from '../../../src/lib/haptics'
 import { takePendingToast } from '../../../src/lib/nextScreenToast'
-import { listContacts } from '../../../src/features/contacts/api'
+import { contactIdentity, listContacts } from '../../../src/features/contacts/api'
 import { listClients } from '../../../src/features/clients/api'
+import { countShootsPerContact } from '../../../src/features/crew/api'
 import {
   clientPerson,
   crewPerson,
@@ -66,19 +67,39 @@ export default function ContactsScreen() {
     useCallback(() => {
       let active = true
       void (async () => {
-        // Both halves in parallel: neither is a fallback for the other, and a
-        // photographer can have people of both kinds.
-        const [clients, contacts] = await Promise.all([listClients(), listContacts()])
+        /*
+          Three reads in parallel. The first two are the list's two halves —
+          neither is a fallback for the other, and a photographer can have
+          people of both kinds.
+
+          The third is only the crew rows' shoot counts, so **its failure is
+          not the screen's**: a null leaves those rows showing the role alone,
+          the same way the calendar's rows survive a failed avatar-stack query.
+          A client's count needs no request — it rides along on `listClients`
+          as an aggregate.
+        */
+        const [clients, contacts, counts] = await Promise.all([
+          listClients(),
+          listContacts(),
+          countShootsPerContact(),
+        ])
         if (!active) return
         if (!clients || !contacts) return setState({ status: 'error' })
 
+        const label = (count: number) => shootCountLabel(count, t)
         setState({
           status: 'loaded',
           people: [
-            ...clients.map((client) =>
-              clientPerson(client, (count) => `${count} ${pluralUk(count, t.shootCountForms)}`)
+            ...clients.map((client) => clientPerson(client, label)),
+            ...contacts.map((contact) =>
+              crewPerson(
+                contact,
+                counts?.[contactIdentity(contact.name, contact.phone, contact.email)] ?? 0,
+                // With no counts at all, the role stands alone rather than
+                // every crew member claiming «0 зйомок».
+                counts ? label : () => ''
+              )
             ),
-            ...contacts.map(crewPerson),
           ],
         })
       })()
