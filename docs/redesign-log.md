@@ -536,6 +536,154 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+## «Мої контакти», from `Contacts.dc.html` (owner, 2026-09-04)
+
+New: `app/(app)/(tabs)/contacts.tsx`, `app/(app)/contact/new.tsx`,
+`app/(app)/contact/[id]/edit.tsx`, `src/features/contacts/ContactForm.tsx`,
+`src/features/contacts/directory.ts`, `src/components/RoleChip.tsx`. Moved:
+`contact/[id].tsx` → `contact/[id]/index.tsx`. Touched: both contact and client
+APIs, `PublicProfile`, `DestructiveAction`, `Toast`'s caller list,
+`ShootFormFields`, the add-crew screen, `BottomNav`, the tabs layout, the app
+stack, both dictionaries.
+
+This is the tab that shipped **drawn and inert** with the bottom navigation one
+commit ago, and the «Редагувати / Видалити контакт» pair deferred from the
+2026-09-04 profile pass. Both were waiting on the same question.
+
+### The question, and the answer that removed a migration
+
+The artboard groups people under **«Клієнти»** and **«Команда»**, carries a
+`kind` on every person, and offers a «Тип контакту» toggle on its form. Our
+`contacts` table holds crew only, so the obvious reading was a new column.
+
+It is not needed: **the two groups are already two tables**, both
+`creator_id = auth.uid()`, both soft-deletable, both carrying a name, a phone,
+handles and a private note.
+
+| Artboard group | Table | Note column |
+|---|---|---|
+| «Клієнти» | `clients` (`ADR-018`) | `notes` — `US-028` AC-3's between-shoots notes |
+| «Команда» | `contacts` (`ADR-003`) | `note` — about the person, not the job |
+
+So the screen is a union of two reads (`src/features/contacts/directory.ts`),
+the filter chips choose which table(s) to show, and «Тип контакту» chooses which
+one a save writes to. No migration, and nobody is duplicated. Owner's decision.
+
+### Decisions
+
+| # | Question | Answer |
+|---|---|---|
+| K-1 | Where do the two groups come from? | **The union above** (owner). A `kind` column would have duplicated every client who already exists as a row |
+| K-2 | A row's destination — `client/[id]` is still `US-028`'s «coming soon» stub | **«Публічний профіль» for both kinds** (owner), as the artboard links it. That screen now has a **third reader**: `kind: 'client'`, with the owner's own subline «Дані клієнта з ваших зйомок». It deliberately does not say «публічні» — nothing about a client is published to anybody |
+| K-3 | Deleting a client blanks its name on every shoot | **Offered only when the client has no shoots** (owner). See below — this is the sharpest thing in the pass |
+| K-4 | How much of the form? | **Create and edit, both kinds** (owner), which is what `updateClientProfile` is for |
+
+### Deleting a client, and why the control comes and goes
+
+`SHOOT_COLUMNS` reads a shoot's client through `clients(name, phone, …)` — a
+PostgREST join under the clients SELECT policy, and **that policy carries
+`deleted_at is null`**. Soft-delete a client who has shoots and the join returns
+nothing for every one of them, so `clientName` falls back to `''`: the home
+card, the calendar rows, the shoot detail and the edit form all lose the name.
+The **link views would keep showing it**, because the gateway reads with the
+service role and bypasses RLS — so the creator's app and the link they sent
+would disagree about who the shoot is for.
+
+That is the opposite of what the artboard's own dialog promises. So «Видалити
+контакт» appears on a crew contact always — `crew_members` rows are different
+rows, which is what the contacts migration meant by making the promise true by
+construction — and on a client only at `shootCount === 0`.
+
+**The absence is silent.** No copy explains why the button is missing on a
+client with shoots, because none exists and inventing it is rule 1. Say the word
+if it should carry a line.
+
+`soft_delete_client` has existed unused since the `ADR-018` migration, written
+"so that `deleted_at` is reachable at all". This is its first caller. Making the
+promise true for a client WITH shoots is a migration of its own — a name stored
+on the shoot, or a policy that lets the join see removed rows.
+
+### Not followed
+
+| # | What the artboard does | Why not |
+|---|---|---|
+| K-5 | Role chips are its own **six** («Оператор» among them) | **`ROLES_UK`'s nine**, following the 2026-09-03 decision to take `Edit Profile.dc.html`'s list verbatim. These are values written to a `role` column and read back on the Ukrainian-only link views. «Оператор» is therefore not offerable — the list has «Відеограф» — and «Інша роль» is here for exactly that gap |
+| K-6 | «Тип контакту» is editable on an existing contact | **Shown and disabled when editing.** Moving a saved person between the two is moving a row between tables, and the delete half of that blanks shoots (K-3) |
+| K-7 | A client's second line is a role («Портретні зйомки») | `clients` has no role column — a client is not cast on a shoot, they are who it is for. The row shows **the shoot count** instead, which is the line the shoot form's client picker already shows for the same rows: existing copy rather than invented copy. The profile card drops the line entirely rather than repeating it |
+| K-8 | The delete confirmation is an in-page dialog | `useDestructiveConfirm` — a real iOS alert, the machinery `US-019` and `US-022` use. R-1's answer applied again. The hook **gained a `message`** for the artboard's explanatory sentence; every existing caller is unchanged |
+| K-9 | The list CTA sits on a gradient fade | Still not built, on this screen as on the calendar and the shoot form. It needs `expo-linear-gradient`, which is not a dependency (C-10) |
+| K-10 | «Нотатки бачите тільки ви — вони не показуються **контакту**» | `crewNotesPrivate` already says «…**учаснику**». Reused rather than the app carrying two near-identical sentences |
+
+### Copy
+
+**One word repaired.** The artboard's delete dialog reads «Зйомки, де він уже
+**додан**, залишаться без змін», which is not a form of «доданий».
+`deleteContactExplain` ships «доданий». Flagged rather than shipped as drawn —
+the precedent (H-12) is to take copy verbatim, and a broken word seemed the
+wrong place to start applying it.
+
+**One string not added.** The artboard's new-contact hint is
+`contactWillBeSaved` plus the words «до зйомки»; the existing key is reused.
+
+Everything else is the artboard's own text. Reused rather than duplicated:
+`name`, `phoneField`, `instagramLabel`, `notesSection`, `crewRoleOnShoot`,
+`optionalSuffix`, `crewPhonePlaceholder`, `crewInstagramPlaceholder`,
+`nameRequired` («Вкажіть імʼя», which is the save button before a name is
+typed), `saveChanges`, `changesSaved`, `crew` and `clientRole`.
+
+### Two writers that deliberately do not write a column
+
+- **`updateContact` never touches `email`.** It is the crew-matching key
+  (`match_contact_to_user`), it was backfilled from `crew_members`, and the form
+  has no field for it — so a save must not blank it.
+- **`updateClientProfile` never touches `telegram`**, for the same reason: the
+  form does not draw it and the shoot form is where it is set.
+
+`updateClientProfile` is also **separate from `updateClient` on purpose.** That
+function excludes the name because a shoot form must not rename a client with
+cross-shoot identity, and its own note ends "renaming belongs on the client's
+own profile (`US-028`)". This form is that place, arriving as «Мої контакти»'s
+edit screen rather than as the client profile. Keeping two functions means the
+shoot forms cannot acquire the power to rename by accident.
+
+### A duplicate name updates instead of inserting
+
+`createContact` cannot create a second row for somebody already in the book:
+`contacts_identity_idx` is unique on (creator, casefolded name, phone-or-email)
+where `deleted_at is null`, so an insert would fail the constraint. It updates
+the existing row instead — the only behaviour the schema permits.
+
+**Nothing tells the creator they already knew that person.** No copy exists for
+it, so nothing is said; the toast still reads «{name} додано до контактів». A
+question, not a decision.
+
+### Reuse, since two controls were about to be drawn twice
+
+`RoleChip` and `FieldLabel` were local to the add-crew screen. Both are now
+shared — `src/components/RoleChip.tsx` and `ShootFormFields`, the latter having
+gained the `optional` prop that put «— необовʼязково» in the local copy. The
+add-crew screen imports both and lost 1,078 characters of duplicate.
+
+### Verified
+
+`tsc --noEmit` clean. `expo export -p web` builds and emits the four new routes
+(`/contacts`, `/contact/new`, `/contact/[id]`, `/contact/[id]/edit`); the
+directory restructure left `/contact/[id]` at the same URL, so the shoot
+detail's «Профіль учасника» link is unchanged.
+
+**No migration in this pass** — nothing to `db:push`.
+
+**The acceptance suite was not run** (standing instruction). Nothing it drives
+moved; the add-crew screen is the only existing screen whose source changed, and
+only its imports did.
+
+**Not verified on a device.** The screen is behind auth, and every write here is
+new: creating a contact by hand, editing either kind, and both deletes have
+never run against the real database. Worth exercising in this order — create a
+crew contact, edit it, delete it; then a client with no shoots, and confirm a
+client WITH shoots offers no delete at all.
+
+---
 ## The bottom navigation, from `Home.dc.html` (owner, 2026-09-04)
 
 New: `src/components/BottomNav.tsx`, `app/(app)/(tabs)/_layout.tsx`. Moved into

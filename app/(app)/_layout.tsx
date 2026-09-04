@@ -100,7 +100,14 @@ function AppStack() {
         holds none of the three.
       */}
       <Stack.Screen name="public-profile" options={{ headerShown: false }} />
-      <Stack.Screen name="contact/[id]" options={{ headerShown: false }} />
+      {/*
+        «Мої контакти»'s three pushed screens (2026-09-04). The profile draws its
+        own header; so do the two form routes, which share one `ContactForm` the
+        way `new-shoot` and `shoot/[id]/edit` share `ShootForm`.
+      */}
+      <Stack.Screen name="contact/[id]/index" options={{ headerShown: false }} />
+      <Stack.Screen name="contact/[id]/edit" options={{ headerShown: false }} />
+      <Stack.Screen name="contact/new" options={{ headerShown: false }} />
       {/* Change password draws its own header too — «Скасувати» beside a centred
           title. It is pushed from the profile TAB, so it covers the bottom bar,
           which is right: it is a form with one way out. */}

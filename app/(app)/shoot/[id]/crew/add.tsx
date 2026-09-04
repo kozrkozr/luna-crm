@@ -14,6 +14,8 @@ import { Tabs } from '../../../../../src/components/ui/tabs'
 import { Text } from '../../../../../src/components/ui/text'
 import { Textarea } from '../../../../../src/components/ui/textarea'
 import { Avatar } from '../../../../../src/components/Avatar'
+import { RoleChip } from '../../../../../src/components/RoleChip'
+import { FieldLabel } from '../../../../../src/components/ShootFormFields'
 import { ROLES_UK, uk } from '../../../../../src/i18n/uk'
 import { VisibilityNote } from '../../../../../src/components/Visibility'
 import { useStrings } from '../../../../../src/i18n/LanguageProvider'
@@ -729,45 +731,4 @@ function NewContactTab({
   )
 }
 
-/** A label with the design's «— необовʼязково» suffix in a lighter tone. */
-function FieldLabel({ label, optional = false }: { label: string; optional?: boolean }) {
-  const t = useStrings()
-  return (
-    <Text className="text-body-sm text-foreground font-medium">
-      {label}
-      {optional ? (
-        <Text className="text-label text-muted-foreground font-normal">{` ${t.optionalSuffix}`}</Text>
-      ) : null}
-    </Text>
-  )
-}
 
-function RoleChip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string
-  active: boolean
-  onPress: () => void
-}) {
-  return (
-    <Pressable
-      className={`min-h-9 justify-center rounded-lg border px-3 ${
-        active ? 'bg-primary border-primary' : 'bg-background border-border active:bg-secondary'
-      }`}
-      onPress={() => {
-        tapped()
-        onPress()
-      }}
-      role="radio"
-      accessibilityState={{ selected: active }}
-    >
-      <Text
-        className={`text-body-sm font-medium ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  )
-}

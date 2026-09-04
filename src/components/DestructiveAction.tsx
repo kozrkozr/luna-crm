@@ -70,10 +70,20 @@ type Props = {
  */
 export function useDestructiveConfirm<T>({
   question,
+  message,
   label,
   onConfirm,
 }: {
   question: string
+  /**
+   * The sentence under the question — what the reader needs before answering.
+   *
+   * Added for «Видалити контакт» (2026-09-04), whose artboard explains what
+   * survives the deletion: «Зйомки, де він уже доданий, залишаться без змін».
+   * On iOS it is the Alert's own message; on web it is a line under the title.
+   * Optional, so the callers that ask a self-contained question are unchanged.
+   */
+  message?: string
   label: string
   onConfirm: (subject: T) => void
 }): { ask: (subject: T) => void; dialog: React.ReactNode } {
@@ -82,7 +92,7 @@ export function useDestructiveConfirm<T>({
 
   const ask = (subject: T) => {
     if (Platform.OS !== 'web') {
-      Alert.alert(question, undefined, [
+      Alert.alert(question, message, [
         // `cancel` and `destructive` are what make iOS lay the buttons out the
         // way people already expect: cancel is the safe default, the red one is
         // the one that acts.
@@ -105,6 +115,9 @@ export function useDestructiveConfirm<T>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{question}</AlertDialogTitle>
+            {message ? (
+              <Text className="text-body-sm text-muted-foreground leading-5">{message}</Text>
+            ) : null}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>

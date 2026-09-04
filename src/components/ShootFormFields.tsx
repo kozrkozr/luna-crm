@@ -352,9 +352,24 @@ export function SectionLabel({ label }: { label: string }) {
   )
 }
 
-/** The design's 13/500 field label, above an input rather than beside it. */
-export function FieldLabel({ label }: { label: string }) {
-  return <Text className="text-body-sm text-foreground font-medium">{label}</Text>
+/**
+ * The design's 13/500 field label, above an input rather than beside it.
+ *
+ * `optional` appends «— необовʼязково» in a lighter tone, which is how every
+ * artboard marks a field that may be left empty. It was a second, local copy of
+ * this component in the add-crew screen until the contact form needed the same
+ * label; one control, one implementation.
+ */
+export function FieldLabel({ label, optional = false }: { label: string; optional?: boolean }) {
+  const t = useStrings()
+  return (
+    <Text className="text-body-sm text-foreground font-medium">
+      {label}
+      {optional ? (
+        <Text className="text-label text-muted-foreground font-normal">{` ${t.optionalSuffix}`}</Text>
+      ) : null}
+    </Text>
+  )
 }
 
 /** One slot in the time grid: 44pt tall, so the row is a legal touch target. */

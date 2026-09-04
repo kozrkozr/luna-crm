@@ -49,6 +49,10 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="shoots" />
+      {/* Live since 2026-09-04. It shipped with the bar as a drawn, inert item
+          for one commit, because `Contacts.dc.html` needed a decision the bar
+          did not — see the screen. */}
+      <Tabs.Screen name="contacts" />
       <Tabs.Screen name="profile" />
     </Tabs>
   )

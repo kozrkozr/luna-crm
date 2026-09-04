@@ -204,3 +204,107 @@ export async function upsertContact(input: ContactInput): Promise<Contact | null
   if (error || !data) return null
   return toContact(data as ContactRow)
 }
+
+/**
+ * Everything the «Новий контакт» / «Редагувати контакт» form writes about a
+ * person in «Команда».
+ *
+ * **No email and no telegram**, because `Contacts.dc.html` draws neither. Both
+ * columns exist and both are set when a crew member is added to a shoot; a
+ * contact created by hand simply has none, and editing one never clears the
+ * email it was backfilled with — see `updateContact`.
+ */
+export type ManualContactInput = {
+  name: string
+  role: string
+  phone: string | null
+  instagram: string | null
+  /** The creator's own writing about the person. Never in a link payload. */
+  note: string | null
+}
+
+/**
+ * Remember somebody the creator typed in, rather than someone a shoot brought.
+ *
+ * Separate from `upsertContact`, which a shoot form calls and which deliberately
+ * never touches `note`. This is the other direction: the form's whole subject IS
+ * the person, notes included.
+ *
+ * **A duplicate identity updates instead of inserting, and it has no choice.**
+ * `contacts_identity_idx` is unique on (creator, casefolded name, phone-or-email)
+ * where `deleted_at is null`, so a second row for the same person cannot exist —
+ * an insert would fail the constraint. Updating the row that is already there is
+ * the only behaviour the schema permits, and it is what the artboard's «{name}
+ * додано до контактів» ends up describing. **Nothing tells the creator they
+ * already knew this person**; no copy exists for that, and inventing it is
+ * CLAUDE.md rule 1. Logged as a question.
+ */
+export async function createContact(input: ManualContactInput): Promise<Contact | null> {
+  const existing = await findContactByIdentity(input.name, input.phone, null)
+  if (existing) {
+    const saved = await updateContact(existing.id, input)
+    // The email is kept — `updateContact` does not write it — so the returned
+    // contact is the stored row with the form's values over it.
+    return saved ? { ...existing, ...normalise(input) } : null
+  }
+
+  const { data: auth } = await supabase.auth.getUser()
+  const creatorId = auth.user?.id
+  if (!creatorId) return null
+
+  const { data, error } = await supabase
+    .from('contacts')
+    .insert({ creator_id: creatorId, ...normalise(input) })
+    .select(CONTACT_COLUMNS)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return toContact(data as ContactRow)
+}
+
+/**
+ * Change what is remembered about a contact.
+ *
+ * **`email` is not in the input and is not written.** It is the crew-matching
+ * key (`match_contact_to_user`), it was backfilled from `crew_members`, and the
+ * form has no field for it — so a save from this form must not blank it.
+ *
+ * The name IS writable here, unlike a client's from a shoot form: a contact has
+ * no cross-shoot rows to rewrite, because `crew_members` keeps its own copy of
+ * the name per shoot.
+ */
+export async function updateContact(id: string, input: ManualContactInput): Promise<boolean> {
+  const { error } = await supabase.from('contacts').update(normalise(input)).eq('id', id)
+  return !error
+}
+
+/**
+ * Remove a contact from the address book (`ADR-014`, soft).
+ *
+ * A plain `update`, where a client needs an RPC: the contacts SELECT policy is
+ * `creator_id = auth.uid()` with **no** `deleted_at` filter — the filter lives
+ * in the reads instead — so setting `deleted_at` still passes the policy on the
+ * way back. The migration chose that shape; this is what it bought.
+ *
+ * The artboard's promise holds by construction here: `crew_members` rows are
+ * different rows, so every shoot this person is on is untouched.
+ */
+export async function deleteContact(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('contacts')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+
+  return !error
+}
+
+/** The form's values as columns: trimmed, and empty stored as null. */
+function normalise(input: ManualContactInput) {
+  return {
+    name: input.name.trim(),
+    role: input.role.trim(),
+    phone: input.phone?.trim() || null,
+    instagram: input.instagram?.trim() || null,
+    note: input.note?.trim() || null,
+  }
+}

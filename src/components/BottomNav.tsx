@@ -32,11 +32,8 @@ export function bottomNavHeight(insetBottom: number) {
 }
 
 type NavItem = {
-  /**
-   * The route inside `app/(app)/(tabs)/`, or `null` for an item that navigates
-   * nowhere — see «Контакти» below.
-   */
-  route: 'index' | 'shoots' | 'profile' | null
+  /** The route inside `app/(app)/(tabs)/`. */
+  route: 'index' | 'shoots' | 'contacts' | 'profile'
   label: string
   icon: LucideIcon
 }
@@ -77,27 +74,21 @@ export function BottomNav({ state, navigation, insets }: BottomTabBarProps) {
     a dictionary read once at import time would keep the language the app
     started in for the rest of the session.
 
-    The order is the artboard's, and «Контакти» is third — which is why this is
-    a list of its own instead of a walk over `state.routes`. The navigator holds
-    three screens; the bar draws four items.
+    The order is the artboard's, and it is a list of its own rather than a walk
+    over `state.routes` so that the bar's order is stated here instead of
+    inherited from the filesystem.
   */
   const items: NavItem[] = [
     { route: 'index', label: t.navHome, icon: House },
     { route: 'shoots', label: t.navCalendar, icon: Calendar },
     /*
-      **«Контакти» is drawn and inert** (owner, 2026-09-04). `Contacts.dc.html`
-      is a whole screen — a search over «Клієнти» / «Команда», three filter
-      chips, and a create/edit form — and it needs a `kind` column that
-      `contacts` does not have: our directory is the crew address book from
-      2026-09-04, while clients live on `Shoot.client*` and `client/[id]`. The
-      artboard merges the two, which is a migration and a story, not a tab.
-
-      So this follows the precedent set on 2026-09-02 for controls whose
-      destination does not exist: present exactly as designed, does nothing on
-      tap. **A quarter of the app's main navigation is dead until that pass** —
-      the one thing on this bar that promises something untrue.
+      Live since 2026-09-04, one commit after the bar itself. It shipped drawn
+      and inert because `Contacts.dc.html` groups people into «Клієнти» and
+      «Команда» while `contacts` holds only crew — the answer turned out to be
+      that both groups are already tables, so the screen is a union of two
+      reads. See `src/features/contacts/directory.ts`.
     */
-    { route: null, label: t.navContacts, icon: Users },
+    { route: 'contacts', label: t.navContacts, icon: Users },
     { route: 'profile', label: t.navProfile, icon: CircleUserRound },
   ]
 
@@ -109,8 +100,8 @@ export function BottomNav({ state, navigation, insets }: BottomTabBarProps) {
       style={{ paddingBottom: insets.bottom || 22 }}
     >
       {items.map((item) => {
-        const target = item.route ? state.routes.find((r) => r.name === item.route) : undefined
-        const selected = item.route !== null && item.route === activeRoute
+        const target = state.routes.find((route) => route.name === item.route)
+        const selected = item.route === activeRoute
 
         return (
           <Pressable

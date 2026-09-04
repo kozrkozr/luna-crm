@@ -535,9 +535,62 @@ export const uk = {
   /** Under the title: what the reader is looking at. */
   publicProfileSelfSubline: 'Так вас бачать інші учасники зйомок',
   publicProfileOtherSubline: 'Публічні дані учасника зйомки',
+  /**
+   * A client's, and the third reader this screen has (owner's words,
+   * 2026-09-04). It deliberately does not say «публічні»: nothing about a
+   * client is published to anybody — the profile is opened from
+   * «Мої контакти», by the only person who can see it.
+   */
+  publicProfileClientSubline: 'Дані клієнта з ваших зйомок',
   contactsSection: 'Контакти',
   /** Why `users.email` is not on a screen called «Публічний профіль». */
   emailHiddenFromOthers: 'Email та налаштування акаунту приховані від інших.',
+
+  /*
+   * ── «Мої контакти», from `Contacts.dc.html` (owner, 2026-09-04) ───────────
+   *
+   * Four labels this screen does NOT define, because they already exist and say
+   * the same thing: `crew` («Команда») for the group heading and the form's
+   * type toggle, `clientRole` («Клієнт») for the other half of it, `name`,
+   * `phoneField`, `instagramLabel`, `notesSection`, `crewRoleOnShoot` and
+   * `optionalSuffix` for the form's fields, `nameRequired` («Вкажіть імʼя») for
+   * the save button before a name is typed, and `changesSaved` for the edit
+   * toast. The artboard writes «Нотатки бачите тільки ви — вони не показуються
+   * КОНТАКТУ» where `crewNotesPrivate` says «УЧАСНИКУ»; the existing string is
+   * reused rather than the app carrying two of them.
+   */
+  myContactsTitle: 'Мої контакти',
+  contactsSearchPlaceholder: 'Пошук за імʼям або роллю',
+  contactsFilterAll: 'Всі',
+  contactsGroupClients: 'Клієнти',
+  /** Nobody in the book at all — and it says how people get there. */
+  emptyContactsTitle: 'Тут поки нікого немає',
+  emptyContactsText:
+    'Контакти зʼявляються тут, коли ви додаєте людей у команду зйомки або створюєте їх вручну.',
+  /** A search that matched nothing, which is a different sentence. */
+  contactsNotFoundTitle: 'Нікого не знайдено',
+  contactsNotFoundText: 'Спробуйте інше імʼя або роль.',
+  newContactTitle: 'Новий контакт',
+  editContactTitle: 'Редагувати контакт',
+  contactKindLabel: 'Тип контакту',
+  contactNamePlaceholder: 'Наприклад, Дмитро Марчук',
+  contactNotesPlaceholder: 'Особливості, побажання, що варто врахувати',
+  saveContact: 'Зберегти контакт',
+  editContactHint: 'Зміни застосуються всюди, де цей контакт уже додано.',
+  contactAddedTemplate: '{name} додано до контактів',
+  contactDeletedTemplate: '{name} видалено з контактів',
+  deleteContactAction: 'Видалити контакт',
+  deleteContactQuestion: 'Видалити контакт «{name}»?',
+  /*
+   * The artboard's own sentence, with one word repaired: it writes «де він уже
+   * додан», which is not a form of «доданий». Flagged in docs/redesign-log.md
+   * rather than shipped as drawn.
+   *
+   * It is true as written only where the screen offers the action — a crew
+   * contact always, a client only with no shoots. See `deleteClient`.
+   */
+  deleteContactExplain:
+    'Контакт зникне зі списку «Мої контакти» разом із вашими нотатками. Зйомки, де він уже доданий, залишаться без змін.',
   /** «Зйомка з Марією Литвин · 3 години» — the link view's meta line. */
   shootWithTemplate: 'Зйомка з {name}',
   /*

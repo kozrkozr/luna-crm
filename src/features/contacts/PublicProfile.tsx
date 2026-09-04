@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { LucideIcon } from 'lucide-react-native'
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import Mail from 'lucide-react-native/icons/mail'
+import Pencil from 'lucide-react-native/icons/pencil'
 import Send from 'lucide-react-native/icons/send'
 import Smartphone from 'lucide-react-native/icons/smartphone'
 import { Card } from '../../components/ui/card'
@@ -20,19 +21,24 @@ import { tapped } from '../../lib/haptics'
 /**
  * «Публічний профіль» — `Public Profile.dc.html` (owner, 2026-09-04).
  *
- * One component, two readers, and the difference is not cosmetic:
+ * One component, three readers, and the differences are not cosmetic:
  *
  * - **`self`** is the account holder previewing themselves, reached from the
  *   profile's «Переглянути публічний профіль». Read from `users`. No note,
- *   because there is nobody to have written one.
- * - **`contact`** is somebody in «Мої контакти», reached from a crew row's
- *   «Профіль учасника». Read from `contacts`, and it carries the creator's own
- *   note about that person.
+ *   because there is nobody to have written one, and no management: you do not
+ *   delete yourself from your own address book.
+ * - **`contact`** is somebody in «Команда», reached from a crew row's «Профіль
+ *   учасника» or from «Мої контакти». Read from `contacts`, and it carries the
+ *   creator's own note about that person.
+ * - **`client`** is somebody in «Клієнти», reached from «Мої контакти» only
+ *   (2026-09-04). Read from `clients`, whose `notes` are `US-028`'s
+ *   between-shoots notes and land in the same card.
  *
- * **Read-only** (owner, 2026-09-03). The artboard puts «Редагувати контакт» and
- * «Видалити контакт» here and points both at `Contacts.dc.html`; that screen is
- * not built, and managing a contact belongs with the list rather than with one
- * profile. Deferred to its own pass.
+ * **It was read-only until 2026-09-04.** The artboard always put «Редагувати
+ * контакт» and «Видалити контакт» here, pointing both at `Contacts.dc.html`;
+ * that screen now exists, so the two controls arrive with it. They are
+ * callbacks rather than routes — whether a given profile may be edited or
+ * deleted is the route's decision, not this component's.
  *
  * ── Two things the artboard draws that this does not ────────────────────────
  *
@@ -58,13 +64,37 @@ export type PublicProfileView = {
    * contact who has none.
    */
   note: string | null
-  /** Whose profile this is, which decides the subline and the note. */
-  kind: 'self' | 'contact'
-  /** «Профіль» when previewing yourself, «Команда» when arriving from a shoot. */
+  /**
+   * Whose profile this is, which decides the subline, the note and the email.
+   *
+   * **`client` is the third reader, added 2026-09-04** with «Мої контакти»:
+   * that screen is one list over `clients` and `contacts`, and both halves open
+   * here because `client/[id]` is still `US-028`'s stub. A client is not a
+   * shoot participant, so it cannot borrow the participant subline.
+   */
+  kind: 'self' | 'contact' | 'client'
+  /** «Профіль» previewing yourself, «Команда» from a shoot, «Контакти» from the list. */
   backLabel: string
 }
 
-export function PublicProfile({ view }: { view: PublicProfileView }) {
+export function PublicProfile({
+  view,
+  onEdit,
+  onDelete,
+}: {
+  view: PublicProfileView
+  /**
+   * «Редагувати контакт». Absent when there is nothing to edit — your own
+   * profile, or a crew member with no contact row behind them.
+   */
+  onEdit?: () => void
+  /**
+   * «Видалити контакт». Absent for the same reasons, and for a client who has
+   * shoots — the route owns that policy, because the reason is about `clients`
+   * rather than about this screen. See `deleteClient`.
+   */
+  onDelete?: () => void
+}) {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -115,7 +145,11 @@ export function PublicProfile({ view }: { view: PublicProfileView }) {
           <View className="w-[88px] shrink-0" />
         </View>
         <Text className="text-caption text-muted-foreground px-4 pb-2.5 text-center">
-          {view.kind === 'self' ? t.publicProfileSelfSubline : t.publicProfileOtherSubline}
+          {view.kind === 'self'
+            ? t.publicProfileSelfSubline
+            : view.kind === 'client'
+              ? t.publicProfileClientSubline
+              : t.publicProfileOtherSubline}
         </Text>
       </View>
 
@@ -138,10 +172,13 @@ export function PublicProfile({ view }: { view: PublicProfileView }) {
             {view.name}
           </Text>
           {/* The role alone: the artboard appends « · KULT Studio» and there is
-              no studio column (P-3, L-4). */}
-          <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
-            {view.role}
-          </Text>
+              no studio column (P-3, L-4). **A client has none at all** — the
+              line is dropped rather than filled with something invented. */}
+          {view.role ? (
+            <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
+              {view.role}
+            </Text>
+          ) : null}
         </Card>
 
         {/*
@@ -201,6 +238,52 @@ export function PublicProfile({ view }: { view: PublicProfileView }) {
               <VisibilityNote label={t.crewNotesPrivate} />
             </Card>
           </View>
+        ) : null}
+
+        {/*
+          ── «Редагувати контакт» · «Видалити контакт» ──
+
+          At the foot of the scroll, as drawn, and each present only when the
+          route passed a handler. The artboard gates both on `showNotes` — i.e.
+          "not my own profile"; ours gates them on there being a row to act on,
+          which is the same rule plus the two cases the artboard has no state
+          for: a crew member with no contact behind them, and a client with
+          shoots (see `deleteClient`).
+
+          The delete does NOT confirm here. It asks the route, which owns
+          `useDestructiveConfirm` — a real iOS alert rather than the artboard's
+          in-page dialog, the same machinery `US-019` and `US-022` use. R-1's
+          answer, applied again.
+        */}
+        {onEdit ? (
+          <Pressable
+            className="border-border active:bg-secondary min-h-12 flex-row items-center justify-center gap-2 rounded-lg border"
+            onPress={() => {
+              tapped()
+              onEdit()
+            }}
+            role="button"
+          >
+            <Icon as={Pencil} size={15} strokeWidth={1.8} className="text-muted-foreground" />
+            <Text className="text-body-sm text-muted-foreground font-medium">
+              {t.editContactTitle}
+            </Text>
+          </Pressable>
+        ) : null}
+
+        {onDelete ? (
+          <Pressable
+            className="border-destructive/40 active:bg-destructive/10 min-h-12 items-center justify-center rounded-lg border"
+            onPress={() => {
+              tapped()
+              onDelete()
+            }}
+            role="button"
+          >
+            <Text className="text-body-sm text-destructive font-medium">
+              {t.deleteContactAction}
+            </Text>
+          </Pressable>
         ) : null}
         </View>
       </ScrollView>
