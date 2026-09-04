@@ -99,7 +99,7 @@ export function PublicProfile({ view }: { view: PublicProfileView }) {
             onPress={() => {
               tapped()
               if (router.canGoBack()) router.back()
-              else router.replace('/(app)/profile')
+              else router.replace('/(app)/(tabs)/profile')
             }}
             role="button"
             accessibilityLabel={view.backLabel}

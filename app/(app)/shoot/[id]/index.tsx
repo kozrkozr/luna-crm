@@ -242,7 +242,7 @@ export default function ShootDetailScreen() {
         // `push`: the deleted shoot must not stay on the stack to be swiped
         // back to. `back` only when there is something to go back to.
         if (router.canGoBack()) router.back()
-        else router.replace('/(app)/shoots')
+        else router.replace('/(app)/(tabs)/shoots')
       })()
     },
   })

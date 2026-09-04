@@ -14,31 +14,32 @@ import Pencil from 'lucide-react-native/icons/pencil'
 import Send from 'lucide-react-native/icons/send'
 import Smartphone from 'lucide-react-native/icons/smartphone'
 import User from 'lucide-react-native/icons/user'
-import { Button } from '../../src/components/ui/button'
-import { Card } from '../../src/components/ui/card'
-import { Icon } from '../../src/components/ui/icon'
-import { InstagramIcon } from '../../src/components/ui/instagram-icon'
-import { Input } from '../../src/components/ui/input'
-import { Sheet } from '../../src/components/ui/sheet'
-import { Switch } from '../../src/components/ui/switch'
-import { Text } from '../../src/components/ui/text'
-import { Avatar } from '../../src/components/Avatar'
-import { LanguageSwitcher } from '../../src/components/LanguageSwitcher'
-import { SectionLabel } from '../../src/components/ShootFormFields'
-import { Toast } from '../../src/components/Toast'
-import { useDestructiveConfirm } from '../../src/components/DestructiveAction'
-import { ROLES_UK, uk } from '../../src/i18n/uk'
-import { useLanguage, useStrings } from '../../src/i18n/LanguageProvider'
-import { formatDayMonth, toIsoDate } from '../../src/features/shoots/date'
-import { failed, selected as tickSelection, succeeded, tapped } from '../../src/lib/haptics'
-import { useProfile } from '../../src/features/auth/useProfile'
+import { Button } from '../../../src/components/ui/button'
+import { Card } from '../../../src/components/ui/card'
+import { Icon } from '../../../src/components/ui/icon'
+import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
+import { Input } from '../../../src/components/ui/input'
+import { Sheet } from '../../../src/components/ui/sheet'
+import { Switch } from '../../../src/components/ui/switch'
+import { Text } from '../../../src/components/ui/text'
+import { Avatar } from '../../../src/components/Avatar'
+import { bottomNavHeight } from '../../../src/components/BottomNav'
+import { LanguageSwitcher } from '../../../src/components/LanguageSwitcher'
+import { SectionLabel } from '../../../src/components/ShootFormFields'
+import { Toast } from '../../../src/components/Toast'
+import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
+import { ROLES_UK, uk } from '../../../src/i18n/uk'
+import { useLanguage, useStrings } from '../../../src/i18n/LanguageProvider'
+import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
+import { failed, selected as tickSelection, succeeded, tapped } from '../../../src/lib/haptics'
+import { useProfile } from '../../../src/features/auth/useProfile'
 import {
   deleteOwnAccount,
   signOut,
   signedAvatarUrl,
   updateProfile,
   uploadAvatar,
-} from '../../src/features/auth/profile'
+} from '../../../src/features/auth/profile'
 
 /** The editable half of the profile — everything the save button writes. */
 type Draft = {
@@ -264,9 +265,20 @@ export default function ProfileScreen() {
     setToast(t.profileSaved)
   }
 
+  /*
+    «Скасувати» — kept on a tab root (owner, 2026-09-04), because
+    `Edit Profile.dc.html` still draws it beside the bar. It does real work
+    here: with unsaved changes it opens the «Скасувати зміни?» sheet, which is
+    not the same thing as going back.
+
+    With nothing to discard it goes to the Головна tab rather than `back()`.
+    This screen has nothing to pop any more — it is a tab, not a pushed
+    screen — and the artboard's own handler toasts «Назад до головного», so
+    home is where it means.
+  */
   const leave = () => {
     if (dirty) return setConfirmDiscard(true)
-    router.back()
+    router.navigate('/(app)/(tabs)')
   }
 
   return (
@@ -323,8 +335,13 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
+      {/*
+        40, and **no bottom inset** (2026-09-04): the artboard's `padding-bottom:114`
+        less the 75px bar the navigator reserves, and the bar owns the safe area
+        now — `insets.bottom` here would add 34pt of dead space above it.
+      */}
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
       >
         <View className="gap-5 p-4">
@@ -719,7 +736,16 @@ export default function ProfileScreen() {
       </Sheet>
 
       {deleteDialog}
-      <Toast message={toast} onDone={() => setToast(null)} />
+      {/*
+        Raised clear of the bottom bar. The toast portals to the root host, so
+        it knows nothing about the navigator it was fired from — 21px above the
+        bar is the artboards' `bottom:96` over a 75px one.
+      */}
+      <Toast
+        message={toast}
+        onDone={() => setToast(null)}
+        bottom={bottomNavHeight(insets.bottom) + 21}
+      />
     </View>
   )
 }

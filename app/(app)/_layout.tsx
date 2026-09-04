@@ -59,32 +59,26 @@ function AppStack() {
       }}
     >
       {/*
-        One route draws its own header and so takes none from the navigator:
-        `index` (US-035's home screen — greeting, bell, profile chip), whose
-        arrangement is impossible natively because iOS centres a native title as
-        soon as a headerLeft exists. Every other route keeps the native header.
+        The four-tab shell (2026-09-04), and the group every route below is
+        pushed ON TOP of. `index` (US-035's home), `shoots` (the calendar) and
+        `profile` moved into `app/(app)/(tabs)/`; the bottom bar lives in that
+        group's own layout, so a screen declared here covers it by construction
+        rather than by remembering to hide it.
 
-        `shoots` used to be the second. Its header had already lost the avatar
-        and then the title, leaving a hand-drawn chevron and nothing else, so the
-        route now takes the navigator's header on the same options `new-shoot`
-        uses (owner, 2026-08-29) — one back control, drawn once.
+        All three draw their own headers, which is why the group takes none:
+        home's arrangement (greeting, bell, avatar) is impossible natively
+        because iOS centres a native title as soon as a headerLeft exists;
+        `Calendar.dc.html` gives `shoots` a meta line under the title
+        («Вересень · 6 зйомок») and a «Сьогодні» control on the right; and
+        profile's is «Скасувати · Мій профіль · Зберегти».
 
         US-016 AC-2's route to the profile and US-015's language switcher both
-        survived the change: the profile is the avatar on `index`, and the
-        switcher moved onto the profile screen itself. `shoots` had an avatar of
-        its own until the owner removed it (2026-08-29) — home is the one route
-        now, which is also the screen `shoots` is reached from. **If home ever
-        loses its avatar, AC-2 has no route left.**
+        survive: the profile is now reachable twice over — the avatar on home
+        AND the «Профіль» tab — and the switcher lives on the profile screen.
+        The tab is the sturdier of the two, but **the avatar is still AC-2's
+        stated route**, so it stays.
       */}
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      {/*
-        `shoots` draws its own header again (2026-08-30) — it had gone back to
-        the navigator's on 2026-08-29 when its hand-drawn one was reduced to a
-        bare chevron. `Calendar.dc.html` gives it a meta line under the title
-        («Вересень · 6 зйомок») and a «Сьогодні» control on the right, and a
-        native header can hold neither.
-      */}
-      <Stack.Screen name="shoots" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="client/[id]"
         options={{ title: t.clientProfileTitle, headerLargeTitle: false }}
@@ -98,10 +92,6 @@ function AppStack() {
         routes in this navigator now draw their own.
       */}
       <Stack.Screen name="new-shoot" options={{ headerShown: false }} />
-      {/* Profile draws its own header too since 2026-08-31 — «Скасувати» beside
-          a centred title, with the save pinned to the bottom. So does the
-          change-password screen it leads to. */}
-      <Stack.Screen name="profile" options={{ headerShown: false }} />
       {/*
         «Публічний профіль», both readers — the account holder previewing
         themselves and a person from «Мої контакти». Each draws its own header:
@@ -111,6 +101,9 @@ function AppStack() {
       */}
       <Stack.Screen name="public-profile" options={{ headerShown: false }} />
       <Stack.Screen name="contact/[id]" options={{ headerShown: false }} />
+      {/* Change password draws its own header too — «Скасувати» beside a centred
+          title. It is pushed from the profile TAB, so it covers the bottom bar,
+          which is right: it is a form with one way out. */}
       <Stack.Screen name="password" options={{ headerShown: false }} />
       {/*
         The shoot's two screens draw their own headers (2026-08-30), which makes

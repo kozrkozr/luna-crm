@@ -89,7 +89,7 @@ export default function ResetPasswordScreen() {
     // Straight into the app: `setNewPassword` ran on a live session, so the
     // reader is already signed in and a trip through the login form would ask
     // for the password they just set.
-    router.replace('/(app)')
+    router.replace('/(app)/(tabs)')
   }
 
   if (ready === 'checking') {

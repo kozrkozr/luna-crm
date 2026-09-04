@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { SectionLabel } from '../../src/components/ShootFormFields'
+import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { Pressable, ScrollView, View } from 'react-native'
 import Animated, {
   Easing,
@@ -11,11 +11,11 @@ import Animated, {
 } from 'react-native-reanimated'
 import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Badge } from '../../src/components/ui/badge'
-import { Button } from '../../src/components/ui/button'
-import { Card } from '../../src/components/ui/card'
-import { Text } from '../../src/components/ui/text'
-import { Avatar } from '../../src/components/Avatar'
+import { Badge } from '../../../src/components/ui/badge'
+import { Button } from '../../../src/components/ui/button'
+import { Card } from '../../../src/components/ui/card'
+import { Text } from '../../../src/components/ui/text'
+import { Avatar } from '../../../src/components/Avatar'
 /*
  * A deep per-icon import, never the `lucide-react-native` barrel: Metro does
  * not tree-shake, so the barrel ships all ~2,000 icon components and doubled
@@ -24,25 +24,25 @@ import { Avatar } from '../../src/components/Avatar'
 import Bell from 'lucide-react-native/icons/bell'
 import CalendarIcon from 'lucide-react-native/icons/calendar'
 import MapPin from 'lucide-react-native/icons/map-pin'
-import { Icon } from '../../src/components/ui/icon'
-import { useStrings } from '../../src/i18n/LanguageProvider'
-import { useProfile } from '../../src/features/auth/useProfile'
-import { tapped } from '../../src/lib/haptics'
-import { listShoots, type Shoot } from '../../src/features/shoots/api'
-import { listCrew } from '../../src/features/crew/api'
+import { Icon } from '../../../src/components/ui/icon'
+import { useStrings } from '../../../src/i18n/LanguageProvider'
+import { useProfile } from '../../../src/features/auth/useProfile'
+import { tapped } from '../../../src/lib/haptics'
+import { listShoots, type Shoot } from '../../../src/features/shoots/api'
+import { listCrew } from '../../../src/features/crew/api'
 import {
   dayOfMonth,
   formatDayMonth,
   formatTimeRange,
   shortMonth,
-} from '../../src/features/shoots/date'
+} from '../../../src/features/shoots/date'
 import {
   daysUntil,
   distanceLabel,
   nextShoot,
   todayLabel,
   upcomingShoots,
-} from '../../src/features/shoots/home'
+} from '../../../src/features/shoots/home'
 
 type State =
   | { status: 'loading' }
@@ -133,7 +133,13 @@ export default function HomeScreen() {
     <View className="bg-background flex-1">
       <HomeHeader />
       <ScrollView contentInsetAdjustmentBehavior="automatic">
-        <View className="gap-3 px-4 pb-8">
+        {/*
+          `pb-10` — the artboard ends its scroll container at `padding-bottom:114`,
+          and 75 of that is the bottom bar. The navigator reserves the bar's
+          height (its screens are a flex child ABOVE it, not underneath), so what
+          belongs here is the remaining 39.
+        */}
+        <View className="gap-3 px-4 pb-10">
           {/*
             `Home.dc.html`'s order, and it is a reversal: the next shoot comes
             FIRST and the two buttons sit under it. They used to lead the screen.
@@ -217,7 +223,7 @@ export default function HomeScreen() {
               variant="outline"
               size="cta"
               className="h-11 justify-center rounded-lg py-0"
-              onPress={() => router.push('/(app)/shoots')}
+              onPress={() => router.push('/(app)/(tabs)/shoots')}
             >
               {/*
                 `Icon` reads the surrounding TextClassContext, which Button sets
@@ -238,7 +244,7 @@ export default function HomeScreen() {
             <View className="mt-2.5">
               <View className="mb-2 flex-row items-baseline justify-between px-0.5">
                 <SectionLabel label={t.upcomingShootsLabel} />
-                <Link href="/(app)/shoots" asChild>
+                <Link href="/(app)/(tabs)/shoots" asChild>
                   <Pressable hitSlop={10} onPress={tapped} role="button">
                     <Text className="text-label text-foreground font-medium">{t.seeAll}</Text>
                   </Pressable>
@@ -362,7 +368,7 @@ function HomeHeader() {
           <View className="border-background bg-foreground absolute right-[9px] top-[9px] h-[7px] w-[7px] rounded-full border-2" />
         </Pressable>
 
-        <Link href="/(app)/profile" asChild>
+        <Link href="/(app)/(tabs)/profile" asChild>
           {/* A plain 40pt avatar. The chevron beside it is gone with the pill
               it sat in — the design draws the avatar alone. */}
           <Pressable

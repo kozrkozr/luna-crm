@@ -89,6 +89,13 @@ export const en: Strings = {
   newShootTitle: 'New shoot',
   // See the note in uk.ts.
   calendarTitle: 'Calendar',
+
+  // The bottom navigation's four labels. See the note in uk.ts.
+  navHome: 'Home',
+  navCalendar: 'Calendar',
+  navContacts: 'Contacts',
+  navProfile: 'Profile',
+
   clientName: 'Client name',
   clientNamePlaceholder: 'e.g. Maria',
   clientContact: 'Client contact',

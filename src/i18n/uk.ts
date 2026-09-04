@@ -105,6 +105,20 @@ export const uk = {
    * It describes what the screen leads with, which is the month calendar.
    */
   calendarTitle: 'Календар',
+
+  /*
+   * ── The bottom navigation's four labels, from `Home.dc.html` ──────────────
+   *
+   * Their own keys, though `navCalendar` and `navProfile` read the same as
+   * `calendarTitle` and `profileTitle` today: a 10px tab label and a screen
+   * title are different copy slots — either can be shortened without the other
+   * — and the bar's four words should come from one place, not two.
+   */
+  navHome: 'Головна',
+  navCalendar: 'Календар',
+  navContacts: 'Контакти',
+  navProfile: 'Профіль',
+
   clientName: "Ім'я клієнта",
   clientNamePlaceholder: 'напр. Марія',
   clientContact: 'Контакт клієнта',

@@ -91,7 +91,7 @@ export function ShootDetailHeader({
             // `canGoBack` first: arriving here from a deep link leaves an empty
             // stack, where `back` does nothing and the control looks broken.
             if (router.canGoBack()) router.back()
-            else router.replace('/(app)/shoots')
+            else router.replace('/(app)/(tabs)/shoots')
           }}
           role="button"
           accessibilityLabel={t.cancel}

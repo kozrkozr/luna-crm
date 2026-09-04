@@ -536,6 +536,124 @@ while two of three user journeys are web. Same grounds as `ADR-010` Option B and
 `ADR-016` Option C.
 
 ---
+## The bottom navigation, from `Home.dc.html` (owner, 2026-09-04)
+
+New: `src/components/BottomNav.tsx`, `app/(app)/(tabs)/_layout.tsx`. Moved into
+that group: `index`, `shoots`, `profile`. Touched: `app/(app)/_layout.tsx`,
+`src/components/Toast.tsx`, both dictionaries, and the six hrefs that pointed at
+the three moved routes.
+
+This is the deferral of 2026-09-03 closed — «ignore navigation which appeared at
+the bottom, we will implement it later, separately». All four artboards that
+carry it (`Home`, `Calendar`, `Contacts`, `Edit Profile`) draw **the same bar**,
+which is what makes it a navigator rather than a component pasted four times.
+
+### What the artboard specifies
+
+| | Value |
+|---|---|
+| container | `bg-background`, `border-border` top hairline, `padding:7px 8px` + the safe area |
+| item | `flex:1`, `min-height:46`, radius 9, a 21px icon over a 10.5px label, 4px apart |
+| active | `#fafafa`, weight 600, `aria-current="page"` |
+| inactive | `#71717a`, weight 500 |
+| height | 7 + 46 + 22 = **75** — which is where `Calendar.dc.html`'s `bottom:74px` CTA comes from |
+| knock-on | Home and Edit Profile end at `padding-bottom:114`, Calendar at `166`, and **every toast moves from `bottom:60` to `bottom:96`** |
+
+The **22px is the artboard standing in for the home indicator**, so it becomes
+`insets.bottom` (34pt on the 402×874 frame it is drawn at) and survives only as
+the fallback for a frame that reports no inset — the web export, an older device.
+
+`react-navigation`'s bottom tabs lays screens out as a flex child **above** the
+bar rather than underneath it, so each screen keeps the artboard's padding *less
+the 75*: home `pb-10`, profile `40`, calendar `91`. The three roots therefore
+**stop applying `insets.bottom` themselves** — the bar owns the safe area now,
+and leaving it in would have pushed the calendar's CTA 34pt up into the list.
+
+### Decisions
+
+| # | Question | Answer |
+|---|---|---|
+| N-1 | A real tab navigator, or the bar as a component on three screens? | **`Tabs` from `expo-router/js-tabs` with a custom `tabBar`** (owner). Each tab keeps its scroll position and state, the bar is mounted once, and every pushed screen covers it by sitting in the parent stack. A route group, so **no URL moved**: `/`, `/shoots` and `/profile` still export to the same three files, which is what keeps `public/_redirects` and the theme playground's manifest valid without a line changing. **Not** the default `Tabs`, which is now `@expo/ui`'s SwiftUI bar — NativeWind cannot reach that, and this bar is hand-drawn monochrome |
+| N-2 | The tab roots still draw their old back controls. Keep them? | **Keep all three, as drawn** (owner). `Calendar.dc.html` still has its chevron, `Contacts.dc.html` its «Головна», `Edit Profile.dc.html` its «Скасувати» — beside the bar that made them redundant. Each goes to the Головна tab. The calendar's is drawn with **no handler at all**, so where it goes was ours; home is what the same artboard's Contacts sibling links its own back control to |
+| N-3 | «Контакти» points at a screen that does not exist | **Four tabs, «Контакти» inert** (owner) — the precedent of 2026-09-02 for controls whose destination does not exist. See below for what the screen behind it actually needs |
+
+### Not followed
+
+| # | What the artboard does | Why not |
+|---|---|---|
+| N-4 | Inactive tabs are `#71717a` | **`muted-foreground` (`#a3a3a3`)** — the greyscale has nothing at `#71717a` and the unselected tabs therefore read a step brighter than drawn. The alternative is a new token for one component, which is what `--border-strong` cost. **Say if it is worth one** |
+| N-5 | The label is 10.5px | `text-micro` (10px). The scale has no half step, and the earlier passes rounded down (`12.5 → text-label`, `13.5 → text-body-sm`) |
+| N-6 | A tab tints on hover | `active:opacity-70`. The artboards give a tab only a hover *colour*; a background fill would invent a surface the design has nowhere else |
+
+### What «Контакти» is waiting for, and it is not a tab
+
+`Contacts.dc.html` is two full screens: a search over people grouped **«Клієнти»
+/ «Команда»** with three filter chips, 64px rows into «Публічний профіль», a
+pinned «+ Новий контакт», two empty-state variants — and a create/edit form with
+a type toggle, role chips, and a «Нотатки бачите тільки ви» note. Plus `?edit=`
+and `?delete=`, the two pieces deferred on 2026-09-04.
+
+**It needs a column that does not exist.** `contacts` is the crew address book
+backfilled from `crew_members`; clients live on `Shoot.client*` and
+`client/[id]`. The artboard merges the two into one directory, adds manual
+contact creation (nothing creates a contact today except adding crew to a
+shoot), and carries a **third role list** — six here against the profile
+artboard's nine and `ROLES_UK`'s five. That is a migration, an amendment to
+`US-005`/`US-029`, and a story. Not a tab.
+
+So a quarter of the app's main navigation is dead until that pass. It is the one
+thing on this bar that promises something untrue.
+
+### Smaller things
+
+- **`Toast` gained a `bottom` prop.** It renders through the root `PortalHost`,
+  which sits outside every navigator — so it cannot discover that a bar is in
+  the way, and at its old `bottom-8` it would have appeared *under* the bar on
+  the profile tab. The screen passes `bottomNavHeight(insets.bottom) + 21`, which
+  is the artboards' `bottom:96` over a 75px bar. Default is 32, exactly what
+  `bottom-8` was, so no other caller moved.
+- **Profile's «Скасувати» goes to the Головна tab** when there is nothing to
+  discard, not `router.back()` — a tab root has nothing to pop, and the
+  artboard's own handler toasts «Назад до головного». With unsaved changes it
+  still opens the «Скасувати зміни?» sheet, which is the work it actually does.
+- **The calendar's chevron does not use `router.back()`.** A tab router keeps a
+  history of visited tabs, so `back()` would return to whichever tab was last
+  focused — a chevron landing somewhere different each time is worse than one
+  that always goes home.
+- **Four new dictionary keys**, `navHome` / `navCalendar` / `navContacts` /
+  `navProfile`. `navCalendar` and `navProfile` read the same as `calendarTitle`
+  and `profileTitle` today and are still their own keys: a 10px tab label and a
+  screen title are different copy slots, and the bar's four words should come
+  from one place.
+- **The profile is now reachable twice** — the avatar on home and the «Профіль»
+  tab. `US-016` AC-2 names the avatar, so it stays; the tab is the sturdier of
+  the two if that is ever revisited.
+
+### Verified
+
+`tsc --noEmit` clean. `expo export -p web` builds, and **`dist/index.html`,
+`dist/shoots.html` and `dist/profile.html` are still at those paths** — the route
+group changed the file tree, not the URLs, so `scripts/theme-playground/seed.mjs`
+and `public/_redirects` need no edit. No new dependency: `expo-router/js-tabs`
+ships with expo-router and neither it nor its bar touches gesture-handler.
+
+**The acceptance suite was not run** (standing instruction). Two notes for
+whoever does: the suites navigate only to `/login` and click through from there,
+so nothing they drive moved — and `us014-check.mjs` asserts the profile screen
+contains «Профіль», which the tab label now also satisfies. It still
+discriminates, because the label is dictionary copy and reads "Profile" on
+English, but it is a weaker assertion than it was.
+
+**`theme-dist/` is stale** — three of its twenty frozen screens now have a bar.
+Re-run `npm run export:web` then `npm run theme:freeze`.
+
+**Not verified: the bar on a device.** It has not been rendered — the three tab
+roots are behind auth and seeding a session writes to the shared Supabase
+project. The two things to look at first are the safe-area padding under the
+labels and whether the calendar's CTA sits flush on the bar as the artboard
+draws it.
+
+---
 ## Link preview copy, second pass (owner, 2026-09-03)
 
 `app/s/[token]/index.tsx`, `src/components/ResponsePill.tsx`, both dictionaries.

@@ -4,26 +4,26 @@ import { Link, Stack, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
-import { Badge } from '../../src/components/ui/badge'
-import { Button } from '../../src/components/ui/button'
-import { Icon } from '../../src/components/ui/icon'
-import { Tabs } from '../../src/components/ui/tabs'
-import { Text } from '../../src/components/ui/text'
-import { useStrings } from '../../src/i18n/LanguageProvider'
-import { formatDayMonth, toIsoDate } from '../../src/features/shoots/date'
-import { pluralUk } from '../../src/features/shoots/home'
-import { listShoots, type Shoot } from '../../src/features/shoots/api'
-import { listCrewShoots, type CrewShoot } from '../../src/features/shoots/crewSchedule'
-import { listCrewNamesForShoots } from '../../src/features/crew/api'
-import { Avatar } from '../../src/components/Avatar'
-import { tapped } from '../../src/lib/haptics'
-import { StatusPill } from '../../src/components/StatusPill'
-import { Card } from '../../src/components/ui/card'
+import { Badge } from '../../../src/components/ui/badge'
+import { Button } from '../../../src/components/ui/button'
+import { Icon } from '../../../src/components/ui/icon'
+import { Tabs } from '../../../src/components/ui/tabs'
+import { Text } from '../../../src/components/ui/text'
+import { useStrings } from '../../../src/i18n/LanguageProvider'
+import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
+import { pluralUk } from '../../../src/features/shoots/home'
+import { listShoots, type Shoot } from '../../../src/features/shoots/api'
+import { listCrewShoots, type CrewShoot } from '../../../src/features/shoots/crewSchedule'
+import { listCrewNamesForShoots } from '../../../src/features/crew/api'
+import { Avatar } from '../../../src/components/Avatar'
+import { tapped } from '../../../src/lib/haptics'
+import { StatusPill } from '../../../src/components/StatusPill'
+import { Card } from '../../../src/components/ui/card'
 import {
   ShootCalendar,
   startOfWeek,
   type CalendarMode,
-} from '../../src/components/ShootCalendar'
+} from '../../../src/components/ShootCalendar'
 
 type State =
   | { status: 'loading' }
@@ -82,7 +82,6 @@ export default function ShootListScreen() {
   const [state, setState] = useState<State>({ status: 'loading' })
   // AC-4 — the date being filtered to, or null for the whole list.
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const insets = useSafeAreaInsets()
 
   useFocusEffect(
     useCallback(() => {
@@ -144,7 +143,12 @@ export default function ShootListScreen() {
         }}
       />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 112 }}>
+      {/*
+        91, from `Calendar.dc.html`'s `padding:0 0 166px` less the 75px bottom
+        bar the navigator now reserves. It clears the pinned CTA below (68px)
+        with the artboard's own breathing room left over.
+      */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 91 }}>
         <View className="gap-3 px-4 pt-3">
           {/*
             The mode switch, now ABOVE the card and drawn by the shared `Tabs`
@@ -267,11 +271,14 @@ export default function ShootListScreen() {
         «+ Нова зйомка», pinned. It sat inline under the calendar card, which
         put the screen's one action halfway up a scrolling list; the handoff
         pins it, so it is reachable wherever the reader has scrolled to.
+
+        **No bottom inset any more** (2026-09-04). The artboard puts this block
+        at `bottom:74px` — directly on top of the bar — and the bar owns the safe
+        area now, so the screen's own bottom edge is already clear of the home
+        indicator. Adding `insets.bottom` here would push the CTA 34pt up into
+        the list. `py-2.5` is the artboard's own `padding:10px`.
       */}
-      <View
-        className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-3"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
+      <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
         <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
           <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
         </Button>
@@ -287,6 +294,12 @@ export default function ShootListScreen() {
  * «Сьогодні» is new. The calendar could always be walked back to the current
  * month with the arrows; nothing jumped to it, which on a screen whose whole
  * subject is dates was a gap the handoff noticed.
+ *
+ * **The chevron stays, now that this is a tab root** (owner, 2026-09-04).
+ * `Calendar.dc.html` still draws it beside the bar that made it redundant — and
+ * draws it with *no handler at all*, so where it goes was ours to decide: the
+ * Головна tab, which is what the same artboard's Contacts sibling links its own
+ * back control to. It is a second route to a tab that is already one tap away.
  */
 function CalendarHeader({ meta, onToday }: { meta: string; onToday: () => void }) {
   const t = useStrings()
@@ -302,8 +315,13 @@ function CalendarHeader({ meta, onToday }: { meta: string; onToday: () => void }
         className="active:bg-secondary h-10 w-10 items-center justify-center rounded-lg"
         onPress={() => {
           tapped()
-          if (router.canGoBack()) router.back()
-          else router.replace('/(app)')
+          /*
+            The Головна tab, always — not `router.back()`. A tab router keeps a
+            history of visited tabs, so `back()` from here would return to
+            whichever tab was last focused, and a chevron that lands somewhere
+            different each time is worse than one that always goes home.
+          */
+          router.navigate('/(app)/(tabs)')
         }}
         role="button"
         accessibilityLabel={t.cancel}

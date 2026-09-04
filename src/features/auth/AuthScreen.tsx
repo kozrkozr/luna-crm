@@ -308,7 +308,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
       setError(uk.wrongCreds)
       return
     }
-    router.replace('/(app)')
+    router.replace('/(app)/(tabs)')
   }
 
   return (
@@ -454,7 +454,7 @@ function RegisterForm() {
       )
       return
     }
-    router.replace('/(app)')
+    router.replace('/(app)/(tabs)')
   }
 
   return (

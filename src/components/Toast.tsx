@@ -35,9 +35,21 @@ export function Toast({
   onDone,
   withAction = false,
   action,
+  bottom = 32,
 }: {
   message: string | null
   onDone: () => void
+  /**
+   * How far off the bottom of the WINDOW the toast sits. 32 by default, which
+   * is what `bottom-8` was.
+   *
+   * It has to be a prop because the toast renders through the root
+   * `PortalHost`: it is outside whatever navigator the caller is in, so it
+   * cannot discover that a bottom bar is in the way. A screen on the tab bar
+   * passes `bottomNavHeight(insets.bottom) + 21` — the artboards' `bottom:96`
+   * over a 75px bar.
+   */
+  bottom?: number
   withAction?: boolean
   /**
    * An undo, or anything else the message offers. Presence of one implies the
@@ -70,7 +82,7 @@ export function Toast({
 
   return (
     <Portal name="toast">
-      <View className="absolute inset-x-0 bottom-8 items-center px-4">
+      <View className="absolute inset-x-0 items-center px-4" style={{ bottom }}>
         <View
           className="bg-secondary border-border-strong max-w-[320px] flex-row items-center gap-3 rounded-lg border px-4 py-2.5"
           style={elevation.overlay}
