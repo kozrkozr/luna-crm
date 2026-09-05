@@ -16,6 +16,7 @@ import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import type { DirectoryKind } from './directory'
 import { createContact, updateContact } from './api'
 import { createClient, updateClientProfile } from '../clients/api'
+import { Starfield } from '../../components/Starfield'
 
 /** What the form starts from: empty for «Новий контакт», a row for an edit. */
 export type ContactDraft = {
@@ -166,6 +167,7 @@ export function ContactForm({
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       {/*
         «Скасувати · Новий контакт», with a spacer matching the control opposite
         so the title is centred on the screen. The artboard leaves the right

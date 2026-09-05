@@ -1,6 +1,7 @@
 import { ActivityIndicator, View } from 'react-native'
 import { Redirect } from 'expo-router'
 import { useSession } from './useSession'
+import { Starfield } from '../../components/Starfield'
 
 /**
  * US-017 AC-2 — a signed-out user reaching an account screen is sent to login,
@@ -20,6 +21,7 @@ export function RequireSession({ children }: { children: React.ReactNode }) {
   if (session.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )

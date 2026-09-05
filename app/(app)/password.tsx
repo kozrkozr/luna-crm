@@ -11,6 +11,7 @@ import { failed, succeeded, tapped } from '../../src/lib/haptics'
 import { toastOnNextScreen } from '../../src/lib/nextScreenToast'
 import { MIN_PASSWORD_LENGTH } from '../../src/features/auth/register'
 import { changePassword } from '../../src/features/auth/profile'
+import { Starfield } from '../../src/components/Starfield'
 
 /**
  * «Зміна пароля» — where the profile's «Пароль · Змінити ›» row leads.
@@ -62,6 +63,7 @@ export default function ChangePasswordScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
       <View

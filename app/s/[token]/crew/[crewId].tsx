@@ -10,6 +10,7 @@ import {
   type LinkClientCrewMember,
   type LinkCrewMember,
 } from '../../../../src/features/links/gateway'
+import { Starfield } from '../../../../src/components/Starfield'
 
 /**
  * One person's record, read through a link — the same URL for two audiences.
@@ -78,6 +79,7 @@ export default function CrewMemberDetailScreen() {
   if (resolution.phase === 'resolving') {
     return (
       <View className="bg-background flex-1 items-center justify-center py-10">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )
@@ -86,6 +88,7 @@ export default function CrewMemberDetailScreen() {
   if (resolution.phase === 'invalid') {
     return (
       <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
+        <Starfield />
         <Text className="text-5xl">⚠️</Text>
         <Text className="text-title text-foreground text-center font-semibold">
           {uk.linkInvalidTitle}
@@ -100,52 +103,55 @@ export default function CrewMemberDetailScreen() {
   const { member } = resolution
 
   return (
-    <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
-      <View className="gap-3 p-4">
-        {/* One title for both audiences, as in the prototype: the client is not
-            told they are seeing a reduced version of the record. */}
-        <Text className="text-title text-foreground font-semibold">{uk.peerDetailsTitle}</Text>
+    <View className="bg-background flex-1">
+      <Starfield />
+      <ScrollView contentInsetAdjustmentBehavior="automatic">
+        <View className="gap-3 p-4">
+          {/* One title for both audiences, as in the prototype: the client is not
+              told they are seeing a reduced version of the record. */}
+          <Text className="text-title text-foreground font-semibold">{uk.peerDetailsTitle}</Text>
 
-        {/* The creator's add-crew form, read back — US-023 AC-1's "same layout". */}
-        {/* A Card supplies text-card-foreground itself — the explicit provider
-            was the stopgap that kept this from going white-on-white when
-            --foreground inverted (ADR-017). */}
-        <Card variant="block" className="gap-1">
-            <Field label={uk.crewName} value={member.name} strong />
-            <Field label={uk.crewRole} value={member.role} />
-            <Field label={uk.crewContact} value={member.contact} />
-            <Field label={uk.crewInstagram} value={member.instagram} />
+          {/* The creator's add-crew form, read back — US-023 AC-1's "same layout". */}
+          {/* A Card supplies text-card-foreground itself — the explicit provider
+              was the stopgap that kept this from going white-on-white when
+              --foreground inverted (ADR-017). */}
+          <Card variant="block" className="gap-1">
+              <Field label={uk.crewName} value={member.name} strong />
+              <Field label={uk.crewRole} value={member.role} />
+              <Field label={uk.crewContact} value={member.contact} />
+              <Field label={uk.crewInstagram} value={member.instagram} />
 
-            {/* US-026 AC-1 — everything above is shared; this is the one
-                difference, and it is an absence rather than a blank. */}
-            {resolution.audience === 'crew' ? (
-              <>
-                <Field label={uk.crewNotes} value={resolution.member.note} />
-                {resolution.member.noteImageUrl ? (
-                  <Pressable
-                    className="bg-muted mt-2 h-40 w-full overflow-hidden rounded-xl active:opacity-70"
-                    onPress={() => setViewingImage(resolution.member.noteImageUrl)}
-                    role="button"
-                    accessibilityLabel={uk.crewNotes}
-                  >
-                    <Image
-                      source={{ uri: resolution.member.noteImageUrl }}
-                      className="h-full w-full"
-                      resizeMode="cover"
-                    />
-                  </Pressable>
-                ) : null}
-              </>
-            ) : null}
-        </Card>
+              {/* US-026 AC-1 — everything above is shared; this is the one
+                  difference, and it is an absence rather than a blank. */}
+              {resolution.audience === 'crew' ? (
+                <>
+                  <Field label={uk.crewNotes} value={resolution.member.note} />
+                  {resolution.member.noteImageUrl ? (
+                    <Pressable
+                      className="bg-muted mt-2 h-40 w-full overflow-hidden rounded-xl active:opacity-70"
+                      onPress={() => setViewingImage(resolution.member.noteImageUrl)}
+                      role="button"
+                      accessibilityLabel={uk.crewNotes}
+                    >
+                      <Image
+                        source={{ uri: resolution.member.noteImageUrl }}
+                        className="h-full w-full"
+                        resizeMode="cover"
+                      />
+                    </Pressable>
+                  ) : null}
+                </>
+              ) : null}
+          </Card>
 
-        {/* Mounted for the crew audience only. A client has no image to open,
-            because the payload that would carry one does not reach them. */}
-        {resolution.audience === 'crew' ? (
-          <ImageViewer uri={viewingImage} onClose={() => setViewingImage(null)} />
-        ) : null}
-      </View>
-    </ScrollView>
+          {/* Mounted for the crew audience only. A client has no image to open,
+              because the payload that would carry one does not reach them. */}
+          {resolution.audience === 'crew' ? (
+            <ImageViewer uri={viewingImage} onClose={() => setViewingImage(null)} />
+          ) : null}
+        </View>
+      </ScrollView>
+    </View>
   )
 }
 

@@ -78,7 +78,7 @@ export function Sheet({
         >
           <View
             className={cn(
-              'bg-background border-border rounded-t-2xl border-t px-4 pt-2.5',
+              'bg-card border-border rounded-t-2xl border-t px-4 pt-2.5',
               className
             )}
             style={[elevation.overlay, { paddingBottom: insets.bottom + 16 }]}

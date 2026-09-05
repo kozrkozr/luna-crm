@@ -3264,3 +3264,381 @@ class surviving anywhere in the rendered DOM, zero console errors.
 likely the placeholder path on web rather than the text colour, since the field
 was empty — but it was not confirmed. **Worth a glance on the device**: type
 into a field and check the text is light.
+
+---
+
+## 2026-09-04 — Colour returns, from `shadcn-theme.css`
+
+**Source:** `~/Desktop/shadcn-theme.css` + `~/Desktop/THEME-HANDOFF.md`, the
+Claude Design export of the design project's own `theme.css` remapped onto the
+shadcn dictionary. Owner's instruction.
+
+This **reverses the monochrome passes of 2026-08-29 and 2026-08-30** recorded
+above, including the loss those entries called "real, worth stating plainly".
+Access level is not what comes back — the client purple and the owner-only
+purple stay gone — but shoot status, response, links and avatars are coloured
+again.
+
+### The vocabulary, narrower than ADR-017's
+
+| Meaning | Tokens |
+| --- | --- |
+| «Запланована» | `--info` / `--info-bg` / `--info-border` (blue outline) |
+| «Завершена» | `--danger-soft` / `--danger-bg` / `--danger-border` (red outline) |
+| «Сьогодні» | `--accent-solid` (solid blue fill, no border) |
+| «Очікує» | `--warn` / `--warn-bg` / `--warn-border` (amber) |
+| «Підтверджено» | `--success` / `--success-foreground` (solid green) |
+| Links, active tab | `--link` / `--link-hover` |
+| Avatars | `--chart-1…5` + `--tint-foreground`, hashed by name |
+
+`--destructive` is unchanged and stays the colour of an *action* that destroys
+something. `--danger-*` is a state that has ended. Do not merge them.
+
+### Adapted, not copied
+
+The handoff targets a Next.js/Tailwind-v4 project — `app/globals.css`,
+`@theme inline`, `<html class="dark">`. None of those exist here.
+
+1. **oklch → HSL.** NativeWind's CSS-to-RN pass rejects `oklch()` outright
+   (`parseDeclaration.js`, "Invalid color unit") and returns `undefined`, which
+   styles nothing and reports nothing. Every value was converted once; each
+   token carries its `oklch()` original in a comment so it can be re-derived.
+2. **`@theme inline` → `theme.extend.colors`.** Tailwind v3 has no `@theme`.
+   The class names come out identical, which is what the handoff specifies.
+3. **No `.dark` block.** One theme on `:root`; nothing applies the class.
+4. **`--border-strong` kept** (14 files use it), valued from the design
+   project's `theme.css`. **`--sidebar-*` dropped** — no sidebar exists.
+
+### The one trap this theme sets
+
+**`--secondary` now equals `--card`** (`#121214`). A `bg-secondary` fill on a
+`bg-card` surface is invisible. Two things moved because of it:
+
+- `Badge`'s `muted` variant → `bg-accent` (`#18181B`).
+- `Card`'s `flat` variant → `bg-card`. It was `bg-background`, which worked
+  while the two were a few points apart in the zinc scale; they are 4.7 points
+  apart now and a flat card would have been the only surface with no fill.
+  `flat` now means *no shadow*, not *no fill*.
+
+`Avatar` was `bg-secondary` too and would have hit the same wall; it takes a
+hashed pastel tint instead, which is what ADR-017 had before 2026-08-29.
+
+### Shape
+
+**Buttons and badges are pills** — `rounded-full` on every `Button` variant and
+size, on `Badge`, `StatusPill` and `ResponsePill`. This reverses the owner's
+2026-09-03 move to radius 6 that matched `Calendar.dc.html`. `--radius` is
+`0.875rem` (14px) and governs cards and sheets only.
+
+### Verified
+
+`tsc --noEmit` clean. Tailwind compiles and all 17 new classes resolve to
+`hsl(var(--token) / <alpha-value>)`; opacity modifiers (`bg-primary/90`) still
+emit, so RNR's press states are intact.
+
+**Not verified: anything on a device or in a browser.** The contrast pairs this
+theme introduces have not been looked at — in particular `--warn` on
+`--warn-bg`, `--info` on `--info-bg`, and the dark `--tint-foreground` initials
+on the five pastel avatars. Worth a pass through `npm run theme`.
+
+### Home screen re-diffed against `Home.dc.html` (same day)
+
+Three fidelity bugs the theme change exposed:
+
+1. **The two buttons were not pills.** «Нова зйомка» and «Переглянути календар»
+   passed `rounded-lg` in their own `className`, which `cn()` merges last, so
+   they overrode `Button`'s `rounded-full` and kept a 14px corner. The artboard
+   draws both at `border-radius:999px`. Removed. These were the **only two**
+   `Button` call sites in the app overriding the corner — everything else that
+   sets `rounded-*` is a `View` or a `Pressable` tile, which is correct.
+2. **«Наступні зйомки» had no gap.** It was one `Card` with `border-t` between
+   rows; the artboard draws each shoot as its own `radius:12px` card in a
+   `gap:8px` column. Each `UpcomingRow` is now its own card.
+3. **The upcoming row's press was invisible.** `active:bg-secondary` on a
+   `bg-card` surface, and those two tokens are now the same value. Moved to
+   `active:bg-muted`, which is the artboard's `--surface-soft` — a step
+   **darker** than the card. This design presses down, not up.
+
+**Open, and bigger than this screen:** `active:bg-secondary` appears at 43 call
+sites across 18 files. On `bg-background` it is still a visible press; on any
+`bg-card` surface it is now a no-op. They have not been audited one by one.
+
+### The status badge, and the word on it (same day)
+
+**Style.** `UpcomingRow` on the home screen drew the status as a neutral outline
+`Badge`. That was right under the monochrome theme — the design gave every row
+the same chip, and a fill on a list where every row says one word is noise — but
+`Home.dc.html` does not draw it neutral:
+
+```
+background:var(--info-bg);border:1px solid var(--info-border);color:var(--info)
+```
+
+That is the blue «Запланована» chip, and `StatusPill` now renders exactly it.
+Switched. A «Завершена» row comes out red by the same mapping. The other two
+`StatusPill` sites — the shoot list and the shoot detail — picked the colours up
+from the theme change already.
+
+**Geometry.** Both `StatusPill` and `Badge` were `py-[3px]` at `font-semibold`,
+neither traceable to a source. Both artboards say the same thing —
+`Home.dc.html` inline (`font-size:11px;font-weight:500;padding:4px 8px`), the
+shoot-detail handoff as "badge 11/500" — so both are now `px-2 py-1` at
+`font-medium`.
+
+**Copy — a grammar bug, owner-settled.** `statusNew` was «Заплановано», the
+impersonal form, sitting beside a feminine «Завершена». Both agree with
+«зйомка» now: **«Запланована» / «Завершена»** (owner, 2026-09-04).
+
+`Home.dc.html` disagrees with itself here — its upcoming rows say «Запланована»
+and its next-shoot meta line says «Заплановано» — which is why this was never
+caught by drawing the screen as given. One string serves both places.
+
+`markNew` follows it («Позначити як «Запланована»»), and nine hardcoded literals
+in `tests/acceptance/us020-check.mjs` and `us009-check.mjs` were updated with it.
+Those suites have not been run — see the header of this file.
+
+### Calendar re-diffed against `Calendar.dc.html` (same day)
+
+**Day cells.** One colour bug and one radius bug.
+
+- The marked dot was `bg-muted-foreground`. `cellStyle` reads
+  `dot: has ? (sel ? 'var(--accent-ink)' : 'var(--info)') : 'transparent'` — it
+  is blue, and was grey only because the monochrome theme had no blue. Now
+  `bg-info`.
+- Selected (`bg-primary` fill, inverted dot), today (`border-strong` edge,
+  heavier number) and has-shoot (`foreground` vs `muted-foreground`) all already
+  matched. `--primary` *is* the artboard's `--accent`, so the selected fill was
+  correct by construction.
+- Geometry — 4px grid gap, 6px under the weekday row, `9px 0` week cells, 12px
+  card padding — all matched.
+
+**Shoot cards.** Five divergences, all from the monochrome era.
+
+| | Was | `Calendar.dc.html` |
+| --- | --- | --- |
+| Card fill | `bg-background` | `bg-card` (`var(--surface)`) |
+| Clash row | lifts to `bg-secondary` + grey `border-strong` | fill unchanged, border → `--warn-border` |
+| Clash chip | neutral outline `Badge` | amber: `--warn-bg` / `--warn-border` / `--warn`, 10.5/500 at `3px 7px` |
+| Status stripe | `border-strong` / `border` (two greys) | `--info-border` / `--danger` |
+| Location | `text-muted-foreground` | `color:var(--link)` |
+
+The clash row is the one worth naming: the artboard sets
+`cardBg: 'var(--surface)'` for **every** row and varies only `cardLine`. Lifting
+the card was wrong on its own terms, and under this theme it was also a no-op —
+`--secondary` equals `--card`. `AvatarStack` lost its `ringClass` prop with it;
+there is one surface behind the stack again.
+
+**`--radius`: 14px → 8px (owner).** The handoff calls `0.875rem` "радіус
+карток", but no artboard draws a card at 14 — `Home.dc.html` and
+`Calendar.dc.html` both use 12, and the value traces to `--r-card` in the design
+project's `theme.css`, which the artboards never reference.
+
+In this codebase `--radius` reaches no card at all: `Card` and the row surfaces
+are `rounded-xl`, Tailwind's stock 12px. What it reaches is `rounded-lg`/`md`/
+`sm` — 70 uses, every one a small control the artboards draw at 8px. Set to the
+card radius it made all seventy 4px rounder and no card more correct. The ladder
+is now 8 / 6 / 4 against the artboards' 8 / 10 / 12 / 999.
+
+### The screen background's stars (same day)
+
+**What the design has and the app did not.** Every artboard puts
+`background:var(--bg-screen)` on its screen container, and `theme.css` defines
+that as `var(--stars), var(--bg)` — four stacked repeating radial-gradients over
+the page colour. **`shadcn-theme.css` does not carry `--stars` at all**; the
+handoff dropped it, because four tiling gradients have no shadcn token to land
+in and no CSS equivalent in React Native. Flagged when the theme landed, now
+built.
+
+`src/components/Starfield.tsx` — four layers, decoded from the CSS:
+
+| Layer | Colour | Alpha | ⌀ | First dot | Tile |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `#EEEEF2` | .42 | 1.2px | (24, 34) | 167×167 |
+| 2 | `#E7E7EB` | .28 | 1.0px | (118, 92) | 223×223 |
+| 3 | `#DDDDE3` | .22 | 1.6px | (70, 148) | 311×311 |
+| 4 | `#F5F5F7` | .16 | 0.9px | (190, 20) | 271×271 |
+
+167, 223, 271 and 311 are all prime, so the four tiles only truly align every
+few million pixels — the field never visibly repeats. **36 dots on a 402×874
+artboard, 33 on an iPhone 15 Pro, 16 on an SE, and no two overlapping.**
+
+`radial-gradient(Dpx Dpx at x y, C 50%, transparent 51%)` is a hard-edged disc
+of radius D/2, not a glow — hence plain `Circle`s.
+
+**Explicit circles, not an SVG `<Pattern>`.** At ~36 dots the arithmetic is
+cheaper than four pattern tiles and can be read and checked in the file, instead
+of depending on how one library implements `patternUnits` across iOS, Android
+and the static web export. `react-native-svg` was already a direct dependency
+and already reaches the link surface through `lucide-react-native`.
+
+**Where it is mounted, and where it deliberately is not.** 35 screen roots
+across 21 files — every `View` that is both `bg-background` and `flex-1`.
+Headers (`border-b`), pinned footers (`absolute inset-x-0 bottom-0`) and the
+bottom bar have no `flex-1` and stay flat, which is what the artboards draw:
+they are `background:var(--bg)`, no stars. A starred header would drag its dots
+across the content scrolling beneath it. Cards are `--surface` and cover the
+field by design.
+
+`useWindowDimensions`, not an `onLayout` measure: the field is fixed to the
+screen while content scrolls over it, exactly as in the artboards, so the window
+is the area to cover and no layout pass is needed. `pointerEvents="none"` is
+load-bearing — it covers the whole screen.
+
+**`--bg-desk` is not implemented and should not be.** It is the radial gradient
+behind the *device frame* in the artboards — the desk the phone sits on, part of
+the presentation, not of the product.
+
+**Unverified on a device.** Whether a 1.2px dot at 42% opacity survives real
+subpixel rendering on a physical screen is exactly the kind of thing this needs
+eyes on.
+
+### The calendar row's address goes grey (same day)
+
+`Calendar.dc.html` writes the shoot row's location as `color:var(--link)`, and
+it shipped that way for a few hours today. **Overruled by the owner:** the
+address is not a link — nothing on that row opens a map — and the blue promised
+an action the row does not have. Now `text-muted-foreground`.
+
+This also puts the calendar back in step with the home screen's «Наступні
+зйомки», whose own artboard already draws the same line in `--text-dim`. The two
+were inconsistent for exactly as long as the blue lasted.
+
+`text-link` keeps its two real uses: the bottom navigation's active tab and
+`Button`'s `link` variant — both things that actually go somewhere.
+
+### Starfield: the auth screen, and five screens that never showed it (2026-09-05)
+
+Asked for the auth screen; it turned out the first mount pass had missed a whole
+shape of screen and quietly broken three more.
+
+**The pass keyed on `View` + `bg-background` + `flex-1`.** Five screens do not
+have one — their outermost element is a `ScrollView` that paints the background
+itself:
+
+- `src/features/auth/AuthScreen.tsx` (the ask)
+- `app/(auth)/reset.tsx`
+- `app/s/[token]/references.tsx`
+- `app/s/[token]/crew/[crewId].tsx`
+- `app/(app)/shoot/[id]/references.tsx`
+
+An absolutely-positioned child of a `ScrollView` is laid out against the
+**content**, not the viewport — it would have been sized to the full scroll
+height and scrolled away with it, which is the opposite of a fixed backdrop. So
+these five are wrapped: a `bg-background flex-1` `View`, the `Starfield`, then
+the `ScrollView` with its own fill removed.
+
+The tell was that four of the five already had a `Starfield` — on their
+*loading* and *error* states, which are plain `View`s. Stars during the spinner,
+none once the screen loaded.
+
+**Three more were covered rather than missing.** `shoot/[id]/index.tsx`,
+`shoot/[id]/crew/add.tsx` and `ShootForm.tsx` have a proper `Starfield` root,
+but the `ScrollView` inside each carried `className="bg-background"` and painted
+straight over it. The root behind them supplies the colour, so the fill is gone
+from all three.
+
+40 mounts across 22 files, and a check now confirms **no scroll surface anywhere
+paints `bg-background` above a starfield**. Headers, pinned footers and the
+bottom bar keep their opaque fill and have no `flex-1` — unchanged, and correct:
+the artboards draw them on flat `var(--bg)`.
+
+### The link views were never re-diffed (2026-09-05)
+
+Asked directly whether the crew and client preview screens had been restyled.
+**They had not** — `app/s/` received only the `Starfield` mounts. Everything
+else reached them second-hand, through the theme and through shared components
+(`Avatar`, `ResponsePill`, `Badge`, `Button`, `Card`, `Sheet`, `Toast`). Nobody
+had opened `Shoot Link Preview.dc.html` against them.
+
+Two things the theme change had quietly broken, both now fixed against that
+artboard:
+
+1. **The viewer's own crew row stopped being highlighted.** It was
+   `bg-secondary/40` inside a `Card variant="flat"`, and `--secondary` now
+   equals `--card` — 40% of the card's own colour on the card. The artboard
+   reads `rowBg: isYou ? 'var(--surface-soft)' : 'transparent'`, a step
+   **darker** than the card, which is `--muted` here. On the crew link that row
+   is the whole point of the screen.
+2. **The confirmation tick was the pale blue button plate.** `bg-primary` where
+   the artboard reads `statusIconBg: 'var(--success)'` with `--success-ink` on
+   it — the same slip `ResponsePill` had, missed here because the block is
+   written inline. Now `bg-success` / `text-success-foreground`.
+
+The answered block also takes the artboard's two surfaces rather than one:
+`statusBg: answer === 'yes' ? 'var(--surface)' : 'var(--bg)'` — a confirmation
+lifts onto a card, a refusal stays flat on the page.
+
+Confirmed already correct: the «ВИ» badge (`Badge` `solid` = `--accent` with
+`--accent-ink`, exactly as drawn), the hero card's `border-strong`, the role tag
+on `--border` (which `Badge` `muted` now resolves to), and the pill-shaped
+respond button.
+
+**Not examined**, and the reason this is logged rather than closed: the hero's
+28px time range, the reference tiles (58×58, radius 8), the organizer block's
+two buttons, the calendar and decline sheets, and the reason chips. Nobody has
+diffed those.
+
+#### Two open conflicts
+
+- **«Ваша черга» / «Очікує».** The 2026-09-04 handoff's badge table makes it
+  amber (`--warn-bg` / `--warn-border` / `--warn`) and `ResponsePill` was
+  changed to match. `Shoot Link Preview.dc.html` draws it **outlined** —
+  `bg: 'transparent'`, `line: 'var(--border-strong)'`, `fg: 'var(--text-soft)'`.
+  The link view is the *only* place a pending chip renders (`showPending` is
+  true nowhere else), so the handoff's amber rule currently has no other
+  consumer and this artboard is its only witness. One of the two is wrong.
+- **The artboard's footer says «Діє до 20 вересня 2026».** `ADR-014` has no
+  expiry column, deliberately — validity derives from soft-deleted parents. The
+  app does not render the line and must not start.
+
+### The «Команда» accordion's open row (2026-09-05)
+
+`Shoot Detail v3.dc.html`, line 592:
+
+```js
+rowBg: this.state.expanded === p.id ? '#0d0d0f' : 'transparent',
+```
+
+on a card that is `var(--surface)` (`#121214`). **An open row is DARKER than
+the card it sits in**, and the panel inside it is darker again — both its
+blocks are `background:var(--bg)` (`#070708`). Three levels descending, which is
+this design's idiom everywhere: the calendar row's press, the link view's «ВИ»
+row, this.
+
+The app had `bg-secondary/30`, **wrong twice over**: it lifted where the artboard
+sinks, and since `--secondary` became equal to `--card` on 2026-09-04 it was 30%
+of the card's own colour painted on the card — nothing at all. The header row's
+`active:bg-secondary` press was invisible for the same reason.
+
+| Level | Artboard | Was | Now |
+| --- | --- | --- | --- |
+| Card | `var(--surface)` | `bg-card` | unchanged |
+| Row, open | `#0d0d0f` | `bg-secondary/30` (invisible) | `bg-muted` |
+| Row, press | `var(--surface-soft)` | `active:bg-secondary` (invisible) | `active:bg-muted` |
+| Contacts block | `var(--bg)` | no fill | `bg-background` |
+| Profile row | `var(--bg)` | no fill | `bg-background`, press `bg-card` |
+
+`bg-muted` is `#0F0F10` against the artboard's `#0d0d0f` — two parts in 255 per
+channel. Not worth a fourteenth token, and `--surface-soft` (the artboard's own
+hover for this row) is exactly `#0F0F10`.
+
+#### The pattern, and what is still exposed
+
+This is the **third** instance of one root cause: `--secondary` and `--card` are
+now the same value, so any `bg-secondary` on a card surface is invisible. The
+first two were `Badge`'s `muted` variant (caught when the theme landed) and the
+link view's «ВИ» row.
+
+A sweep counts **71 plain `bg-secondary` fills and 41 `active:bg-secondary`
+press states**. Most are on `bg-background` and still read correctly. The ones
+that look wrong on inspection, not yet fixed:
+
+- `Visibility.tsx:29,40,72` — the «Бачите лише ви» / «Клієнт не бачить» badges,
+  which sit on cards
+- `ui/progress.tsx:30` — the confirmation card's progress track
+- `shoot/[id]/index.tsx:787,1508` — the reference placeholder and the file-row
+  icon squares, both inside cards
+- `ReferenceGrid.tsx:176`
+
+None has been verified on screen. A proper pass wants each call site's actual
+surface checked, not a global replace.

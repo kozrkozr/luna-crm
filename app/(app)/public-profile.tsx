@@ -6,6 +6,7 @@ import { Text } from '../../src/components/ui/text'
 import { useStrings } from '../../src/i18n/LanguageProvider'
 import { signedAvatarUrl } from '../../src/features/auth/profile'
 import { useProfile } from '../../src/features/auth/useProfile'
+import { Starfield } from '../../src/components/Starfield'
 
 /**
  * «Так вас бачать інші учасники зйомок» — the account holder previewing their
@@ -46,6 +47,7 @@ export default function PublicProfileScreen() {
   if (state.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" />
       </View>
@@ -55,6 +57,7 @@ export default function PublicProfileScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 items-center justify-center p-4">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>

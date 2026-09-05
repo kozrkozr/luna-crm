@@ -56,11 +56,19 @@ type NavItem = {
  * **The label is `text-micro` (10px), not 10.5.** The scale has no half step and
  * the earlier passes rounded down (`12.5 → text-label`, `13.5 → text-body-sm`).
  *
+ * **The active tab is `text-link`** — "Посилання та активний таб у нижній
+ * навігації — `text-link`" (2026-09-04 handoff). This is what `Home.dc.html`
+ * always drew; the bar shipped on 2026-09-04 with `text-foreground` because the
+ * app had no `--link` token to point at, and now it does. Icon and label both
+ * take it, so the selected tab is blue rather than merely brighter.
+ *
  * **Inactive is `muted-foreground`, and that is a departure.** The artboard's
- * inactive tab is `#71717a`; our greyscale has nothing there — the nearest is
- * `--muted-foreground` at `#a3a3a3`, a visible step brighter, so the unselected
+ * inactive tab is the design's `--muted` (`#868689`); the nearest token here is
+ * `--muted-foreground` at `#A4A4A7`, a visible step brighter, so the unselected
  * tabs read stronger than drawn. The alternative is a new token for one
  * component, which is what `--border-strong` cost. Say if it is worth one.
+ * (Less pressing now that the active tab carries a hue: the two states no
+ * longer have to be told apart on lightness alone.)
  *
  * The press state is `active:opacity-70`, not a fill: the artboards give a tab
  * only a hover *colour*, and a background would invent a surface the design has
@@ -135,11 +143,11 @@ export function BottomNav({ state, navigation, insets }: BottomTabBarProps) {
               as={item.icon}
               size={21}
               strokeWidth={1.7}
-              className={selected ? 'text-foreground' : 'text-muted-foreground'}
+              className={selected ? 'text-link' : 'text-muted-foreground'}
             />
             <Text
               className={`text-micro ${
-                selected ? 'text-foreground font-semibold' : 'text-muted-foreground font-medium'
+                selected ? 'text-link font-semibold' : 'text-muted-foreground font-medium'
               }`}
             >
               {item.label}

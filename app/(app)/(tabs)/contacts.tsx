@@ -29,6 +29,7 @@ import {
   type DirectoryFilter,
   type DirectoryPerson,
 } from '../../../src/features/contacts/directory'
+import { Starfield } from '../../../src/components/Starfield'
 
 type State =
   | { status: 'loading' }
@@ -123,6 +124,7 @@ export default function ContactsScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <ContactsHeader
         query={query}
         onQuery={setQuery}

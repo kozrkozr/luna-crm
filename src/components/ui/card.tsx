@@ -37,14 +37,20 @@ const CARD_VARIANTS = {
   block: 'bg-card border-border rounded-xl border p-3.5',
   /*
    * The shoot-detail handoff's card: background `#09090b`, 1px `#27272a`,
-   * radius 12, padding 14–16. It has no fill of its own — the page shows
-   * through and the border is the whole of the edge, which is stock shadcn's
-   * arrangement and the opposite of `--card`'s lift.
+   * radius 12, padding 14–16.
    *
-   * It takes no shadow either — see the `style` prop below. A shadow under a
-   * card that is the same colour as the page reads as a smudge.
+   * **It has a fill again since 2026-09-04.** It was `bg-background` — the page
+   * showing through, with the border as the whole of the edge — which worked
+   * while `--card` and `--background` were a few points apart in the zinc
+   * scale. The new theme separates them (`#121214` on `#070708`) and the
+   * handoff's rule is explicit: "картки `bg-card` з `border border-border`". A
+   * card left on the page colour would now be the only surface on the screen
+   * that has none.
+   *
+   * What still makes it `flat` is the **shadow** — it takes none, see the
+   * `style` prop below. The name is about lift now, not fill.
    */
-  flat: 'bg-background border-border rounded-xl border p-4',
+  flat: 'bg-card border-border rounded-xl border p-4',
 } as const;
 
 type CardVariant = keyof typeof CARD_VARIANTS;

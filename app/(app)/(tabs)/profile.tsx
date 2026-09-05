@@ -40,6 +40,7 @@ import {
   updateProfile,
   uploadAvatar,
 } from '../../../src/features/auth/profile'
+import { Starfield } from '../../../src/components/Starfield'
 
 /** The editable half of the profile — everything the save button writes. */
 type Draft = {
@@ -164,6 +165,7 @@ export default function ProfileScreen() {
   if (state.status === 'loading' || !draft || !saved) {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" />
       </View>
@@ -173,6 +175,7 @@ export default function ProfileScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4" style={{ paddingTop: insets.top + 16 }}>
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
@@ -283,6 +286,7 @@ export default function ProfileScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/*

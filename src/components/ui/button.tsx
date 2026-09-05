@@ -14,8 +14,14 @@ const buttonVariants = cva(
      *
      * Applied to every variant, so the dashed and ghost ones respond too rather
      * than only the filled ones.
+     *
+     * **`rounded-full`, on every variant and every size.** "Кнопки й баджі в
+     * цьому дизайні — таблетки" (2026-09-04 handoff, step 3). `--radius` is
+     * still 14px and still governs cards and sheets; a button no longer reads
+     * it. `sm`, `lg`, `cta` and `block` repeat the class only because they
+     * previously overrode it — none of them may set a corner of its own now.
      */
-    'group shrink-0 flex-row items-center justify-center gap-2 rounded-md shadow-none active:scale-[0.98] active:opacity-80',
+    'group shrink-0 flex-row items-center justify-center gap-2 rounded-full shadow-none active:scale-[0.98] active:opacity-80',
     Platform.select({
       web: "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
     })
@@ -51,15 +57,17 @@ const buttonVariants = cva(
         /*
          * The pinned screen CTA (§3.5, variant 2 — the owner's choice).
          *
-         * White on the frame, not the mockups' #1C1C1E, which sits on #151517
-         * at 1.07:1 and has no visible edge at all — the button "reads" only
-         * because its label is white. This is the one place `primary` is
-         * inverted, and it is a separate variant rather than a change to
-         * `--primary` because a modal's primary button sits on a white card and
-         * would vanish. See src/theme/global.css, departure 2.
+         * Identical to `default` today, and kept as a distinct variant on
+         * purpose. It existed to invert `--primary` back to white for the
+         * pinned button when primary was dark; since the 2026-09-04 handoff
+         * made `--primary` itself the pale blue-white plate, there is nothing
+         * left to invert and the two collapsed onto one token. The name still
+         * marks *where* a button sits — pinned at the bottom, above the
+         * content — which is the thing §3.5 is actually about, and it is 20-odd
+         * call sites' worth of intent to throw away for a deduplication.
          *
-         * Belongs at the bottom of a screen, above the content, per §3.5 —
-         * white competes with the white cards if it floats among them.
+         * "Не використовувати чистий білий (`#fff`) для кнопок — тільки
+         * `--primary`" (handoff): do not reintroduce a literal here.
          */
         cta: 'bg-primary active:bg-primary/90',
         /*
@@ -75,8 +83,8 @@ const buttonVariants = cva(
       },
       size: {
         default: cn('h-10 px-4 py-2 sm:h-9', Platform.select({ web: 'has-[>svg]:px-3' })),
-        sm: cn('h-9 gap-1.5 rounded-md px-3 sm:h-8', Platform.select({ web: 'has-[>svg]:px-2.5' })),
-        lg: cn('h-11 rounded-md px-6 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
+        sm: cn('h-9 gap-1.5 rounded-full px-3 sm:h-8', Platform.select({ web: 'has-[>svg]:px-2.5' })),
+        lg: cn('h-11 rounded-full px-6 sm:h-10', Platform.select({ web: 'has-[>svg]:px-4' })),
         icon: 'h-10 w-10 sm:h-9 sm:w-9',
         /*
          * §5.5's full-width buttons, sized by padding rather than a fixed
@@ -85,8 +93,8 @@ const buttonVariants = cva(
          * 15px padding lands at ~48pt, 13px at ~44pt: both clear the 44pt
          * minimum without a hitSlop.
          */
-        cta: 'h-auto w-full rounded-xl py-[15px]',
-        block: 'h-auto w-full rounded-xl py-[13px]',
+        cta: 'h-auto w-full rounded-full py-[15px]',
+        block: 'h-auto w-full rounded-full py-[13px]',
         /*
          * The 32pt circular icon button (`icon-circle`). Visually 32, which is
          * below the 44pt minimum on purpose — §6.3 says keep the visual size
@@ -114,8 +122,8 @@ const buttonTextVariants = cva(
       variant: {
         default: 'text-primary-foreground',
         // Was `text-white`, an RNR stock literal that bypassed the token.
-        // Same value today (--destructive-foreground is #FFFFFF) but it now
-        // follows the palette instead of coinciding with it.
+        // No longer even the same value — the 2026-09-04 handoff makes
+        // `--destructive-foreground` a warm off-white (#FFF8F7).
         destructive: 'text-destructive-foreground',
         outline: cn(
           'group-active:text-accent-foreground',
@@ -125,8 +133,10 @@ const buttonTextVariants = cva(
         cta: 'text-primary-foreground text-subtitle font-semibold',
         dashed: 'text-muted-foreground text-body font-semibold',
         ghost: 'group-active:text-accent-foreground',
+        // "Посилання ... — `text-link`" (2026-09-04 handoff). Was
+        // `text-primary`, which is now a button plate rather than a link blue.
         link: cn(
-          'text-primary group-active:underline',
+          'text-link group-active:underline',
           Platform.select({ web: 'underline-offset-4 hover:underline group-hover:underline' })
         ),
       },

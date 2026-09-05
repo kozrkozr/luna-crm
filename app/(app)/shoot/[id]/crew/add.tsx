@@ -28,6 +28,7 @@ import {
   listPastCrew,
   type PastCrewMember,
 } from '../../../../../src/features/crew/api'
+import { Starfield } from '../../../../../src/components/Starfield'
 
 type AddMode = 'contacts' | 'new'
 
@@ -225,6 +226,7 @@ export default function AddCrewScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/*
@@ -262,7 +264,6 @@ export default function AddCrewScreen() {
       </View>
 
       <ScrollView
-        className="bg-background"
         contentContainerStyle={{ paddingBottom: insets.bottom + 108 }}
         keyboardShouldPersistTaps="handled"
       >

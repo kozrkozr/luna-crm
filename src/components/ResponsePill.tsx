@@ -33,8 +33,20 @@ import type { CrewMember } from '../features/crew/api'
  * who has not opened their link, which is the one confusion this row exists to
  * prevent. Logged rather than followed.
  *
- * The shape is v3's: radius 6 rather than a full pill, `4px 8px`, 11px/500, and
- * a 12px check inside the confirmed chip.
+ * The shape is `4px 8px`, 11px/500, with a 12px check inside the confirmed
+ * chip. **A full pill since 2026-09-04**, reversing v3's radius 6.
+ *
+ * ── Tones, from the 2026-09-04 handoff's badge table ──────────────────────
+ *
+ * - `confirmed` («Підтверджено») — `bg-success text-success-foreground`, the
+ *   one solid green in the app. It used to be `bg-primary`, which now reads as
+ *   a pale blue button plate rather than an answer.
+ * - `pending` («Очікує») — `bg-warn-bg text-warn border border-warn-border`,
+ *   amber. Still drawn only for the reader's own row (`showPending`); the
+ *   handoff changes what the chip looks like, not which rows carry one.
+ * - `declined` — `--destructive`, unchanged. It is the one tone here the
+ *   handoff has no entry for, because v3's fixtures had no refusal; keeping it
+ *   on destructive is the same call this file already logged.
  */
 
 /** v3's check-circle, 12px, inside the confirmed chip at a 5px gap. */
@@ -64,12 +76,12 @@ export function ResponsePill({
 
   return (
     <View
-      className={`shrink-0 flex-row items-center gap-[5px] rounded-md border px-2 py-1 ${
+      className={`shrink-0 flex-row items-center gap-[5px] rounded-full border px-2 py-1 ${
         confirmed
-          ? 'bg-primary border-primary'
+          ? 'bg-success border-success'
           : value === 'declined'
             ? 'bg-destructive/10 border-destructive/40'
-            : 'border-border-strong'
+            : 'bg-warn-bg border-warn-border'
       }`}
     >
       {confirmed ? (
@@ -77,17 +89,17 @@ export function ResponsePill({
           as={CircleCheck}
           size={CHECK_SIZE}
           strokeWidth={2}
-          className="text-primary-foreground"
+          className="text-success-foreground"
         />
       ) : null}
       <Text
         numberOfLines={1}
         className={`text-caption font-medium ${
           confirmed
-            ? 'text-primary-foreground'
+            ? 'text-success-foreground'
             : value === 'declined'
               ? 'text-destructive'
-              : 'text-foreground/85'
+              : 'text-warn'
         }`}
       >
         {label}

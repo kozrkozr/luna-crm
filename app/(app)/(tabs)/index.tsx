@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Badge } from '../../../src/components/ui/badge'
 import { Button } from '../../../src/components/ui/button'
 import { Card } from '../../../src/components/ui/card'
+import { StatusPill } from '../../../src/components/StatusPill'
 import { Text } from '../../../src/components/ui/text'
 import { Avatar } from '../../../src/components/Avatar'
 /*
@@ -43,6 +44,7 @@ import {
   todayLabel,
   upcomingShoots,
 } from '../../../src/features/shoots/home'
+import { Starfield } from '../../../src/components/Starfield'
 
 type State =
   | { status: 'loading' }
@@ -131,6 +133,7 @@ export default function HomeScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <HomeHeader />
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         {/*
@@ -154,15 +157,12 @@ export default function HomeScreen() {
             <View>
               {daysUntil(state.next.date) <= 0 ? (
                 /*
-                  The «Сьогодні» state. It used to be amber — `home-screen-2.html`
-                  called a shoot today «радше нагадування, ніж звичайний запис».
-                  `Home.dc.html` draws it **monochrome**: a white pulsing dot, a
-                  white label, a white stripe and a solid white badge.
-
-                  That retired the last colour scale in the app. `warning` was
-                  the one the 2026-08-30 monochrome pass kept, and its own note
-                  in global.css said it was "the obvious next question if «no
-                  colour tints» is meant literally". This design answered it.
+                  The «Сьогодні» state. It was amber, then monochrome-white for
+                  the fortnight the app had no colour, and it is now what
+                  `Home.dc.html` actually draws: a **`--success` pulsing dot**
+                  over an `--accent-solid` stripe and chip. Three signals, and
+                  none of them is merely "brighter than the rest of the screen",
+                  which is what the white version had to be.
                 */
                 <View className="mb-2 flex-row items-center gap-1.5 px-0.5">
                   <PulseDot />
@@ -205,12 +205,14 @@ export default function HomeScreen() {
           */}
 
           <View className="gap-2">
-            {/* AC-3 — the primary action. 48px, radius 10, as drawn; it was a
-                larger 18pt pill at radius 16 while it led the screen. */}
+            {/* AC-3 — the primary action. 48px and a full pill, as
+                `Home.dc.html` draws it (`height:48px;border-radius:999px`).
+                The corner comes from `Button` — this className must not set
+                one, or `cn()` merges it last and wins. */}
             <Button
               variant="cta"
               size="cta"
-              className="h-12 justify-center rounded-lg py-0"
+              className="h-12 justify-center py-0"
               onPress={() => router.push('/(app)/new-shoot')}
             >
               <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
@@ -222,7 +224,7 @@ export default function HomeScreen() {
             <Button
               variant="outline"
               size="cta"
-              className="h-11 justify-center rounded-lg py-0"
+              className="h-11 justify-center py-0"
               onPress={() => router.push('/(app)/(tabs)/shoots')}
             >
               {/*
@@ -250,11 +252,17 @@ export default function HomeScreen() {
                   </Pressable>
                 </Link>
               </View>
-              <Card variant="flat" className="gap-0 p-0">
-                {state.upcoming.map((shoot, index) => (
-                  <UpcomingRow key={shoot.id} shoot={shoot} divided={index > 0} />
+              {/*
+                Separate cards with 8px between them, not one card with
+                hairlines. `Home.dc.html` draws each upcoming shoot as its own
+                `border-radius:12px` surface inside a `gap:8px` column — see
+                `UpcomingRow`.
+              */}
+              <View className="gap-2">
+                {state.upcoming.map((shoot) => (
+                  <UpcomingRow key={shoot.id} shoot={shoot} />
                 ))}
-              </Card>
+              </View>
             </View>
           ) : null}
         </View>
@@ -264,27 +272,38 @@ export default function HomeScreen() {
 }
 
 /**
- * One row of «Наступні зйомки»: a date column, a hairline, the shoot, a status.
+ * One card of «Наступні зйомки»: a date column, a hairline, the shoot, a status.
  *
- * The status is a plain outline `Badge` rather than `StatusPill`. The design
- * draws every row's badge the same — an outline chip, whatever the status — and
- * on a list where every row says «Заплановано» a fill would be noise. The word
- * still distinguishes them.
+ * **Its own card, not a row in a shared one** (2026-09-04). It had been one
+ * `Card` holding every shoot with a `border-t` between them; the artboard draws
+ * each as a separate `background:var(--surface)` card, `border-radius:12px`,
+ * 1px `--border`, `min-height:60px`, `padding:12px 14px`, in a column with
+ * `gap:8px`. The parent supplies the gap, this supplies the card.
+ *
+ * `active:bg-muted` is the artboard's `style-hover="background:var(--surface-soft)"`
+ * — a step **darker** than the card, which is how this design presses. It was
+ * `active:bg-secondary`, and since the 2026-09-04 theme made `--secondary` equal
+ * `--card` that press had become invisible.
+ *
+ * **The status is a `StatusPill`** since 2026-09-04. It was a neutral outline
+ * `Badge`, because under the monochrome theme the design drew every row's chip
+ * the same whatever the status, and a fill on a list where every row says the
+ * same word would have been noise.
+ *
+ * `Home.dc.html` does not draw it neutral — the row's chip is
+ * `background:var(--info-bg);border:1px solid var(--info-border);color:var(--info)`,
+ * the blue «Запланована» chip — and now that those tokens exist, `StatusPill`
+ * renders exactly that. A «Завершена» row comes out red by the same mapping,
+ * which is the whole point of a status having a colour again.
  */
-function UpcomingRow({ shoot, divided }: { shoot: Shoot; divided: boolean }) {
+function UpcomingRow({ shoot }: { shoot: Shoot }) {
   const t = useStrings()
   const range = formatTimeRange(shoot.startTime, shoot.endTime)
-  const STATUS_LABEL: Record<Shoot['status'], string> = {
-    new: t.statusNew,
-    finished: t.statusFinished,
-  }
 
   return (
     <Link href={`/(app)/shoot/${shoot.id}`} asChild>
       <Pressable
-        className={`min-h-[60px] flex-row items-center gap-3 px-3.5 py-3 active:bg-secondary ${
-          divided ? 'border-border border-t' : ''
-        }`}
+        className="bg-card border-border active:bg-muted min-h-[60px] flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
         onPress={tapped}
         role="button"
         accessibilityLabel={shoot.clientName}
@@ -310,7 +329,7 @@ function UpcomingRow({ shoot, divided }: { shoot: Shoot; divided: boolean }) {
           </Text>
         </View>
 
-        <Badge variant="outline" label={STATUS_LABEL[shoot.status]} />
+        <StatusPill value={shoot.status} />
       </Pressable>
     </Link>
   )
@@ -427,7 +446,7 @@ function PulseDot() {
 
   return (
     <Animated.View
-      className="bg-foreground h-[7px] w-[7px] rounded-full"
+      className="bg-success h-[7px] w-[7px] rounded-full"
       style={animated}
     />
   )
@@ -436,27 +455,23 @@ function PulseDot() {
 /**
  * AC-4's card: a 5px status stripe, then the shoot.
  *
- * **A light card, on purpose** (owner, 2026-08-29) — the one bright surface on
- * the home screen, so the next shoot reads before anything else does.
+ * **A dark card on `bg-card`, bordered** — `Home.dc.html`'s `.next-card`. It
+ * was a light `bg-primary` card until 2026-08-29 (the one bright surface on the
+ * screen, so the next shoot read first), then `bg-background` with a border,
+ * and it is now the same lifted `--card` surface as every other card. See the
+ * inline note on the View.
  *
- * It uses `primary` rather than a new white token. In RNR's dark theme
- * `--primary` *is* the near-white surface and `--primary-foreground` the dark
- * text that belongs on it, so this stays inside the stock palette instead of
- * reintroducing a colour of our own.
- *
- * Every text inside therefore flips: the card's contents cannot use
- * `card-foreground` or `muted-foreground`, both of which are light and would
- * vanish. Secondary text is `primary-foreground` at reduced opacity, which is
- * only possible because the config carries `<alpha-value>`.
+ * **Blue is what marks "today" here, since 2026-09-04.** `Home.dc.html` gives a
+ * shoot happening today three signals and the handoff supplies the tokens for
+ * all three: a pulsing `--success` dot above the card, an `--accent-solid`
+ * stripe down its left edge, and the «Сьогодні» chip filled with the same
+ * `--accent-solid` (`Badge`'s `accent` variant). A shoot further out gets a
+ * grey stripe and an outlined chip. That replaces the monochrome arrangement,
+ * where "today" was only *brighter* — white stripe, solid white chip — and had
+ * to compete with every other white thing on the screen.
  *
  * `overflow-hidden` with the elevation on the same View is what lets the stripe
  * reach the rounded corners — the same arrangement as the agenda row.
- *
- * Brought back onto `home-screen.html`'s `.next-card` on 2026-08-29: the status
- * was a second chip where the mockup writes it as text, the location pin was an
- * emoji, the radius was 24 rather than 20, and the stripe and countdown chip
- * were the wrong colour — that last one fixed in global.css rather than here,
- * by re-toning the status triples to the design system's own.
  */
 function NextShootCard({
   shoot,
@@ -487,26 +502,30 @@ function NextShootCard({
           **A dark card, bordered** — `Home.dc.html`, and a reversal of what this
           was. It had been the one bright surface on the screen, `bg-primary`
           filled, so that the next shoot read before anything else; the design
-          makes it `#09090b` inside `#27272a` like every other card and lets the
-          3px stripe and the badge do that work instead.
+          lets the 3px stripe and the badge do that work instead.
+
+          `bg-card`, not `bg-background`, since 2026-09-04 — the design draws it
+          on `--surface`, which is what `--card` now holds, and the two tokens
+          are no longer near enough for the choice to be cosmetic.
 
           Everything inside therefore un-inverts. The card's text was
           `primary-foreground` at various opacities, because `card-foreground`
           and `muted-foreground` are light and would have vanished on white.
           Those are simply the right tokens again.
 
-          A stronger border when the shoot is today (`#3f3f46`), which is the
-          design's quietest way of marking it.
+          A stronger border when the shoot is today, which is the design's
+          quietest way of marking it — and now the least of three.
         */}
         <View
-          className={`flex-row overflow-hidden rounded-xl border bg-background ${
+          className={`flex-row overflow-hidden rounded-xl border bg-card ${
             isToday ? 'border-border-strong' : 'border-border'
           }`}
         >
-          {/* 3px, and monochrome: white today, receding grey otherwise. The
-              status no longer picks it — `STRIPE` went with the amber. */}
+          {/* 3px. `Home.dc.html`'s `nextBar`: `--accent-solid` when the shoot
+              is today, a receding grey otherwise. The status has never picked
+              it — that went with the amber `STRIPE`. */}
           <View
-            className={`w-[3px] self-stretch ${isToday ? 'bg-foreground' : 'bg-border-strong'}`}
+            className={`w-[3px] self-stretch ${isToday ? 'bg-accent-solid' : 'bg-border-strong'}`}
           />
 
           <View className="flex-1 px-4 py-3.5">
@@ -524,7 +543,7 @@ function NextShootCard({
                 is what retired the `warning` scale.
               */}
               <Badge
-                variant={isToday ? 'solid' : 'outline'}
+                variant={isToday ? 'accent' : 'outline'}
                 label={distanceLabel(days, t)}
               />
             </View>

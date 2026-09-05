@@ -10,6 +10,7 @@ import { uk } from '../../src/i18n/uk'
 import { failed, succeeded } from '../../src/lib/haptics'
 import { MIN_PASSWORD_LENGTH } from '../../src/features/auth/register'
 import { establishRecoverySession, setNewPassword } from '../../src/features/auth/passwordReset'
+import { Starfield } from '../../src/components/Starfield'
 
 /**
  * Where the recovery email lands — `lunacrm://reset` on a device, `/reset` on
@@ -95,61 +96,64 @@ export default function ResetPasswordScreen() {
   if (ready === 'checking') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )
   }
 
   return (
-    <ScrollView
-      className="bg-background"
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
-    >
-      <View className="gap-2 p-4 pt-8">
-        <Text className="text-title text-foreground font-semibold">{uk.newPasswordTitle}</Text>
+    <View className="bg-background flex-1">
+      <Starfield />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="gap-2 p-4 pt-8">
+          <Text className="text-title text-foreground font-semibold">{uk.newPasswordTitle}</Text>
 
-        {ready === 'invalid' ? (
-          <>
-            {/* An expired or already-used link. «Try again» would be advice that
-                cannot succeed, so the only way out offered is a new request. */}
-            <Text className="text-body-sm text-destructive mt-2 leading-5">
-              {uk.resetLinkInvalid}
-            </Text>
-            <Button size="cta" className="mt-5" onPress={() => router.replace('/(auth)/login')}>
-              <Text className="text-subtitle font-semibold">{uk.returnToLogin}</Text>
-            </Button>
-          </>
-        ) : (
-          <>
-            <View className="mt-4 gap-2">
-              <Label htmlFor="new-password">{uk.newPassword}</Label>
-              <Input
-                id="new-password"
-                value={password}
-                onChangeText={(value) => {
-                  setPassword(value)
-                  setError(null)
-                }}
-                secureTextEntry
-                autoCapitalize="none"
-                autoComplete="new-password"
-                placeholder={uk.passwordHint}
-              />
-              {error ? <Text className="text-label text-destructive">{error}</Text> : null}
-            </View>
+          {ready === 'invalid' ? (
+            <>
+              {/* An expired or already-used link. «Try again» would be advice that
+                  cannot succeed, so the only way out offered is a new request. */}
+              <Text className="text-body-sm text-destructive mt-2 leading-5">
+                {uk.resetLinkInvalid}
+              </Text>
+              <Button size="cta" className="mt-5" onPress={() => router.replace('/(auth)/login')}>
+                <Text className="text-subtitle font-semibold">{uk.returnToLogin}</Text>
+              </Button>
+            </>
+          ) : (
+            <>
+              <View className="mt-4 gap-2">
+                <Label htmlFor="new-password">{uk.newPassword}</Label>
+                <Input
+                  id="new-password"
+                  value={password}
+                  onChangeText={(value) => {
+                    setPassword(value)
+                    setError(null)
+                  }}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="new-password"
+                  placeholder={uk.passwordHint}
+                />
+                {error ? <Text className="text-label text-destructive">{error}</Text> : null}
+              </View>
 
-            <Button
-              size="cta"
-              className="mt-5"
-              disabled={submitting}
-              onPress={() => void submit()}
-            >
-              <Text className="text-subtitle font-semibold">{uk.savePassword}</Text>
-            </Button>
-          </>
-        )}
-      </View>
-    </ScrollView>
+              <Button
+                size="cta"
+                className="mt-5"
+                disabled={submitting}
+                onPress={() => void submit()}
+              >
+                <Text className="text-subtitle font-semibold">{uk.savePassword}</Text>
+              </Button>
+            </>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   )
 }

@@ -70,7 +70,7 @@ export function MonthPicker({
 
   return (
     <View
-      className={`bg-background rounded-xl border p-3 ${
+      className={`bg-card rounded-xl border p-3 ${
         invalid ? 'border-destructive/60' : 'border-border'
       }`}
     >

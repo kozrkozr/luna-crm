@@ -5,6 +5,7 @@ import { Text } from '../../../src/components/ui/text'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { uk } from '../../../src/i18n/uk'
 import { resolveLink, type LinkReference } from '../../../src/features/links/gateway'
+import { Starfield } from '../../../src/components/Starfield'
 
 /**
  * US-021 on the anonymous surface — every reference on the shoot, reached from
@@ -43,6 +44,7 @@ export default function LinkAllReferencesScreen() {
   if (resolution.phase === 'resolving') {
     return (
       <View className="bg-background flex-1 items-center justify-center py-10">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )
@@ -51,6 +53,7 @@ export default function LinkAllReferencesScreen() {
   if (resolution.phase === 'invalid') {
     return (
       <View className="bg-background flex-1 items-center gap-2 px-4 py-10">
+        <Starfield />
         <Text className="text-5xl">⚠️</Text>
         <Text className="text-title text-foreground text-center font-semibold">
           {uk.linkInvalidTitle}
@@ -63,11 +66,14 @@ export default function LinkAllReferencesScreen() {
   }
 
   return (
-    <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
-      <View className="gap-3 p-4">
-        <Text className="text-title text-foreground font-semibold">{uk.allReferencesTitle}</Text>
-        <LinkReferenceGrid references={resolution.references} />
-      </View>
-    </ScrollView>
+    <View className="bg-background flex-1">
+      <Starfield />
+      <ScrollView contentInsetAdjustmentBehavior="automatic">
+        <View className="gap-3 p-4">
+          <Text className="text-title text-foreground font-semibold">{uk.allReferencesTitle}</Text>
+          <LinkReferenceGrid references={resolution.references} />
+        </View>
+      </ScrollView>
+    </View>
   )
 }

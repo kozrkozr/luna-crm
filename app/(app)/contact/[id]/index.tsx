@@ -15,6 +15,7 @@ import {
 } from '../../../../src/features/contacts/api'
 import { deleteClient, getClient } from '../../../../src/features/clients/api'
 import type { DirectoryKind } from '../../../../src/features/contacts/directory'
+import { Starfield } from '../../../../src/components/Starfield'
 
 /**
  * A person from «Мої контакти», and the two ways in.
@@ -209,6 +210,7 @@ export default function ContactProfileScreen() {
   if (state.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" />
       </View>
@@ -218,6 +220,7 @@ export default function ContactProfileScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 items-center justify-center p-4">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>

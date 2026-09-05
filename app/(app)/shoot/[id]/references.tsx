@@ -5,6 +5,7 @@ import { Text } from '../../../../src/components/ui/text'
 import { ReferenceGrid } from '../../../../src/components/ReferenceGrid'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { listReferences, type Reference } from '../../../../src/features/references/api'
+import { Starfield } from '../../../../src/components/Starfield'
 
 type State =
   | { status: 'loading' }
@@ -52,6 +53,7 @@ export default function AllReferencesScreen() {
   if (state.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )
@@ -60,6 +62,7 @@ export default function AllReferencesScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4">
+        <Starfield />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
     )
@@ -74,11 +77,14 @@ export default function AllReferencesScreen() {
       {/* The group's own name as the title when the page is narrowed to it —
           «Усі референси» would contradict the list underneath. */}
       {category ? <Stack.Screen options={{ title: category }} /> : null}
-      <ScrollView className="bg-background" contentInsetAdjustmentBehavior="automatic">
-        <View className="gap-3 p-4">
-          <ReferenceGrid references={shown} />
-        </View>
-      </ScrollView>
+      <View className="bg-background flex-1">
+        <Starfield />
+        <ScrollView contentInsetAdjustmentBehavior="automatic">
+          <View className="gap-3 p-4">
+            <ReferenceGrid references={shown} />
+          </View>
+        </ScrollView>
+      </View>
     </>
   )
 }

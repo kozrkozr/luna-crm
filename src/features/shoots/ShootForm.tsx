@@ -42,6 +42,7 @@ import {
 import { toIsoDate, toTimeValue } from '../../features/shoots/date'
 import { failed, selected as selectedTick, succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
+import { Starfield } from '../../components/Starfield'
 
 /**
  * `US-002` — create a shoot, rebuilt against `client-match-flow.html`
@@ -342,6 +343,7 @@ export function ShootForm(props: ShootFormMode) {
   if (failedToLoad) {
     return (
       <View className="bg-background flex-1 p-4" style={{ paddingTop: insets.top + 16 }}>
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
@@ -351,6 +353,7 @@ export function ShootForm(props: ShootFormMode) {
   if (loading) {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" />
       </View>
@@ -359,6 +362,7 @@ export function ShootForm(props: ShootFormMode) {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/*
@@ -409,7 +413,6 @@ export function ShootForm(props: ShootFormMode) {
       </View>
 
       <ScrollView
-        className="bg-background"
         contentContainerStyle={{ paddingBottom: insets.bottom + 108 }}
         keyboardShouldPersistTaps="handled"
       >

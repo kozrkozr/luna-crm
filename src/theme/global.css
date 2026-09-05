@@ -1,144 +1,213 @@
 /*
  * The only place a colour value may appear (README, Layout).
  *
- * **React Native Reusables' stock dark theme, and nothing else.** Owner's
- * decision, 2026-08-29: the dark-frame design system adopted in `ADR-017` is
- * removed and the app returns to RNR's defaults.
+ * **Source: `shadcn-theme.css`** — the Claude Design handoff of 2026-09-04
+ * (`THEME-HANDOFF.md`, "Передача теми в Claude Code"), which is the design
+ * project's own `theme.css` remapped onto the shadcn dictionary. Every token
+ * below carries the `oklch()` it came from, so any value can be traced back to
+ * that file and re-derived.
  *
- * These values are RNR's `.dark` block verbatim, promoted to `:root` so they
- * are the app's one theme rather than a variant something must switch into.
- * That keeps the arrangement the app already had — one theme, no `.dark` class,
- * no half-finished light variant for the system setting to fall into — while
- * the values themselves stop being ours.
+ * **This reverses the monochrome passes of 2026-08-29 and 2026-08-30.** Those
+ * removed the frame, the warm neutrals, the client/private axis, both
+ * shoot-status triples, `link`, `pending`, `confirmed` and `warning`, leaving
+ * `--destructive` as the app's one hue. The handoff brings colour back —
+ * deliberately, and with a narrower vocabulary than ADR-017 had: one blue
+ * (link / «Запланована» / «Сьогодні»), one amber («Очікує»), one green
+ * («Підтверджено»), one red («Завершена» and refusals), and five pastel avatar
+ * tints. Nothing else is tinted; the base stays neutral-black.
  *
- * **What this changes beyond colour.** ADR-017's system inverted the usual
- * structure: a near-black frame with content on WHITE cards. RNR's dark theme is
- * conventional — a card is no longer a bright surface, so everything written to
- * sit "on white" had to be re-pointed at the dark pair. That was the bulk of
- * this change.
+ * ── Why these are HSL and not the handoff's oklch ─────────────────────────
  *
- * RNR would have `--card` equal to `--background`, separated by a border rather
- * than by brightness. **That one value is now the Figma file's instead** — see
- * the note on it below.
+ * NativeWind cannot use `oklch()`. Its CSS-to-RN pass lists the function
+ * alongside `lab`, `lch` and `display-p3` and bails:
  *
- * The scales ADR-017 added — the frame, the warm neutrals, the client/private
- * purple axis, warning, link, cta, avatar tints — are gone. Where they carried
- * meaning the app still needs, they map onto stock slots: `secondary` for a
- * raised surface, `muted-foreground` for secondary text, `destructive` for a
- * refusal.
+ *     // react-native-css-interop/dist/css-to-rn/parseDeclaration.js
+ *     case "oklch":
+ *       options.addValueWarning(`Invalid color unit ${color.type}`);
+ *       return undefined;
  *
- * **One documented exception, down from seven.** `--card` is the Figma file's
- * `#1F1F22` rather than stock's page colour. Every other token is RNR's,
- * verbatim, plus one addition — `--border-strong`, the shoot-detail handoff's
- * `#3f3f46`.
+ * `undefined` is not an error — an unparsed colour styles nothing and nothing
+ * reports it, which is the same silent failure mode `ResponsePill` documents
+ * from the ADR-017 rename. `hsl()` is the one function that pass converts, so
+ * the handoff's values are converted here once rather than left to fail on
+ * device. The conversion is sRGB-clipped: `--warn-bg` and `--info-bg` sit
+ * marginally outside the gamut in oklch and land on their clipped sRGB
+ * neighbours.
  *
- * The list was longer until 2026-08-30. Two shoot-status triples, `client`,
- * `link`, `pending`, `confirmed` and finally `warning` all lived here, and all
- * went with the owner's app-wide move to the handoff's monochrome zinc
- * direction. `--destructive` is the only hue left. See the block at the top of
- * `:root` for what that costs.
+ * ── Two departures from the handoff, both deliberate ───────────────────────
  *
- * **The rule that survives all of it:** a value here must be something RNR has
- * no slot for — a card that lifts, a warning, a stronger border — and it must
- * come from a named source. Every remaining token is stock, verbatim.
+ * 1. **`--border-strong` is kept.** The handoff has no slot for it, and
+ *    fourteen files use `border-border-strong` — the outlined badge, the
+ *    checkbox, the sheet grabber, the toast, the link view's crew rows. Its
+ *    value is the design project's own `theme.css` token
+ *    (`oklch(0.360 0.005 285)`), not a guess, so the two files still agree.
+ *
+ * 2. **The `--sidebar-*` block is dropped.** Eight tokens for a component this
+ *    product does not have on any of its three journeys. They are shadcn's web
+ *    defaults travelling with the dictionary, not part of this design.
+ *
+ * ── One thing to know before styling on top of this ───────────────────────
+ *
+ * `--secondary` and `--card` are now **the same value** (`#121214`). A
+ * `bg-secondary` chip placed on a `bg-card` surface is therefore invisible.
+ * That is why `Badge`'s `muted` variant moved to `bg-accent`, one step up. The
+ * handoff makes the same point about borders — "рамка майже не відрізняється
+ * від картки — так і має бути" — but a border at low contrast still draws an
+ * edge, and a fill at zero contrast draws nothing.
+ *
+ * **The rule that survives all of it:** a value here must come from a named
+ * source. Every token below names its oklch origin in `shadcn-theme.css`.
  */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /*
+   * One theme, promoted to `:root` rather than sitting behind a `.dark` class.
+   * The handoff says the app is dark-only and repeats the values under `.dark`
+   * for a web project that keys off `<html class="dark">`; there is no `<html>`
+   * here, nothing applies the class, and a second identical block would be a
+   * copy to keep in sync for no gain. Do not add a light variant — see
+   * "Чого не робити" in the handoff.
+   */
   :root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    /*
-     * **Not RNR's value.** Stock dark sets `--card` to `0 0% 3.9%`, the same as
-     * `--background`, so a card has no fill of its own and needs a border to
-     * exist at all. The Figma file draws the crew card on `#1F1F22` over the
-     * page's near-black — a card that lifts *and* is bordered (owner,
-     * 2026-08-30; node 1:79 of the shoot-detail frame, read through the Dev Mode
-     * MCP server. No Figma variable behind it — a raw hex).
-     *
-     * The tint is the file's, not a mistake: `#1F1F22` is hue 240 at 5%, because
-     * that frame is built on Tailwind's **zinc** scale (its `#27272A` border is
-     * `zinc-800` exactly) where this theme is RNR's pure-neutral **neutral**. At
-     * 5% saturation the difference is imperceptible; the value is kept as drawn
-     * rather than flattened to `0 0% 13%`, so it can be traced back.
-     *
-     * `--card-foreground` needs no change: `#FAFAFA` is what the file uses too.
-     */
-    --card: 240 5% 13%; /* #1F1F22 */
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70.9% 59.4%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 300 0% 45%;
-    --radius: 0.625rem;
+    /* ── shadcn dictionary (Layer A) — stock RNR components read these ───── */
+
+    --background: 239 5.3% 2.8%; /* #070708  oklch(0.128 0.002 285) */
+    --foreground: 238 8.2% 98.1%; /* #FAFAFB  oklch(0.985 0.001 285) */
 
     /*
-     * ── Monochrome, 2026-08-30 (owner) ────────────────────────────────────
-     *
-     * Six colour scales lived here until today: the two shoot-status triples
-     * (`status-new` blue, `status-finished` pink), `client` purple, `link`
-     * blue, `pending` amber and `confirmed` green. All six are **removed**.
-     *
-     * The shoot-detail handoff (`design_handoff_shoot_detail/README.md`) is
-     * built on the shadcn dark **zinc** scale and states the rule outright:
-     * "monochrome zinc scale, no colour tints", "only these; no coloured
-     * status tints". A status is a solid `foreground` chip or an outlined one;
-     * a confirmed crew member is solid, a pending one outlined; nothing is
-     * distinguished by hue any more. The owner extended that decision to the
-     * whole app rather than to the one screen, so the tokens go rather than
-     * being kept for the screens not yet redesigned.
-     *
-     * **What is lost, stated plainly.** Access level was the one thing this
-     * product colour-coded, and the client purple was the last of it — see the
-     * note in src/components/Visibility.tsx, which has been making this point
-     * since the first theme reset. Status and response are now distinguished by
-     * FILL vs OUTLINE and by their words. That is two channels, not one, but it
-     * is not colour.
-     *
-     * `--destructive` stays: the handoff has its own red (`#f87171` text,
-     * `#7f1d1d` border and confirm fill), so a refusal is still the one thing
-     * with a hue.
+     * A card lifts off the page by 4.7 points of lightness and is bordered on
+     * top of that. Both are needed: the border alone is `#18191A` against
+     * `#121214`, which is the low-contrast edge the handoff calls for on
+     * purpose, and the fill alone would not separate two stacked cards.
      */
+    --card: 239 4.0% 7.5%; /* #121214  oklch(0.185 0.003 285) */
+    --card-foreground: 238 8.2% 98.1%; /* #FAFAFB  oklch(0.985 0.001 285) */
+    --popover: 239 4.0% 7.5%; /* #121214  oklch(0.185 0.003 285) */
+    --popover-foreground: 238 8.2% 98.1%; /* #FAFAFB  oklch(0.985 0.001 285) */
 
     /*
-     * The handoff's "strong border / focus ring" `#3f3f46`, one step up from
-     * `--border`. RNR has no slot for it and the difference is load-bearing in
-     * the design: an outlined «Очікує» badge, the «Надіслати нагадування»
-     * button and the sheet's grabber all sit on it, and at `--border` they
-     * disappear into the surface behind them.
+     * **`--primary` is no longer white.** It is the handoff's "бліда
+     * блакитно-біла плашка" — a pale blue-white with near-black blue-tinted
+     * text on it. This is the single biggest visual change in the file: every
+     * primary button, the solid badge, the confirmed avatar check, the progress
+     * fill and the checkbox all move off `#FAFAFA` together.
      *
-     * Source: design_handoff_shoot_detail/README.md, "Design tokens (shadcn
-     * dark)". Same provenance rule as `--card` — a named file, not a guess.
+     * "Не використовувати чистий білий (`#fff`) для кнопок — тільки
+     * `--primary`" (handoff). `Button`'s `cta` variant used to exist to invert
+     * primary for the pinned screen CTA; it now points at the same token as
+     * `default`, since there is no white left to invert away from.
      */
-    --border-strong: 240 5% 26%; /* #3f3f46 */
+    --primary: 218 94.5% 93.0%; /* #DCE9FE  oklch(0.930 0.032 262) */
+    --primary-foreground: 219 50.0% 6.6%; /* #080E19  oklch(0.165 0.025 262) */
 
     /*
-     * `--warning` was here until 2026-08-30, and it is the last of the seven
-     * scales the monochrome pass removed.
+     * Equal to `--card` — see the note in the header. `secondary` is the raised
+     * surface *on the page*, and it stops being raised the moment it sits on a
+     * card.
+     */
+    --secondary: 239 4.0% 7.5%; /* #121214  oklch(0.185 0.003 285) */
+    --secondary-foreground: 238 8.2% 98.1%; /* #FAFAFB  oklch(0.985 0.001 285) */
+
+    /* Inset rows — darker than the page, not lighter. */
+    --muted: 239 4.8% 6.1%; /* #0F0F10  oklch(0.168 0.003 285) */
+    --muted-foreground: 238 1.6% 64.9%; /* #A4A4A7  oklch(0.720 0.004 285) */
+
+    /* `accent` is the hover/press fill for rows and ghost buttons, and equals
+       `--border`. That is the handoff's own arrangement, not a collision. */
+    --accent: 239 3.1% 9.9%; /* #18191A  oklch(0.212 0.003 285) */
+    --accent-foreground: 238 8.2% 98.1%; /* #FAFAFB  oklch(0.985 0.001 285) */
+
+    --destructive: 358 79.8% 69.2%; /* #EF7276  oklch(0.700 0.155 20) */
+    --destructive-foreground: 3 100% 98.5%; /* #FFF8F7  oklch(0.985 0.010 20) */
+
+    --border: 239 3.1% 9.9%; /* #18191A  oklch(0.212 0.003 285) */
+    --input: 239 3.1% 9.9%; /* #18191A  oklch(0.212 0.003 285) */
+
+    /* The focus ring is the link blue now, not a grey. */
+    --ring: 219 100% 71.9%; /* #6FA2FF  oklch(0.720 0.150 262) */
+
+    /*
+     * **8px, not the handoff's `0.875rem`** (owner, 2026-09-04).
      *
-     * It outlived the other six twice. First as the home screen's «Сьогодні»
-     * amber — retired when `Home.dc.html` drew that state in white. Then as
-     * `US-031`'s clash marker on the shoot list, which was a defensible last
-     * colour because it meant "something is wrong with the schedule" rather
-     * than identity or state — retired when `Calendar.dc.html` drew that tag as
-     * an outline badge.
+     * The handoff calls 14px "радіус карток", but no artboard draws a card at
+     * 14 — `Home.dc.html` and `Calendar.dc.html` both use 12, and the value
+     * traces to `--r-card` in the design project's `theme.css`, which the
+     * artboards never reference.
      *
-     * With both gone it had no usage anywhere, so it went too. **`--destructive`
-     * is now the only hue in the app**, which is also all stock shadcn dark has.
+     * In this codebase `--radius` does not reach a card at all: `Card` and the
+     * shoot/upcoming rows are `rounded-xl`, Tailwind's stock 12px. What it does
+     * reach is `rounded-lg`/`md`/`sm` — 70 uses, every one a small control the
+     * artboards draw at 8px: day cells, icon buttons, tab triggers. Set to the
+     * card radius it made all seventy 4px rounder and no card more correct.
+     *
+     * The ladder is now lg 8 / md 6 / sm 4, against the artboards' 8 / 10 / 12
+     * / 999. Buttons and badges are pills and read none of it.
+     */
+    --radius: 0.5rem;
+
+    /* ── Application scales (Layer B) — outside the shadcn dictionary ─────
+     *
+     * The handoff's second block. In its own project these go in Tailwind v4's
+     * `@theme inline`; this project is on Tailwind v3, so they are declared
+     * here and mapped to class names in `tailwind.config.js`.
+     *
+     * `--border-strong` leads the list because it is the one token here that
+     * the handoff does not carry — see the header.
      */
 
+    /* Strong border / grabber / outlined badge. From the design project's
+       `theme.css`, the same file `shadcn-theme.css` was derived from. */
+    --border-strong: 239 2.4% 24.4%; /* #3D3D40  oklch(0.360 0.005 285) */
+
+    /* Links, and the active tab in the bottom navigation. */
+    --link: 219 100% 71.9%; /* #6FA2FF  oklch(0.720 0.150 262) */
+    --link-hover: 217 100% 79.5%; /* #97BFFF  oklch(0.805 0.115 262) */
+
+    /* «Запланована» — a blue outlined badge. */
+    --info: 219 100% 71.9%; /* #6FA2FF  oklch(0.720 0.150 262) */
+    --info-bg: 222 67.2% 15.9%; /* #0D1E44  oklch(0.245 0.075 264) */
+    --info-border: 219 48.7% 51.9%; /* #4972C0  oklch(0.560 0.130 262) */
+
+    /* «Сьогодні» — a saturated blue fill, no border. The one solid blue in the
+       app, and the reason `--accent-solid` is separate from `--accent`. */
+    --accent-solid: 221 76.5% 73.4%; /* #87A8EF  oklch(0.735 0.110 265) */
+
+    /* «Очікує» — amber. */
+    --warn: 37 76.7% 69.7%; /* #EDBF76  oklch(0.830 0.105 78) */
+    --warn-bg: 32 100% 8.7%; /* #2C1800  oklch(0.230 0.055 72) */
+    --warn-border: 35 54.1% 48.2%; /* #BD8638  oklch(0.660 0.115 72) */
+
+    /* «Підтверджено» — green, solid, no border. */
+    --success: 149 88.4% 29%; /* #098B47  oklch(0.560 0.145 152) */
+    --success-foreground: 132 54.3% 97.6%; /* #F5FCF7  oklch(0.985 0.010 152) */
+
+    /*
+     * «Завершена» — a red outlined badge, and the reason a finished shoot is no
+     * longer told apart from a scheduled one by fill vs outline alone. Distinct
+     * from `--destructive`, which stays the colour of an *action* that destroys
+     * something; this is the colour of a state that has ended.
+     */
+    --danger-soft: 0 85.1% 80.5%; /* #F8A4A3  oklch(0.800 0.100 20) */
+    --danger-border: 360 41.5% 23.7%; /* #562323  oklch(0.330 0.075 22) */
+    --danger-bg: 2 47.9% 12.4%; /* #2F1210  oklch(0.225 0.048 24) */
+
+    /*
+     * Pastel avatar tints — peach, pink, mint, lavender, sky — picked per
+     * person by hashing the name (`src/components/Avatar.tsx`). Named
+     * `--chart-*` because that is the shadcn slot the handoff put them in, not
+     * because anything charts them; the app has no charts.
+     *
+     * These are the only light surfaces in the app, which is why the initials
+     * on them need their own dark ink rather than any `*-foreground` token.
+     */
+    --chart-1: 27 89.3% 85.9%; /* #FBD8BB  oklch(0.905 0.055 62)  peach */
+    --chart-2: 355 93% 90.7%; /* #FDD1D5  oklch(0.900 0.050 12)  pink */
+    --chart-3: 143 51.2% 84.2%; /* #C2EBD2  oklch(0.905 0.055 158) mint */
+    --chart-4: 249 91.4% 92.2%; /* #DED9FD  oklch(0.900 0.050 292) lavender */
+    --chart-5: 201 89.9% 86.9%; /* #BFE6FC  oklch(0.905 0.050 232) sky */
+    --tint-foreground: 240 14.3% 23.5%; /* #343344  oklch(0.330 0.030 285) */
   }
 }

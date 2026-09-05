@@ -4,7 +4,6 @@ import { Link, Stack, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
-import { Badge } from '../../../src/components/ui/badge'
 import { Button } from '../../../src/components/ui/button'
 import { Icon } from '../../../src/components/ui/icon'
 import { Tabs } from '../../../src/components/ui/tabs'
@@ -24,6 +23,7 @@ import {
   startOfWeek,
   type CalendarMode,
 } from '../../../src/components/ShootCalendar'
+import { Starfield } from '../../../src/components/Starfield'
 
 type State =
   | { status: 'loading' }
@@ -126,6 +126,7 @@ export default function ShootListScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/*
@@ -562,21 +563,20 @@ function AgendaRow({
       <Pressable onPress={tapped} className="active:opacity-70">
         <View
           /*
-            The conflict ring is `warning-border` (#E2A63F), not `destructive`.
-            `.agenda-row.warn` draws `inset 0 0 0 1.5px #e2a63f` — §3.1's
-            `warning-ring` — and «менше години після попередньої» is a warning,
-            not an error. A red ring on this row said something stronger than the
-            tag inside it.
+            `Calendar.dc.html`'s row: `background:var(--surface)` inside a 1px
+            border, radius 12 — `bg-card`, not the page colour it used to be.
+
+            **A clash changes only the border.** The artboard reads
+            `cardBg: 'var(--surface)'` for every row and
+            `cardLine: warn ? 'var(--warn-border)' : 'var(--border)'` — so the
+            surface never moves and the edge goes amber. This had been lifting
+            the whole card to `secondary` with a grey `border-strong`, which
+            under the 2026-09-04 theme is doubly wrong: `--secondary` now equals
+            `--card`, so the lift did nothing at all, and the amber the design
+            uses to mark this row exists again.
           */
-          /*
-            The handoff's row: the page colour inside a `#27272a` border, radius
-            12, no lift. A clash lifts the whole card to `secondary` and takes
-            the stronger border, where it used to take a 1.5px amber ring — that
-            ring was the last thing on this screen using `warning` as a surface,
-            and the scale now survives only on the tag inside.
-          */
-          className={`flex-row overflow-hidden rounded-xl border ${
-            tooSoon ? 'bg-secondary border-border-strong' : 'bg-background border-border'
+          className={`flex-row overflow-hidden rounded-xl border bg-card ${
+            tooSoon ? 'border-warn-border' : 'border-border'
           }`}
         >
           {/* 3px, down from 4. `self-stretch` works here only because the
@@ -604,16 +604,25 @@ function AgendaRow({
 
             <View className="min-w-0 flex-1">
               {/*
-                `US-031`'s clash marker. An **outline** badge now, as
-                `Calendar.dc.html` draws it — it was an amber fill, and the
-                card's own lift plus its stronger border already say this row is
-                the odd one. The text still states exactly what is wrong.
+                `US-031`'s clash marker, **amber again** — this is what
+                `Calendar.dc.html` draws:
 
-                This was the last use of `warning` anywhere in the app.
+                  font-size:10.5px; font-weight:500; padding:3px 7px;
+                  border-radius:999px; background:var(--warn-bg);
+                  border:1px solid var(--warn-border); color:var(--warn)
+
+                Written inline rather than as a `Badge` variant: its geometry is
+                its own (10.5/500 at `3px 7px`, where `Badge` is 11/500 at
+                `4px 8px`), and a `warn` variant on the primitive would let any
+                caller reach for "something is wrong with the schedule" styling.
+                `text-micro` is 10px — the scale has no half step, and earlier
+                passes rounded down.
               */}
               {tooSoon ? (
-                <View className="mb-1.5 self-start">
-                  <Badge variant="outline" label={t.conflictLessThanHour} />
+                <View className="bg-warn-bg border-warn-border mb-[7px] self-start rounded-full border px-[7px] py-[3px]">
+                  <Text className="text-micro text-warn font-medium">
+                    {t.conflictLessThanHour}
+                  </Text>
                 </View>
               ) : null}
 
@@ -626,6 +635,17 @@ function AgendaRow({
                 <StatusPill value={shoot.status} />
               </View>
 
+              {/*
+                **Grey, not the artboard's blue** (owner, 2026-09-04).
+                `Calendar.dc.html` writes `color:var(--link)` here, and it was
+                `text-link` for a few hours today. Overruled: the address is not
+                a link — nothing on this row opens a map — and the blue promised
+                an action the row does not have.
+
+                `text-muted-foreground` also puts this row back in step with the
+                home screen's «Наступні зйомки», whose own artboard already
+                draws the same line in `--text-dim`.
+              */}
               {shoot.locationAddress ? (
                 <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
                   {shoot.locationAddress}
@@ -633,17 +653,12 @@ function AgendaRow({
               ) : null}
 
               {/*
-                The ring colour is the colour of THIS row, which is not one
-                colour: a clash row lifts to `secondary`. It was hardcoded to
-                `border-card` — a leftover from when the row was `bg-card` — so
-                every avatar carried a `#1F1F22` halo against the `#0A0A0A` row.
+                The ring is `border:2px solid {{ s.cardBg }}` — the surface
+                behind the stack. That is one colour again now that a clash row
+                keeps `--surface` and moves only its border, so the caller no
+                longer has two cases to pass.
               */}
-              {crew.length > 0 ? (
-                <AvatarStack
-                  names={crew}
-                  ringClass={tooSoon ? 'border-secondary' : 'border-background'}
-                />
-              ) : null}
+              {crew.length > 0 ? <AvatarStack names={crew} /> : null}
             </View>
           </View>
         </View>
@@ -655,13 +670,13 @@ function AgendaRow({
 /**
  * Overlapping crew avatars (§5.8).
  *
- * The ring colour is the colour of the surface BEHIND the stack, which is why
- * the caller supplies it — `Calendar.dc.html` writes `border:2px solid
- * {{ s.cardBg }}`, and that value differs per row: a clash row lifts to
- * `secondary`. Passing it in rather than assuming one colour is the same
- * warning the design system gives about assuming white.
+ * The ring is the colour of the surface BEHIND the stack —
+ * `Calendar.dc.html` writes `border:2px solid {{ s.cardBg }}`, and `cardBg` is
+ * `var(--surface)` for every row including a clash. It had been a prop because
+ * a clash row used to lift to `secondary`; it no longer does, so `border-card`
+ * is simply correct and there is no case to pass.
  */
-function AvatarStack({ names, ringClass }: { names: string[]; ringClass: string }) {
+function AvatarStack({ names }: { names: string[] }) {
   return (
     <View className="mt-2.5 flex-row">
       {names.map((name, index) => (
@@ -669,7 +684,7 @@ function AvatarStack({ names, ringClass }: { names: string[]; ringClass: string 
           key={`${name}-${index}`}
           name={name}
           size={26}
-          className={`border-2 ${ringClass} ${index > 0 ? '-ml-[7px]' : ''}`}
+          className={`border-card border-2 ${index > 0 ? '-ml-[7px]' : ''}`}
         />
       ))}
     </View>
@@ -691,17 +706,23 @@ function AvatarStack({ names, ringClass }: { names: string[]; ringClass: string 
 /**
  * The 3px stripe.
  *
- * `Calendar.dc.html`'s own tones for the two statuses we have: `planned` is
- * `#52525b` and `done` is `#27272a` — `border-strong` and `border`. Neither is
- * white; the design reserves that for its third status, `progress`, which this
- * product does not have (`US-020` AC-2 — two values, deliberately).
+ * `Calendar.dc.html`'s `STATUS` table, which is coloured again:
  *
- * So the stripe is a quiet marker here, not a signal. The word on the
- * `StatusPill` beside it is what actually reports the status.
+ *   planned → bar `var(--info-border)`    (#4972C0)
+ *   done    → bar `var(--danger)`         (#EF7276, our `--destructive`)
+ *
+ * It was `border-strong` / `border` — two greys — which is what the artboard
+ * drew while the design was monochrome. The stripe agrees with the
+ * `StatusPill` beside it again: blue for a scheduled shoot, red for a finished
+ * one, so the row reports its status twice rather than once.
+ *
+ * `--danger` and `--destructive` are the same oklch here
+ * (`0.700 0.155 20`), so the finished stripe uses the token the app already
+ * has rather than adding a `--danger` DEFAULT that nothing else would read.
  */
 const STRIPE: Record<Shoot['status'], string> = {
-  new: 'bg-border-strong',
-  finished: 'bg-border',
+  new: 'bg-info-border',
+  finished: 'bg-destructive',
 }
 
 /** Rows grouped by date, preserving the order they arrived in. */

@@ -17,6 +17,7 @@ import { SectionLabel } from '../../components/ShootFormFields'
 import { VisibilityNote } from '../../components/Visibility'
 import { useStrings } from '../../i18n/LanguageProvider'
 import { tapped } from '../../lib/haptics'
+import { Starfield } from '../../components/Starfield'
 
 /**
  * «Публічний профіль» — `Public Profile.dc.html` (owner, 2026-09-04).
@@ -114,6 +115,7 @@ export function PublicProfile({
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       {/*
         «‹ Профіль · Публічний профіль», with a subline naming what the reader is
         looking at. The right-hand spacer matches the back control's width so the

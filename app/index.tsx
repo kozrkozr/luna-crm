@@ -1,6 +1,7 @@
 import { ActivityIndicator, View } from 'react-native'
 import { Redirect } from 'expo-router'
 import { useSession } from '../src/features/auth/useSession'
+import { Starfield } from '../src/components/Starfield'
 
 /**
  * Entry point: send a signed-in user to the app surface, everyone else to
@@ -20,6 +21,7 @@ export default function Index() {
   if (session.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )

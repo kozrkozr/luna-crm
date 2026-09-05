@@ -1,6 +1,7 @@
 import { View } from 'react-native'
 import { Text } from '../../../src/components/ui/text'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
+import { Starfield } from '../../../src/components/Starfield'
 
 /**
  * `US-028`'s client profile — a stub, so «Глянути профіль» on the shoot form
@@ -15,6 +16,7 @@ export default function ClientProfileScreen() {
   const t = useStrings()
   return (
     <View className="bg-background flex-1 items-center justify-center p-4">
+      <Starfield />
       <Text className="text-body text-muted-foreground text-center">
         {t.clientProfileComingSoon}
       </Text>

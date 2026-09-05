@@ -26,6 +26,7 @@ import { selected } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
 import { MIN_PASSWORD_LENGTH, register } from './register'
+import { Starfield } from '../../components/Starfield'
 
 /**
  * `login` and `register` are the two the routes map onto; `forgot` and `sent`
@@ -97,72 +98,74 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
       keyboard has no Done key, and `keyboardShouldPersistTaps="handled"` only
       dismisses on a tap that hits no touchable.
     */
-    <ScrollView
-      className="bg-background"
-      contentInsetAdjustmentBehavior="automatic"
-      automaticallyAdjustKeyboardInsets
-      keyboardDismissMode="interactive"
-      keyboardShouldPersistTaps="handled"
-    >
-      <View className="px-4 pb-16">
-        {/* The intro and the tabs belong to the two AUTH modes. The recovery
-            screens replace them with their own heading, as drawn. */}
-        {mode === 'login' || mode === 'register' ? (
-          <>
-            <Intro />
-            <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
-              <SegmentTab
-                label={uk.loginBtn}
-                active={mode === 'login'}
-                onPress={() => setMode('login')}
-              />
-              <SegmentTab
-                label={uk.registerTitle}
-                active={mode === 'register'}
-                onPress={() => setMode('register')}
-              />
-            </View>
-          </>
-        ) : null}
+    <View className="bg-background flex-1">
+      <Starfield />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="px-4 pb-16">
+          {/* The intro and the tabs belong to the two AUTH modes. The recovery
+              screens replace them with their own heading, as drawn. */}
+          {mode === 'login' || mode === 'register' ? (
+            <>
+              <Intro />
+              <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
+                <SegmentTab
+                  label={uk.loginBtn}
+                  active={mode === 'login'}
+                  onPress={() => setMode('login')}
+                />
+                <SegmentTab
+                  label={uk.registerTitle}
+                  active={mode === 'register'}
+                  onPress={() => setMode('register')}
+                />
+              </View>
+            </>
+          ) : null}
 
-        {mode === 'login' ? (
-          <LoginForm
-            onForgot={(email) => {
-              setRecoveryEmail(email)
-              setMode('forgot')
-            }}
-          />
-        ) : null}
-        {mode === 'register' ? <RegisterForm /> : null}
-        {mode === 'forgot' ? (
-          <ForgotForm
-            email={recoveryEmail}
-            onEmailChange={setRecoveryEmail}
-            onBack={() => setMode('login')}
-            onSent={() => setMode('sent')}
-          />
-        ) : null}
-        {mode === 'sent' ? (
-          <ResetSent
-            email={recoveryEmail}
-            onBack={() => setMode('login')}
-            onChangeAddress={() => setMode('forgot')}
-          />
-        ) : null}
+          {mode === 'login' ? (
+            <LoginForm
+              onForgot={(email) => {
+                setRecoveryEmail(email)
+                setMode('forgot')
+              }}
+            />
+          ) : null}
+          {mode === 'register' ? <RegisterForm /> : null}
+          {mode === 'forgot' ? (
+            <ForgotForm
+              email={recoveryEmail}
+              onEmailChange={setRecoveryEmail}
+              onBack={() => setMode('login')}
+              onSent={() => setMode('sent')}
+            />
+          ) : null}
+          {mode === 'sent' ? (
+            <ResetSent
+              email={recoveryEmail}
+              onBack={() => setMode('login')}
+              onChangeAddress={() => setMode('forgot')}
+            />
+          ) : null}
 
-        {/* «Потрібна допомога? Напишіть нам» — on the auth modes only. */}
-        {mode === 'login' || mode === 'register' ? (
-          <Pressable
-            className="mt-3.5 min-h-11 flex-row items-center justify-center"
-            onPress={() => void openExternalUrl('mailto:support@lunacrm.app')}
-            role="button"
-          >
-            <Text className="text-label text-muted-foreground">{`${uk.needHelp} `}</Text>
-            <Text className="text-label text-foreground">{uk.writeToUs}</Text>
-          </Pressable>
-        ) : null}
-      </View>
-    </ScrollView>
+          {/* «Потрібна допомога? Напишіть нам» — on the auth modes only. */}
+          {mode === 'login' || mode === 'register' ? (
+            <Pressable
+              className="mt-3.5 min-h-11 flex-row items-center justify-center"
+              onPress={() => void openExternalUrl('mailto:support@lunacrm.app')}
+              role="button"
+            >
+              <Text className="text-label text-muted-foreground">{`${uk.needHelp} `}</Text>
+              <Text className="text-label text-foreground">{uk.writeToUs}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </ScrollView>
+    </View>
   )
 }
 

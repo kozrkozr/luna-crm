@@ -7,6 +7,7 @@ import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { getContact } from '../../../../src/features/contacts/api'
 import { getClient } from '../../../../src/features/clients/api'
 import type { DirectoryKind } from '../../../../src/features/contacts/directory'
+import { Starfield } from '../../../../src/components/Starfield'
 
 /**
  * «Редагувати контакт», reached from «Публічний профіль».
@@ -75,6 +76,7 @@ export default function EditContactScreen() {
   if (state.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" />
       </View>
@@ -84,6 +86,7 @@ export default function EditContactScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 items-center justify-center p-4">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>

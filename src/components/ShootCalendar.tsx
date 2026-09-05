@@ -97,7 +97,7 @@ export function ShootCalendar({
         shadow went with the fill; a shadow under a card the same colour as the
         page reads as a smudge.
       */}
-      <View className="bg-background border-border rounded-xl border px-3 pb-3.5 pt-3">
+      <View className="bg-card border-border rounded-xl border px-3 pb-3.5 pt-3">
         <View className="mb-3 flex-row items-center justify-between">
           <NavButton direction="prev" onPress={() => step(-1)} />
           <Text className="text-subtitle text-foreground font-semibold">
@@ -294,6 +294,8 @@ function DayCell({
 }) {
   return (
     <Pressable
+      // `rounded-lg` is the artboard's 8px — see the `--radius` note in
+      // src/theme/global.css, which is set so that it is.
       className={`flex-1 items-center justify-center rounded-lg border active:opacity-70 ${
         shape === 'month' ? 'aspect-square gap-1' : 'gap-[5px] py-[9px]'
       } ${
@@ -339,6 +341,11 @@ function DayCell({
  *
  * `onFill` is the selected cell — the dot has to invert there or it disappears
  * into the `primary` fill it sits on.
+ *
+ * **`marked` is `bg-info`** (2026-09-04). `Calendar.dc.html`'s `cellStyle` reads
+ * `dot: has ? (sel ? 'var(--accent-ink)' : 'var(--info)') : 'transparent'` — the
+ * blue is the whole point of the dot, and it was `muted-foreground` only because
+ * the monochrome theme had no blue to give it.
  */
 function Dot({ state }: { state: 'onFill' | 'marked' | 'none' }) {
   return (
@@ -347,7 +354,7 @@ function Dot({ state }: { state: 'onFill' | 'marked' | 'none' }) {
         state === 'onFill'
           ? 'bg-primary-foreground'
           : state === 'marked'
-            ? 'bg-muted-foreground'
+            ? 'bg-info'
             : 'bg-transparent'
       }`}
     />

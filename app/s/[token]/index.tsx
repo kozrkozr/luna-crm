@@ -41,6 +41,7 @@ import {
   type LinkOrganizer,
   type LinkPayload,
 } from '../../../src/features/links/gateway'
+import { Starfield } from '../../../src/components/Starfield'
 
 type Resolution =
   | { phase: 'resolving' }
@@ -85,6 +86,7 @@ export default function LinkView() {
   if (resolution.phase === 'resolving') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <ActivityIndicator size="large" />
       </View>
     )
@@ -93,6 +95,7 @@ export default function LinkView() {
   if (resolution.phase === 'invalid') {
     return (
       <View className="bg-background flex-1 items-center justify-center gap-2 p-8">
+        <Starfield />
         <Text className="text-title-sm text-foreground text-center font-semibold">
           {uk.linkInvalidTitle}
         </Text>
@@ -140,6 +143,7 @@ export default function LinkView() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       {/* The product mark, and the one thing this page says about itself: the
           link is private. No expiry line — `ADR-014` has no expiry column, and
           the design's «Діє до…» would be untrue on every link. */}
@@ -284,17 +288,30 @@ export default function LinkView() {
               gateway's `respond`, and note this reverses `US-008`'s "a submitted
               response is final". */}
           {answered ? (
-            <View className="bg-secondary border-border-strong flex-row items-center gap-3 rounded-xl border p-4">
+            /*
+              `Shoot Link Preview.dc.html`'s answered block. Two surfaces, not
+              one: `statusBg: answer === 'yes' ? 'var(--surface)' : 'var(--bg)'`
+              with `statusLine` following it — a confirmation lifts onto a card,
+              a refusal stays flat on the page.
+            */
+            <View
+              className={`flex-row items-center gap-3 rounded-xl border p-4 ${
+                confirmed ? 'bg-card border-border-strong' : 'bg-background border-border'
+              }`}
+            >
+              {/* `statusIconBg: 'var(--success)'` with `--success-ink` on it.
+                  It was `bg-primary`, which since the 2026-09-04 theme is the
+                  pale blue button plate — the same slip `ResponsePill` had. */}
               <View
                 className={`h-8 w-8 items-center justify-center rounded-full ${
-                  confirmed ? 'bg-primary' : 'bg-border-strong'
+                  confirmed ? 'bg-success' : 'bg-border-strong'
                 }`}
               >
                 <Icon
                   as={confirmed ? Check : X}
                   size={15}
                   strokeWidth={2.4}
-                  className={confirmed ? 'text-primary-foreground' : 'text-foreground'}
+                  className={confirmed ? 'text-success-foreground' : 'text-foreground'}
                 />
               </View>
               <View className="min-w-0 flex-1">
@@ -403,7 +420,7 @@ export default function LinkView() {
                     key={member.id}
                     className={`min-h-16 flex-row items-center gap-3 px-4 py-3 ${
                       index > 0 ? 'border-border border-t' : ''
-                    } ${isYou ? 'bg-secondary/40' : ''}`}
+                    } ${isYou ? 'bg-muted' : ''}`}
                   >
                     <Avatar name={member.name} size={38} />
                     <View className="min-w-0 flex-1">

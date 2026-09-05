@@ -1,9 +1,9 @@
 const { hairlineWidth } = require('nativewind/theme')
 
 /**
- * React Native Reusables' stock scales. ADR-017's application colours — the
- * frame, warm neutrals, client/private, warning, link, cta — were removed on
- * 2026-08-29 at the owner's request; see src/theme/global.css.
+ * React Native Reusables' stock scales, plus the application scales the
+ * 2026-09-04 design handoff reintroduced. See src/theme/global.css — it carries
+ * the provenance, the oklch originals and what the change costs.
  *
  * The type scale below is NOT stock and stays deliberately: `text-body`,
  * `text-title` and the rest are named sizes used across 33 files, and they
@@ -24,12 +24,16 @@ const { hairlineWidth } = require('nativewind/theme')
  * system's §4 suggests writing those as literal hex here, and `ADR-017`
  * declines it for this rule's sake.
  *
- * The colour set is deliberately small since the monochrome pass of 2026-08-30:
- * the stock shadcn slots plus `border-strong`, and no application scales at
- * all. Seven used to sit below them — two shoot-status triples, `client`,
- * `link`, `pending`, `confirmed` and `warning` — and all went with the app-wide
- * move to the handoff's monochrome zinc direction. Read global.css first; it
- * carries the reasoning and what the change costs.
+ * **This block is what Tailwind v4's `@theme inline` would be.** The handoff
+ * (`THEME-HANDOFF.md`, step 2) asks for the custom tokens to be declared there
+ * so that `bg-info-bg`, `text-info`, `border-info-border`, `text-link`,
+ * `bg-warn-bg` and the rest resolve to classes. This project is on Tailwind
+ * v3 — `@theme inline` does not exist and NativeWind's preset expects a config
+ * — so the same declaration happens in `theme.extend.colors` below. The class
+ * names come out identical, which is what the handoff actually specifies.
+ *
+ * The nesting is what produces those names: a `DEFAULT` key gives `text-info`,
+ * and a sibling `bg` key gives `bg-info-bg` rather than a second `bg-` prefix.
  *
  * @type {import('tailwindcss').Config}
  */
@@ -69,6 +73,12 @@ module.exports = {
         accent: {
           DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
           foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
+          /*
+           * `bg-accent-solid` — the «Сьогодні» badge. It lives under `accent`
+           * rather than as a top-level key so the name matches the handoff
+           * exactly; it shares nothing with `--accent` but the word.
+           */
+          solid: 'hsl(var(--accent-solid) / <alpha-value>)',
         },
         popover: {
           DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
@@ -79,14 +89,80 @@ module.exports = {
           foreground: 'hsl(var(--card-foreground) / <alpha-value>)',
         },
 
+        // ── Application scales (Layer B) — the 2026-09-04 handoff ─────────
+
         /*
-         * `--border-strong` — the shoot-detail handoff's `#3f3f46`, one step up
-         * from `border`. The outlined «Очікує» badge, the reminder button and
-         * the sheet grabber all sit on it. See src/theme/global.css.
+         * `--border-strong` — `#3D3D40`, one step up from `border`. The
+         * outlined badge, the reminder button and the sheet grabber all sit on
+         * it. The one token here that `shadcn-theme.css` does not carry; its
+         * value comes from the design project's `theme.css`. See global.css.
          */
         'border-strong': 'hsl(var(--border-strong) / <alpha-value>)',
 
+        /** `text-link` — links, and the active tab in the bottom navigation. */
+        link: {
+          DEFAULT: 'hsl(var(--link) / <alpha-value>)',
+          hover: 'hsl(var(--link-hover) / <alpha-value>)',
+        },
+
+        /** «Запланована» — `bg-info-bg text-info border-info-border`. */
+        info: {
+          DEFAULT: 'hsl(var(--info) / <alpha-value>)',
+          bg: 'hsl(var(--info-bg) / <alpha-value>)',
+          border: 'hsl(var(--info-border) / <alpha-value>)',
+        },
+
+        /** «Очікує» — `bg-warn-bg text-warn border-warn-border`. */
+        warn: {
+          DEFAULT: 'hsl(var(--warn) / <alpha-value>)',
+          bg: 'hsl(var(--warn-bg) / <alpha-value>)',
+          border: 'hsl(var(--warn-border) / <alpha-value>)',
+        },
+
+        /** «Підтверджено» — `bg-success text-success-foreground`. */
+        success: {
+          DEFAULT: 'hsl(var(--success) / <alpha-value>)',
+          foreground: 'hsl(var(--success-foreground) / <alpha-value>)',
+        },
+
+        /*
+         * «Завершена» — `bg-danger-bg text-danger-soft border-danger-border`.
+         *
+         * No `DEFAULT`: the handoff gives this scale three roles and no plain
+         * `text-danger`, and `--destructive` is what an action that destroys
+         * something uses. Leaving the key out keeps the two from being reached
+         * for interchangeably.
+         */
+        danger: {
+          soft: 'hsl(var(--danger-soft) / <alpha-value>)',
+          bg: 'hsl(var(--danger-bg) / <alpha-value>)',
+          border: 'hsl(var(--danger-border) / <alpha-value>)',
+        },
+
+        /*
+         * Pastel avatar tints, `bg-chart-1` … `bg-chart-5`. Named for the
+         * shadcn slot the handoff put them in; nothing is charted.
+         * `text-tint-foreground` is the initials' ink — these are the only
+         * light surfaces in the app, so no `*-foreground` token reads on them.
+         */
+        chart: {
+          1: 'hsl(var(--chart-1) / <alpha-value>)',
+          2: 'hsl(var(--chart-2) / <alpha-value>)',
+          3: 'hsl(var(--chart-3) / <alpha-value>)',
+          4: 'hsl(var(--chart-4) / <alpha-value>)',
+          5: 'hsl(var(--chart-5) / <alpha-value>)',
+        },
+        tint: {
+          foreground: 'hsl(var(--tint-foreground) / <alpha-value>)',
+        },
       },
+      /*
+       * `--radius` is 8px, so this ladder is 8 / 6 / 4 — small controls only.
+       * Cards are `rounded-xl`, Tailwind's stock 12px, which is what every
+       * artboard draws and is deliberately NOT derived from `--radius`.
+       * Buttons and badges are `rounded-full` and read none of this.
+       * See src/theme/global.css for why 8 rather than the handoff's 14.
+       */
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

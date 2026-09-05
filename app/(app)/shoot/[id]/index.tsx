@@ -71,6 +71,7 @@ import {
   attachmentKind,
   signedLocationUrl,
 } from '../../../../src/features/shoots/locationMedia'
+import { Starfield } from '../../../../src/components/Starfield'
 
 type State =
   | { status: 'loading' }
@@ -250,6 +251,7 @@ export default function ShootDetailScreen() {
   if (state.status === 'loading') {
     return (
       <View className="bg-background flex-1 items-center justify-center">
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" />
       </View>
@@ -259,6 +261,7 @@ export default function ShootDetailScreen() {
   if (state.status === 'error') {
     return (
       <View className="bg-background flex-1 p-4" style={{ paddingTop: insets.top + 16 }}>
+        <Starfield />
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
       </View>
@@ -319,6 +322,7 @@ export default function ShootDetailScreen() {
 
   return (
     <View className="bg-background flex-1">
+      <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
       <ShootDetailHeader
@@ -335,7 +339,6 @@ export default function ShootDetailScreen() {
       />
 
       <ScrollView
-        className="bg-background"
         contentContainerStyle={{
           // The measured header height, never a constant — the banner grows it.
           paddingTop: headerHeight,
@@ -999,9 +1002,26 @@ function PersonRow({
   ].filter((row): row is { label: string; value: string } => row !== null)
 
   return (
-    <View className={`${divided ? 'border-border border-t' : ''} ${open ? 'bg-secondary/30' : ''}`}>
+    /*
+      **An open row sinks; it does not lift.** `Shoot Detail v3.dc.html` reads
+      `rowBg: expanded === p.id ? '#0d0d0f' : 'transparent'` on a card that is
+      `var(--surface)` — the open row is DARKER than the card it sits in, and
+      the panel's own blocks are darker again (`var(--bg)`). Three levels
+      descending, which is this design's idiom throughout.
+
+      It was `bg-secondary/30`, which is wrong twice over: it lifted where the
+      artboard sinks, and since the 2026-09-04 theme made `--secondary` equal
+      `--card` it was 30% of the card's own colour painted on the card —
+      nothing at all. The same collision as the link view's «ВИ» row.
+
+      `bg-muted` is `#0F0F10` against the artboard's `#0d0d0f` — two parts in
+      255 per channel, below anything a screen resolves. Not worth a fourteenth
+      token; `--surface-soft`, which the artboard uses for this row's hover, is
+      exactly `#0F0F10` anyway.
+    */
+    <View className={`${divided ? 'border-border border-t' : ''} ${open ? 'bg-muted' : ''}`}>
       <Pressable
-        className="active:bg-secondary min-h-16 flex-row items-center gap-3 px-4 py-3"
+        className="active:bg-muted min-h-16 flex-row items-center gap-3 px-4 py-3"
         onPress={() => {
           tapped()
           onToggle()
@@ -1051,7 +1071,9 @@ function PersonRow({
       {open ? (
         <View className="gap-2 px-4 pb-3.5">
           {contacts.length > 0 ? (
-            <View className="border-border overflow-hidden rounded-lg border">
+            /* `background:var(--bg)` in the artboard — a step below the open
+               row, which is itself a step below the card. */
+            <View className="bg-background border-border overflow-hidden rounded-lg border">
               {contacts.map((contact, index) => (
                 <View
                   key={contact.label}
@@ -1082,7 +1104,7 @@ function PersonRow({
             can render the person rather than an error.
           */}
           <Pressable
-            className="border-border active:bg-secondary min-h-11 flex-row items-center gap-2.5 rounded-lg border px-3"
+            className="bg-background border-border active:bg-card min-h-11 flex-row items-center gap-2.5 rounded-lg border px-3"
             onPress={() => {
               tapped()
               router.push({
