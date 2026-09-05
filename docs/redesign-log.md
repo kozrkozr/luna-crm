@@ -4046,3 +4046,43 @@ upcoming shoot locally** instead. It carries `confirmed: null`, because the crew
 count is fetched for the hero alone and is genuinely unknown until the refetch;
 the card drops that line rather than showing a count belonging to the shoot just
 deleted.
+
+---
+
+## Calendar: two overrides of `Calendar.dc.html` (owner, 2026-09-05)
+
+`app/(app)/(tabs)/shoots.tsx`, `src/components/ShootCalendar.tsx`. Both are
+departures from the artboard rather than alignments to it, which is why they are
+here.
+
+### «Сьогодні» removed from the header
+
+Added on 2026-08-30 with this reasoning, quoted from that entry: "«Сьогодні» is
+new. The calendar could always be walked back to the current month with the
+arrows; nothing jumped to it, which on a screen whose whole subject is dates was
+a gap the handoff noticed."
+
+That reasoning still describes what is lost. **The arrows are now the only way
+back to the current month** — page forward to next March and you walk home. What
+keeps that navigable rather than disorienting is the meta line beside the title,
+which still names the month you are looking at. Worth reinstating if anyone
+reports the walk; removed because the owner asked and the header reads calmer
+with the title alone.
+
+### No dot under a selected day
+
+`Calendar.dc.html`'s `cellStyle` reads
+`dot: has ? (sel ? 'var(--accent-ink)' : 'var(--info)') : 'transparent'` — the
+artboard **keeps** the dot on a selected day and inverts it onto the fill.
+`Dot` had an `onFill` state for exactly that; it is gone, and the type is down to
+`marked | none`.
+
+The override's reasoning: the dot's job is to say "something happens on this
+day". A selected day is already a filled white cell whose shoots the agenda is
+listing directly below, so the dot repeated what the fill and the list had both
+said — and a dark speck on a bright cell read as a smudge rather than a mark.
+
+**The transparent dot stays** for unmarked days. That is not the same decision:
+it is rendered rather than omitted so a cell cannot grow a dot and shift its
+number by two pixels, which would make the numbers jump as the eye scans the
+grid.

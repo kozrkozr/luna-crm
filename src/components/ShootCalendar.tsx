@@ -326,7 +326,9 @@ function DayCell({
       >
         {day}
       </Text>
-      <Dot state={isSelected ? 'onFill' : hasShoot ? 'marked' : 'none'} />
+      {/* No dot on the selected day — see `Dot`. The fill already says the day
+          is chosen, and the dot said the same thing twice. */}
+      <Dot state={!isSelected && hasShoot ? 'marked' : 'none'} />
     </Pressable>
   )
 }
@@ -337,27 +339,26 @@ function DayCell({
  * Rendered at all times and made transparent when there is nothing, rather than
  * conditionally: a cell that grew a dot would shift its number by two pixels,
  * and a month grid of numbers that jump as you scan it is worse than a dot that
- * is sometimes invisible.
- *
- * `onFill` is the selected cell — the dot has to invert there or it disappears
- * into the `primary` fill it sits on.
+ * is sometimes invisible. That is why `none` is a state and not an absence.
  *
  * **`marked` is `bg-info`** (2026-09-04). `Calendar.dc.html`'s `cellStyle` reads
  * `dot: has ? (sel ? 'var(--accent-ink)' : 'var(--info)') : 'transparent'` — the
  * blue is the whole point of the dot, and it was `muted-foreground` only because
  * the monochrome theme had no blue to give it.
+ *
+ * **The selected day now gets no dot at all** (owner, 2026-09-05), which is a
+ * departure from that same `cellStyle`: the artboard keeps the dot on a selected
+ * day and inverts it to `--accent-ink`, and this had an `onFill` state to do
+ * exactly that. It is gone.
+ *
+ * The reasoning behind the override: the dot's job is to say "something happens
+ * on this day", and a selected day is already a filled white cell that the
+ * agenda below is listing. The dot repeated what the fill and the list had both
+ * said, and a dark speck on a bright cell read as a smudge rather than a mark.
  */
-function Dot({ state }: { state: 'onFill' | 'marked' | 'none' }) {
+function Dot({ state }: { state: 'marked' | 'none' }) {
   return (
-    <View
-      className={`h-1 w-1 rounded-full ${
-        state === 'onFill'
-          ? 'bg-primary-foreground'
-          : state === 'marked'
-            ? 'bg-info'
-            : 'bg-transparent'
-      }`}
-    />
+    <View className={`h-1 w-1 rounded-full ${state === 'marked' ? 'bg-info' : 'bg-transparent'}`} />
   )
 }
 

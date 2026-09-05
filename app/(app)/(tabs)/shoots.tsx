@@ -182,10 +182,6 @@ export default function ShootListScreen() {
           meta={`${mode === 'month' ? t.months[focus.getMonth()] : t.calModeWeek} · ${
             inPeriod.length
           } ${pluralUk(inPeriod.length, t.shootCountForms)}`}
-          onToday={() => {
-            setFocus(new Date())
-            setSelectedDate(null)
-          }}
         />
 
         {/*
@@ -340,9 +336,16 @@ export default function ShootListScreen() {
  * The screen's own header: a back chevron, «Календар» with a meta line under
  * it, and «Сьогодні».
  *
- * «Сьогодні» is new. The calendar could always be walked back to the current
- * month with the arrows; nothing jumped to it, which on a screen whose whole
- * subject is dates was a gap the handoff noticed.
+ * **«Сьогодні» is gone** (owner, 2026-09-05). It was added on 2026-08-30 on the
+ * reasoning that a screen whose whole subject is dates should be able to jump
+ * back to the current one rather than only walk there with the arrows.
+ *
+ * That reasoning still describes what was lost: the arrows remain the only way
+ * back to this month, so a reader who has paged to next March walks home. The
+ * meta line beside the title still names where they are, which is what keeps
+ * that navigable rather than disorienting. Worth reinstating if anyone reports
+ * the walk; removed because the owner asked and the header reads calmer with
+ * the title alone.
  *
  * **The chevron stays, now that this is a tab root** (owner, 2026-09-04).
  * `Calendar.dc.html` still draws it beside the bar that made it redundant — and
@@ -350,7 +353,7 @@ export default function ShootListScreen() {
  * Головна tab, which is what the same artboard's Contacts sibling links its own
  * back control to. It is a second route to a tab that is already one tap away.
  */
-function CalendarHeader({ meta, onToday }: { meta: string; onToday: () => void }) {
+function CalendarHeader({ meta }: { meta: string }) {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -384,17 +387,6 @@ function CalendarHeader({ meta, onToday }: { meta: string; onToday: () => void }
           {meta}
         </Text>
       </View>
-
-      <Pressable
-        className="border-border active:bg-secondary h-8 shrink-0 justify-center rounded-lg border px-2.5"
-        onPress={() => {
-          tapped()
-          onToday()
-        }}
-        role="button"
-      >
-        <Text className="text-label text-foreground font-medium">{t.todayWord}</Text>
-      </Pressable>
     </View>
   )
 }
