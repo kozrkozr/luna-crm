@@ -24,6 +24,13 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'dark',
   plugins: [
     'expo-router',
+    /*
+     * Works around a React Native 0.86.2 bug that makes a Debug build link
+     * against the RELEASE prebuilt core and fail with undefined C++ symbols.
+     * See plugins/withPrebuiltArtifactMarker.js — the whole diagnosis is there,
+     * because the error names libraries that have nothing to do with the cause.
+     */
+    './plugins/withPrebuiltArtifactMarker',
     [
       'expo-image-picker',
       {
