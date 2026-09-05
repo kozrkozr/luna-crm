@@ -134,9 +134,58 @@ export async function signedAvatarUrl(path: string): Promise<string | null> {
  * it and could not check it would be theatre. The protection is that a session
  * is required at all.
  */
-export async function changePassword(password: string): Promise<boolean> {
-  const { error } = await supabase.auth.updateUser({ password })
-  return !error
+export type PasswordChangeResult = 'ok' | 'wrong-current' | 'failed'
+
+/**
+ * Change the password, verifying the current one first.
+ *
+ * **The current password is checked, and the screen that used to say it could
+ * not be is what changed.** `app/(app)/password.tsx` carried a note that
+ * "Supabase's `updateUser` authenticates by the session alone and offers no way
+ * to verify one, so a field collecting it could not check it — it would be
+ * theatre." The first half is true and the conclusion was wrong: `updateUser`
+ * cannot verify a password, but `signInWithPassword` can, and re-authenticating
+ * with the address already on the session is exactly what that is for.
+ * `Edit Profile.dc.html` draws the field and an error for it, so it is checked.
+ *
+ * What the re-auth costs, stated once:
+ *
+ * - **A new session replaces the current one.** Same user, same device, so
+ *   nothing visible happens — but it is a real sign-in, and any listener on
+ *   `onAuthStateChange` sees it.
+ * - **Wrong attempts count against Supabase's sign-in rate limit**, which is
+ *   the same limit `tooManyAttempts` covers on the login screen. Somebody
+ *   guessing at their own current password can lock themselves out of retrying
+ *   for a few minutes. That is the behaviour of the mechanism rather than a
+ *   choice made here, and it is the correct direction for a security control.
+ *
+ * `secure_password_change` is **off** in config.toml. With it on, Supabase
+ * would demand a recent session or a nonce for `updateUser` and this re-auth
+ * would incidentally satisfy it — worth knowing before anyone turns it on,
+ * because it would then be load-bearing rather than a verification step.
+ *
+ * Three outcomes rather than a boolean: the screen shows «Невірний поточний
+ * пароль» under one field for the first and a general failure for the second,
+ * and could not tell them apart from `false`.
+ */
+export async function changePassword(
+  current: string,
+  next: string
+): Promise<PasswordChangeResult> {
+  const email = (await supabase.auth.getUser()).data.user?.email
+  // No session, no email, nothing to re-authenticate against. Treated as a
+  // plain failure: the screen is unreachable without a session, so this is a
+  // guard rather than a state anyone can produce.
+  if (!email) return 'failed'
+
+  const { error: reauth } = await supabase.auth.signInWithPassword({
+    email,
+    password: current,
+  })
+  if (reauth) return 'wrong-current'
+
+  const { error } = await supabase.auth.updateUser({ password: next })
+  return error ? 'failed' : 'ok'
 }
 
 /**

@@ -233,6 +233,48 @@ export const uk = {
   newPassword: 'Новий пароль',
   savePassword: 'Зберегти пароль',
   passwordChanged: 'Пароль змінено',
+  /*
+   * ── «Зміна пароля», from `Edit Profile.dc.html` (owner, 2026-09-05) ───────
+   *
+   * The artboard grew a full password screen where it had drawn only the
+   * «Пароль · Змінити ›» row. Every string below is its own.
+   *
+   * **Two of these were deleted on 2026-08-31 and are back by design.** A-3
+   * removed `confirmPassword` and `passwordMismatch` as "a field and a message
+   * no story defined" — this artboard defines both, so the objection is
+   * answered rather than overruled. They are named for the screen that now
+   * draws them.
+   */
+  passwordChangeTitle: 'Зміна пароля',
+  currentPasswordSection: 'Поточний пароль',
+  currentPasswordPlaceholder: 'Введіть поточний пароль',
+  currentPasswordRequired: 'Введіть поточний пароль',
+  /** What a failed re-authentication says — see `changePassword`. */
+  currentPasswordWrong: 'Невірний поточний пароль',
+  newPasswordSection: 'Новий пароль',
+  repeatNewPassword: 'Повторіть новий пароль',
+  passwordsDoNotMatch: 'Паролі не збігаються',
+  updatePassword: 'Оновити пароль',
+  savingWord: 'Збереження…',
+  /** Sent by the real recovery flow, not a stub — `requestPasswordReset`. */
+  recoveryEmailSent: 'Лист для відновлення надіслано на пошту',
+  /*
+   * The four rules. **They ask for 8 characters where registration takes 6**
+   * (`MIN_PASSWORD_LENGTH`, and `minimum_password_length` in config.toml) —
+   * the mirror of A-5, which deleted a placeholder for promising exactly that.
+   * The promise is kept here because the screen enforces it, but the two
+   * surfaces now disagree. Logged; see src/features/auth/passwordRules.ts.
+   */
+  passwordRuleLength: 'Щонайменше 8 символів',
+  passwordRuleMixedCase: 'Велика та мала літери',
+  passwordRuleDigit: 'Хоча б одна цифра',
+  passwordRuleDifferent: 'Відрізняється від поточного',
+  /* Two new steps on the meter. The existing `strengthWeak`/`strengthStrong`
+     are reused; `strengthNormal` («Нормальний») is NOT — this artboard's
+     middle step is «Середній», and the two scales differ in length, so the
+     AuthScreen meter keeps its own word. Logged. */
+  strengthMedium: 'Середній',
+  strengthGood: 'Добрий',
   resetLinkInvalid: 'Посилання недійсне або застаріле. Запросіть нове.',
 
   /* ── The rest of `Auth.dc.html` ── */

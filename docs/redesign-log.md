@@ -3903,3 +3903,68 @@ carries no notes to either audience.
 **Two deploys, not one** (docs/deploy-dev.md): `supabase functions deploy
 link-gateway` for the payload, then `npm run export:web` and `wrangler pages
 deploy`. Either alone gives a payload nobody reads or a reader with no data.
+
+---
+
+## «Зміна пароля», rebuilt from the artboard (owner, 2026-09-05)
+
+`Edit Profile.dc.html` grew a full password layer where it had drawn only the
+«Пароль · Змінити ›» row. `app/(app)/password.tsx`, plus
+`src/features/auth/passwordRules.ts` and `PasswordStrength.tsx`.
+
+**No story covers changing a password** — `US-013` is login. Every rule and every
+word is the artboard's.
+
+What it replaces: one «Новий пароль» field and a save button.
+
+### The current-password field, and a note that was wrong
+
+The screen carried this: "Supabase's `updateUser` authenticates by the session
+alone and offers no way to verify one, so a field collecting it could not check
+it — it would be theatre."
+
+The first half is true and the conclusion was not. `updateUser` cannot verify a
+password; `signInWithPassword` can, and re-authenticating with the address
+already on the session is what that is for. The artboard draws the field and an
+error for it, so it is checked. Two costs, recorded in `changePassword`:
+
+- the re-auth issues a **new session** — same user, same device, but anything
+  listening to `onAuthStateChange` sees it;
+- wrong attempts count against Supabase's **sign-in rate limit**, the one
+  `tooManyAttempts` covers, so somebody guessing at their own password can lock
+  themselves out for a few minutes. Correct direction for a security control.
+
+`secure_password_change` is off in config.toml. Turning it on would make this
+re-auth load-bearing rather than a verification step.
+
+### Needs the owner's answer
+
+| # | What the artboard does | What the app says | Consequence as built |
+|---|---|---|---|
+| P-6 | «Щонайменше 8 символів» | `MIN_PASSWORD_LENGTH` is 6, and so is `minimum_password_length` in config.toml | **An account can be created with a password this screen refuses to set.** Stricter on the client is the safe direction, but this is the mirror of **A-5**, which deleted `registerPasswordPlaceholder` for "promising 8 characters where the backend takes 6". Either registration rises to 8 — `US-001`, the config and the AuthScreen meter — or this stays a local rule |
+| P-7 | A four-bar meter, five steps, a colour each | `AuthScreen` draws three bars, three words, two hues | **Two meters, disagreeing.** The old one was built monochrome and its note records the compromise. Not unified: `Auth.dc.html` has not been re-read against this, and changing what registration calls a strong password is a design decision. `PasswordStrength` is standalone so aligning them is an import |
+
+### Resolved by this artboard
+
+**A-3 is answered rather than overruled.** `confirmPassword` and
+`passwordMismatch` were deleted on 2026-08-31 as "a field and a message no story
+defined". This artboard defines both — a repeat field with a match tick and
+«Паролі не збігаються» — so the keys are back, named for the screen that draws
+them.
+
+### Drawn but not built
+
+The artboard's script carries `pwSignOut` state and a track/knob for "sign out
+other devices" and **renders no control for it anywhere in the markup** —
+leftover from an earlier pass. Building it would mean inventing the row and the
+behaviour both, and Supabase's global sign-out ends the current session too.
+
+### One deliberate departure
+
+The strength bonus tests `[^A-Za-zА-Яа-я0-9]`, which counts «ґ» as a symbol
+because `а-я` omits ґєії. Corrected here to include them. It moves a label, never
+whether a password is accepted, which is why it was fixed rather than asked
+about.
+
+«Забули пароль?» sends the real recovery email (`requestPasswordReset`) rather
+than the artboard's stub toast.
