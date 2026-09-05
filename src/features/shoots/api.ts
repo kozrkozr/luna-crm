@@ -63,6 +63,16 @@ export type Shoot = {
    * client**, and this one it does not select for anyone — see the migration.
    */
   notes: string | null
+  /**
+   * The shoot's note **for the client** — what to bring, dress code, how to get
+   * there. «Нотатки для клієнта», migration `20260905160000`.
+   *
+   * The mirror image of `notes`, and the only shoot column added since
+   * `ADR-013` that is meant to leave the app: the gateway selects it for
+   * `clientPayload` and for nobody else (owner, 2026-09-05). Crew do not see
+   * it, which is narrower than the design proves and the reversible direction.
+   */
+  clientNotes: string | null
   /** Storage path to one image OR one video (US-018 AC-2). */
   locationAttachment: string | null
   /**
@@ -118,6 +128,8 @@ export type UpdateShootInput = {
   locationAttachment: string | null
   /** `20260830160000` — editable, like every other field on this form. */
   notes: string | null
+  /** `20260905160000` — the client-facing note, edited beside the crew one. */
+  clientNotes: string | null
   /** `US-024` — set on the edit screen, where `ux-notes.md` and the prototype
    *  both place it. Open question #6 recorded that no story's criteria cover
    *  the creator entering it; design covers it, and AC-2 is unreachable
@@ -137,7 +149,7 @@ export type UpdateShootInput = {
  * subject to the same RLS as a direct read of `clients`.
  */
 const SHOOT_COLUMNS =
-  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url, price, prepayment'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, client_notes, raw_files_url, finished_photos_url, price, prepayment'
 
 export type CreateShootInput = {
   /**
@@ -172,6 +184,8 @@ export type CreateShootInput = {
   locationNote: string | null
   /** `20260830160000` — the shoot's own note, collected on the create form. */
   notes: string | null
+  /** `20260905160000` — the client-facing note, collected on the same form. */
+  clientNotes: string | null
   /**
    * «Оплата» — see `Shoot`. Null when the form left the field empty, which is
    * how a shoot created before this feature reads too.
@@ -208,6 +222,7 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
       location_address: input.locationAddress?.trim() || null,
       location_note: input.locationNote?.trim() || null,
       notes: input.notes?.trim() || null,
+      client_notes: input.clientNotes?.trim() || null,
       // Written together, always. The column constraint refuses a prepayment
       // above a price, so a partial write is the one way to trip it.
       price: input.price,
@@ -269,6 +284,7 @@ type ShootRow = {
   location_note: string | null
   location_attachment: string | null
   notes: string | null
+  client_notes: string | null
   raw_files_url: string | null
   finished_photos_url: string | null
   price: number | null
@@ -308,6 +324,7 @@ function toShoot(row: ShootRow): Shoot {
     locationAddress: row.location_address,
     locationNote: row.location_note,
     notes: row.notes,
+    clientNotes: row.client_notes,
     locationAttachment: row.location_attachment,
     rawFilesUrl: row.raw_files_url,
     finishedPhotosUrl: row.finished_photos_url,
@@ -369,6 +386,7 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
       location_note: input.locationNote?.trim() || null,
       location_attachment: input.locationAttachment,
       notes: input.notes?.trim() || null,
+      client_notes: input.clientNotes?.trim() || null,
       price: input.price,
       prepayment: input.prepayment,
       // AC-3 — stored only if it is a link at all. The screen rejects a

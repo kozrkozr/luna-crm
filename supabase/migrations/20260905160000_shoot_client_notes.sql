@@ -1,0 +1,64 @@
+-- A note on the shoot that the CLIENT is meant to read.
+--
+-- `New Shoot.dc.html` and `Shoot Detail v3.dc.html` grew a «Нотатки для
+-- клієнта» field (owner, 2026-09-05), alongside renaming the existing note to
+-- «Нотатки для команди». **No story covers it** — `US-002`, `US-018` and
+-- `US-026` all need amending, recorded in docs/redesign-log.md rather than
+-- assumed into the backlog (CLAUDE.md rule 1).
+--
+-- ── Which note is which ─────────────────────────────────────────────────────
+--
+-- There are now four, and telling them apart is the whole point of this comment:
+--
+--   * `shoots.location_note`  — how to get IN. Door code, floor, parking.
+--                               `US-018` AC-2. Both link audiences see it.
+--   * `crew_members.note`     — about one PERSON on one shoot. The field
+--                               `ADR-013` and CLAUDE.md rule 2 exist to keep
+--                               away from clients. Crew audience only.
+--   * `shoots.notes`          — about the SHOOT, for the people working it.
+--                               Badged «Клієнт не бачить». Crew audience only.
+--   * `shoots.client_notes`   — about the SHOOT, for the client. What to bring,
+--                               dress code, how to get there. THIS column.
+--
+-- ── Visibility, and why this one is different ───────────────────────────────
+--
+-- Every shoot column added since `ADR-013` has been introduced *away* from the
+-- link surface: `notes` (20260830160000) and `price`/`prepayment`
+-- (20260905140000) were both written so that the gateway's explicit column
+-- lists reached them for nobody. This is the first column added deliberately
+-- FOR a link audience, so the rule has to be stated in the direction it is
+-- actually being used.
+--
+--   **`client_notes` is selected in `clientPayload` and in no other query.**
+--
+-- The owner's decision, 2026-09-05: the client sees it, the crew does not. That
+-- is narrower than the design proves — `Shoot Detail v3.dc.html` shows the card
+-- outside its `showPrivate` gate, which establishes the client sees it and says
+-- nothing about crew — and narrower is the reversible direction. Adding it to
+-- `crewPayload` is one line whenever somebody asks for it; taking it out of a
+-- payload that has already shipped is not.
+--
+-- Rule 2 is unaffected and worth restating, because this column moves in the
+-- opposite direction to the one rule 2 usually guards: a client must never
+-- receive a crew member's `note`, and nothing here changes that. `crew_members.note`
+-- and `shoots.notes` remain absent from `clientPayload`'s select. What is new
+-- is a column that must never reach `crewPayload`'s.
+--
+-- ── Storage ─────────────────────────────────────────────────────────────────
+--
+-- Nullable `text`, exactly like `shoots.notes`. Empty and never-written are
+-- collapsed to null by the writers (`api.ts` trims to null), so the gateway has
+-- one absent case to handle rather than two, and `US-026`'s "not even an empty
+-- one" discipline stays expressible on the other side.
+alter table public.shoots
+  add column client_notes text;
+
+-- No policy change and no grant change. `shoots` already carries
+-- `select, insert, update` for `authenticated` (20260825140000) and the
+-- creator-scoped policies from the initial schema, so this column inherits
+-- both — writable by the shoot's creator and by nobody else.
+--
+-- Anonymous reads do not touch this table directly at all: the link gateway is
+-- a SECURITY DEFINER Edge Function holding the service role, which is why its
+-- SELECT column list is the only thing standing between a column and an
+-- audience, and why it is named twice in this file.
