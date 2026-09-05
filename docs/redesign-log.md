@@ -4086,3 +4086,66 @@ said — and a dark speck on a bright cell read as a smudge rather than a mark.
 it is rendered rather than omitted so a cell cannot grow a dot and shift its
 number by two pixels, which would make the numbers jump as the eye scans the
 grid.
+
+---
+
+## «Оплата» — a shoot's price and what has been paid (owner, 2026-09-05)
+
+`New Shoot.dc.html` and `Shoot Detail v3.dc.html` grew a payment section.
+Migration `20260905140000_shoot_payment.sql`, `src/features/shoots/money.ts`,
+`ShootForm`, and a card on the shoot's «Деталі» tab.
+
+**No story covers money at all.** Nothing in the PRD's requirement register or
+any epic mentions a price. `US-002` (create a shoot) and `US-018` (edit one)
+both need amending.
+
+### The owner's four answers, 2026-09-05
+
+| Question | Answer |
+|---|---|
+| Who may see it? | **Creator only, never in a link** — for crew AND client |
+| A shoot with no price? | **Show the card at «0 ₴»**, as the artboard literally does |
+| How precise? | **Whole hryvnia.** `integer` columns, no kopecks |
+| What is «Передплата»? | **How much has been paid so far**, not a booking deposit |
+
+The last one is what makes «Оплачено» correct when it equals the price, and why
+the remainder is «Залишок» rather than anything about a deposit.
+
+### Privacy, and where it is actually enforced
+
+The design says this twice: the detail card sits behind the same viewer gate as
+the private notes (`showPrivate: !clientView`), and **`Shoot Link Preview.dc.html`
+draws no payment section for either audience** — crew or client.
+
+So the link gateway is **untouched**, and that is the mechanism rather than an
+omission: it builds every payload from an explicit column list (`ADR-013`,
+CLAUDE.md rule 2), so a new column reaches nobody until somebody names it. The
+Edge Function contains no mention of `price` or `prepayment`, checked after the
+change.
+
+### Decisions worth keeping
+
+| | |
+|---|---|
+| **Nullable, not `default 0`** | Null and zero render identically today, but the column keeps them apart — so hiding the card for untouched shoots later is a condition, not a migration |
+| **Constraints in the database** | Non-negative, and `prepayment <= price` **only when both are set**, mirroring the artboard's own `price > 0` guard. The form is one writer; a rule that lives only in a screen is one the next writer does not have |
+| **Grouping is hand-rolled** | The artboard uses `toLocaleString('uk-UA')`. `home.ts` already writes its own plural rules rather than trust Hermes's partial `Intl`, citing the design system's §9 — same engine, same call |
+| **Both separators are U+00A0** | Thousands, and the gap before ₴, so an amount never wraps away from its currency. A test asserting a plain space fails; that is documented in `money.ts` |
+
+### Two departures from the artboards
+
+**No «Залишок після зйомки» row on the form** (owner). The artboard draws one
+under the chips whenever a price is set. Removed because the same number is on
+the shoot's own screen, where it is the point of the card rather than a footnote
+to a form. The arithmetic still runs — it is what blocks the save.
+
+That also settled an inconsistency the artboards carried: the form drew the
+outstanding balance plain until zero, the card draws it amber until settled.
+With the row gone, only one surface shows it and there is nothing to disagree.
+
+### Consequence worth knowing
+
+**Every shoot that already exists now shows «0 ₴ · Без передплати».** That
+follows from taking the artboard literally — it gates the card on the viewer,
+not on having a figure — and it is the owner's choice. It is a visible change to
+every existing shoot, not only to new ones.

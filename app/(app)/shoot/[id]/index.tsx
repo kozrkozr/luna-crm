@@ -34,6 +34,7 @@ import { ImageViewer } from '../../../../src/components/ImageViewer'
 // and `removePerson` still take.
 import { type SheetPerson } from '../../../../src/components/PersonSheet'
 import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
+import { formatMoney, payment } from '../../../../src/features/shoots/money'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { ReferenceGrid } from '../../../../src/components/ReferenceGrid'
@@ -597,6 +598,8 @@ function DetailsTab({
 
       <LocationCard shoot={shoot} />
 
+      <PaymentCard shoot={shoot} />
+
       {/*
         The «Нотатки» card, restored 2026-08-30.
 
@@ -729,6 +732,96 @@ function ContactRow({
     <Pressable className="active:bg-secondary" onPress={() => void openExternalUrl(url)} role="link">
       {body}
     </Pressable>
+  )
+}
+
+/**
+ * «Оплата» — what the shoot costs and what is still owed.
+ *
+ * `Shoot Detail v3.dc.html` (owner, 2026-09-05). **No story covers money**;
+ * `US-002` and `US-018` both need amending.
+ *
+ * **Shown even when nothing has been priced** — the owner's call on 2026-09-05,
+ * and what the artboard literally does: it gates the card on the viewer, not on
+ * having a figure. So every shoot that existed before this feature grows a card
+ * reading «0 ₴ · Без передплати». The column keeps null and zero apart, so
+ * hiding it for untouched shoots is one condition away if that reads badly.
+ *
+ * **Creator-only, and nothing here enforces that** — the gateway does, by
+ * naming its columns. `Shoot Link Preview.dc.html` draws no payment section for
+ * a crew member or a client, and this card sits behind the same viewer gate as
+ * the private notes. Same guarantee the «Клієнт не бачить» badge relies on
+ * below (`ADR-013`, CLAUDE.md rule 2) — so no badge is needed here: nobody but
+ * the creator can reach this screen at all.
+ */
+function PaymentCard({ shoot }: { shoot: Shoot }) {
+  const t = useStrings()
+  const pay = payment(shoot)
+
+  /*
+    The badge's three states, and the only place in the app that uses
+    `--warn-*` as a fill. A partly-paid shoot is a state that has not finished
+    rather than an error, which is what an amber says and a red would not.
+  */
+  const badge = {
+    paid: { label: t.paymentPaid, className: 'border-success', text: 'text-success' },
+    none: { label: t.prepaymentNone, className: 'border-border', text: 'text-muted-foreground' },
+    partial: { label: t.paymentPartial, className: 'border-warn-border bg-warn-bg', text: 'text-warn' },
+  }[pay.badge]
+
+  return (
+    <Card variant="flat" className="gap-0 p-0">
+      <View className="flex-row items-center gap-2 px-4 pb-2.5 pt-4">
+        <View className="flex-1">
+          <SectionLabel label={t.paymentSection} />
+        </View>
+        <View className={`rounded-full border px-2 py-[3px] ${badge.className}`}>
+          <Text className={`text-caption font-medium ${badge.text}`}>{badge.label}</Text>
+        </View>
+      </View>
+
+      {/* 26px, `-0.5` tracking — the one number on this screen drawn large
+          enough to read without looking for it. RN letterSpacing is absolute. */}
+      <View className="flex-row items-baseline gap-2.5 px-4 pb-3.5">
+        <Text
+          className="text-foreground font-semibold"
+          style={{ fontSize: 26, lineHeight: 30, letterSpacing: -0.5 }}
+        >
+          {formatMoney(pay.price)}
+        </Text>
+        <Text className="text-body-sm text-muted-foreground">{t.fullPrice}</Text>
+      </View>
+
+      <View className="border-border flex-row border-t">
+        <View className="flex-1 px-4 py-3">
+          <Text className="text-caption text-muted-foreground">{t.prepaymentLabel}</Text>
+          {/* «Немає» rather than «0 ₴»: nothing paid is an absence, and the
+              artboard dims it to say so. */}
+          <Text
+            className={`text-subtitle mt-1 font-semibold ${
+              pay.prepayment === 0 ? 'text-muted-foreground' : 'text-foreground'
+            }`}
+          >
+            {pay.prepayment === 0 ? t.prepaymentNoneValue : formatMoney(pay.prepayment)}
+          </Text>
+        </View>
+        <View className="border-border flex-1 border-l px-4 py-3">
+          <Text className="text-caption text-muted-foreground">{t.balanceLabel}</Text>
+          {/*
+            Amber while anything is outstanding, green when it is not — and
+            note this is NOT what the form does with the same number, which
+            leaves it plain until it reaches zero. Both are as drawn; logged.
+          */}
+          <Text
+            className={`text-subtitle mt-1 font-semibold ${
+              pay.badge === 'paid' ? 'text-success' : 'text-warn'
+            }`}
+          >
+            {formatMoney(pay.balance)}
+          </Text>
+        </View>
+      </View>
+    </Card>
   )
 }
 

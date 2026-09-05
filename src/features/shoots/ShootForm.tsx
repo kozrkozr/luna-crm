@@ -43,6 +43,15 @@ import {
 import { toIsoDate, toTimeValue } from '../../features/shoots/date'
 import { failed, selected as selectedTick, succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
+import { RoleChip } from '../../components/RoleChip'
+import {
+  PREPAYMENT_STEPS,
+  CURRENCY,
+  formatAmount,
+  parseAmount,
+  payment,
+  prepaymentChip,
+} from './money'
 import { Starfield } from '../../components/Starfield'
 
 /**
@@ -103,6 +112,14 @@ export function ShootForm(props: ShootFormMode) {
   const [address, setAddress] = useState('')
   const [locationDetails, setLocationDetails] = useState('')
   const [notes, setNotes] = useState('')
+  /*
+    «Оплата» as TEXT, not numbers. The fields group as they are typed —
+    «12 000» — so the string is what the user sees and `parseAmount` is the only
+    thing that reads it. Keeping a number here instead would mean formatting on
+    every render and losing the caret.
+  */
+  const [price, setPrice] = useState('')
+  const [prepayment, setPrepayment] = useState('')
   /** Every shoot, for the location chips and the overlap warning. */
   const [existing, setExisting] = useState<Shoot[]>([])
 
@@ -171,6 +188,10 @@ export function ShootForm(props: ShootFormMode) {
         setAddress(shoot.locationAddress ?? '')
         setLocationDetails(shoot.locationNote ?? '')
         setNotes(shoot.notes ?? '')
+        // Null renders as an EMPTY field, not «0» — the form must not look like
+        // somebody priced this shoot at nothing when nobody priced it at all.
+        setPrice(shoot.price === null ? '' : formatAmount(shoot.price))
+        setPrepayment(shoot.prepayment === null ? '' : formatAmount(shoot.prepayment))
         setLoading(false)
       })()
       return () => {
@@ -294,6 +315,8 @@ export function ShootForm(props: ShootFormMode) {
       locationAddress: address.trim() || null,
       locationNote: locationDetails.trim() || null,
       notes: notes.trim() || null,
+      price: priceValue,
+      prepayment: prepaymentValue,
     }
 
     if (shootId) {
@@ -336,7 +359,16 @@ export function ShootForm(props: ShootFormMode) {
     router.back()
   }
 
-  const valid = typedName.trim().length > 1 && !!date && !!start && !!end
+  /*
+    The money, derived once per render. `pay.invalid` is the artboard's `over`:
+    a prepayment above a price it actually has. It blocks the save, which is why
+    it joins `valid` rather than only colouring a border.
+  */
+  const priceValue = parseAmount(price)
+  const prepaymentValue = parseAmount(prepayment)
+  const pay = payment({ price: priceValue, prepayment: prepaymentValue })
+  const valid =
+    typedName.trim().length > 1 && !!date && !!start && !!end && !pay.invalid
   const clashes =
     date && start && end ? overlappingShoots(existing, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
@@ -532,6 +564,71 @@ export function ShootForm(props: ShootFormMode) {
             chips={chips}
           />
 
+          {/*
+            ── Оплата ── between the location and the notes, as both artboards
+            place it. Two fields side by side and the percentage chips.
+
+            **No «Залишок після зйомки» row** (owner, 2026-09-05). The artboard
+            draws one under the chips whenever a price is set; it is removed
+            because the same number is already on the shoot's own screen, where
+            it is the point of the card rather than a footnote to a form. The
+            arithmetic is still live — `pay.invalid` is what blocks the save.
+          */}
+          <View className="gap-3.5">
+            <SectionLabel label={t.paymentSection} />
+
+            <View className="flex-row gap-2.5">
+              <AmountField
+                label={t.priceLabel}
+                value={price}
+                onChangeText={(text) => {
+                  const next = parseAmount(text)
+                  setPrice(next === null ? '' : formatAmount(next))
+                  /*
+                    Typing the price DOWN drags the prepayment with it, which is
+                    the artboard's own `onPrice`. Without it the form would sit
+                    in the error state the moment somebody corrected a price
+                    downwards, blaming the field they did not touch.
+                  */
+                  if (next !== null && prepaymentValue !== null && prepaymentValue > next) {
+                    setPrepayment(formatAmount(next))
+                  }
+                }}
+              />
+              <AmountField
+                label={t.prepaymentLabel}
+                value={prepayment}
+                invalid={pay.invalid}
+                onChangeText={(text) => {
+                  const next = parseAmount(text)
+                  setPrepayment(next === null ? '' : formatAmount(next))
+                }}
+              />
+            </View>
+
+            <View className="-mt-1 flex-row flex-wrap gap-1.5">
+              {PREPAYMENT_STEPS.map((step) => {
+                const chip = prepaymentChip(step, priceValue, prepaymentValue)
+                return (
+                  <RoleChip
+                    key={step}
+                    label={step === 0 ? t.prepaymentNone : `${step}${t.percentSuffix}`}
+                    active={chip.active}
+                    onPress={() =>
+                      setPrepayment(chip.value === null ? '' : formatAmount(chip.value))
+                    }
+                  />
+                )
+              })}
+            </View>
+
+            {pay.invalid ? (
+              <Text role="alert" className="text-caption text-destructive -mt-1 px-0.5">
+                {t.prepaymentOverPrice}
+              </Text>
+            ) : null}
+          </View>
+
           {/* ── Нотатки ── */}
           <View className="gap-2">
             <SectionLabel label={t.notesSection} />
@@ -610,6 +707,49 @@ export function ShootForm(props: ShootFormMode) {
 }
 
 /** A field label carrying the design's «— необовʼязково» in a lighter tone. */
+/**
+ * One money field: a label, a numeric input, and a ₴ pinned inside its right edge.
+ *
+ * `New Shoot.dc.html` draws the symbol as an absolutely positioned child with
+ * `pointer-events:none` over an input padded 30px on the right. Same here — it
+ * has to sit INSIDE the field rather than beside it, or the two fields stop
+ * being equal halves of the row.
+ *
+ * `keyboardType="number-pad"` rather than `inputMode="numeric"`: the artboard
+ * writes the web attribute, and this is its iOS equivalent — digits only, no
+ * decimal key, which matches a column that holds whole hryvnia.
+ */
+function AmountField({
+  label,
+  value,
+  onChangeText,
+  invalid = false,
+}: {
+  label: string
+  value: string
+  onChangeText: (text: string) => void
+  invalid?: boolean
+}) {
+  const t = useStrings()
+  return (
+    <View className="min-w-0 flex-1 gap-[7px]">
+      <Text className="text-body-sm text-foreground font-medium">{label}</Text>
+      <View className="justify-center">
+        <Input
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={t.amountPlaceholder}
+          keyboardType="number-pad"
+          className={`pr-[30px] ${invalid ? 'border-destructive' : ''}`}
+        />
+        <Text className="text-body text-muted-foreground absolute right-3" pointerEvents="none">
+          {CURRENCY}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
 function OptionalLabel({ label }: { label: string }) {
   const t = useStrings()
   return (

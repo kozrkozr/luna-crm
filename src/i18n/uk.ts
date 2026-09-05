@@ -526,6 +526,40 @@ export const uk = {
    */
   noUpcomingTitle: 'Немає запланованих зйомок',
   noUpcomingSub: 'Створіть нову зйомку — вона зʼявиться тут.',
+  /*
+   * ── «Оплата», from `New Shoot.dc.html` and `Shoot Detail v3.dc.html`
+   *    (owner, 2026-09-05) ────────────────────────────────────────────────────
+   *
+   * **No story covers money.** Nothing in the PRD's requirement register or any
+   * epic mentions a price; `US-002` and `US-018` both need amending. Every
+   * string below is the artboards' own.
+   *
+   * `Передплата` records what has been PAID so far rather than a booking
+   * deposit (owner), which is what makes «Оплачено» correct at 100%.
+   */
+  paymentSection: 'Оплата',
+  priceLabel: 'Ціна',
+  prepaymentLabel: 'Передплата',
+  /** Both fields. The artboard's placeholder is a bare zero. */
+  amountPlaceholder: '0',
+  /* The chips. «Без передплати» clears the field rather than writing a zero —
+     see `prepaymentChip`. The rest are percentages of the price. */
+  prepaymentNone: 'Без передплати',
+  /** «30%» — the number is `PREPAYMENT_STEPS`, so the copy is the suffix only. */
+  percentSuffix: '%',
+  prepaymentOverPrice: 'Передплата не може перевищувати ціну',
+  /** The save button while the prepayment is impossible. */
+  fixPrepayment: 'Виправте передплату',
+  /* ── The detail card ── */
+  /** Beside the big number, naming what it is. */
+  fullPrice: 'повна вартість',
+  /** The card's right-hand column. Shorter than the form's — as drawn. */
+  balanceLabel: 'Залишок',
+  /** The prepayment column when nothing has been paid. */
+  prepaymentNoneValue: 'Немає',
+  /* The badge: paid in full, nothing paid, something paid. */
+  paymentPaid: 'Оплачено',
+  paymentPartial: 'Часткова оплата',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',
   createFirst: 'Створити першу зйомку',

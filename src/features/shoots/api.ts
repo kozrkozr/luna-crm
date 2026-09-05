@@ -73,6 +73,23 @@ export type Shoot = {
   rawFilesUrl: string | null
   /** `US-025` — the same, for finished photos. Also a link, not hosting. */
   finishedPhotosUrl: string | null
+  /**
+   * `New Shoot.dc.html` / `Shoot Detail v3.dc.html`'s «Оплата» — whole hryvnia,
+   * migration `20260905140000`. **No story covers money**; both need amending.
+   *
+   * `prepayment` is how much has been PAID so far, not a booking deposit
+   * (owner, 2026-09-05) — which is what makes «Оплачено» right when it equals
+   * the price. Null means never set and renders as `0 ₴`, the owner's call on
+   * the same day; the column keeps the two apart so that is reversible.
+   *
+   * **Creator-only, and the gateway is what keeps it so.** Neither field is in
+   * any link payload for either audience — `Shoot Link Preview.dc.html` draws
+   * no payment section at all, and the detail card sits behind the same gate as
+   * the private notes. The gateway names its columns explicitly (`ADR-013`,
+   * rule 2), so these reach nobody until somebody adds them there.
+   */
+  price: number | null
+  prepayment: number | null
 }
 
 /**
@@ -108,6 +125,9 @@ export type UpdateShootInput = {
   rawFilesUrl: string | null
   /** `US-025`, alongside `rawFilesUrl` and set on the same screen. */
   finishedPhotosUrl: string | null
+  /** «Оплата» — see `Shoot`. Both written together, never one alone. */
+  price: number | null
+  prepayment: number | null
 }
 
 /** Every column the app reads for a Shoot, in one place so the two queries agree. */
@@ -117,7 +137,7 @@ export type UpdateShootInput = {
  * subject to the same RLS as a direct read of `clients`.
  */
 const SHOOT_COLUMNS =
-  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url, price, prepayment'
 
 export type CreateShootInput = {
   /**
@@ -152,6 +172,12 @@ export type CreateShootInput = {
   locationNote: string | null
   /** `20260830160000` — the shoot's own note, collected on the create form. */
   notes: string | null
+  /**
+   * «Оплата» — see `Shoot`. Null when the form left the field empty, which is
+   * how a shoot created before this feature reads too.
+   */
+  price: number | null
+  prepayment: number | null
 }
 
 export type CreateShootResult = { ok: true; id: string } | { ok: false }
@@ -182,6 +208,10 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
       location_address: input.locationAddress?.trim() || null,
       location_note: input.locationNote?.trim() || null,
       notes: input.notes?.trim() || null,
+      // Written together, always. The column constraint refuses a prepayment
+      // above a price, so a partial write is the one way to trip it.
+      price: input.price,
+      prepayment: input.prepayment,
     })
     .select('id')
     .single()
@@ -241,6 +271,8 @@ type ShootRow = {
   notes: string | null
   raw_files_url: string | null
   finished_photos_url: string | null
+  price: number | null
+  prepayment: number | null
 }
 
 type EmbeddedClient = {
@@ -279,6 +311,8 @@ function toShoot(row: ShootRow): Shoot {
     locationAttachment: row.location_attachment,
     rawFilesUrl: row.raw_files_url,
     finishedPhotosUrl: row.finished_photos_url,
+    price: row.price,
+    prepayment: row.prepayment,
   }
 }
 
@@ -335,6 +369,8 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
       location_note: input.locationNote?.trim() || null,
       location_attachment: input.locationAttachment,
       notes: input.notes?.trim() || null,
+      price: input.price,
+      prepayment: input.prepayment,
       // AC-3 — stored only if it is a link at all. The screen rejects a
       // malformed one with a message first (US-003 AC-2's rule, reused rather
       // than restated); this is the second guard, so a bad value cannot reach
