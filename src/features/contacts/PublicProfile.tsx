@@ -15,7 +15,9 @@ import { Avatar } from '../../components/Avatar'
 import { SectionLabel } from '../../components/ShootFormFields'
 import { VisibilityNote } from '../../components/Visibility'
 import { useStrings } from '../../i18n/LanguageProvider'
+import { handleLabel, handleUrl } from '../../lib/socialHandle'
 import { tapped } from '../../lib/haptics'
+import { openExternalUrl } from '../../lib/openExternalUrl'
 import { Starfield } from '../../components/Starfield'
 
 /**
@@ -107,15 +109,54 @@ export function PublicProfile({
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
-  const contacts: { label: string; value: string; icon: LucideIcon }[] = [
-    view.phone ? { label: t.phoneField, value: view.phone, icon: Smartphone } : null,
+  /*
+    `url` since 2026-09-05 — the rows open the service rather than asking to be
+    read and retyped, and `handleLabel` shows «@nickname» whatever form the
+    field was filled in with. A profile URL pasted from Instagram's own «Copy
+    link» is the case that motivated it.
+
+    A phone dials. Everything goes through `src/lib/socialHandle.ts`, so this
+    screen and the person sheet cannot disagree about where one handle leads.
+  */
+  type Row = {
+    label: string
+    value: string
+    url: string | null
+    /** The link colour. Handles only — a phone dials and keeps its own. */
+    linkTone?: boolean
+    icon: LucideIcon
+  }
+  const rows: (Row | null)[] = [
+    view.phone
+      ? {
+          label: t.phoneField,
+          value: view.phone,
+          url: `tel:${view.phone.replace(/[^+\d]/g, '')}`,
+          icon: Smartphone,
+        }
+      : null,
     // No email, for anybody — see this component's note. An email reaches this
     // screen as a crew-matching key, never as something to display.
     view.instagram
-      ? { label: t.instagramLabel, value: view.instagram, icon: InstagramIcon }
+      ? {
+          label: t.instagramLabel,
+          value: handleLabel('instagram', view.instagram),
+          url: handleUrl('instagram', view.instagram),
+          linkTone: true,
+          icon: InstagramIcon,
+        }
       : null,
-    view.telegram ? { label: t.telegramLabel, value: view.telegram, icon: Send } : null,
-  ].filter((row): row is { label: string; value: string; icon: LucideIcon } => row !== null)
+    view.telegram
+      ? {
+          label: t.telegramLabel,
+          value: handleLabel('telegram', view.telegram),
+          url: handleUrl('telegram', view.telegram),
+          linkTone: true,
+          icon: Send,
+        }
+      : null,
+  ]
+  const contacts = rows.filter((row): row is Row => row !== null)
 
   return (
     <View className="bg-background flex-1">
@@ -200,27 +241,53 @@ export function PublicProfile({
           <View className="gap-2">
             <SectionLabel label={t.contactsSection} />
             <Card variant="flat" className="gap-0 p-0">
-              {contacts.map((row, index) => (
-                <View
-                  key={row.label}
-                  className={`min-h-14 flex-row items-center gap-3 px-4 ${
-                    index > 0 ? 'border-border border-t' : ''
-                  }`}
-                >
-                  <View className="w-[18px] shrink-0 items-center">
-                    <Icon
-                      as={row.icon}
-                      size={17}
-                      strokeWidth={1.7}
-                      className="text-muted-foreground"
-                    />
+              {contacts.map((row, index) => {
+                const rowClass = `min-h-14 flex-row items-center gap-3 px-4 ${
+                  index > 0 ? 'border-border border-t' : ''
+                }`
+                const body = (
+                  <>
+                    <View className="w-[18px] shrink-0 items-center">
+                      <Icon
+                        as={row.icon}
+                        size={17}
+                        strokeWidth={1.7}
+                        className="text-muted-foreground"
+                      />
+                    </View>
+                    <Text className="text-body-sm text-muted-foreground flex-1">{row.label}</Text>
+                    {/* Handles are blue; a phone dials and is not — the same
+                        rule `PersonSheet`'s `DetailRow` follows for the same
+                        rows on the shoot screen. */}
+                    <Text
+                      className={`text-body ${row.linkTone ? 'text-link' : 'text-foreground'}`}
+                      numberOfLines={1}
+                    >
+                      {row.value}
+                    </Text>
+                  </>
+                )
+                /* Inert when there is nowhere to go — free text in an Instagram
+                   field gets no press state rather than a link that 404s. */
+                return row.url ? (
+                  <Pressable
+                    key={row.label}
+                    className={`${rowClass} active:bg-muted`}
+                    onPress={() => {
+                      tapped()
+                      void openExternalUrl(row.url as string)
+                    }}
+                    role="link"
+                    accessibilityLabel={`${row.label}: ${row.value}`}
+                  >
+                    {body}
+                  </Pressable>
+                ) : (
+                  <View key={row.label} className={rowClass}>
+                    {body}
                   </View>
-                  <Text className="text-body-sm text-muted-foreground flex-1">{row.label}</Text>
-                  <Text className="text-body text-foreground" numberOfLines={1}>
-                    {row.value}
-                  </Text>
-                </View>
-              ))}
+                )
+              })}
             </Card>
             {/*
               **`self` only**, and it explains why there is no email row above.

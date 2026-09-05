@@ -18,6 +18,7 @@ import { Text } from '../../../src/components/ui/text'
 import { Toast } from '../../../src/components/Toast'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
+import { handleLabel, handleUrl } from '../../../src/lib/socialHandle'
 import { ResponsePill } from '../../../src/components/ResponsePill'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { uk } from '../../../src/i18n/uk'
@@ -367,21 +368,15 @@ export default function LinkView() {
                   </View>
                 </View>
                 {shoot.client.instagram ? (
-                  <View className="border-border flex-row items-center gap-2.5 border-t px-4 py-3">
-                    <View className="w-[18px] shrink-0 items-center">
-                      <Icon
-                        as={InstagramIcon}
-                        size={16}
-                        className="text-muted-foreground"
-                      />
-                    </View>
-                    <Text className="text-body-sm text-muted-foreground flex-1">
-                      {uk.instagramLabel}
-                    </Text>
-                    <Text className="text-body-sm text-foreground font-medium">
-                      {shoot.client.instagram}
-                    </Text>
-                  </View>
+                  /* Tappable since 2026-09-05, via the same `handleUrl` the
+                     organizer's «Написати» uses — one handle, one destination.
+                     Inert when the field holds something that is not a handle,
+                     which is the rule everywhere these rows appear. */
+                  <ClientHandleRow
+                    label={uk.instagramLabel}
+                    value={handleLabel('instagram', shoot.client.instagram)}
+                    url={handleUrl('instagram', shoot.client.instagram)}
+                  />
                 ) : null}
               </Card>
             </View>
@@ -668,16 +663,76 @@ export default function LinkView() {
 }
 
 /**
+ * One handle on the client card: an icon, a label, and the handle on the right.
+ *
+ * The row the client card already drew, plus a destination. Split out because
+ * the "link when there is somewhere to go, plain row when there is not" pair is
+ * two shapes of the same thing, and inlining both made the card's JSX hard to
+ * read against the artboard.
+ *
+ * `text-link` marks the tappable one — #6FA2FF, the token the theme names for
+ * links (owner, 2026-09-05).
+ *
+ * **Handles only.** The colour is read straight off `url` here, which is safe
+ * because this row is a handle by construction — the name says so and the
+ * Instagram glyph is hard-coded. Blue is deliberately NOT the colour of every
+ * tappable value: a phone number dials and keeps its own, which is why the
+ * creator's screens pass an explicit `linkTone` instead. If this ever grows a
+ * phone row, it needs that flag too.
+ */
+function ClientHandleRow({
+  label,
+  value,
+  url,
+}: {
+  label: string
+  value: string
+  url: string | null
+}) {
+  const body = (
+    <>
+      <View className="w-[18px] shrink-0 items-center">
+        <Icon as={InstagramIcon} size={16} className="text-muted-foreground" />
+      </View>
+      <Text className="text-body-sm text-muted-foreground flex-1">{label}</Text>
+      <Text
+        className={`text-body-sm font-medium ${url ? 'text-link' : 'text-foreground'}`}
+      >
+        {value}
+      </Text>
+    </>
+  )
+  const rowClass = 'border-border flex-row items-center gap-2.5 border-t px-4 py-3'
+
+  return url ? (
+    <Pressable
+      className={`${rowClass} active:opacity-70`}
+      onPress={() => void openExternalUrl(url)}
+      role="link"
+      accessibilityLabel={`${label}: ${value}`}
+    >
+      {body}
+    </Pressable>
+  ) : (
+    <View className={rowClass}>{body}</View>
+  )
+}
+
+/**
  * «Організатор» — who to reach when something changes on the day.
  *
  * The first thing from `users` to reach an anonymous audience (owner,
  * 2026-08-31). `email` is never among it — see the gateway's `organizer`.
  */
 function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
-  const handle = organizer.telegram ?? organizer.instagram
-  const handleUrl = handle
-    ? `${organizer.telegram ? 'https://t.me/' : 'https://instagram.com/'}${handle.replace(/^@/, '')}`
-    : null
+  /*
+    `handleUrl` from src/lib/socialHandle.ts since 2026-09-05. This built its own
+    URL by stripping a leading `@` and concatenating, which produced
+    `https://instagram.com/https://instagram.com/daryna` for an organizer who had
+    pasted their profile link — the exact case the shared parser exists for.
+  */
+  const messageUrl =
+    handleUrl('telegram', organizer.telegram) ?? handleUrl('instagram', organizer.instagram)
 
   return (
     <View className="gap-2">
@@ -694,7 +749,7 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
             </Text>
           </View>
         </View>
-        {organizer.phone || handleUrl ? (
+        {organizer.phone || messageUrl ? (
           <View className="mt-3 flex-row gap-2">
             {organizer.phone ? (
               <Button
@@ -705,11 +760,11 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
                 <Text className="text-body-sm font-medium">{uk.callOrganizer}</Text>
               </Button>
             ) : null}
-            {handleUrl ? (
+            {messageUrl ? (
               <Button
                 variant="outline"
                 className="h-10 flex-1"
-                onPress={() => void openExternalUrl(handleUrl)}
+                onPress={() => void openExternalUrl(messageUrl)}
               >
                 <Text className="text-body-sm font-medium">{uk.writeTo}</Text>
               </Button>

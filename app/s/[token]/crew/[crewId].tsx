@@ -11,6 +11,8 @@ import {
   type LinkCrewMember,
 } from '../../../../src/features/links/gateway'
 import { Starfield } from '../../../../src/components/Starfield'
+import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
+import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
 
 /**
  * One person's record, read through a link — the same URL for two audiences.
@@ -119,7 +121,15 @@ export default function CrewMemberDetailScreen() {
               <Field label={uk.crewName} value={member.name} strong />
               <Field label={uk.crewRole} value={member.role} />
               <Field label={uk.crewContact} value={member.contact} />
-              <Field label={uk.crewInstagram} value={member.instagram} />
+              {/* Tappable since 2026-09-05, and shown as «@nickname» whatever
+                  the creator pasted in. This is a phone browser with no app
+                  around it — a handle the reader has to retype into Instagram
+                  by hand is the least useful form it could take. */}
+              <Field
+                label={uk.crewInstagram}
+                value={handleLabel('instagram', member.instagram)}
+                url={handleUrl('instagram', member.instagram)}
+              />
 
               {/* US-026 AC-1 — everything above is shared; this is the one
                   difference, and it is an absence rather than a blank. */}
@@ -164,15 +174,59 @@ export default function CrewMemberDetailScreen() {
  * rendering the notes field at all — rendering it with an empty value would
  * have produced «Нотатки: —», which is exactly what that phrase forbids.
  */
-function Field({ label, value, strong }: { label: string; value: string | null; strong?: boolean }) {
+function Field({
+  label,
+  value,
+  strong,
+  url,
+}: {
+  label: string
+  value: string | null
+  strong?: boolean
+  /** Somewhere to go, for the fields that have one. Inert without it. */
+  url?: string | null
+}) {
+  const text = value?.trim() || '—'
+
   return (
     <View className="gap-1 pt-2">
       {/* Inside the card, so `muted-foreground` is right here: #6E6E73 on white
           is 5.07:1. Only the size moves, onto the design's scale. */}
       <Text className="text-label text-muted-foreground">{label}</Text>
-      <Text className={`text-body-sm ${strong ? 'font-semibold' : ''}`}>
-        {value?.trim() || '—'}
-      </Text>
+      {url ? (
+        /*
+          `text-link` — #6FA2FF, the token the theme names for links and already
+          the bottom nav's active tab and `Button`'s `link` variant (owner,
+          2026-09-05). This had been a bare underline for a few hours, on the
+          reasoning that the link surface is near-monochrome and the handoff
+          supplied no link colour; it supplies one, and this screen has no
+          reason to be the odd surface out.
+
+          `group-active:underline` is `Button`'s own link press state, so the
+          underline is what the press does rather than what the link is.
+
+          **Every `url` this Field receives is a handle** — «Інстаграм» is the
+          only field given one. Blue is not the colour of everything tappable
+          (a phone dials and stays as it was), so a phone row added here would
+          need the tone separated from the URL, as `ContactRow` does.
+        */
+        <Pressable
+          className="group active:opacity-70"
+          onPress={() => void openExternalUrl(url)}
+          role="link"
+          accessibilityLabel={`${label}: ${text}`}
+        >
+          <Text
+            className={`text-body-sm text-link group-active:underline ${
+              strong ? 'font-semibold' : ''
+            }`}
+          >
+            {text}
+          </Text>
+        </Pressable>
+      ) : (
+        <Text className={`text-body-sm ${strong ? 'font-semibold' : ''}`}>{text}</Text>
+      )}
     </View>
   )
 }

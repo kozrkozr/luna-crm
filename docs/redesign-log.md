@@ -3748,3 +3748,61 @@ The «Контакти» card is dropped when empty, and the note goes with it. 
 with no phone and no handles now previews as name and role alone — correct, since
 that is all a crew member would see, but it means the reassurance about the email
 is absent exactly when the card is.
+
+---
+
+## Instagram and Telegram handles open, and read as «@nickname» (owner, 2026-09-05)
+
+New: `src/lib/socialHandle.ts`. Changed: `src/components/PersonSheet.tsx`,
+`src/features/contacts/PublicProfile.tsx`, `app/(app)/shoot/[id]/index.tsx`,
+`app/s/[token]/index.tsx`, `app/s/[token]/crew/[crewId].tsx`.
+
+**No story covers any of this** — not `US-005`, `US-023`, `US-027` or `US-016`,
+all of which put one of these fields on a screen and none of which says what
+tapping it does. Owner's request, and it needs a story or an amendment in the
+discovery repo.
+
+### What changed
+
+A handle is now a link wherever it is shown read-only, and it displays as
+«@nickname» whatever form it was stored in — `@daryna`, `daryna`,
+`instagram.com/daryna`, or the `https://www.instagram.com/daryna/?igsh=…` that
+Instagram's own «Copy link» produces. Forms are untouched.
+
+`handleUrl` had existed since the person sheet's rows became tappable, but only
+inside that component, and it only stripped a leading `@`. It is now
+`src/lib/socialHandle.ts` with five callers and a `handleLabel` beside it.
+
+| Decision | |
+|---|---|
+| **Nothing is normalised on save** | The stored value stays what somebody typed. Parsing at read time covers every row already in the database, which a migration would have had to do anyway, and four tables carry these columns (`users`, `contacts`, `clients`, `crew_members`) |
+| **Free text no longer linkifies** | `handleUrl` used to turn anything into a URL, so «Марія з студії» in an Instagram field built `instagram.com/Марія%20з%20студії`. A value that is not a plausible handle now renders inert — the rule `DetailRow` already stated for itself |
+| **A post or an invite opens but is not renamed** | `instagram.com/p/CxYz` and `t.me/+AbCdEf` are good links with no nickname in them. Presenting the first segment as «@p» would be confidently wrong |
+| **Blue is for handles, not for everything tappable** | See below |
+
+### The colour, and the phone exception
+
+Handles use `text-link` (`--link`, #6FA2FF) — the token the theme names for
+links, already the bottom nav's active tab and `Button`'s `link` variant.
+
+**A phone number is tappable and deliberately stays `text-foreground`** (owner,
+2026-09-05). It was blue for a few minutes, keyed off "does this row open
+something", which is the wrong question: a phone dials, which is the phone doing
+its own job, while a handle leads somewhere else. The row models carry an
+explicit `linkTone` now so the two questions cannot be conflated again.
+
+This does not weaken the 2026-09-04 ruling that retired `text-link` from the
+calendar row's address — blue still never appears on something that opens
+nothing. It is simply no longer true that everything openable is blue.
+
+### A bug this uncovered
+
+`OrganizerCard` on the shoot link built its own URL by stripping `@` and
+concatenating, so an organizer who had pasted their profile link got
+`https://instagram.com/https://instagram.com/daryna`. It uses the shared parser.
+
+### Still open
+
+The form placeholders still say «@nickname». The fields accept a pasted link
+now and nothing tells anyone that — new user-facing copy, so not invented here
+(rule 1).

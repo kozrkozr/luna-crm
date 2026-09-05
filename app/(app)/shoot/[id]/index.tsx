@@ -31,7 +31,8 @@ import { ImageViewer } from '../../../../src/components/ImageViewer'
 // `PersonSheet` itself is gone (2026-09-03): v3 expands a crew row in place
 // rather than opening a sheet. Its type survives as the shape `copyLinkFor`
 // and `removePerson` still take.
-import { handleUrl, type SheetPerson } from '../../../../src/components/PersonSheet'
+import { type SheetPerson } from '../../../../src/components/PersonSheet'
+import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { ReferenceGrid } from '../../../../src/components/ReferenceGrid'
@@ -490,29 +491,34 @@ function DetailsTab({
     what has to change — a badge on the creator's own screen was a rehearsal of
     a guarantee made elsewhere, which is the same reason client view went.
   */
-  const contacts: { label: string; value: string; url: string | null }[] = [
+  type ClientRow = { label: string; value: string; url: string | null; linkTone?: boolean }
+  const clientRows: (ClientRow | null)[] = [
     shoot.clientContact
       ? {
           label: t.phoneField,
           value: shoot.clientContact,
           url: `tel:${shoot.clientContact.replace(/[^+\d]/g, '')}`,
+          // No `linkTone`: a phone dials, and it looks the way it always did.
         }
       : null,
     shoot.clientInstagram
       ? {
           label: t.instagramLabel,
-          value: shoot.clientInstagram,
+          value: handleLabel('instagram', shoot.clientInstagram),
           url: handleUrl('instagram', shoot.clientInstagram),
+          linkTone: true,
         }
       : null,
     shoot.clientTelegram
       ? {
           label: t.telegramLabel,
-          value: shoot.clientTelegram,
+          value: handleLabel('telegram', shoot.clientTelegram),
           url: handleUrl('telegram', shoot.clientTelegram),
+          linkTone: true,
         }
       : null,
-  ].filter((row): row is { label: string; value: string; url: string | null } => row !== null)
+  ]
+  const contacts = clientRows.filter((row): row is ClientRow => row !== null)
 
   return (
     <>
@@ -556,6 +562,7 @@ function DetailsTab({
             label={contact.label}
             value={contact.value}
             url={contact.url}
+            linkTone={contact.linkTone}
           />
         ))}
 
@@ -682,16 +689,34 @@ function ContactRow({
   label,
   value,
   url,
+  linkTone = false,
 }: {
   label: string
   value: string
   url: string | null
+  /** Draw the value in the link colour. Handles only — see below. */
+  linkTone?: boolean
 }) {
   const body = (
     <View className="border-border flex-row items-center gap-2.5 border-t px-4 py-3">
       <Text className="text-body-sm text-muted-foreground shrink-0">{label}</Text>
+      {/*
+        **`text-link` for handles only** (owner, 2026-09-05) — the token named
+        for links, already the active tab's colour and `Button`'s `link`
+        variant. It marks a value that leads somewhere *else*: an Instagram or
+        Telegram profile. A phone number is tappable too and is deliberately
+        NOT blue — it dials, which is the phone doing its own job, and the row
+        keeps the colour it has always had.
+
+        Which is why the tone is passed in rather than read off `url`. Blue
+        still never appears on something that opens nothing — the rule the
+        calendar row's address settled on 2026-09-04 — it is simply no longer
+        true that everything openable is blue.
+      */}
       <Text
-        className="text-body-sm text-foreground min-w-0 flex-1 text-right font-medium"
+        className={`text-body-sm min-w-0 flex-1 text-right font-medium ${
+          linkTone ? 'text-link' : 'text-foreground'
+        }`}
         numberOfLines={1}
       >
         {value}
@@ -994,12 +1019,45 @@ function PersonRow({
   const t = useStrings()
   const router = useRouter()
 
-  const contacts: { label: string; value: string }[] = [
-    member.phone ? { label: t.phoneField, value: member.phone } : null,
-    member.email ? { label: t.email, value: member.email } : null,
-    member.instagram ? { label: t.instagramLabel, value: member.instagram } : null,
-    member.telegram ? { label: t.telegramLabel, value: member.telegram } : null,
-  ].filter((row): row is { label: string; value: string } => row !== null)
+  /*
+    `url` since 2026-09-05: these rows were plain text, so a crew member's
+    Instagram was something to read off the screen and retype. They open the
+    same place the person sheet's rows open — `handleUrl` is shared, so the two
+    surfaces cannot disagree about where one handle goes — and `handleLabel`
+    means a pasted profile URL shows as «@nickname» here too.
+
+    A phone dials. An email is left alone: `mailto:` is not something any story
+    asks for, and the row is the crew-matching key as often as it is an address.
+  */
+  type Row = { label: string; value: string; url: string | null; linkTone?: boolean }
+  const rows: (Row | null)[] = [
+    // Tappable, and deliberately not blue: a phone dials. See `ContactRow`.
+    member.phone
+      ? {
+          label: t.phoneField,
+          value: member.phone,
+          url: `tel:${member.phone.replace(/[^+\d]/g, '')}`,
+        }
+      : null,
+    member.email ? { label: t.email, value: member.email, url: null } : null,
+    member.instagram
+      ? {
+          label: t.instagramLabel,
+          value: handleLabel('instagram', member.instagram),
+          url: handleUrl('instagram', member.instagram),
+          linkTone: true,
+        }
+      : null,
+    member.telegram
+      ? {
+          label: t.telegramLabel,
+          value: handleLabel('telegram', member.telegram),
+          url: handleUrl('telegram', member.telegram),
+          linkTone: true,
+        }
+      : null,
+  ]
+  const contacts = rows.filter((row): row is Row => row !== null)
 
   return (
     /*
@@ -1074,22 +1132,47 @@ function PersonRow({
             /* `background:var(--bg)` in the artboard — a step below the open
                row, which is itself a step below the card. */
             <View className="bg-background border-border overflow-hidden rounded-lg border">
-              {contacts.map((contact, index) => (
-                <View
-                  key={contact.label}
-                  className={`flex-row items-center justify-between gap-2.5 px-3 py-2.5 ${
-                    index > 0 ? 'border-border border-t' : ''
-                  }`}
-                >
-                  <Text className="text-label text-muted-foreground shrink-0">{contact.label}</Text>
-                  <Text
-                    className="text-body-sm text-foreground min-w-0 flex-1 text-right font-medium"
-                    numberOfLines={1}
+              {contacts.map((contact, index) => {
+                const rowClass = `flex-row items-center justify-between gap-2.5 px-3 py-2.5 ${
+                  index > 0 ? 'border-border border-t' : ''
+                }`
+                const body = (
+                  <>
+                    <Text className="text-label text-muted-foreground shrink-0">
+                      {contact.label}
+                    </Text>
+                    {/* Handles are blue; a phone dials and is not. See `ContactRow`. */}
+                    <Text
+                      className={`text-body-sm min-w-0 flex-1 text-right font-medium ${
+                        contact.linkTone ? 'text-link' : 'text-foreground'
+                      }`}
+                      numberOfLines={1}
+                    >
+                      {contact.value}
+                    </Text>
+                  </>
+                )
+                /* No `url`, no press state. An affordance that leads nowhere is
+                   worse than none — the rule `DetailRow` was written to. */
+                return contact.url ? (
+                  <Pressable
+                    key={contact.label}
+                    className={`${rowClass} active:bg-muted`}
+                    onPress={() => {
+                      tapped()
+                      void openExternalUrl(contact.url as string)
+                    }}
+                    role="link"
+                    accessibilityLabel={`${contact.label}: ${contact.value}`}
                   >
-                    {contact.value}
-                  </Text>
-                </View>
-              ))}
+                    {body}
+                  </Pressable>
+                ) : (
+                  <View key={contact.label} className={rowClass}>
+                    {body}
+                  </View>
+                )
+              })}
             </View>
           ) : null}
 

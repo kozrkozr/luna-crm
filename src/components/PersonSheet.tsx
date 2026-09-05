@@ -11,6 +11,7 @@ import { Text } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
 import { tapped } from '../lib/haptics'
 import { openExternalUrl } from '../lib/openExternalUrl'
+import { handleLabel, handleUrl } from '../lib/socialHandle'
 
 /**
  * Whoever the sheet is open on — a crew member or the client, flattened to the
@@ -101,8 +102,9 @@ export function PersonSheet({
               {person.instagram ? (
                 <DetailRow
                   label={t.instagramLabel}
-                  value={person.instagram}
+                  value={handleLabel('instagram', person.instagram)}
                   url={handleUrl('instagram', person.instagram)}
+                  linkTone
                   divided={!!person.phone}
                 />
               ) : null}
@@ -113,8 +115,9 @@ export function PersonSheet({
               {person.telegram ? (
                 <DetailRow
                   label={t.telegramLabel}
-                  value={person.telegram}
+                  value={handleLabel('telegram', person.telegram)}
                   url={handleUrl('telegram', person.telegram)}
+                  linkTone
                   divided={!!(person.phone || person.instagram)}
                 />
               ) : null}
@@ -198,9 +201,11 @@ export function PersonSheet({
  * purpose that is — an Instagram profile link is a page you then have to find
  * the DM button on.
  *
- * The handle is stored as the reader typed it («@nickname», per the field's own
- * placeholder), so the `@` is stripped for the URL and any accidental full URL
- * is passed through untouched rather than being nested inside another one.
+ * Whatever form the handle was stored in — «@nickname», a bare name, or the URL
+ * Instagram's «Copy link» produces — `handleUrl` resolves it, so this button and
+ * the row for the same handle cannot lead to different places. It returns null
+ * for free text, which is what keeps «Написати» off a person whose Instagram
+ * field holds a sentence.
  */
 function messageLink(
   person: SheetPerson
@@ -210,23 +215,6 @@ function messageLink(
   const instagram = handleUrl('instagram', person.instagram)
   if (instagram) return { kind: 'instagram', url: instagram }
   return null
-}
-
-/**
- * The profile URL for a stored handle, or null when there is nothing to open.
- *
- * Handles are stored as the reader typed them («@nickname», per every field's
- * placeholder), so the `@` is stripped — and a handle someone pasted as a full
- * URL is passed through rather than nested inside another one.
- *
- * Shared by «Написати» and by the rows above it, so the button and the row for
- * the same handle cannot lead to different places.
- */
-export function handleUrl(kind: 'telegram' | 'instagram', raw: string | null): string | null {
-  const handle = raw?.trim().replace(/^@/, '')
-  if (!handle) return null
-  if (/^https?:\/\//i.test(handle)) return handle
-  return (kind === 'telegram' ? 'https://t.me/' : 'https://instagram.com/') + handle
 }
 
 /**
@@ -243,17 +231,30 @@ function DetailRow({
   label,
   value,
   url,
+  linkTone = false,
   divided = false,
 }: {
   label: string
   value: string
   url?: string | null
+  /** Draw the value in the link colour. Handles, not phone numbers — see below. */
+  linkTone?: boolean
   divided?: boolean
 }) {
   const body = (
     <>
       <Text className="text-body-sm text-muted-foreground">{label}</Text>
-      <Text className="text-body-sm text-foreground font-medium" numberOfLines={1}>
+      {/*
+        `text-link` is the handles' colour, not every tappable row's (owner,
+        2026-09-05). A phone number dials — it stays as it always was — while a
+        handle leads somewhere else entirely, and that is the difference the
+        blue marks. So the tone is asked for explicitly rather than derived from
+        `url`: the two are no longer the same question.
+      */}
+      <Text
+        className={`text-body-sm font-medium ${linkTone ? 'text-link' : 'text-foreground'}`}
+        numberOfLines={1}
+      >
         {value}
       </Text>
     </>
