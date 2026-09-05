@@ -212,11 +212,27 @@ type PeerRow = MemberRow & {
  * `email` is NOT selected. It is the login credential (`ADR-015`), it is the
  * crew-matching key (`match_contact_to_user`), and nothing on this screen asks
  * for it — three reasons, any one of which is enough.
+ *
+ * ── The avatar: an emoji, never a photo (owner, 2026-09-05) ─────────────────
+ *
+ * `avatar_emoji` and `avatar_tint` are two plain strings — a character and a
+ * palette key — and cost this payload nothing. They are a picture the
+ * photographer chose of themselves for exactly this purpose, so sending them to
+ * the audience the «Організатор» card exists for is what they are for.
+ *
+ * **`avatar_url` is deliberately absent, and not for privacy.** It holds a path
+ * in a private bucket, so sending it would mean signing a URL here — and
+ * CLAUDE.md's own warning is that signed media URLs expire while link tokens
+ * never do, so an idle link would show a broken image on a page that is still
+ * valid. The link views already carry that hazard for a location video and
+ * handle it by re-requesting the payload on error; an avatar is not worth a
+ * second instance of it. An organizer with a photo therefore reads as initials
+ * on a link, which is what it has always done.
  */
 async function organizer(supabase: Supabase, creatorId: string) {
   const { data } = await supabase
     .from('users')
-    .select('name, role, phone, social_handle, telegram')
+    .select('name, role, phone, social_handle, telegram, avatar_emoji, avatar_tint')
     .eq('id', creatorId)
     .maybeSingle()
 
@@ -227,6 +243,8 @@ async function organizer(supabase: Supabase, creatorId: string) {
     phone: string | null
     social_handle: string | null
     telegram: string | null
+    avatar_emoji: string | null
+    avatar_tint: string | null
   }
   return {
     name: row.name,
@@ -234,6 +252,13 @@ async function organizer(supabase: Supabase, creatorId: string) {
     phone: row.phone,
     instagram: row.social_handle,
     telegram: row.telegram,
+    /*
+      Both or neither. `users_avatar_one_of` already guarantees it, so this is
+      not defending against a bad row — it means the reader has one thing to
+      check instead of two, and a half-set pair can never cross the wire.
+    */
+    avatarEmoji: row.avatar_emoji && row.avatar_tint ? row.avatar_emoji : null,
+    avatarTint: row.avatar_emoji && row.avatar_tint ? row.avatar_tint : null,
   }
 }
 

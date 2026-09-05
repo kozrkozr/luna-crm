@@ -3873,3 +3873,33 @@ the client. Nothing technical requires a fixed list — `avatar_emoji` is plain
 `text` and renders whatever it holds — so growing it is a one-array change, and
 opening it to the system keyboard would need a validation rule and a placeholder
 that no artboard supplies.
+
+### The organizer's emoji reaches the link views (owner, 2026-09-05)
+
+`supabase/functions/link-gateway/index.ts`, `src/features/links/gateway.ts`,
+`app/s/[token]/index.tsx`. Deferred when the picker was built, then asked for.
+
+`organizer()` sends `avatar_emoji` and `avatar_tint` — two plain strings, and a
+picture the photographer chose of themselves for exactly this audience. They
+are the pair or nothing, so no reader has to decide what half a pair means.
+
+**`avatar_url` is deliberately absent, and not for privacy.** It is a path in a
+private bucket, so sending it means signing a URL — and CLAUDE.md's own warning
+is that signed media URLs expire while link tokens never do. An idle link would
+show a broken image on a page that is still valid. The link views already carry
+that hazard once, for a location video, and answer it by re-requesting the
+payload on error; a second instance for an avatar is not worth it. **An
+organizer with a photo therefore reads as initials on a link**, unchanged.
+
+The reader guards the tint with `isAvatarTint` rather than trusting it. The link
+surface is a static export (`ADR-012`) and can be months older than the app that
+wrote the value, so a tint this bundle does not know falls back to initials
+instead of drawing a glyph on no background.
+
+Rule 2 re-checked while in that file: the client's crew mapping still has no
+`note` key at all, the crew's still does. Only `organizer()` changed, which
+carries no notes to either audience.
+
+**Two deploys, not one** (docs/deploy-dev.md): `supabase functions deploy
+link-gateway` for the payload, then `npm run export:web` and `wrangler pages
+deploy`. Either alone gives a payload nobody reads or a reader with no data.

@@ -19,6 +19,7 @@ import { Toast } from '../../../src/components/Toast'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
 import { handleLabel, handleUrl } from '../../../src/lib/socialHandle'
+import { isAvatarTint } from '../../../src/features/auth/avatar'
 import { ResponsePill } from '../../../src/components/ResponsePill'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { uk } from '../../../src/i18n/uk'
@@ -739,7 +740,28 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
       <SectionLabel label={uk.organizerSection} />
       <Card variant="flat">
         <View className="flex-row items-center gap-3">
-          <Avatar name={organizer.name} size={40} />
+          {/*
+            The photographer's own emoji, if they chose one — the one avatar on
+            this surface that is not initials. Crew and the client keep theirs:
+            nobody chose anything for them, which is F-4's rule and the reason
+            this field exists on `organizer` alone.
+
+            `isAvatarTint` guards the palette key rather than trusting it. It
+            arrives from the gateway as free text, and a row written by a newer
+            build could name a tint this bundle does not have — the link surface
+            is a STATIC export (ADR-012), so it can be months older than the
+            app that wrote the value. An unknown tint falls back to initials
+            instead of drawing a glyph on nothing.
+          */}
+          <Avatar
+            name={organizer.name}
+            size={40}
+            emoji={
+              organizer.avatarEmoji && isAvatarTint(organizer.avatarTint)
+                ? { char: organizer.avatarEmoji, tint: organizer.avatarTint }
+                : null
+            }
+          />
           <View className="min-w-0 flex-1">
             <Text className="text-body text-foreground font-semibold" numberOfLines={1}>
               {organizer.name}

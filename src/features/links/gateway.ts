@@ -145,6 +145,20 @@ export type LinkOrganizer = {
   phone: string | null
   instagram: string | null
   telegram: string | null
+  /**
+   * The emoji avatar the photographer chose for themselves, and its background.
+   *
+   * Both or neither — the gateway sends the pair or nothing, so a reader never
+   * has to decide what half a pair means.
+   *
+   * **There is no photo here, deliberately.** `avatar_url` is a path in a
+   * private bucket and would have to be signed; signed URLs expire and link
+   * tokens do not, so an old link would show a broken image on a page that is
+   * still valid. An organizer with a photo reads as initials on a link. The
+   * gateway's own note carries the full reasoning.
+   */
+  avatarEmoji: string | null
+  avatarTint: string | null
 }
 
 export type LinkPayload = CrewLinkPayload | ClientLinkPayload
