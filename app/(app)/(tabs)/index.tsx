@@ -28,8 +28,10 @@ import MapPin from 'lucide-react-native/icons/map-pin'
 import { Icon } from '../../../src/components/ui/icon'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
 import { useProfile } from '../../../src/features/auth/useProfile'
-import { tapped } from '../../../src/lib/haptics'
-import { listShoots, type Shoot } from '../../../src/features/shoots/api'
+import { failed, tapped } from '../../../src/lib/haptics'
+import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
+import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
+import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { listCrew } from '../../../src/features/crew/api'
 import {
   dayOfMonth,
@@ -98,6 +100,14 @@ export default function HomeScreen() {
   const t = useStrings()
   const router = useRouter()
   const [state, setState] = useState<State>({ status: 'loading' })
+  /*
+    Bumped after a swipe-delete to refetch without waiting for focus to change.
+    The screen is already focused when a row is deleted from it, so
+    `useFocusEffect` alone would leave the hero slot empty until the user
+    navigated away and back — the shoot that should be promoted into it is only
+    knowable from the full list.
+  */
+  const [reloadKey, setReloadKey] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
@@ -128,146 +138,234 @@ export default function HomeScreen() {
       return () => {
         active = false
       }
-    }, [])
+    }, [reloadKey])
   )
+
+  /*
+    `US-019` — the same soft delete the shoot-detail screen performs, reached by
+    swiping a row (`SwipeToDelete`). AC-2 is required and this hook is the whole
+    of it: a real iOS alert on device, a dialog on web, and `deleteShoot` runs
+    only from inside it.
+
+    Generic over the `Shoot` so the question carries which row was swiped all
+    the way to the confirm — the alternative is a second piece of state that can
+    drift from what the alert is asking about.
+  */
+  const { ask: askDelete, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
+    label: t.deleteShoot,
+    question: t.confirmDeleteShoot,
+    onConfirm: (shoot) => {
+      void (async () => {
+        if (!(await deleteShoot(shoot.id))) {
+          /*
+            The write did not happen and the row stays. No message: no story
+            supplies one for a failed delete, and `deleteShoot` returns a bare
+            boolean that does not say why (the RPC is deliberately silent about
+            whether the shoot was missing or not the caller's). The refused
+            haptic is the feedback — `haptics.ts` names this case — and the
+            screen is still true, which is the part that matters.
+          */
+          failed()
+          return
+        }
+        /*
+          Drop it locally first so the row goes at once, then refetch: the list
+          is what decides which shoot is next, and only the round trip can
+          promote one into the hero slot. Deleting the hero leaves that slot
+          empty for the length of the refetch rather than flashing the empty
+          state, because `hasAny` is untouched.
+        */
+        setState((current) =>
+          current.status === 'loaded'
+            ? {
+                ...current,
+                next: current.next?.id === shoot.id ? null : current.next,
+                upcoming: current.upcoming.filter((row) => row.id !== shoot.id),
+              }
+            : current
+        )
+        setReloadKey((key) => key + 1)
+      })()
+    },
+  })
 
   return (
     <View className="bg-background flex-1">
       <Starfield />
-      <HomeHeader />
-      <ScrollView contentInsetAdjustmentBehavior="automatic">
-        {/*
-          `pb-10` — the artboard ends its scroll container at `padding-bottom:114`,
-          and 75 of that is the bottom bar. The navigator reserves the bar's
-          height (its screens are a flex child ABOVE it, not underneath), so what
-          belongs here is the remaining 39.
-        */}
-        <View className="gap-3 px-4 pb-10">
+      {/* Everything the user can touch goes inside, so an open row closes on a
+          tap anywhere but its «Видалити». The Starfield is outside because it
+          is painted behind and takes no touches; `deleteDialog` is outside
+          because the boundary must not intercept the confirmation itself. */}
+      <SwipeDismissBoundary>
+        <HomeHeader />
+        <ScrollView contentInsetAdjustmentBehavior="automatic">
           {/*
-            `Home.dc.html`'s order, and it is a reversal: the next shoot comes
-            FIRST and the two buttons sit under it. They used to lead the screen.
-
-            It is the better answer to the question this screen exists for
-            (`US-035` — "what is next"): the shoot is the answer, and the buttons
-            are what you do when the answer is not enough.
+            `pb-10` — the artboard ends its scroll container at `padding-bottom:114`,
+            and 75 of that is the bottom bar. The navigator reserves the bar's
+            height (its screens are a flex child ABOVE it, not underneath), so what
+            belongs here is the remaining 39.
           */}
-          {state.status === 'error' ? (
-            <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
-          ) : state.status === 'loaded' && state.next ? (
-            <View>
-              {daysUntil(state.next.date) <= 0 ? (
-                /*
-                  The «Сьогодні» state. It was amber, then monochrome-white for
-                  the fortnight the app had no colour, and it is now what
-                  `Home.dc.html` actually draws: a **`--success` pulsing dot**
-                  over an `--accent-solid` stripe and chip. Three signals, and
-                  none of them is merely "brighter than the rest of the screen",
-                  which is what the white version had to be.
-                */
-                <View className="mb-2 flex-row items-center gap-1.5 px-0.5">
-                  <PulseDot />
-                  <SectionLabel label={t.todayWord} />
-                </View>
-              ) : (
-                <View className="mb-2 px-0.5">
-                  <SectionLabel label={t.nextShootLabel} />
-                </View>
-              )}
-              <NextShootCard shoot={state.next} confirmed={state.confirmed} />
-            </View>
-          ) : state.status === 'loaded' && !state.hasAny ? (
-            /*
-              The empty state, now **on a card** rather than bare on the frame,
-              as drawn. Its copy changed with it: the old line said «Натисніть
-              «Нова зйомка» **вище**», and the button is below this block now.
-            */
-            <Card variant="flat" className="items-center px-5 py-7">
-              <Icon
-                as={CalendarIcon}
-                size={34}
-                strokeWidth={1.6}
-                className="text-border-strong mb-3"
-              />
-              <Text className="text-body text-foreground font-semibold">{t.emptyNextTitle}</Text>
-              <Text
-                className="text-body-sm text-muted-foreground mt-1.5 text-center leading-5"
-                style={{ maxWidth: 250 }}
+          <View className="gap-3 px-4 pb-10">
+            {/*
+              `Home.dc.html`'s order, and it is a reversal: the next shoot comes
+              FIRST and the two buttons sit under it. They used to lead the screen.
+
+              It is the better answer to the question this screen exists for
+              (`US-035` — "what is next"): the shoot is the answer, and the buttons
+              are what you do when the answer is not enough.
+            */}
+            {state.status === 'error' ? (
+              <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
+            ) : state.status === 'loaded' && state.next ? (
+              <View>
+                {daysUntil(state.next.date) <= 0 ? (
+                  /*
+                    The «Сьогодні» state. It was amber, then monochrome-white for
+                    the fortnight the app had no colour, and it is now what
+                    `Home.dc.html` actually draws: a **`--success` pulsing dot**
+                    over an `--accent-solid` stripe and chip. Three signals, and
+                    none of them is merely "brighter than the rest of the screen",
+                    which is what the white version had to be.
+                  */
+                  <View className="mb-2 flex-row items-center gap-1.5 px-0.5">
+                    <PulseDot />
+                    <SectionLabel label={t.todayWord} />
+                  </View>
+                ) : (
+                  <View className="mb-2 px-0.5">
+                    <SectionLabel label={t.nextShootLabel} />
+                  </View>
+                )}
+                {/* The hero card swipes too, at the owner's request — it is a
+                    shoot like any other, and being the nearest one is not a
+                    reason to have to open it to remove it.
+
+                    `hero` rather than `state.next` inside the handler: the
+                    narrowing above does not survive into a closure, and a local
+                    const is the honest way to keep it — a cast would be a
+                    promise the type system is not making. */}
+                <HeroCard shoot={state.next} confirmed={state.confirmed} onRequestDelete={askDelete} />
+              </View>
+            ) : state.status === 'loaded' && !state.hasAny ? (
+              /*
+                The empty state, now **on a card** rather than bare on the frame,
+                as drawn. Its copy changed with it: the old line said «Натисніть
+                «Нова зйомка» **вище**», and the button is below this block now.
+              */
+              <Card variant="flat" className="items-center px-5 py-7">
+                <Icon
+                  as={CalendarIcon}
+                  size={34}
+                  strokeWidth={1.6}
+                  className="text-border-strong mb-3"
+                />
+                <Text className="text-body text-foreground font-semibold">{t.emptyNextTitle}</Text>
+                <Text
+                  className="text-body-sm text-muted-foreground mt-1.5 text-center leading-5"
+                  style={{ maxWidth: 250 }}
+                >
+                  {t.emptyNextSub}
+                </Text>
+              </Card>
+            ) : null}
+            {/*
+              AC-5 — with shoots on the account but none upcoming, the section is
+              still absent entirely, label included. That case is not the empty
+              state above: the design draws nothing for it, and «no upcoming
+              shoots» would be copy no story supplies.
+            */}
+
+            <View className="gap-2">
+              {/* AC-3 — the primary action. 48px and a full pill, as
+                  `Home.dc.html` draws it (`height:48px;border-radius:999px`).
+                  The corner comes from `Button` — this className must not set
+                  one, or `cn()` merges it last and wins. */}
+              <Button
+                variant="cta"
+                size="cta"
+                className="h-12 justify-center py-0"
+                onPress={() => router.push('/(app)/new-shoot')}
               >
-                {t.emptyNextSub}
-              </Text>
-            </Card>
-          ) : null}
-          {/*
-            AC-5 — with shoots on the account but none upcoming, the section is
-            still absent entirely, label included. That case is not the empty
-            state above: the design draws nothing for it, and «no upcoming
-            shoots» would be copy no story supplies.
-          */}
+                <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
+              </Button>
 
-          <View className="gap-2">
-            {/* AC-3 — the primary action. 48px and a full pill, as
-                `Home.dc.html` draws it (`height:48px;border-radius:999px`).
-                The corner comes from `Button` — this className must not set
-                one, or `cn()` merges it last and wins. */}
-            <Button
-              variant="cta"
-              size="cta"
-              className="h-12 justify-center py-0"
-              onPress={() => router.push('/(app)/new-shoot')}
-            >
-              <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
-            </Button>
-
-            {/* AC-3 — and the way to the list, which used to be this route.
-                `outline` now, not `secondary`: the design gives it a border on
-                the page colour rather than a raised fill. */}
-            <Button
-              variant="outline"
-              size="cta"
-              className="h-11 justify-center py-0"
-              onPress={() => router.push('/(app)/(tabs)/shoots')}
-            >
-              {/*
-                `Icon` reads the surrounding TextClassContext, which Button sets
-                per variant — so the glyph takes the label's colour rather than
-                being told one, and cannot drift from it.
-              */}
-              <Icon as={CalendarIcon} size={15} strokeWidth={1.7} />
-              <Text className="text-body-sm text-foreground font-medium">{t.viewCalendar}</Text>
-            </Button>
-          </View>
-
-          {/*
-            «Наступні зйомки» — new on this screen. Everything after the shoot in
-            the card above, so the two never show the same shoot twice (see
-            `upcomingShoots`, and the prototype bug it does not copy).
-          */}
-          {state.status === 'loaded' && state.upcoming.length > 0 ? (
-            <View className="mt-2.5">
-              <View className="mb-2 flex-row items-baseline justify-between px-0.5">
-                <SectionLabel label={t.upcomingShootsLabel} />
-                <Link href="/(app)/(tabs)/shoots" asChild>
-                  <Pressable hitSlop={10} onPress={tapped} role="button">
-                    <Text className="text-label text-foreground font-medium">{t.seeAll}</Text>
-                  </Pressable>
-                </Link>
-              </View>
-              {/*
-                Separate cards with 8px between them, not one card with
-                hairlines. `Home.dc.html` draws each upcoming shoot as its own
-                `border-radius:12px` surface inside a `gap:8px` column — see
-                `UpcomingRow`.
-              */}
-              <View className="gap-2">
-                {state.upcoming.map((shoot) => (
-                  <UpcomingRow key={shoot.id} shoot={shoot} />
-                ))}
-              </View>
+              {/* AC-3 — and the way to the list, which used to be this route.
+                  `outline` now, not `secondary`: the design gives it a border on
+                  the page colour rather than a raised fill. */}
+              <Button
+                variant="outline"
+                size="cta"
+                className="h-11 justify-center py-0"
+                onPress={() => router.push('/(app)/(tabs)/shoots')}
+              >
+                {/*
+                  `Icon` reads the surrounding TextClassContext, which Button sets
+                  per variant — so the glyph takes the label's colour rather than
+                  being told one, and cannot drift from it.
+                */}
+                <Icon as={CalendarIcon} size={15} strokeWidth={1.7} />
+                <Text className="text-body-sm text-foreground font-medium">{t.viewCalendar}</Text>
+              </Button>
             </View>
-          ) : null}
-        </View>
-      </ScrollView>
+
+            {/*
+              «Наступні зйомки» — new on this screen. Everything after the shoot in
+              the card above, so the two never show the same shoot twice (see
+              `upcomingShoots`, and the prototype bug it does not copy).
+            */}
+            {state.status === 'loaded' && state.upcoming.length > 0 ? (
+              <View className="mt-2.5">
+                <View className="mb-2 flex-row items-baseline justify-between px-0.5">
+                  <SectionLabel label={t.upcomingShootsLabel} />
+                  <Link href="/(app)/(tabs)/shoots" asChild>
+                    <Pressable hitSlop={10} onPress={tapped} role="button">
+                      <Text className="text-label text-foreground font-medium">{t.seeAll}</Text>
+                    </Pressable>
+                  </Link>
+                </View>
+                {/*
+                  Separate cards with 8px between them, not one card with
+                  hairlines. `Home.dc.html` draws each upcoming shoot as its own
+                  `border-radius:12px` surface inside a `gap:8px` column — see
+                  `UpcomingRow`.
+                */}
+                <View className="gap-2">
+                  {state.upcoming.map((shoot) => (
+                    <SwipeToDelete key={shoot.id} onRequestDelete={() => askDelete(shoot)}>
+                      <UpcomingRow shoot={shoot} />
+                    </SwipeToDelete>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+          </View>
+        </ScrollView>
+      </SwipeDismissBoundary>
+      {deleteDialog}
     </View>
+  )
+}
+
+/**
+ * The hero card, wrapped in its swipe gesture.
+ *
+ * A component only so that the shoot is a prop — the deletion handler needs it
+ * non-null, and TypeScript drops the narrowing `state.next !== null` gives the
+ * moment the value is read inside a callback.
+ */
+function HeroCard({
+  shoot,
+  confirmed,
+  onRequestDelete,
+}: {
+  shoot: Shoot
+  confirmed: { done: number; total: number } | null
+  onRequestDelete: (shoot: Shoot) => void
+}) {
+  return (
+    <SwipeToDelete onRequestDelete={() => onRequestDelete(shoot)}>
+      <NextShootCard shoot={shoot} confirmed={confirmed} />
+    </SwipeToDelete>
   )
 }
 

@@ -11,11 +11,13 @@ import { Text } from '../../../src/components/ui/text'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { pluralUk } from '../../../src/features/shoots/home'
-import { listShoots, type Shoot } from '../../../src/features/shoots/api'
+import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { listCrewShoots, type CrewShoot } from '../../../src/features/shoots/crewSchedule'
 import { listCrewNamesForShoots } from '../../../src/features/crew/api'
 import { Avatar } from '../../../src/components/Avatar'
-import { tapped } from '../../../src/lib/haptics'
+import { failed, tapped } from '../../../src/lib/haptics'
+import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
+import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
 import { StatusPill } from '../../../src/components/StatusPill'
 import { Card } from '../../../src/components/ui/card'
 import {
@@ -82,6 +84,13 @@ export default function ShootListScreen() {
   const [state, setState] = useState<State>({ status: 'loading' })
   // AC-4 — the date being filtered to, or null for the whole list.
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  /*
+    Bumped after a swipe-delete. This screen is focused when the row goes, so
+    `useFocusEffect` would not refetch on its own — and the calendar's dots are
+    derived from the same list, so a deleted shoot would otherwise keep its mark
+    on the grid above the row that has already disappeared.
+  */
+  const [reloadKey, setReloadKey] = useState(0)
 
   useFocusEffect(
     useCallback(() => {
@@ -109,8 +118,39 @@ export default function ShootListScreen() {
       return () => {
         active = false
       }
-    }, [])
+    }, [reloadKey])
   )
+
+  /*
+    `US-019`, reached by swiping a row (`SwipeToDelete`). The same hook the home
+    screen and the shoot detail use — AC-2's confirmation is required, and
+    having one implementation of it is why `useDestructiveConfirm` was extracted
+    in the first place.
+
+    **Created rows only.** `US-009`'s crew rows are somebody else's shoot; they
+    are not wrapped, so there is nothing to swipe on them.
+  */
+  const { ask: askDelete, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
+    label: t.deleteShoot,
+    question: t.confirmDeleteShoot,
+    onConfirm: (shoot) => {
+      void (async () => {
+        // No message on failure, for the reasons the home screen's copy of this
+        // handler records: nothing supplies one, and the boolean does not say
+        // why. The row stays where it is, which keeps the screen true.
+        if (!(await deleteShoot(shoot.id))) {
+          failed()
+          return
+        }
+        setState((current) =>
+          current.status === 'loaded'
+            ? { ...current, shoots: current.shoots.filter((row) => row.id !== shoot.id) }
+            : current
+        )
+        setReloadKey((key) => key + 1)
+      })()
+    },
+  })
 
   /*
     The calendar's position and grid, lifted out of `ShootCalendar` on
@@ -129,161 +169,169 @@ export default function ShootListScreen() {
       <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/*
-        The screen's own header (2026-08-30). It carries a meta line under the
-        title and a «Сьогодні» control on the right, neither of which a native
-        header can hold — the same reason the shoot's screens draw theirs.
-      */}
-      <CalendarHeader
-        meta={`${mode === 'month' ? t.months[focus.getMonth()] : t.calModeWeek} · ${
-          inPeriod.length
-        } ${pluralUk(inPeriod.length, t.shootCountForms)}`}
-        onToday={() => {
-          setFocus(new Date())
-          setSelectedDate(null)
-        }}
-      />
+      {/* An open row closes on a tap anywhere but its «Видалити» — see
+          `SwipeDismissBoundary`. The pinned CTA is inside it, so the first tap
+          there dismisses rather than opening the new-shoot screen. */}
+      <SwipeDismissBoundary>
+        {/*
+          The screen's own header (2026-08-30). It carries a meta line under the
+          title and a «Сьогодні» control on the right, neither of which a native
+          header can hold — the same reason the shoot's screens draw theirs.
+        */}
+        <CalendarHeader
+          meta={`${mode === 'month' ? t.months[focus.getMonth()] : t.calModeWeek} · ${
+            inPeriod.length
+          } ${pluralUk(inPeriod.length, t.shootCountForms)}`}
+          onToday={() => {
+            setFocus(new Date())
+            setSelectedDate(null)
+          }}
+        />
 
-      {/*
-        91, from `Calendar.dc.html`'s `padding:0 0 166px` less the 75px bottom
-        bar the navigator now reserves. It clears the pinned CTA below (68px)
-        with the artboard's own breathing room left over.
-      */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 91 }}>
-        <View className="gap-3 px-4 pt-3">
-          {/*
-            The mode switch, now ABOVE the card and drawn by the shared `Tabs`
-            rather than this screen's own segmented control — one control, one
-            implementation, as on the shoot detail and the add-crew screens.
-          */}
-          <Tabs
-            items={[
-              { value: 'month', label: t.calModeMonth },
-              { value: 'week', label: t.calModeWeek },
-            ]}
-            value={mode}
-            onChange={setMode}
-          />
-
-          {/*
-            AC-1 places the calendar first. It is fed the loaded shoots' dates,
-            so during loading and after an error it renders unmarked rather than
-            disappearing — the chrome should not move under the reader.
-
-            US-009 — the calendar marks BOTH kinds. A crew member's commitments
-            are the whole reason they would open this screen, and a calendar that
-            ignored them would show an empty month to someone booked all week.
-          */}
-          <ShootCalendar
-            shootDates={all.map((r) => r.date)}
-            selected={selectedDate}
-            mode={mode}
-            focus={focus}
-            onFocusChange={setFocus}
-            // Tapping the selected date again clears it. The visible control
-            // below is the documented way back (AC-4); this is just the gesture
-            // people try anyway, and it costs nothing to honour.
-            onSelect={(iso) => setSelectedDate((current) => (current === iso ? null : iso))}
-          />
-
-          {/*
-            AC-4's way back to the full list. A full-width bar on `secondary`
-            now, as drawn — it was a small pill floating at the left, which read
-            as a tag rather than as something to dismiss.
-          */}
-          {selectedDate ? (
-            <View className="bg-secondary border-border flex-row items-center gap-2.5 rounded-lg border px-3 py-2.5">
-              <Text className="text-body-sm text-foreground flex-1 font-medium">
-                {`${t.shootsWord} · ${formatDayMonth(selectedDate, t.monthsGenitive)}`}
-              </Text>
-              {/*
-                A bare ✕ (2026-09-03). The artboard draws the glyph alone and
-                puts «Показати всі» in `aria-label` — so the words are still
-                there for a screen reader, which is the only reader that needed
-                them beside a row already headed «Зйомки · 19 вересня».
-              */}
-              <Pressable
-                onPress={() => {
-                  tapped()
-                  setSelectedDate(null)
-                }}
-                hitSlop={12}
-                role="button"
-                accessibilityLabel={t.showAllShoots}
-              >
-                <Text className="text-label text-muted-foreground px-1 font-medium">✕</Text>
-              </Pressable>
-            </View>
-          ) : null}
-
-          {state.status === 'loading' ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" />
-            </View>
-          ) : state.status === 'error' ? (
-            <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
-          ) : shown.length === 0 ? (
-            /*
-              One empty card, three sentences — the handoff collapses what were
-              two separate states here (an account with no shoots at all, and a
-              period or date with none) into one box whose text names the case.
-
-              `US-004` AC-2's «У вас ще немає зйомок» survives as the first of
-              them, so the story's own empty state is still what an empty account
-              sees.
-            */
-            /*
-              Text only since 2026-09-03. It carried an outline «+ Нова зйомка»
-              button, which the artboard's empty card does not — and the pinned
-              CTA sits a few pixels below it, so the card was offering the same
-              action twice.
-            */
-            <Card variant="flat" className="items-center px-4 py-7">
-              <Text className="text-body-sm text-muted-foreground text-center">
-                {all.length === 0
-                  ? t.emptyShoots
-                  : selectedDate
-                    ? t.noShootsOnDay
-                    : mode === 'week'
-                      ? t.emptyWeek
-                      : t.emptyMonth}
-              </Text>
-            </Card>
-          ) : (
-            /*
-              The agenda: shoots grouped under a date heading, each row led by a
-              stripe, then a time column, a hairline, and the body.
-
-              Time-forward rather than name-forward, which is the whole point of
-              this variant — the question a photographer opens this screen with
-              is "what is today", not "who is Марія".
-            */
-            <Agenda
-              groups={groupByDate(shown)}
-              crewNames={state.status === 'loaded' ? state.crewNames : {}}
-              monthsGenitive={t.monthsGenitive}
-              t={t}
+        {/*
+          91, from `Calendar.dc.html`'s `padding:0 0 166px` less the 75px bottom
+          bar the navigator now reserves. It clears the pinned CTA below (68px)
+          with the artboard's own breathing room left over.
+        */}
+        <ScrollView contentContainerStyle={{ paddingBottom: 91 }}>
+          <View className="gap-3 px-4 pt-3">
+            {/*
+              The mode switch, now ABOVE the card and drawn by the shared `Tabs`
+              rather than this screen's own segmented control — one control, one
+              implementation, as on the shoot detail and the add-crew screens.
+            */}
+            <Tabs
+              items={[
+                { value: 'month', label: t.calModeMonth },
+                { value: 'week', label: t.calModeWeek },
+              ]}
+              value={mode}
+              onChange={setMode}
             />
-          )}
+
+            {/*
+              AC-1 places the calendar first. It is fed the loaded shoots' dates,
+              so during loading and after an error it renders unmarked rather than
+              disappearing — the chrome should not move under the reader.
+
+              US-009 — the calendar marks BOTH kinds. A crew member's commitments
+              are the whole reason they would open this screen, and a calendar that
+              ignored them would show an empty month to someone booked all week.
+            */}
+            <ShootCalendar
+              shootDates={all.map((r) => r.date)}
+              selected={selectedDate}
+              mode={mode}
+              focus={focus}
+              onFocusChange={setFocus}
+              // Tapping the selected date again clears it. The visible control
+              // below is the documented way back (AC-4); this is just the gesture
+              // people try anyway, and it costs nothing to honour.
+              onSelect={(iso) => setSelectedDate((current) => (current === iso ? null : iso))}
+            />
+
+            {/*
+              AC-4's way back to the full list. A full-width bar on `secondary`
+              now, as drawn — it was a small pill floating at the left, which read
+              as a tag rather than as something to dismiss.
+            */}
+            {selectedDate ? (
+              <View className="bg-secondary border-border flex-row items-center gap-2.5 rounded-lg border px-3 py-2.5">
+                <Text className="text-body-sm text-foreground flex-1 font-medium">
+                  {`${t.shootsWord} · ${formatDayMonth(selectedDate, t.monthsGenitive)}`}
+                </Text>
+                {/*
+                  A bare ✕ (2026-09-03). The artboard draws the glyph alone and
+                  puts «Показати всі» in `aria-label` — so the words are still
+                  there for a screen reader, which is the only reader that needed
+                  them beside a row already headed «Зйомки · 19 вересня».
+                */}
+                <Pressable
+                  onPress={() => {
+                    tapped()
+                    setSelectedDate(null)
+                  }}
+                  hitSlop={12}
+                  role="button"
+                  accessibilityLabel={t.showAllShoots}
+                >
+                  <Text className="text-label text-muted-foreground px-1 font-medium">✕</Text>
+                </Pressable>
+              </View>
+            ) : null}
+
+            {state.status === 'loading' ? (
+              <View className="items-center py-8">
+                <ActivityIndicator size="large" />
+              </View>
+            ) : state.status === 'error' ? (
+              <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
+            ) : shown.length === 0 ? (
+              /*
+                One empty card, three sentences — the handoff collapses what were
+                two separate states here (an account with no shoots at all, and a
+                period or date with none) into one box whose text names the case.
+
+                `US-004` AC-2's «У вас ще немає зйомок» survives as the first of
+                them, so the story's own empty state is still what an empty account
+                sees.
+              */
+              /*
+                Text only since 2026-09-03. It carried an outline «+ Нова зйомка»
+                button, which the artboard's empty card does not — and the pinned
+                CTA sits a few pixels below it, so the card was offering the same
+                action twice.
+              */
+              <Card variant="flat" className="items-center px-4 py-7">
+                <Text className="text-body-sm text-muted-foreground text-center">
+                  {all.length === 0
+                    ? t.emptyShoots
+                    : selectedDate
+                      ? t.noShootsOnDay
+                      : mode === 'week'
+                        ? t.emptyWeek
+                        : t.emptyMonth}
+                </Text>
+              </Card>
+            ) : (
+              /*
+                The agenda: shoots grouped under a date heading, each row led by a
+                stripe, then a time column, a hairline, and the body.
+
+                Time-forward rather than name-forward, which is the whole point of
+                this variant — the question a photographer opens this screen with
+                is "what is today", not "who is Марія".
+              */
+              <Agenda
+                groups={groupByDate(shown)}
+                crewNames={state.status === 'loaded' ? state.crewNames : {}}
+                monthsGenitive={t.monthsGenitive}
+                onRequestDelete={askDelete}
+                t={t}
+              />
+            )}
+          </View>
+        </ScrollView>
+
+        {/*
+          «+ Нова зйомка», pinned. It sat inline under the calendar card, which
+          put the screen's one action halfway up a scrolling list; the handoff
+          pins it, so it is reachable wherever the reader has scrolled to.
+
+          **No bottom inset any more** (2026-09-04). The artboard puts this block
+          at `bottom:74px` — directly on top of the bar — and the bar owns the safe
+          area now, so the screen's own bottom edge is already clear of the home
+          indicator. Adding `insets.bottom` here would push the CTA 34pt up into
+          the list. `py-2.5` is the artboard's own `padding:10px`.
+        */}
+        <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
+          <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
+            <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
+          </Button>
         </View>
-      </ScrollView>
+      </SwipeDismissBoundary>
 
-      {/*
-        «+ Нова зйомка», pinned. It sat inline under the calendar card, which
-        put the screen's one action halfway up a scrolling list; the handoff
-        pins it, so it is reachable wherever the reader has scrolled to.
-
-        **No bottom inset any more** (2026-09-04). The artboard puts this block
-        at `bottom:74px` — directly on top of the bar — and the bar owns the safe
-        area now, so the screen's own bottom edge is already clear of the home
-        indicator. Adding `insets.bottom` here would push the CTA 34pt up into
-        the list. `py-2.5` is the artboard's own `padding:10px`.
-      */}
-      <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
-        <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
-          <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
-        </Button>
-      </View>
+      {deleteDialog}
     </View>
   )
 }
@@ -450,11 +498,14 @@ function Agenda({
   groups,
   crewNames,
   monthsGenitive,
+  onRequestDelete,
   t,
 }: {
   groups: { date: string; rows: Row[] }[]
   crewNames: Record<string, string[]>
   monthsGenitive: readonly string[]
+  /** Raised by a row's swipe action — the screen's confirmation follows. */
+  onRequestDelete: (shoot: Shoot) => void
   t: ReturnType<typeof useStrings>
 }) {
   return (
@@ -497,13 +548,20 @@ function Agenda({
           <View className="gap-2">
             {group.rows.map((row, index) =>
               row.kind === 'created' ? (
-                <AgendaRow
+                /* Only these swipe. A crew row below is a shoot someone else
+                   created and this user cannot delete — see the screen's
+                   confirmation hook. */
+                <SwipeToDelete
                   key={row.shoot.id}
-                  shoot={row.shoot}
-                  crew={crewNames[row.shoot.id] ?? []}
-                  tooSoon={followsTooSoon(group.rows, index)}
-                  t={t}
-                />
+                  onRequestDelete={() => onRequestDelete(row.shoot)}
+                >
+                  <AgendaRow
+                    shoot={row.shoot}
+                    crew={crewNames[row.shoot.id] ?? []}
+                    tooSoon={followsTooSoon(group.rows, index)}
+                    t={t}
+                  />
+                </SwipeToDelete>
               ) : (
                 <CrewRow
                   key={`crew-${row.entry.shootId}`}

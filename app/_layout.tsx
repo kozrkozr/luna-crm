@@ -3,6 +3,7 @@ import '../src/theme/global.css'
 import { PortalHost } from '@rn-primitives/portal'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BACKGROUND } from '../src/theme/palette'
 
 /**
@@ -36,10 +37,20 @@ import { BACKGROUND } from '../src/theme/palette'
  * near-black frame; app.config.ts keeps `userInterfaceStyle: 'light'` on
  * purpose, since that governs native chrome (keyboard, date pickers) which
  * appears over the white card content, not over the frame.
+ *
+ * **`GestureHandlerRootView` wraps everything** (2026-09-05). The library was
+ * already in the tree — expo-router and react-native-screens both depend on it
+ * — but only as a transitive one, and nothing had ever mounted its root view
+ * because no screen used a gesture of its own. Swipe-to-delete on the two shoot
+ * lists does (`src/components/SwipeToDelete.tsx`), and without this host a
+ * gesture handler on iOS is simply never fed touches: the row does not move and
+ * nothing warns. It is `react-native-gesture-handler` as a direct dependency
+ * now for the same reason — importing a package you did not declare works right
+ * up until the day something else stops depending on it.
  */
 export default function RootLayout() {
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       {/*
         headerShown: false — the route groups `(app)` and `(auth)` are
@@ -66,6 +77,6 @@ export default function RootLayout() {
         "Things that will bite you".
       */}
       <PortalHost />
-    </>
+    </GestureHandlerRootView>
   )
 }
