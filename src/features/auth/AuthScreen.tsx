@@ -21,7 +21,7 @@ import { Icon } from '../../components/ui/icon'
 import { Text } from '../../components/ui/text'
 import { Toast } from '../../components/Toast'
 import { openExternalUrl } from '../../lib/openExternalUrl'
-import { ROLES_UK, uk, type Role } from '../../i18n/uk'
+import { ROLES_UK, roleWithEmoji, uk, type Role } from '../../i18n/uk'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
@@ -733,12 +733,14 @@ function RoleChips({
               role="radio"
               accessibilityState={{ selected: active }}
             >
+              {/* The glyph is on the LABEL only — `option` stays the bare
+                  role in `onChange`, in `active`, and in what is stored. */}
               <Text
                 className={`text-body-sm font-medium ${
                   active ? 'text-primary-foreground' : 'text-foreground/85'
                 }`}
               >
-                {option}
+                {roleWithEmoji(option)}
               </Text>
             </Pressable>
           )

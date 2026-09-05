@@ -10,7 +10,7 @@ import { Textarea } from '../../components/ui/textarea'
 import { FieldLabel } from '../../components/ShootFormFields'
 import { RoleChip } from '../../components/RoleChip'
 import { VisibilityNote } from '../../components/Visibility'
-import { ROLES_UK, uk } from '../../i18n/uk'
+import { ROLES_UK, roleWithEmoji, uk } from '../../i18n/uk'
 import { useStrings } from '../../i18n/LanguageProvider'
 import { succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
@@ -260,10 +260,12 @@ export function ContactForm({
             <View className="gap-2">
               <FieldLabel label={t.crewRoleOnShoot} />
               <View className="flex-row flex-wrap gap-1.5">
+                {/* `label` carries the glyph; `option` stays the bare role in
+                    `active`, in `setRole`, and in what `normalise` stores. */}
                 {[...ROLES_UK, uk.otherRole].map((option) => (
                   <RoleChip
                     key={option}
-                    label={option}
+                    label={roleWithEmoji(option)}
                     active={option === role}
                     onPress={() => setRole(option)}
                   />

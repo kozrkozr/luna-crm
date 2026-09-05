@@ -468,3 +468,9 @@ project needs the same setting** — Authentication → Providers → Email.
 `US-001` defers the list to "the glossary's confirmed roles as the starting list". The glossary
 confirms makeup artist, stylist, gaffer and shoot manager; the gated prototype adds Фотограф and
 fixes the Ukrainian labels. Five roles, in `ROLES_UK` (`src/i18n/uk.ts`).
+
+**Nine since then, not five** — corrected 2026-09-05. The owner has extended the list twice
+(`docs/redesign-log.md`), and `ROLES_UK` now reads Фотограф, Відеограф, Стиліст, Hair стиліст,
+Візажист, Гафер, Модель, Асистент, Продюсер. Every picker also appends «Інша роль», which is not
+a stored role: choosing it reveals a field and stores what is typed. The paragraph above records
+how the list *started*, and was left saying five long after it stopped being true.

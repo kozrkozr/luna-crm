@@ -17,7 +17,7 @@ import { Textarea } from '../../../../../src/components/ui/textarea'
 import { Avatar } from '../../../../../src/components/Avatar'
 import { RoleChip } from '../../../../../src/components/RoleChip'
 import { FieldLabel } from '../../../../../src/components/ShootFormFields'
-import { ROLES_UK, uk } from '../../../../../src/i18n/uk'
+import { ROLES_UK, roleWithEmoji, uk } from '../../../../../src/i18n/uk'
 import { VisibilityNote } from '../../../../../src/components/Visibility'
 import { useStrings } from '../../../../../src/i18n/LanguageProvider'
 import { succeeded, tapped } from '../../../../../src/lib/haptics'
@@ -666,10 +666,12 @@ function NewContactTab({
           they are not the dictionary's to translate. See the note on ROLES_UK.
         */}
         <View className="flex-row flex-wrap gap-1.5">
+          {/* `label` carries the glyph; `option` stays the bare role — it is
+              what `onRole` sets and what reaches `crew_members.role`. */}
           {[...ROLES_UK, uk.otherRole].map((option) => (
             <RoleChip
               key={option}
-              label={option}
+              label={roleWithEmoji(option)}
               active={option === role}
               onPress={() => onRole(option)}
             />

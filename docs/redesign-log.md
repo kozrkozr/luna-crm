@@ -4407,3 +4407,58 @@ exactly one caller, and the repo's own convention is to remove a key that has
 none (see the note at the top of `uk.ts` about the five removed on 2026-08-31).
 `CalendarIcon`'s import goes too. No acceptance suite names the button, checked
 under `tests/`.
+
+## Roles get an emoji, in the pickers only (owner, 2026-09-05)
+
+Each of the nine roles gains a glyph — 📸 Фотограф, 🎥 Відеограф, 👠 Стиліст,
+🧚‍♂️ Hair стиліст, 💄 Візажист, 💡 Гафер, 💃 Модель, 🌟 Асистент, 🎬 Продюсер —
+and «Інша роль», the escape hatch every picker appends, gets 🪄.
+
+### Three decisions, all the owner's, 2026-09-05
+
+| Question | Answer |
+|---|---|
+| Is «Інша роль» a tenth role? | **No.** The list stays at nine; «Інша роль» is the existing free-text escape hatch and only its chip is decorated |
+| «Hair-stylist» or «Hair стиліст»? | **Keep «Hair стиліст».** The string IS the stored value, so renaming would need a migration over `crew_members.role`, `contacts.role` and `users.role` |
+| Where does the glyph show? | **Only where a role is picked** — registration, the profile, the contact form, the add-crew form. Every surface that merely reports a role stays plain |
+
+### Display, never storage
+
+`roleWithEmoji()` is called in **label position and nowhere else** — four call
+sites, all verifiable with one grep. Every picker keeps comparing and storing
+the bare `option`.
+
+That is not a stylistic preference. Storing «📸 Фотограф» would have:
+
+- rewritten every existing row in three tables, or left old rows unmatched;
+- pushed emoji into the link gateway's payloads for both audiences, where
+  `US-026`'s crew list and the «Ваша роль: Гафер» badge read the raw column;
+- broken `ROLES_UK.includes(saved)` at `profile.tsx` and `ContactForm.tsx`,
+  which is how each form decides whether to light a chip or fall back to
+  «Інша роль» — every legacy role would have been classified as "other";
+- and made `role.toLowerCase().includes(term)` in the two contact searches miss
+  a role the user can see.
+
+None of those apply, precisely because nothing is written.
+
+### Not translated
+
+Roles stay Ukrainian in the English UI (open question #23), so there is one list
+and one map, and `ROLE_EMOJI` is deliberately not a dictionary key: an emoji is
+not copy, and `en.ts` would repeat all nine to say nothing different.
+
+`ROLE_EMOJI` is keyed by `Role`, so adding a role without a glyph — or removing
+one and leaving the glyph — is a compile error rather than a gap in a chip. An
+unknown role (anything typed into «Інша роль», or a legacy value) returns
+unchanged rather than gaining a stray leading space.
+
+### Worth knowing
+
+**🧚‍♂️ is a ZWJ sequence** (fairy + ZWJ + male sign + VS16), unlike the other
+eight. It renders on iOS, which is what v1 ships; older Android and some web
+fonts fall back to two glyphs side by side.
+
+No acceptance suite taps a role chip by its label — checked — so the four
+pickers changed without touching a test. The suites that assert on a role
+string (`us007`, `us009`, `us015`, `us023`, `us026`) all read *displayed* text
+or payload values, which this change does not reach.

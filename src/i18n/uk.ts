@@ -1236,3 +1236,77 @@ export const ROLES_UK = [
 ] as const
 
 export type Role = (typeof ROLES_UK)[number]
+
+/**
+ * The glyph shown beside a role **where a role is chosen** (owner, 2026-09-05).
+ *
+ * ── Display only, and that is the whole design ───────────────────────────────
+ *
+ * `crew_members.role` and `contacts.role` store the plain Ukrainian string and
+ * keep storing it. Nothing here is ever written, concatenated into a value, or
+ * compared against one. Storing «📸 Фотограф» would rewrite every existing row,
+ * push emoji into the link gateway's payloads, and make an equality test
+ * against `'Фотограф'` fail without saying why.
+ *
+ * ── Pickers only ────────────────────────────────────────────────────────────
+ *
+ * The owner's call, 2026-09-05: registration, the profile, the contact form and
+ * the add-crew screen show the glyph; every surface that merely *reports* a
+ * role — crew lists, the profile view, and both link audiences — shows the
+ * words alone. A role is decoration while you are choosing it and information
+ * once it is chosen.
+ *
+ * ── Not translated, and not in `Strings` ────────────────────────────────────
+ *
+ * Roles stay Ukrainian in the English UI (open question #23), so there is one
+ * list and one map. This is deliberately not a dictionary key: an emoji is not
+ * copy, and `en.ts` would have to repeat all nine to say nothing different.
+ *
+ * Keyed by `Role`, so removing a role from `ROLES_UK` without removing it here
+ * — or adding one and forgetting the glyph — is a compile error rather than a
+ * blank space in a chip.
+ *
+ * **«Hair стиліст» is a ZWJ sequence** (fairy + ZWJ + male sign + VS16), unlike
+ * the other eight. It renders on iOS, which is what v1 ships; older Android and
+ * some web fonts fall back to two glyphs side by side. Worth knowing before it
+ * is reported as a bug.
+ */
+export const ROLE_EMOJI: Record<Role, string> = {
+  Фотограф: '📸',
+  Відеограф: '🎥',
+  Стиліст: '👠',
+  'Hair стиліст': '🧚‍♂️',
+  Візажист: '💄',
+  Гафер: '💡',
+  Модель: '💃',
+  Асистент: '🌟',
+  Продюсер: '🎬',
+}
+
+/**
+ * «Інша роль» — the escape hatch every picker appends after the nine.
+ *
+ * Separate from `ROLE_EMOJI` because it is **not** a `Role`: choosing it reveals
+ * a text field and stores whatever is typed there, so «Інша роль» itself never
+ * reaches a column. Keeping it out of the record is what preserves that
+ * record's exhaustiveness check over `ROLES_UK`.
+ */
+const OTHER_ROLE_EMOJI = '🪄'
+
+/**
+ * «📸 Фотограф» — a role as a PICKER labels it. One space, always.
+ *
+ * Call this on the label and nowhere else. Every picker keeps comparing and
+ * storing the bare `option`, so the value that reaches `crew_members.role` is
+ * the same string it has always been.
+ *
+ * A role with no glyph comes back unchanged rather than blank-prefixed — which
+ * is not a theoretical case: `crew_members.role` and `contacts.role` can hold
+ * anything typed into «Інша роль», and those values are shown by the same
+ * chips when a saved contact is edited.
+ */
+export function roleWithEmoji(role: string): string {
+  if (role === uk.otherRole) return `${OTHER_ROLE_EMOJI} ${role}`
+  const glyph = ROLE_EMOJI[role as Role]
+  return glyph ? `${glyph} ${role}` : role
+}

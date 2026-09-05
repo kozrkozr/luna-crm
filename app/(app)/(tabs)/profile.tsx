@@ -29,7 +29,7 @@ import { LanguageSwitcher } from '../../../src/components/LanguageSwitcher'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { Toast } from '../../../src/components/Toast'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
-import { ROLES_UK, uk } from '../../../src/i18n/uk'
+import { ROLES_UK, roleWithEmoji, uk } from '../../../src/i18n/uk'
 import { useLanguage, useStrings } from '../../../src/i18n/LanguageProvider'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { failed, selected as tickSelection, succeeded, tapped } from '../../../src/lib/haptics'
@@ -600,12 +600,14 @@ export default function ProfileScreen() {
                     role="radio"
                     accessibilityState={{ selected: active }}
                   >
+                    {/* Label only — `set('role', option)` above stores the
+                        bare role, which is what `ROLES_UK.includes` reads back. */}
                     <Text
                       className={`text-body-sm font-medium ${
                         active ? 'text-primary-foreground' : 'text-foreground/85'
                       }`}
                     >
-                      {option}
+                      {roleWithEmoji(option)}
                     </Text>
                   </Pressable>
                 )
