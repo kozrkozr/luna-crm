@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Pressable, View } from 'react-native'
 import { Stack, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '../../components/ui/button'
+import { FormScrollView } from '../../components/ui/form-scroll-view'
 import { Input } from '../../components/ui/input'
 import { Text } from '../../components/ui/text'
 import { Textarea } from '../../components/ui/textarea'
@@ -412,9 +413,8 @@ export function ShootForm(props: ShootFormMode) {
         </Pressable>
       </View>
 
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 108 }}
-        keyboardShouldPersistTaps="handled"
       >
         <View className="gap-5 p-4">
           {/* ── Клієнт ── */}
@@ -563,7 +563,7 @@ export function ShootForm(props: ShootFormMode) {
 
           {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
         </View>
-      </ScrollView>
+      </FormScrollView>
 
       {/* The sticky CTA, in the design's two states. */}
       <View

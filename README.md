@@ -99,6 +99,16 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
   siblings disagreeing is the signature. The fix is to state the value rather than omit it:
   `ui/input.tsx` and `ui/textarea.tsx` now set `letterSpacing: 0` so there is no absence to fill.
   Anything setting an unusual text style should assume the same about its neighbours.
+- **`automaticallyAdjustKeyboardInsets` makes room; it does not scroll.** The two halves of
+  keyboard avoidance are separate, and only the first is a prop. A single-line field survives on
+  the prop alone because UIKit brings a `UITextField` above the keyboard itself — a `Textarea` is
+  a `UITextView`, which scrolls its own caret *inside itself* and never asks the scroll view
+  around it to move. So «Нотатки» stayed covered on every form while the fields above it worked.
+  `src/components/ui/form-scroll-view.tsx` owns both halves: it sets `contentInset` itself rather
+  than letting iOS do it on its own schedule (a scroll cannot move into range that does not exist
+  yet — `scrollTo` is silently clamped and nothing appears to happen), and it measures the field
+  against the keyboard's real frame to scroll the difference. **The web cannot reproduce any of
+  this**, so it is verified in a simulator with timestamps or not at all.
 - **Never infer "invalid link" from a missing token.** Static export prerenders `/s/[token]`
   without one; deciding invalidity there ships the error page for every link
   (`docs/spikes/S-2-*.md` F-2). Resolve first, then decide.

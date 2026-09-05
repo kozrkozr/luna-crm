@@ -28,6 +28,7 @@ import { requestPasswordReset } from './passwordReset'
 import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
 import { Starfield } from '../../components/Starfield'
+import { FormScrollView } from '../../components/ui/form-scroll-view'
 
 /**
  * `login` and `register` are the two the routes map onto; `forgot` and `sent`
@@ -88,24 +89,16 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
 
   return (
     /*
-      `automaticallyAdjustKeyboardInsets` is what keeps «Соцмережі» — the last
-      field, and the one the keyboard covered — reachable: iOS insets the scroll
-      view by the keyboard's height instead of letting it sit on top, so the
-      focused field can be scrolled to. Without it the bottom of a form this
-      long is unreachable while typing.
-
-      Paired with `keyboardDismissMode="interactive"`, the iOS convention for
-      getting rid of the keyboard: drag down on the content. The default
-      keyboard has no Done key, and `keyboardShouldPersistTaps="handled"` only
-      dismisses on a tap that hits no touchable.
+      `FormScrollView` carries the keyboard behaviour — the inset that keeps
+      «Соцмережі», the last block of this form, reachable while typing. It was
+      written here first and lived here alone until 2026-09-05, when the owner
+      found every other form in the app had the bug it fixes. The reasoning
+      moved to the component with it.
     */
     <View className="bg-background flex-1">
       <Starfield />
-      <ScrollView
+      <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
-        automaticallyAdjustKeyboardInsets
-        keyboardDismissMode="interactive"
-        keyboardShouldPersistTaps="handled"
       >
         <View className="px-4 pb-16">
           {/* The intro and the tabs belong to the two AUTH modes. The recovery
@@ -165,7 +158,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
             </Pressable>
           ) : null}
         </View>
-      </ScrollView>
+      </FormScrollView>
     </View>
   )
 }

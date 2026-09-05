@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Pressable, View } from 'react-native'
 import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
@@ -7,6 +7,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Search from 'lucide-react-native/icons/search'
 import { Button } from '../../../src/components/ui/button'
+import { FormScrollView } from '../../../src/components/ui/form-scroll-view'
 import { Card } from '../../../src/components/ui/card'
 import { Icon } from '../../../src/components/ui/icon'
 import { Input } from '../../../src/components/ui/input'
@@ -137,7 +138,7 @@ export default function ContactsScreen() {
         the navigator reserves. It clears the pinned CTA (68px) with the
         artboard's own breathing room left over.
       */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 103 }} keyboardShouldPersistTaps="handled">
+      <FormScrollView contentContainerStyle={{ paddingBottom: 103 }}>
         <View className="gap-[18px] px-4 pt-3">
           {state.status === 'loading' ? (
             <View className="items-center py-8">
@@ -182,7 +183,7 @@ export default function ContactsScreen() {
             ))
           )}
         </View>
-      </ScrollView>
+      </FormScrollView>
 
       {/*
         «+ Новий контакт», pinned. The artboard puts it at `bottom:74px` — on top

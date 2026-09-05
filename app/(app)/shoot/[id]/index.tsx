@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SectionLabel } from '../../../../src/components/ShootFormFields'
-import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Image, Pressable, View } from 'react-native'
 import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
@@ -19,6 +19,7 @@ import Plus from 'lucide-react-native/icons/plus'
 import Trash from 'lucide-react-native/icons/trash'
 import UserIcon from 'lucide-react-native/icons/user'
 import { Badge } from '../../../../src/components/ui/badge'
+import { FormScrollView } from '../../../../src/components/ui/form-scroll-view'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
 import { Card } from '../../../../src/components/ui/card'
@@ -339,14 +340,13 @@ export default function ShootDetailScreen() {
         onHeight={setHeaderHeight}
       />
 
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={{
           // The measured header height, never a constant — the banner grows it.
           paddingTop: headerHeight,
           // Room for the sticky CTA on the tabs that have one.
           paddingBottom: insets.bottom + 96,
         }}
-        keyboardShouldPersistTaps="handled"
       >
         <View className="gap-3 p-4">
           {tab === 'details' ? (
@@ -412,7 +412,7 @@ export default function ShootDetailScreen() {
             />
           ) : null}
         </View>
-      </ScrollView>
+      </FormScrollView>
 
       {cancelShootDialog}
 

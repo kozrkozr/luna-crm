@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, View } from 'react-native'
+import { ActivityIndicator, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import * as Linking from 'expo-linking'
 import { Button } from '../../src/components/ui/button'
+import { FormScrollView } from '../../src/components/ui/form-scroll-view'
 import { Input } from '../../src/components/ui/input'
 import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
@@ -105,9 +106,8 @@ export default function ResetPasswordScreen() {
   return (
     <View className="bg-background flex-1">
       <Starfield />
-      <ScrollView
+      <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
       >
         <View className="gap-2 p-4 pt-8">
           <Text className="text-title text-foreground font-semibold">{uk.newPasswordTitle}</Text>
@@ -153,7 +153,7 @@ export default function ResetPasswordScreen() {
             </>
           )}
         </View>
-      </ScrollView>
+      </FormScrollView>
     </View>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pressable, ScrollView, TextInput, View } from 'react-native'
+import { Pressable, TextInput, View } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
@@ -7,6 +7,7 @@ import Check from 'lucide-react-native/icons/check'
 import Eye from 'lucide-react-native/icons/eye'
 import EyeOff from 'lucide-react-native/icons/eye-off'
 import { Button } from '../../src/components/ui/button'
+import { FormScrollView } from '../../src/components/ui/form-scroll-view'
 import { Icon } from '../../src/components/ui/icon'
 import { Text } from '../../src/components/ui/text'
 import { SectionLabel } from '../../src/components/ShootFormFields'
@@ -169,9 +170,8 @@ export default function ChangePasswordScreen() {
         </View>
       </View>
 
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 34, gap: 18 }}
-        keyboardShouldPersistTaps="handled"
       >
         {/* ── Поточний пароль ── */}
         <View>
@@ -259,7 +259,7 @@ export default function ChangePasswordScreen() {
             {busy ? t.savingWord : t.updatePassword}
           </Text>
         </Button>
-      </ScrollView>
+      </FormScrollView>
 
       <Toast message={toast} onDone={() => setToast(null)} />
     </View>

@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Pressable, View } from 'react-native'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import Check from 'lucide-react-native/icons/check'
 import { Badge } from '../../../../../src/components/ui/badge'
+import { FormScrollView } from '../../../../../src/components/ui/form-scroll-view'
 import { Button } from '../../../../../src/components/ui/button'
 import { Card } from '../../../../../src/components/ui/card'
 import { Icon } from '../../../../../src/components/ui/icon'
@@ -263,9 +264,8 @@ export default function AddCrewScreen() {
         <View className="w-24" />
       </View>
 
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 108 }}
-        keyboardShouldPersistTaps="handled"
       >
         <View className="gap-3.5 p-4">
           <Tabs
@@ -319,7 +319,7 @@ export default function AddCrewScreen() {
 
           {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
         </View>
-      </ScrollView>
+      </FormScrollView>
 
       {/*
         The sticky CTA, one per tab. Both take the design's two states: `cta`

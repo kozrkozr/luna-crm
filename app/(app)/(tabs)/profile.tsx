@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
+import { ActivityIndicator, Image, Pressable, View } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
@@ -15,6 +15,7 @@ import Send from 'lucide-react-native/icons/send'
 import Smartphone from 'lucide-react-native/icons/smartphone'
 import User from 'lucide-react-native/icons/user'
 import { Button } from '../../../src/components/ui/button'
+import { FormScrollView } from '../../../src/components/ui/form-scroll-view'
 import { Card } from '../../../src/components/ui/card'
 import { Icon } from '../../../src/components/ui/icon'
 import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
@@ -406,9 +407,8 @@ export default function ProfileScreen() {
         less the 75px bar the navigator reserves, and the bar owns the safe area
         now — `insets.bottom` here would add 34pt of dead space above it.
       */}
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
-        keyboardShouldPersistTaps="handled"
       >
         <View className="gap-5 p-4">
           {/* ── Identity ── */}
@@ -773,7 +773,7 @@ export default function ProfileScreen() {
             </Text>
           ) : null}
         </View>
-      </ScrollView>
+      </FormScrollView>
 
       {/*
         The discard confirmation, as a bottom SHEET — the design draws one here,

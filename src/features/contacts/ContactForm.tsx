@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '../../components/ui/button'
+import { FormScrollView } from '../../components/ui/form-scroll-view'
 import { Input } from '../../components/ui/input'
 import { Text } from '../../components/ui/text'
 import { Textarea } from '../../components/ui/textarea'
@@ -196,9 +197,8 @@ export function ContactForm({
         <View className="w-16 shrink-0" />
       </View>
 
-      <ScrollView
+      <FormScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 104 }}
-        keyboardShouldPersistTaps="handled"
       >
         <View className="gap-3.5 p-4">
           {/* ── Тип контакту ── two segments, and fixed once saved. */}
@@ -302,7 +302,7 @@ export function ContactForm({
 
           {failed ? <Text className="text-destructive text-sm">{t.somethingWentWrong}</Text> : null}
         </View>
-      </ScrollView>
+      </FormScrollView>
 
       {/*
         The save, pinned — the artboard's `bottom:0` block, and its three states
