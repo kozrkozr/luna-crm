@@ -89,6 +89,16 @@ npm run db:types              # regenerate src/lib/supabase/database.types.ts
   components — it doubled the web bundle to 4.4 MB. Use
   `import Check from 'lucide-react-native/icons/check'`. That bundle serves the anonymous link
   views, where `docs/spikes/S-2-*.md` F-2 showed slow JS costs correctness, not just patience.
+- **A style one field sets can appear on another that never asked for it.** React Native reuses
+  native views between screens, and a prop a component does not mention is not guaranteed to be
+  reset when a view is recycled — so a `TextInput` that says nothing about `letterSpacing`
+  inherits whatever the last tenant set. The concrete instance: «Зміна пароля» sets
+  `letterSpacing: 2` on its masked field, and the registration form then drew «Вкажіть свою роль»
+  and Telegram's «@username» with 2pt of tracking while Instagram — the same component, identical
+  props — rendered correctly. **Web cannot reproduce it** (no view recycling), and identical
+  siblings disagreeing is the signature. The fix is to state the value rather than omit it:
+  `ui/input.tsx` and `ui/textarea.tsx` now set `letterSpacing: 0` so there is no absence to fill.
+  Anything setting an unusual text style should assume the same about its neighbours.
 - **Never infer "invalid link" from a missing token.** Static export prerenders `/s/[token]`
   without one; deciding invalidity there ships the error page for every link
   (`docs/spikes/S-2-*.md` F-2). Resolve first, then decide.

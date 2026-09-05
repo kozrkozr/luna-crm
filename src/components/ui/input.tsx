@@ -45,6 +45,30 @@ function Input({ className, ...props }: React.ComponentProps<typeof TextInput> &
       // dark, so the keyboard is too. Overridable per field via props.
       keyboardAppearance="dark"
       {...props}
+      /*
+        **`letterSpacing: 0` is stated, not left absent** (owner reported it,
+        2026-09-05).
+
+        The registration form rendered «Вкажіть свою роль» and Telegram's
+        «@username» with ~2pt of tracking while Instagram — the same component
+        with the same props — rendered correctly. Measured off the screenshot:
+        `@nickname` 111px against `@username` 136px, nine characters each, which
+        is 2.1pt per gap.
+
+        2pt is exactly what `app/(app)/password.tsx` sets on a masked field. The
+        two screens share no code, so the value arrived through **Fabric view
+        recycling**: React Native reuses native `TextInput` views across screens,
+        and a prop a component never mentions is not guaranteed to be reset to
+        its default when a view is reused — so a field that says nothing about
+        `letterSpacing` can inherit whatever the last tenant set. It affects some
+        fields and not others because it depends on which views get recycled,
+        which is why identical siblings disagreed.
+
+        Saying `0` costs nothing and makes the prop always present, so there is
+        no absence for a stale value to fill. It sits after `{...props}` so a
+        caller can still override it — `password.tsx` does exactly that.
+      */
+      style={[{ letterSpacing: 0 }, props.style]}
     />
   );
 }

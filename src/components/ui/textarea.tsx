@@ -28,6 +28,10 @@ function Textarea({
       // Dark keyboard — see input.tsx.
       keyboardAppearance="dark"
       {...props}
+      // `letterSpacing: 0` stated rather than left absent — a recycled Fabric view
+      // can otherwise arrive carrying the masked password field's 2pt. Full
+      // reasoning in ui/input.tsx, which does the same.
+      style={[{ letterSpacing: 0 }, props.style]}
     />
   );
 }
