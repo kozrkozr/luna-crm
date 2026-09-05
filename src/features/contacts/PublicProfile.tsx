@@ -7,6 +7,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Send from 'lucide-react-native/icons/send'
 import Smartphone from 'lucide-react-native/icons/smartphone'
+import Trash from 'lucide-react-native/icons/trash'
 import { Card } from '../../components/ui/card'
 import { Icon } from '../../components/ui/icon'
 import { InstagramIcon } from '../../components/ui/instagram-icon'
@@ -355,36 +356,68 @@ export function PublicProfile({
           `useDestructiveConfirm` — a real iOS alert rather than the artboard's
           in-page dialog, the same machinery `US-019` and `US-022` use. R-1's
           answer, applied again.
-        */}
-        {onEdit ? (
-          <Pressable
-            className="border-border active:bg-secondary min-h-12 flex-row items-center justify-center gap-2 rounded-lg border"
-            onPress={() => {
-              tapped()
-              onEdit()
-            }}
-            role="button"
-          >
-            <Icon as={Pencil} size={15} strokeWidth={1.8} className="text-muted-foreground" />
-            <Text className="text-body-sm text-muted-foreground font-medium">
-              {t.editContactTitle}
-            </Text>
-          </Pressable>
-        ) : null}
 
-        {onDelete ? (
-          <Pressable
-            className="border-destructive/40 active:bg-destructive/10 min-h-12 items-center justify-center rounded-lg border"
-            onPress={() => {
-              tapped()
-              onDelete()
-            }}
-            role="button"
-          >
-            <Text className="text-body-sm text-destructive font-medium">
-              {t.deleteContactAction}
-            </Text>
-          </Pressable>
+          ── Drawn as the shoot's two actions are (owner, 2026-09-05) ──────────
+
+          A filled pill taking the width that is left, and a 48pt circle holding
+          a trash glyph and no words — the row `Shoot Detail v3.dc.html` gives
+          «Редагувати зйомку», reused here so the two screens that offer the
+          same pair of actions offer them in the same shape.
+
+          **This is a deliberate departure from `Public Profile.dc.html`**,
+          which draws two stacked outlined pills and keeps edit quiet. The owner
+          chose the shoot screen's arrangement on 2026-09-05, which promotes
+          editing to the primary action here as well. Logged in
+          docs/redesign-log.md; the artboard is the older of the two drawings.
+
+          Tokens are the shoot row's, and the same trap applies: the artboards'
+          `--accent` is this app's `--primary` (see `Badge`'s note and the theme
+          handoff), while `--danger-bg`/`--danger-border`/`--danger-soft` cross
+          unchanged. The press state on the circle is `active:opacity-80`
+          because no `--danger` fill token exists here.
+
+          «Видалити контакт» moves to `accessibilityLabel`: the control has no
+          text now, and this is the only place the words exist before the
+          confirmation the route puts up.
+        */}
+        {onEdit || onDelete ? (
+          <View className="flex-row items-center gap-2.5">
+            {/*
+              `onDelete` without `onEdit` cannot happen — the route sets `onEdit`
+              whenever there is a subject and `onDelete` only when that subject
+              is `deletable`. The pill is `flex-1`, so an edit-only profile still
+              fills the row.
+            */}
+            {onEdit ? (
+              <Pressable
+                className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
+                onPress={() => {
+                  tapped()
+                  onEdit()
+                }}
+                role="button"
+              >
+                <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
+                <Text className="text-body-sm text-primary-foreground font-semibold">
+                  {t.editContactTitle}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {onDelete ? (
+              <Pressable
+                className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
+                onPress={() => {
+                  tapped()
+                  onDelete()
+                }}
+                role="button"
+                accessibilityLabel={t.deleteContactAction}
+              >
+                <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
         </View>
       </ScrollView>

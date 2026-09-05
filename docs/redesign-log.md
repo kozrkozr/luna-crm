@@ -4357,3 +4357,32 @@ waited for «Видалити зйомку» on this screen, which is `deleteSho
 confirm-dialog wording on the two LIST screens. This screen has said «Скасувати
 зйомку» since the v3 rebuild. Both the stale string and the new icon-only shape
 are fixed together. Not run: the local stack is not up.
+
+## The contact profile borrows the shoot's action row (owner, 2026-09-05)
+
+`PublicProfile`'s «Редагувати контакт» and «Видалити контакт» were two stacked
+`rounded-lg` outlined rectangles. They are now the row `Shoot Detail v3.dc.html`
+gives the shoot: a filled pill taking the width that is left, and a 48pt circle
+holding a trash glyph and no words.
+
+**This departs from `Public Profile.dc.html` deliberately.** That artboard draws
+two stacked *pills*, both outlined — edit in `--border` with `--text-soft`,
+delete in `--danger-border` with `--danger` — and keeps edit quiet. The owner
+was shown both and chose the shoot screen's arrangement (2026-09-05), which
+promotes editing to the primary action here too.
+
+So the two screens offering the same pair of actions now offer them in the same
+shape, and the older artboard is the one that is out of step. Worth knowing
+before someone "fixes" this back against `Public Profile.dc.html`.
+
+The tokens and the one departure are the shoot row's, unchanged: the artboards'
+`--accent` is this app's `--primary`, the three `--danger-*` tokens cross as
+they are, and the circle's press state is `active:opacity-80` because no
+`--danger` fill token exists here.
+
+«Видалити контакт» moves to `accessibilityLabel` — the control has no text now.
+No acceptance suite names either control, checked under `tests/`, so nothing
+had to change there. `onDelete` without `onEdit` is unreachable: the route sets
+`onEdit` whenever there is a subject and `onDelete` only when that subject is
+`deletable`, and the pill is `flex-1` so an edit-only profile still fills the
+row.
