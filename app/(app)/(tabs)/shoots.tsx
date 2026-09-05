@@ -9,6 +9,7 @@ import { Icon } from '../../../src/components/ui/icon'
 import { Tabs } from '../../../src/components/ui/tabs'
 import { Text } from '../../../src/components/ui/text'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
+import { roleWithEmoji } from '../../../src/i18n/uk'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { pluralUk } from '../../../src/features/shoots/home'
 import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
@@ -456,7 +457,9 @@ function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
           {entry.locationAddress ?? entry.date}
         </Text>
         <Text className="text-label text-muted-foreground">
-          {entry.locationAddress ? `${entry.date} · ${entry.role}` : entry.role}
+          {entry.locationAddress
+            ? `${entry.date} · ${roleWithEmoji(entry.role)}`
+            : roleWithEmoji(entry.role)}
         </Text>
       </View>
       {/* The badge stays borderless, like every other chip in the system

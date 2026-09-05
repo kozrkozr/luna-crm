@@ -4507,3 +4507,37 @@ Nothing renders that — the badge is `yourRoleTemplate`, «Ваша роль: {
 the older wording survives only in a comment on `gateway.ts`. That assertion was
 failing before this change and is **not** fixed here; it belongs with whatever
 pass reconciles the stale suites (`us030` has the same problem).
+
+## The role glyph, everywhere (owner, 2026-09-05)
+
+Third and last pass. The emoji went pickers → the shoot's team surfaces →
+everywhere, in three steps on one afternoon, each time because the surface left
+out looked broken beside the ones that had it.
+
+The remaining four:
+
+- the contacts directory's second line, «💄 Візажист · 3 зйомки»;
+- a contact's profile card — which is also the reader's own public profile
+  preview, since both render through `PublicProfile`;
+- the saved-contact picker on the add-crew screen;
+- the «Зйомки, де я в команді» rows.
+
+**The lesson is the pass itself.** Each narrowing sounded principled when it was
+made — "a role is decoration while you are choosing it", "address-book surfaces
+report a fact rather than label a team" — and each one produced a screen where
+the same value was drawn two ways. A decoration on a value belongs to the value,
+not to the surface. If a new screen renders a role, it calls `roleWithEmoji`.
+
+The one exception is `t.clientRole` («Клієнт») on the shoot screen: a dictionary
+string naming an audience, not a value from `ROLES_UK`. `roleWithEmoji` would
+return it unchanged anyway.
+
+### The search still finds a role
+
+`matchesQuery` searches `DirectoryPerson.sub`, which now carries the glyph. An
+emoji **prefix** leaves «візажист» a substring, so searching by role works
+exactly as before — checked against `crewPerson` directly rather than assumed.
+`crew/add.tsx`'s own filter reads the raw `person.role` and never saw a change.
+
+Storage is untouched for the third time: `roleWithEmoji` runs at render, and
+`sub` is a formatted display line that nothing reads back.

@@ -1258,11 +1258,15 @@ export type Role = (typeof ROLES_UK)[number]
  * it; the intermediate state is in docs/redesign-log.md, and this comment used
  * to argue for it.
  *
- * **Still not everywhere.** The contacts directory, a contact's own profile and
- * the "shoots I am crew on" rows show the words alone — they are address-book
- * and scheduling surfaces, where the role is a fact about a person rather than
- * a label on a team. Nobody has asked for those, and adding them is one call to
- * this function each.
+ * **Everywhere, as of the third pass.** It went pickers → team surfaces →
+ * everything, in three steps on one afternoon, each time because the surface
+ * left out looked broken beside the ones that had it. The contacts directory,
+ * a contact's profile, the saved-contact picker and the "shoots I am crew on"
+ * rows all carry it now. If a new surface renders a role, it calls this.
+ *
+ * The one thing that does NOT is `t.clientRole` («Клієнт») on the shoot screen:
+ * it is a dictionary string describing an audience, not a value from
+ * `ROLES_UK`, and this function would return it unchanged in any case.
  *
  * ── Not translated, and not in `Strings` ────────────────────────────────────
  *

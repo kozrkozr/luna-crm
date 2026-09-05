@@ -524,7 +524,7 @@ function ContactRow({
         <Text className="text-label text-muted-foreground" numberOfLines={1}>
           {inCrew
             ? t.alreadyInCrewMeta
-            : [person.role, contact].filter(Boolean).join(' · ')}
+            : [roleWithEmoji(person.role), contact].filter(Boolean).join(' · ')}
         </Text>
       </View>
 

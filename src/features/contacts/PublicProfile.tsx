@@ -16,6 +16,7 @@ import { Avatar } from '../../components/Avatar'
 import { SectionLabel } from '../../components/ShootFormFields'
 import { VisibilityNote } from '../../components/Visibility'
 import { useStrings } from '../../i18n/LanguageProvider'
+import { roleWithEmoji } from '../../i18n/uk'
 import { handleLabel, handleUrl } from '../../lib/socialHandle'
 import type { AvatarTint } from '../auth/avatar'
 import { tapped } from '../../lib/haptics'
@@ -235,7 +236,7 @@ export function PublicProfile({
               line is dropped rather than filled with something invented. */}
           {view.role ? (
             <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
-              {view.role}
+              {roleWithEmoji(view.role)}
             </Text>
           ) : null}
         </Card>

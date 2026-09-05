@@ -1,4 +1,5 @@
 import type { Client } from '../clients/api'
+import { roleWithEmoji } from '../../i18n/uk'
 import type { Contact } from './api'
 
 /**
@@ -106,7 +107,19 @@ export function crewPerson(
     id: contact.id,
     kind: 'crew',
     name: contact.name,
-    sub: [contact.role, shootCountLabel(shootCount)].filter(Boolean).join(' · '),
+    /*
+      «💄 Візажист · 3 зйомки». The glyph is added HERE rather than at the row,
+      because `sub` is already a formatted display line and the row renders it
+      verbatim.
+
+      `matchesQuery` searches this string, and that is unchanged in practice: an
+      emoji PREFIX leaves «візажист» a substring, so searching by role still
+      matches. Only the raw `contact.role` is ever stored; nothing reads `sub`
+      back.
+    */
+    sub: [roleWithEmoji(contact.role), shootCountLabel(shootCount)]
+      .filter(Boolean)
+      .join(' · '),
     phone: contact.phone,
     instagram: contact.instagram,
     telegram: contact.telegram,
