@@ -3,7 +3,12 @@ import Check from 'lucide-react-native/icons/check'
 import { Icon } from '../../components/ui/icon'
 import { Text } from '../../components/ui/text'
 import { useStrings } from '../../i18n/LanguageProvider'
-import { passwordRules, passwordScore, type PasswordRuleKey } from './passwordRules'
+import {
+  passwordRules,
+  passwordScore,
+  withMinLength,
+  type PasswordRuleKey,
+} from './passwordRules'
 
 /**
  * Four bars, a word, and the four rules ticking themselves off as they pass.
@@ -105,7 +110,8 @@ export function PasswordStrength({
             <Text
               className={`text-label ${rule.ok ? 'text-foreground' : 'text-muted-foreground'}`}
             >
-              {t[RULE_LABEL[rule.key]]}
+              {/* Only `length` carries `{n}`; the others pass through. */}
+              {withMinLength(t[RULE_LABEL[rule.key]])}
             </Text>
           </View>
         ))}

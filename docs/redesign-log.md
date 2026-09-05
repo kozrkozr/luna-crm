@@ -3968,3 +3968,31 @@ about.
 
 «Забули пароль?» sends the real recovery email (`requestPasswordReset`) rather
 than the artboard's stub toast.
+
+### P-6 resolved: registration rises to 8 (owner, 2026-09-05)
+
+`MIN_PASSWORD_LENGTH` is 8, and it **moved from `register.ts` to
+`passwordRules.ts`** — the pure module, so that registration, recovery and
+«Зміна пароля» read one constant. The inversion matters: `register.ts` imports
+the Supabase client, and a rules module that dragged a network client behind it
+could not be unit-tested the way this one is.
+
+**A-5 is retired, and structurally.** It deleted a placeholder for "promising 8
+characters where the backend takes 6"; the three strings that quote the minimum
+are templates now (`{n}`, rendered by `withMinLength`), so raising it again is
+one edit and no copy can lie about it. `passwordTooShort` and `passwordHint`
+became `…Template` in both dictionaries; the compiler found all six call sites.
+
+**Only the LENGTH is aligned.** «Зміна пароля» also demands mixed case, a digit
+and difference from the current password; registration still asks for length
+alone. So a password can be registered that this screen would refuse to set as a
+*replacement* — much narrower than before, but not nothing. Whether registration
+should adopt the full rule set is a design question for `Auth.dc.html`, and it
+is the same question as **P-7**, which is still open: the two meters still
+differ, and `AuthScreen`'s now scores its first bar at 8 rather than 6.
+
+**The server floor needs pushing separately.** `supabase/config.toml` is the
+LOCAL stack's config; the linked project keeps its own. `supabase config push`
+sends it — but it pushes the whole `[auth]` block, not this line, so anything
+set in the dashboard and not mirrored in the file would be overwritten. The
+alternative is changing the one setting in the dashboard. Not done here.

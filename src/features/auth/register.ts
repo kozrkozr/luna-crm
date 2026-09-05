@@ -1,9 +1,6 @@
 import { supabase } from '../../lib/supabase/client'
 import type { Role } from '../../i18n/uk'
 
-/** Mirrors `minimum_password_length` in supabase/config.toml. */
-export const MIN_PASSWORD_LENGTH = 6
-
 export type RegistrationInput = {
   name: string
   email: string

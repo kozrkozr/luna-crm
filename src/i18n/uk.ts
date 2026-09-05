@@ -259,13 +259,11 @@ export const uk = {
   /** Sent by the real recovery flow, not a stub — `requestPasswordReset`. */
   recoveryEmailSent: 'Лист для відновлення надіслано на пошту',
   /*
-   * The four rules. **They ask for 8 characters where registration takes 6**
-   * (`MIN_PASSWORD_LENGTH`, and `minimum_password_length` in config.toml) —
-   * the mirror of A-5, which deleted a placeholder for promising exactly that.
-   * The promise is kept here because the screen enforces it, but the two
-   * surfaces now disagree. Logged; see src/features/auth/passwordRules.ts.
+   * The four rules. The length one renders `MIN_PASSWORD_LENGTH`, which is 8 on
+   * every surface since the owner resolved P-6 on 2026-09-05 — registration,
+   * recovery and this screen all read the one constant.
    */
-  passwordRuleLength: 'Щонайменше 8 символів',
+  passwordRuleLength: 'Щонайменше {n} символів',
   passwordRuleMixedCase: 'Велика та мала літери',
   passwordRuleDigit: 'Хоча б одна цифра',
   passwordRuleDifferent: 'Відрізняється від поточного',
@@ -764,8 +762,16 @@ export const uk = {
   // for a screen that fails to load its data. Placeholders pending
   // confirmation; see docs/open-questions.md item 1.
   registrationFailed: 'Не вдалося зареєструватися. Спробуйте ще раз.',
-  passwordTooShort: 'Пароль має містити щонайменше 6 символів',
-  passwordHint: 'Щонайменше 6 символів',
+  /*
+   * `{n}` is `MIN_PASSWORD_LENGTH`, never a literal.
+   *
+   * A-5 deleted `registerPasswordPlaceholder` for "promising 8 characters where
+   * the backend takes 6" — a hard-coded number in a string is precisely how a
+   * promise and a rule come apart. These three now render the constant, so
+   * raising it again is one edit and none of the copy can lie.
+   */
+  passwordTooShortTemplate: 'Пароль має містити щонайменше {n} символів',
+  passwordHintTemplate: 'Щонайменше {n} символів',
   emailTaken: 'Акаунт з таким email вже існує',
   somethingWentWrong: 'Щось пішло не так. Спробуйте ще раз.',
   // US-002 AC-2 requires the missing field to be *indicated*, and the prototype

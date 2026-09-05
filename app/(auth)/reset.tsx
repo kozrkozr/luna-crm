@@ -8,7 +8,7 @@ import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
 import { uk } from '../../src/i18n/uk'
 import { failed, succeeded } from '../../src/lib/haptics'
-import { MIN_PASSWORD_LENGTH } from '../../src/features/auth/register'
+import { MIN_PASSWORD_LENGTH, withMinLength } from '../../src/features/auth/passwordRules'
 import { establishRecoverySession, setNewPassword } from '../../src/features/auth/passwordReset'
 import { Starfield } from '../../src/components/Starfield'
 
@@ -67,7 +67,7 @@ export default function ResetPasswordScreen() {
   const submit = async () => {
     if (password.length < MIN_PASSWORD_LENGTH) {
       failed()
-      return setError(uk.passwordTooShort)
+      return setError(withMinLength(uk.passwordTooShortTemplate))
     }
 
     setError(null)
@@ -81,7 +81,7 @@ export default function ResetPasswordScreen() {
         result.reason === 'linkInvalid'
           ? uk.resetLinkInvalid
           : result.reason === 'weakPassword'
-            ? uk.passwordTooShort
+            ? withMinLength(uk.passwordTooShortTemplate)
             : uk.somethingWentWrong
       )
     }
@@ -137,7 +137,7 @@ export default function ResetPasswordScreen() {
                   secureTextEntry
                   autoCapitalize="none"
                   autoComplete="new-password"
-                  placeholder={uk.passwordHint}
+                  placeholder={withMinLength(uk.passwordHintTemplate)}
                 />
                 {error ? <Text className="text-label text-destructive">{error}</Text> : null}
               </View>

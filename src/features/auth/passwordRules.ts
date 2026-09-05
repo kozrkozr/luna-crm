@@ -10,24 +10,36 @@
  * copy lives, and means the English dictionary cannot drift into changing what
  * counts as a valid password.
  *
- * ── This is stricter than registration, and that is worth knowing ───────────
+ * ── The minimum lives here, and every surface reads it ─────────────────────
  *
- * `MIN_PASSWORD_LENGTH` is 6, `supabase/config.toml` sets
- * `minimum_password_length = 6`, and this screen demands 8. So an account can
- * be created with a password this screen would refuse to set.
+ * It was `register.ts`'s, at 6, and this screen wanted the artboard's 8 — so
+ * for one commit an account could be created with a password this screen would
+ * refuse to set. **P-6, resolved by the owner on 2026-09-05: registration rises
+ * to 8.**
  *
- * Stricter on the client than on the server is the safe direction, and the
- * artboard is explicit about the four rules. But it is the mirror of
- * redesign-log **A-5**, which deleted `registerPasswordPlaceholder` in
- * 2026-08-31 precisely because it "promised 8 characters where the backend
- * takes 6". The promise is real this time — the screen enforces it — yet the
- * two surfaces now disagree about what a good password is. **Raised for the
- * owner**, in docs/redesign-log.md: either registration rises to 8 (a change to
- * `US-001`, the config and the existing meter) or this stays a local rule.
+ * The constant moved here rather than the other way round because this module
+ * is pure — `register.ts` pulls in the Supabase client, and a rules module that
+ * dragged a network client behind it could not be unit-tested the way this one
+ * is. Registration, recovery and this screen all import it from here now, so
+ * there is one number.
+ *
+ * That number is also **mirrored in `supabase/config.toml`**
+ * (`minimum_password_length`), which is the server's own floor. The mirror is
+ * the reason the copy below is a template rather than a literal: redesign-log
+ * **A-5** deleted a placeholder for "promising 8 characters where the backend
+ * takes 6", and a hard-coded number in a string is exactly how that happens.
  */
+export const MIN_PASSWORD_LENGTH = 8
 
-/** The artboard's `next.length >= 8`. Deliberately not `MIN_PASSWORD_LENGTH`. */
-export const NEW_PASSWORD_MIN_LENGTH = 8
+/**
+ * Renders `{n}` in the three strings that quote the minimum.
+ *
+ * One function rather than a `.replace` at each of seven call sites — the point
+ * of the template is that the number appears once, and seven copies of the
+ * substitution would be six more places for it to appear.
+ */
+export const withMinLength = (template: string): string =>
+  template.replace('{n}', String(MIN_PASSWORD_LENGTH))
 
 /**
  * Rule identities. The screen maps these to `uk.ts`; nothing here is displayed.
@@ -77,7 +89,7 @@ const BONUS_LENGTH = 12
  */
 export function passwordRules(next: string, current: string): PasswordRule[] {
   return [
-    { key: 'length', ok: next.length >= NEW_PASSWORD_MIN_LENGTH },
+    { key: 'length', ok: next.length >= MIN_PASSWORD_LENGTH },
     { key: 'mixedCase', ok: LOWER.test(next) && UPPER.test(next) },
     { key: 'digit', ok: DIGIT.test(next) },
     { key: 'different', ok: next.length > 0 && next !== current },

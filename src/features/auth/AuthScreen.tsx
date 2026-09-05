@@ -25,7 +25,8 @@ import { ROLES_UK, uk, type Role } from '../../i18n/uk'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
-import { MIN_PASSWORD_LENGTH, register } from './register'
+import { register } from './register'
+import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
 import { Starfield } from '../../components/Starfield'
 
 /**
@@ -415,7 +416,7 @@ function RegisterForm() {
     if (!email.trim()) next.email = uk.emailRequired
     else if (!EMAIL_PATTERN.test(email.trim())) next.email = uk.emailFormat
     if (!password) next.password = uk.passwordInvent
-    else if (password.length < MIN_PASSWORD_LENGTH) next.password = uk.passwordTooShort
+    else if (password.length < MIN_PASSWORD_LENGTH) next.password = withMinLength(uk.passwordTooShortTemplate)
     // AC-2 — registration is blocked without a role, and «Інша роль» is not a
     // role until it has been filled in.
     if (!role) next.role = uk.roleRequired
@@ -450,7 +451,7 @@ function RegisterForm() {
     if (!result.ok) {
       setFormError(
         result.reason === 'weakPassword'
-          ? uk.passwordTooShort
+          ? withMinLength(uk.passwordTooShortTemplate)
           : result.reason === 'emailTaken'
             ? uk.emailTaken
             : uk.registrationFailed
@@ -515,7 +516,7 @@ function RegisterForm() {
             setErrors((e) => ({ ...e, password: undefined }))
           }}
           autoComplete="new-password"
-          placeholder={uk.passwordHint}
+          placeholder={withMinLength(uk.passwordHintTemplate)}
         />
         <PasswordStrength password={password} />
         <FieldError message={errors.password ?? null} />
