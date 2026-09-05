@@ -1,6 +1,11 @@
 import { supabase } from '../../lib/supabase/client'
 import { isValidReferenceLink } from '../references/api'
+import { shootStatus } from './status'
 
+/**
+ * `US-020`'s two values. **Derived, never stored** since 2026-09-04 — see
+ * `./status.ts`, which is the only thing that produces one.
+ */
 export type ShootStatus = 'new' | 'finished'
 
 export type Shoot = {
@@ -31,6 +36,12 @@ export type Shoot = {
    */
   startTime: string | null
   endTime: string | null
+  /**
+   * Computed from `date` and `endTime` on the way out of `toShoot`, not read
+   * from a column — the `shoots.status` column and its enum were dropped in
+   * `20260904160000_derive_shoot_status.sql`. Kept as a field so that every
+   * screen displaying a status still reads `shoot.status`.
+   */
   status: ShootStatus
   /**
    * `20260903120000` — the venue's name («Студія KULT»), which `locationAddress`
@@ -106,7 +117,7 @@ export type UpdateShootInput = {
  * subject to the same RLS as a direct read of `clients`.
  */
 const SHOOT_COLUMNS =
-  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, status, location_name, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, raw_files_url, finished_photos_url'
 
 export type CreateShootInput = {
   /**
@@ -223,7 +234,6 @@ type ShootRow = {
   date: string
   start_time: string | null
   end_time: string | null
-  status: string
   location_name: string | null
   location_address: string | null
   location_note: string | null
@@ -259,7 +269,9 @@ function toShoot(row: ShootRow): Shoot {
     // Trimmed here so no screen has to know the column's precision.
     startTime: row.start_time ? row.start_time.slice(0, 5) : null,
     endTime: row.end_time ? row.end_time.slice(0, 5) : null,
-    status: row.status as ShootStatus,
+    // Derived here, once, so no screen has to remember to call `shootStatus`
+    // and no two screens can disagree about the same shoot (`./status.ts`).
+    status: shootStatus(row.date, row.end_time ? row.end_time.slice(0, 5) : null),
     locationName: row.location_name,
     locationAddress: row.location_address,
     locationNote: row.location_note,
@@ -291,19 +303,12 @@ export async function deleteShoot(id: string): Promise<boolean> {
   return !error && data === true
 }
 
-/**
- * US-020 AC-1 — mark a shoot Finished, or back to New.
- *
- * The parameter is `ShootStatus`, which is the union of exactly the two values
- * the enum column allows. That is AC-2's requirement — "no way to reach any
- * other status value, intentionally or by mistake" — held at three levels: the
- * screen offers a toggle rather than a picker, this signature admits nothing
- * else, and `shoot_status` rejects anything else in the database.
+/*
+ * `setShootStatus` was here until 2026-09-04. It had had no caller since the
+ * New Shoot / Edit Shoot merge removed the «Статус» segment on 2026-09-03, and
+ * with the status derived (`./status.ts`) there is nothing left for it to
+ * write — the column it wrote is dropped.
  */
-export async function setShootStatus(id: string, status: ShootStatus): Promise<boolean> {
-  const { error } = await supabase.from('shoots').update({ status }).eq('id', id)
-  return !error
-}
 
 /**
  * US-018 AC-1 — save the edited date and location.

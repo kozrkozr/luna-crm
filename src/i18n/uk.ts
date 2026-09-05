@@ -447,8 +447,15 @@ export const uk = {
   back: '← Назад',
   /* `Calendar.dc.html`'s own words (owner, 2026-09-03), replacing «Нова» /
      «Закінчена». The ENUM is still `new` / `finished` — CLAUDE.md rule 5 keeps
-     identifiers on the glossary; only what the reader sees changed. */
-  statusNew: 'Заплановано',
+     identifiers on the glossary; only what the reader sees changed.
+
+     **Both agree with «зйомка» — feminine** (owner, 2026-09-04). `statusNew`
+     was «Заплановано», the impersonal form, beside a feminine «Завершена»;
+     the pair now reads «Запланована» / «Завершена». `Home.dc.html` is
+     inconsistent about this on its own — its upcoming rows say «Запланована»
+     and its next-shoot meta line says «Заплановано» — and the owner settled
+     it on the feminine. One string serves both places. */
+  statusNew: 'Запланована',
   statusFinished: 'Завершена',
   // US-020 — the toggle's label names the status it moves TO, not the one the
   // shoot is in. Verbatim from the prototype, nested guillemets included.
@@ -456,7 +463,7 @@ export const uk = {
      `statusNew` / `statusFinished`. Kept in step with them; candidates for
      removal. */
   markFinished: 'Позначити як «Завершена»',
-  markNew: 'Позначити як «Заплановано»',
+  markNew: 'Позначити як «Запланована»',
   // US-019, verbatim from the prototype.
   deleteShoot: 'Видалити зйомку',
   confirmDeleteShoot: 'Видалити цю зйомку? Це незворотньо.',

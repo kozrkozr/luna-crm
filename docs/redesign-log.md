@@ -3439,6 +3439,73 @@ are `rounded-xl`, Tailwind's stock 12px. What it reaches is `rounded-lg`/`md`/
 card radius it made all seventy 4px rounder and no card more correct. The ladder
 is now 8 / 6 / 4 against the artboards' 8 / 10 / 12 / 999.
 
+## 2026-09-04 — A shoot's status becomes derived (`US-020`)
+
+**Owner:** "shoot is «Завершена» if current day > shoot day, if no — «Запланована»".
+Chosen from three options; the two rejected were a derived default with a manual
+override, and re-homing the manual control.
+
+### What was actually broken
+
+The status had been **unreachable since 2026-09-03**. The «Статус» segment went
+with the New Shoot / Edit Shoot merge, `setShootStatus` lost its last caller,
+and the column sat at its `'new'` default for every row in existence. Nothing in
+the app could produce a «Завершена» shoot — the red stripe and red badge added
+earlier the same day were dead code. That is what this fixes.
+
+### The rule
+
+`src/features/shoots/status.ts`, applied once in `toShoot` so no screen derives
+its own and no two screens can disagree:
+
+```
+finished  ⟺  now > date + end_time        (end_time null → end of that day)
+```
+
+Sharper than the owner's literal wording on purpose: `US-030` made `end_time`
+required, so a shoot that ran 09:00–12:00 does not stay «Запланована» until
+midnight. Rows predating `US-030` have no `end_time` and fall back to the plain
+day rule as stated. All local wall-clock, like every other date helper here.
+
+Ten boundary cases checked by hand, including both sides of an end time, the
+null-`end_time` fallback, and 31 December → 1 January.
+
+### Cost, stated plainly
+
+**A cancelled shoot, or one that never happened, reads «Завершена» once its date
+passes.** The model cannot tell "done" from "gone", and there is no longer any
+way to say so. `US-019`'s delete is what a mistake uses. A shoot finished early
+stays «Запланована» until its end time.
+
+### `US-020` AC-1 is retired and owes the discovery repo an amendment
+
+> "the creator changes its status to Finished … **and can be changed back to New
+> the same way**"
+
+There is no control and no column behind one. `docs/product/` is read-only here
+(CLAUDE.md), so the debt is recorded in `status.ts`, in the migration, in the
+rewritten suite, and here. **AC-2 survives and is now structural** — "no way to
+reach any other status value" holds because there is no way to reach any value.
+
+### Changed
+
+- `src/features/shoots/status.ts` — new, the only thing that produces a status.
+- `api.ts` — `status` dropped from `SHOOT_COLUMNS` and `ShootRow`; derived in
+  `toShoot`; `setShootStatus` deleted. `Shoot.status` stays a field, so every
+  display site (`StatusPill`, `STRIPE`, the home meta line) is untouched.
+- `20260904160000_derive_shoot_status.sql` — drops the column and the
+  `shoot_status` enum.
+- `us020-check.mjs` — rewritten to assert the rule (a past shoot reads
+  «Завершена», a future one «Запланована») instead of a control that no longer
+  exists.
+
+The link gateway never selected `status` and no link payload has ever carried
+one, so no crew member or client sees a status and `ADR-013` is not involved.
+
+**Unrun.** The migration has not been applied and the suite cannot execute — its
+seed inserts `client_name`/`client_contact`, dropped on 2026-08-29, which is
+true of **every** suite in that directory and predates this change.
+
 ### The screen background's stars (same day)
 
 **What the design has and the app did not.** Every artboard puts
