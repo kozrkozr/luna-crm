@@ -146,6 +146,17 @@ type ShootRow = {
    */
   notes: string | null
   /**
+   * The shoot's note FOR THE CLIENT (`20260905160000`). The mirror image of
+   * `notes` above, and the first column in this file that is selected for the
+   * client and withheld from the crew rather than the other way round.
+   *
+   * **Selected in `clientPayload` and nowhere else** (owner, 2026-09-05). The
+   * crew audience does not get it — narrower than the design proves, and the
+   * direction that stays reversible: one line adds it to `crewPayload`, nothing
+   * takes it back out of a payload that has shipped.
+   */
+  client_notes: string | null
+  /**
    * `20260903120000`. **On the link surface since 2026-09-03** (owner): the
    * artboard puts the venue above the address, and a reader who has never been
    * there needs the name more than the creator does.
@@ -495,9 +506,16 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       from a client's response entirely. The field is selected in `crewPayload`
       and nowhere else. Adding it to this list is the one edit that breaks
       `ADR-013` and CLAUDE.md rule 2.
+
+      **`client_notes` is the opposite case and is selected HERE and nowhere
+      else** (owner, 2026-09-05, migration `20260905160000`). Two columns whose
+      names differ by a prefix, going to two different audiences, one line
+      apart: `notes` is the crew's and must never appear below, `client_notes`
+      is the client's and must never appear in `crewPayload`'s select. Read the
+      whole word before editing either list.
     */
     .select(
-      'id, date, start_time, end_time, creator_id, location_name, location_address, location_note, location_attachment, raw_files_url, finished_photos_url, clients(name, instagram)'
+      'id, date, start_time, end_time, creator_id, location_name, location_address, location_note, location_attachment, client_notes, raw_files_url, finished_photos_url, clients(name, instagram)'
     )
     .eq('id', shootId)
     .is('deleted_at', null)
@@ -567,6 +585,18 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       // the studio needs the same directions a crew member does.
       locationNote: row.location_note,
       locationAttachmentUrl: await signed(supabase, row.location_attachment),
+      /*
+        The client's own note. Not on `CrewLinkPayload` — see the SELECT above.
+
+        Sent as null rather than omitted when empty: `api.ts` trims a blank
+        field to null before it is stored, so the column holds no empty strings
+        and the screen has one absent case to test. That is the same shape
+        `locationNote` has carried since it existed, and it is NOT the treatment
+        `US-026` demands of the crew note — "not even an empty one" applies to a
+        field a client must never learn the existence of, where this one is
+        addressed to them.
+      */
+      clientNotes: row.client_notes,
     },
     // US-024 — an external link the creator pasted, or null for the «В розробці»
     // placeholder. AC-3's fallback is made here rather than on the screen: the

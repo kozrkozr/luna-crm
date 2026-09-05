@@ -415,6 +415,38 @@ server-rendered first paint that S-2 F-2 exists to protect.
 - **Raised by:** reading `dist/` before a first deploy
 - **Blocks:** nothing now; a decision before the first public deploy.
 
+### 27. Does a crew member see «Нотатки для клієнта»?
+
+`shoots.client_notes` (migration `20260905160000`) is selected for the client audience and for
+nobody else — the owner's answer on 2026-09-05, taken as the reversible direction rather than as a
+settled rule.
+
+The design only ever proves the client half. `Shoot Detail v3.dc.html` draws the card outside its
+`showPrivate` gate, which establishes that the client sees it and says nothing about crew; the
+crew link view in `Shoot Link Preview.dc.html` was drawn before the field existed.
+
+The case for crew seeing it is real and unargued either way: a stylist reading the same "bring two
+or three outfits" the client got is useful, and the note is not private in the way
+`crew_members.note` is. The case against is only that nobody asked for it.
+
+**Adding it is one line** — `client_notes` in `crewPayload`'s SELECT, plus the field on
+`CrewLinkPayload` and a branch on the link screen. Removing it from a payload that has already
+shipped is not one line, which is why it starts narrow.
+
+- **Raised by:** building «Нотатки для клієнта», 2026-09-05
+- **Blocks:** nothing. `US-026` needs amending regardless, and the answer belongs in that amendment.
+
+### 28. The confirmation copy for removing an optional form section
+
+«Прибрати «{section}»? Введене буде стерто.» is written in `src/i18n/uk.ts` and appears nowhere in
+any artboard. The owner asked for a confirmation on 2026-09-05, after the designs were drawn — both
+of them clear the section on the tap with no dialog — so there is no drawn copy to take.
+
+The English is a translation of that invented Ukrainian, which is the weaker half again.
+
+- **Raised by:** implementing the owner's 2026-09-05 answer
+- **Blocks:** nothing; the dialog works. It wants the owner's words before v1.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

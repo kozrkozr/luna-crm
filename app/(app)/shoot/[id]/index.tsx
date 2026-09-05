@@ -601,7 +601,8 @@ function DetailsTab({
       <PaymentCard shoot={shoot} />
 
       {/*
-        The «Нотатки» card, restored 2026-08-30.
+        The «Нотатки для команди» card, restored 2026-08-30 and renamed
+        2026-09-05.
 
         It was the handoff's very first item and went unbuilt twice for want of a
         column — redesign-log S-1, then H-1. The owner added
@@ -617,11 +618,34 @@ function DetailsTab({
         <Card variant="flat" className="gap-2.5">
           <View className="flex-row items-center gap-2">
             <View className="flex-1">
-              <SectionLabel label={t.notesSection} />
+              <SectionLabel label={t.teamNotesSection} />
             </View>
             <Badge variant="outline" label={t.clientCannotSee} />
           </View>
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.notes}</Text>
+        </Card>
+      ) : null}
+
+      {/*
+        The «Нотатки для клієнта» card (owner, 2026-09-05, migration
+        `20260905160000`).
+
+        **The one card on this screen that the client also sees**, which is why
+        it carries no badge and why `Shoot Detail v3.dc.html` draws it outside
+        the `showPrivate` gate that hides «Оплата» and the crew note from its
+        client-view preview. The link view renders the same text under a
+        different heading — «Нотатки від організатора», which is what the crew
+        note is called there too, because «Нотатки для клієнта» names an audience
+        the reader already knows they are.
+
+        Hidden when empty, unlike the payment card above it. That is not an
+        inconsistency to tidy: a note has nothing to say when it is empty, where
+        «0 ₴» is a fact about the shoot.
+      */}
+      {shoot.clientNotes ? (
+        <Card variant="flat" className="gap-2.5">
+          <SectionLabel label={t.clientNotesSection} />
+          <Text className="text-body-sm text-foreground/90 leading-5">{shoot.clientNotes}</Text>
         </Card>
       ) : null}
 

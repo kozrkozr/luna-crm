@@ -4149,3 +4149,115 @@ With the row gone, only one surface shows it and there is nothing to disagree.
 follows from taking the artboard literally — it gates the card on the viewer,
 not on having a figure — and it is the owner's choice. It is a visible change to
 every existing shoot, not only to new ones.
+
+## Optional sections, and a note the client reads (owner, 2026-09-05)
+
+`New Shoot.dc.html` and the edit form inside `Shoot Detail v3.dc.html` changed
+together. Three things:
+
+1. «Оплата» and «Нотатки» stopped being permanent parts of the form. They are
+   added from dashed `+` pills at its foot and removed by an `×` in their own
+   heading.
+2. «Нотатки» became **«Нотатки для команди»**, keeping its «Клієнт не бачить»
+   badge and taking a new placeholder.
+3. A third section appeared: **«Нотатки для клієнта»** — migration
+   `20260905160000_shoot_client_notes.sql`, and the first shoot column ever
+   added *for* a link audience rather than away from one.
+
+**No story covers any of it.** `US-002`, `US-018` and `US-026` all need
+amending — the third most of all, since it is the story that defines what a
+client's payload may contain.
+
+### The owner's four answers, 2026-09-05
+
+| Question | Answer |
+|---|---|
+| Does the CREW see «Нотатки для клієнта»? | **No — client only.** Narrower than the design proves, and the reversible direction |
+| What heads the card on the link page? | **«Нотатки від організатора»**, the same heading the crew note carries there |
+| `×` clears a section that has content? | **Ask first.** The artboards clear outright |
+| The «Оплата» card on an unpriced shoot? | **Still «0 ₴»**, unchanged from earlier that day |
+
+### One rule where the artboards have two
+
+`New Shoot.dc.html` holds three explicit booleans and starts them all false.
+The edit form derives openness from whether the field is filled and ORs in an
+`optAdded` override, so a shoot that already has a price opens with «Оплата»
+showing. **The second subsumes the first**: on a blank create form nothing is
+filled, so `filled || added` closes every section by itself. `openSections` in
+`ShootForm.tsx` is that one rule, and both screens use it.
+
+It is only correct because `×` **clears** the section as well as hiding it. Were
+a value left behind, `filled` would reopen the section the reader had just
+closed — and a form that saves a field it does not show is the worse half of
+that bargain. So the two halves are one function, `clearSection`, and neither is
+callable without the other.
+
+### The one departure from the artboards
+
+**`×` asks before clearing a section that holds something.** Both artboards
+clear on the tap. On the create form that costs a sentence someone typed a
+moment ago; on the edit form it silently deletes a price or a note that was
+already saved, and the next «Зберегти» commits the deletion. An empty section
+still goes without a dialog — there is nothing to lose and the prompt would be
+noise.
+
+> **The dialog's copy is not from any artboard.** «Прибрати «{section}»? Введене
+> буде стерто.» was written here to cover a behaviour chosen after the design
+> was drawn. It needs the owner's sign-off; it is not confirmed copy, and it is
+> flagged as such in `uk.ts` beside the key.
+
+### Two notes, one prefix apart, opposite audiences
+
+This is the part most likely to break later, so it is written down in four
+places — the migration, both SELECT lists, and here:
+
+| Column | Audience | Selected in |
+|---|---|---|
+| `shoots.notes` | crew only | `crewPayload`, and no other query |
+| `shoots.client_notes` | **client only** | `clientPayload`, and no other query |
+
+Every shoot column added since `ADR-013` had been introduced *away* from the
+link surface — `notes` (`20260830160000`) and `price`/`prepayment`
+(`20260905140000`) were each written so the gateway's explicit column lists
+reached them for nobody. This is the first added deliberately **for** an
+audience, so rule 2 had to be stated in the direction it is now being used: the
+danger is no longer only "a column reaching the client", it is also "the wrong
+one of two near-identical columns reaching either".
+
+`tests/acceptance/client-notes-check.mjs` is the guard. Fifteen assertions on
+one shoot through two tokens, asserting the contrast rather than an absence —
+`us026-check.mjs`'s method, borrowed for the same reason it uses it.
+
+**`us026-check.mjs` needed no change.** Its «no notes LABEL» assertion looked
+like it would fail on the new card, but it runs on the crew MEMBER's detail
+screen, not on the shoot view, and that screen gained nothing.
+
+### Three smaller decisions
+
+**`notesSection` was not renamed.** It reads «Нотатки» in three places — the
+shoot form, `ContactForm` and `PublicProfile` — and only the first became
+«Нотатки для команди». The other two are a crew member's *own* note, a different
+field with a different audience (`ADR-013`). `teamNotesSection` is a new key.
+
+**The badge came back, and the box went.** «Клієнт не бачить» was a
+`VisibilityNote` box under the field from 2026-09-03; the new artboard draws it
+as a badge beside the heading again. The box is the better shape for a sentence
+and is given up because the heading row now also carries an `×` — a box below
+the label, a badge above it and an `×` beside both is three affordances
+competing for one small space. `VisibilityNote` keeps its three other callers.
+
+**«Нотатки для клієнта» is headed differently on the link page.** The app names
+the audience because the creator is choosing one; on the link the reader *is*
+that audience, and a heading telling them so says nothing. It also puts both
+link audiences' notes under one name — which is what they are, a note from the
+person running the shoot.
+
+### Consequence worth knowing
+
+**The detail screen and the edit form now disagree about an unpriced shoot.**
+The card shows «0 ₴ · Без передплати» on every shoot, but opening that same
+shoot in the editor shows no «Оплата» section — you tap `+ Оплата` to reach a
+figure the previous screen just displayed. Both halves are the owner's choice,
+taken a few hours apart. Hiding the card when `price` and `prepayment` are both
+null closes the seam whenever that reads badly: one condition, no migration,
+which is exactly what the nullable columns were for.

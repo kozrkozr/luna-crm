@@ -505,6 +505,34 @@ export default function LinkView() {
             </View>
           ) : null}
 
+          {/*
+            The same section for the CLIENT audience, from a different column.
+
+            `shoots.client_notes` is selected in `clientPayload` and in no other
+            query (owner, 2026-09-05), so this is the exact mirror of the block
+            above: `!isCrew` is what satisfies TypeScript, and the SELECT is
+            what decides who receives it.
+
+            **Headed «Нотатки від організатора», not «Нотатки для клієнта».**
+            The app calls it the latter because the creator is choosing an
+            audience; here the reader IS that audience, and a heading telling
+            them so says nothing. It also puts the two notes under one name
+            across the two link audiences, which is what they are — a note from
+            the person running the shoot.
+
+            No «Клієнт не бачить» badge, for the obvious reason.
+          */}
+          {!isCrew && payload.shoot.clientNotes ? (
+            <View className="gap-2">
+              <SectionLabel label={uk.organizerNotes} />
+              <Card variant="flat">
+                <Text className="text-body-sm text-foreground/90 leading-6">
+                  {payload.shoot.clientNotes}
+                </Text>
+              </Card>
+            </View>
+          ) : null}
+
           {/* `US-024` / `US-025` — the client's two file links. The crew payload
               carries none, which is why this is inside the client branch. */}
           {!isCrew && (payload.rawFilesUrl || payload.finishedPhotosUrl) ? (

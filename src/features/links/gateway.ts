@@ -113,6 +113,16 @@ export type ClientLinkPayload = {
     locationNote: string | null
     locationAttachmentUrl: string | null
     /* **No `notes` key.** See `CrewLinkPayload` and `US-026`. */
+    /**
+     * `20260905160000` — the shoot's note written FOR the client.
+     *
+     * **On this payload and never on `CrewLinkPayload`** (owner, 2026-09-05),
+     * which is the reverse of the rule one line above and the reason the two
+     * payload types are written out separately instead of one being derived
+     * from the other. Each declares what its own audience receives, so neither
+     * can inherit a field the other gains.
+     */
+    clientNotes: string | null
   }
   organizer: LinkOrganizer | null
   /**
