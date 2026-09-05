@@ -120,7 +120,6 @@ export default function ContactProfileScreen() {
               // repeat.
               role: '',
               phone: client.phone,
-              email: null,
               instagram: client.instagram,
               telegram: client.telegram,
               avatarUri: null,
@@ -158,7 +157,6 @@ export default function ContactProfileScreen() {
               name: contact.name,
               role: contact.role,
               phone: contact.phone,
-              email: contact.email,
               instagram: contact.instagram,
               telegram: contact.telegram,
               avatarUri: null,
@@ -178,7 +176,6 @@ export default function ContactProfileScreen() {
             name: params.name,
             role: params.role ?? '',
             phone: params.phone ?? null,
-            email: null,
             instagram: params.instagram ?? null,
             telegram: params.telegram ?? null,
             avatarUri: null,

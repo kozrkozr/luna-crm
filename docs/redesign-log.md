@@ -3709,3 +3709,42 @@ that look wrong on inspection, not yet fixed:
 
 None has been verified on screen. A proper pass wants each call site's actual
 surface checked, not a global replace.
+
+---
+
+## «Публічний профіль» — the email row is gone (owner, 2026-09-05)
+
+`src/features/contacts/PublicProfile.tsx`, `app/(app)/public-profile.tsx`,
+`app/(app)/contact/[id]/index.tsx`.
+
+**Reverses a decision recorded above**, in the 2026-09-04 entry: "No email row
+for a contact … The account holder sees their own, where the reader and the
+subject are the same person." The `self` preview therefore showed an email row,
+with the artboard's «Email та налаштування акаунту приховані від інших»
+underneath it.
+
+The owner opened the screen and read those two things as a contradiction, which
+they are. The screen's subline promises «Так вас бачать інші учасники зйомок»,
+and a preview that adds a field the audience never receives is not a preview of
+anything — the "discloses nothing to yourself" argument is true and beside the
+point. `PublicProfileView.email` had no reader left afterwards and is deleted
+rather than kept as a prop nobody uses; `users.email` is still on `/profile`,
+which is a screen about the account rather than about what others see.
+
+The note now does the job the artboard wrote it for: it explains why there is no
+email row, which it could not do while sitting under one.
+
+### A second defect, found in the same file
+
+The note was **not gated on the reader** — it rendered under any profile with at
+least one contact row. Opening a crew member's «Профіль учасника» explained the
+privacy of an email that is not theirs and of account settings they do not have.
+It is `self` only now. The other two readers get no note, because no copy exists
+for them and none was invented (rule 1).
+
+### Consequence worth knowing
+
+The «Контакти» card is dropped when empty, and the note goes with it. An account
+with no phone and no handles now previews as name and role alone — correct, since
+that is all a crew member would see, but it means the reassurance about the email
+is absent exactly when the card is.

@@ -19,10 +19,13 @@ import { Starfield } from '../../src/components/Starfield'
  * owns `/profile`, and a `profile/` directory beside it is the one arrangement
  * Expo Router resolves ambiguously.
  *
- * **`users.email` is deliberately passed.** This is the one reader who is also
- * the subject, so showing their own login discloses nothing — and the note under
- * the card says others do not see it. `PublicProfile` drops the row for a
- * contact.
+ * **`users.email` is deliberately NOT passed** (owner, 2026-09-05). It used to
+ * be, on the argument that this reader is also the subject and so discloses
+ * nothing to themselves. But the screen says «Так вас бачать інші учасники
+ * зйомок», and a preview carrying a field the audience never receives is not a
+ * preview. The email lives on `/profile`, which is about the account rather
+ * than about what others see; the note under the card here explains its
+ * absence, which is what the artboard wrote it for.
  */
 export default function PublicProfileScreen() {
   const t = useStrings()
@@ -68,7 +71,6 @@ export default function PublicProfileScreen() {
     name: state.profile.name,
     role: state.profile.role,
     phone: state.profile.phone,
-    email: state.profile.email,
     instagram: state.profile.socialHandle,
     telegram: state.profile.telegram,
     avatarUri,

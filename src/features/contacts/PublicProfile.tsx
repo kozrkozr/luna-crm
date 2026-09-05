@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import type { LucideIcon } from 'lucide-react-native'
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
-import Mail from 'lucide-react-native/icons/mail'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Send from 'lucide-react-native/icons/send'
 import Smartphone from 'lucide-react-native/icons/smartphone'
@@ -46,16 +45,24 @@ import { Starfield } from '../../components/Starfield'
  * **No «KULT Studio».** The role line is the role. There is no studio column
  * anywhere — the same gap as P-3 on the profile and L-4 on the link view.
  *
- * **No email row.** Not an omission: the artboard says «Email та налаштування
- * акаунту приховані від інших» and this screen exists to be what others see.
- * `users.email` is the login credential and the crew-matching key; it is shown
- * on the account holder's own profile and nowhere else.
+ * **No email row, for any reader.** Not an omission: the artboard says «Email
+ * та налаштування акаунту приховані від інших» and this screen exists to be
+ * what others see. `users.email` is the login credential and the crew-matching
+ * key; it is shown on `/profile`, which is about the account, and nowhere else.
+ *
+ * **The `self` preview showed one until 2026-09-05.** The reasoning was that
+ * the reader and the subject are the same person there, so a login discloses
+ * nothing — true, and beside the point. The screen's own subline promises «Так
+ * вас бачать інші учасники зйомок», and a preview that adds a field the
+ * audience never gets is not a preview of anything. The note under the card is
+ * the artboard's explanation for the row's ABSENCE, which is how it reads now
+ * and could not while the row was above it. Owner's call, reversing the
+ * 2026-09-04 decision in docs/redesign-log.md.
  */
 export type PublicProfileView = {
   name: string
   role: string
   phone: string | null
-  email: string | null
   instagram: string | null
   telegram: string | null
   /** Signed already — `users.avatar_url` is a Storage path. */
@@ -66,7 +73,7 @@ export type PublicProfileView = {
    */
   note: string | null
   /**
-   * Whose profile this is, which decides the subline, the note and the email.
+   * Whose profile this is, which decides the subline and the note.
    *
    * **`client` is the third reader, added 2026-09-04** with «Мої контакти»:
    * that screen is one list over `clients` and `contacts`, and both halves open
@@ -102,11 +109,8 @@ export function PublicProfile({
 
   const contacts: { label: string; value: string; icon: LucideIcon }[] = [
     view.phone ? { label: t.phoneField, value: view.phone, icon: Smartphone } : null,
-    // Only ever on `self`. A contact's email is a match key, not a display
-    // field, and the note under this card says the account's is hidden.
-    view.kind === 'self' && view.email
-      ? { label: t.email, value: view.email, icon: Mail }
-      : null,
+    // No email, for anybody — see this component's note. An email reaches this
+    // screen as a crew-matching key, never as something to display.
     view.instagram
       ? { label: t.instagramLabel, value: view.instagram, icon: InstagramIcon }
       : null,
@@ -218,9 +222,26 @@ export function PublicProfile({
                 </View>
               ))}
             </Card>
-            <Text className="text-caption text-muted-foreground px-0.5 leading-4">
-              {t.emailHiddenFromOthers}
-            </Text>
+            {/*
+              **`self` only**, and it explains why there is no email row above.
+
+              The sentence is about the reader's own account — «Email та
+              налаштування акаунту приховані від інших» — and it was rendering
+              under every profile, so opening a crew member's card explained the
+              privacy of an email that is not theirs and account settings they
+              do not have. No copy exists for the other two readers, and none is
+              invented: they simply do not get a note.
+
+              It goes with the card when the card goes. Someone with no phone
+              and no handles has nothing to show a crew member, so the preview
+              is right to say nothing at all rather than explain an absence
+              inside an absence.
+            */}
+            {view.kind === 'self' ? (
+              <Text className="text-caption text-muted-foreground px-0.5 leading-4">
+                {t.emailHiddenFromOthers}
+              </Text>
+            ) : null}
           </View>
         ) : null}
 
