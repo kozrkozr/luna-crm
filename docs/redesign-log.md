@@ -4462,3 +4462,48 @@ No acceptance suite taps a role chip by its label — checked — so the four
 pickers changed without touching a test. The suites that assert on a role
 string (`us007`, `us009`, `us015`, `us023`, `us026`) all read *displayed* text
 or payload values, which this change does not reach.
+
+## The role glyph reaches the team surfaces too (owner, 2026-09-05)
+
+Extends the entry above, a few hours later. The emoji was pickers-only; it now
+also shows wherever a shoot's TEAM is listed:
+
+- the «Команда» tab on the shoot screen;
+- the crew list on a link view, for both audiences;
+- one crew member's own page on a link view (`US-023`, `US-026`);
+- the «Ваша роль: 💡 Гафер» badge a crew member sees at the top of their link;
+- the organizer card beside them.
+
+**The organizer is not crew and gets the glyph anyway.** It sits on the same
+screen as the crew list, and one card reading «Фотограф» plain beside rows
+reading «💄 Візажист» looks like a bug rather than a distinction. `users.role`
+comes from the same list. Called out because it is the one inclusion the
+instruction did not name.
+
+**Still not everywhere**, and the omissions are deliberate: the contacts
+directory, a contact's own profile, and the "shoots I am crew on" rows show the
+words alone. Those are address-book and scheduling surfaces, where a role is a
+fact about a person rather than a label on a team. One call each if that
+changes.
+
+### Nothing about storage changed
+
+`roleWithEmoji()` still only ever runs at render. The gateway payloads carry the
+raw column, so what crosses the network is unchanged for both audiences — this
+is a rendering change on the receiving side, not a payload change.
+
+### The tests survive, and one was already broken
+
+The suites asserting a role string do it two ways, and only one would have been
+at risk:
+
+- `body.includes('Візажист')` — `us009`, `us015`, `us023`, `us026`. A **prefix**
+  leaves the substring intact, so these still pass.
+- `gw.viewer.role === 'Гафер'`, `clientSubject.role === 'Візажист'` — `us007`,
+  `us026`. These read the payload, which this change does not touch.
+
+Separately: `us007-check.mjs:84` asserts the body contains «Ви: Ігор (Гафер)».
+Nothing renders that — the badge is `yourRoleTemplate`, «Ваша роль: {role}», and
+the older wording survives only in a comment on `gateway.ts`. That assertion was
+failing before this change and is **not** fixed here; it belongs with whatever
+pass reconciles the stale suites (`us030` has the same problem).

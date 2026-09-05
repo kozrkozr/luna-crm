@@ -51,6 +51,7 @@ import {
 } from '../../../../src/features/shoots/date'
 import { pluralUk } from '../../../../src/features/shoots/home'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
+import { roleWithEmoji } from '../../../../src/i18n/uk'
 import { failed, succeeded, tapped } from '../../../../src/lib/haptics'
 import { takePendingToast } from '../../../../src/lib/nextScreenToast'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
@@ -1247,8 +1248,11 @@ function PersonRow({
           <Text className="text-subtitle text-foreground font-semibold" numberOfLines={1}>
             {member.name}
           </Text>
+          {/* The glyph reaches the READ surfaces too since 2026-09-05 — see
+              `ROLE_EMOJI`. `member.role` is untouched; only what is drawn from
+              it changes, and a role that has no glyph draws as it always did. */}
           <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-            {member.role}
+            {roleWithEmoji(member.role)}
           </Text>
         </View>
         <ResponsePill value={member.response} label={responseLabel(member, t)} />

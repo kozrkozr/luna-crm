@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router'
 import { Text } from '../../../../src/components/ui/text'
 import { Card } from '../../../../src/components/ui/card'
 import { ImageViewer } from '../../../../src/components/ImageViewer'
-import { uk } from '../../../../src/i18n/uk'
+import { roleWithEmoji, uk } from '../../../../src/i18n/uk'
 import {
   resolveLink,
   type LinkClientCrewMember,
@@ -119,7 +119,7 @@ export default function CrewMemberDetailScreen() {
               --foreground inverted (ADR-017). */}
           <Card variant="block" className="gap-1">
               <Field label={uk.crewName} value={member.name} strong />
-              <Field label={uk.crewRole} value={member.role} />
+              <Field label={uk.crewRole} value={roleWithEmoji(member.role)} />
               <Field label={uk.crewContact} value={member.contact} />
               {/* Tappable since 2026-09-05, and shown as «@nickname» whatever
                   the creator pasted in. This is a phone browser with no app

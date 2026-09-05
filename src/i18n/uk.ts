@@ -1248,13 +1248,21 @@ export type Role = (typeof ROLES_UK)[number]
  * push emoji into the link gateway's payloads, and make an equality test
  * against `'Фотограф'` fail without saying why.
  *
- * ── Pickers only ────────────────────────────────────────────────────────────
+ * ── Where it shows ──────────────────────────────────────────────────────────
  *
- * The owner's call, 2026-09-05: registration, the profile, the contact form and
- * the add-crew screen show the glyph; every surface that merely *reports* a
- * role — crew lists, the profile view, and both link audiences — shows the
- * words alone. A role is decoration while you are choosing it and information
- * once it is chosen.
+ * Pickers, and the surfaces that show a SHOOT'S TEAM: the «Команда» tab, and
+ * the link views a crew member or a client opens — the crew list, one member's
+ * own page, the «Ваша роль» badge, and the organizer card beside them.
+ *
+ * That was pickers only for a few hours on 2026-09-05 before the owner extended
+ * it; the intermediate state is in docs/redesign-log.md, and this comment used
+ * to argue for it.
+ *
+ * **Still not everywhere.** The contacts directory, a contact's own profile and
+ * the "shoots I am crew on" rows show the words alone — they are address-book
+ * and scheduling surfaces, where the role is a fact about a person rather than
+ * a label on a team. Nobody has asked for those, and adding them is one call to
+ * this function each.
  *
  * ── Not translated, and not in `Strings` ────────────────────────────────────
  *
@@ -1294,11 +1302,13 @@ export const ROLE_EMOJI: Record<Role, string> = {
 const OTHER_ROLE_EMOJI = '🪄'
 
 /**
- * «📸 Фотограф» — a role as a PICKER labels it. One space, always.
+ * «📸 Фотограф» — a role as it is SHOWN. One space, always.
  *
- * Call this on the label and nowhere else. Every picker keeps comparing and
- * storing the bare `option`, so the value that reaches `crew_members.role` is
- * the same string it has always been.
+ * Call this at the point of RENDER and nowhere else. Every picker keeps
+ * comparing and storing the bare `option`, every read surface keeps the raw
+ * `member.role` it was given, and the gateway's payloads carry the column
+ * untouched — so the value in `crew_members.role`, `contacts.role` and
+ * `users.role` is the same string it has always been.
  *
  * A role with no glyph comes back unchanged rather than blank-prefixed — which
  * is not a theoretical case: `crew_members.role` and `contacts.role` can hold

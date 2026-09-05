@@ -22,7 +22,7 @@ import { handleLabel, handleUrl } from '../../../src/lib/socialHandle'
 import { isAvatarTint } from '../../../src/features/auth/avatar'
 import { ResponsePill } from '../../../src/components/ResponsePill'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
-import { uk } from '../../../src/i18n/uk'
+import { roleWithEmoji, uk } from '../../../src/i18n/uk'
 import { openExternalUrl } from '../../../src/lib/openExternalUrl'
 import {
   formatDayMonthWeekday,
@@ -169,7 +169,7 @@ export default function LinkView() {
                 variant="muted"
                 label={
                   isCrew
-                    ? uk.yourRoleTemplate.replace('{role}', payload.viewer.role)
+                    ? uk.yourRoleTemplate.replace('{role}', roleWithEmoji(payload.viewer.role))
                     : uk.youAreTheClient
                 }
               />
@@ -435,7 +435,7 @@ export default function LinkView() {
                           says whose row this is, and saying it twice on one row
                           is noise. */}
                       <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-                        {member.role}
+                        {roleWithEmoji(member.role)}
                       </Text>
                     </View>
                     {/*
@@ -794,8 +794,14 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
             <Text className="text-body text-foreground font-semibold" numberOfLines={1}>
               {organizer.name}
             </Text>
+            {/*
+              The organizer is not crew, and gets the glyph anyway: they sit on
+              the same screen as the crew list, and one card rendering «Фотограф»
+              plain beside rows reading «💄 Візажист» looks like a bug rather
+              than a distinction. `users.role` is drawn from the same list.
+            */}
             <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-              {organizer.role}
+              {roleWithEmoji(organizer.role)}
             </Text>
           </View>
         </View>
