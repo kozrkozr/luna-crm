@@ -117,8 +117,58 @@ Cloudflare's side — you are building on your own Node 22.
 ```bash
 node -v                              # must be >= 22; the export fails on 20
 rm -rf dist
-npx expo export -p web --clear       # NOT `npm run export:web` — see below
-npx wrangler pages deploy dist --project-name=luna-crm
+npm run export:web                   # export --clear, THEN rename the link routes
+npx wrangler pages deploy dist --project-name=luna-crm --branch=main
+```
+
+**`--branch` is not optional, and omitting it fails silently.** `wrangler pages
+deploy` infers the branch from git when you do not pass one. Any branch that is
+not the project's *production* branch produces a **preview** deployment: it
+uploads fine, prints a success line and a URL, and publishes to a per-deployment
+host like `https://<hash>.luna-crm-107.pages.dev`. Meanwhile
+`https://luna-crm-107.pages.dev` — the host baked into
+`EXPO_PUBLIC_LINK_BASE_URL`, and the one every real link points at — keeps
+serving the previous production deployment.
+
+Nothing warns you. The deploy succeeds and the site is simply unchanged.
+
+`main` is this project's production branch — every deployment in its history is
+`Environment: Production, Branch: main`, including ones made while a feature
+branch was checked out. Pass it explicitly anyway; relying on whatever git
+happens to report is how a preview gets published by accident.
+
+```bash
+npx wrangler pages deployment list --project-name=luna-crm   # Environment + Branch columns
+```
+
+**Corrected 2026-09-05.** This step used to read `npx expo export -p web --clear`
+with an explicit "NOT `npm run export:web`". That was true when it was written
+(`d4da527`): the script was a bare `expo export -p web`, with no `--clear`.
+Later the same day `5858d46` changed it to
+`expo export -p web --clear && node scripts/prepare-link-surface.js`, and the doc
+was not updated.
+
+**Following the old line today produces a broken deployment.** Without
+`scripts/prepare-link-surface.js` the export leaves `dist/s/[token].html`, and
+Cloudflare Pages cannot serve a bracketed filename — it 308s `/s/[token]` to
+itself and a reader gets `ERR_TOO_MANY_REDIRECTS` on a perfectly valid link.
+That was measured on a live deployment on 2026-08-27 and is the whole reason
+`prepare-link-surface.js` exists. `public/_redirects` points at the renamed,
+bracket-free files, so the rename and the rewrite rules only work as a pair.
+
+**The project name is `luna-crm`, and it does NOT match its own URL.** The
+project `luna-crm` serves `https://luna-crm-107.pages.dev` — the host in
+`EXPO_PUBLIC_LINK_BASE_URL`. Inferring the project name from that URL is wrong
+and the failure is silent: `wrangler pages deploy` CREATES a project that does
+not exist, so `--project-name=luna-crm-107` uploads successfully to a brand-new,
+empty project and reports success. Cloudflare then has to invent a domain for
+it, because the obvious one is taken — which is where
+`luna-crm-107-c5a.pages.dev` came from.
+
+Done exactly that on 2026-09-05. Confirm the pairing rather than guessing it:
+
+```bash
+npx wrangler pages project list      # match Project Name to Project Domains
 ```
 
 **`--clear` is not optional after `.env` changes, and this one bites silently.** Metro caches
@@ -133,7 +183,13 @@ Check the build rather than trusting it:
 ```bash
 grep -rl "<your-project-ref>" dist >/dev/null && echo "ok: hosted URL baked in"
 grep -rl "192.168"             dist >/dev/null && echo "STALE — rebuild with --clear"
+ls dist/s/                     # must be link.html, link-references.html, link-crew.html
+test -f dist/_redirects && echo "ok: rewrite rules will be uploaded"
 ```
+
+If `ls dist/s/` shows anything with square brackets, `prepare-link-surface.js`
+did not run — you exported with the bare `expo export` rather than
+`npm run export:web`. Do not deploy that.
 
 First run opens a browser to authorise Cloudflare and offers to create the project — accept
 both. It prints the URL when it finishes.
