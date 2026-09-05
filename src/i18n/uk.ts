@@ -351,7 +351,20 @@ export const uk = {
     'Неділя',
   ],
   viewCalendar: 'Переглянути календар',
-  nextShootLabel: 'Наступна зйомка',
+  /**
+   * Above the hero card on the home screen (owner, 2026-09-05).
+   *
+   * **«Найближча», not «Наступна».** «Наступна» is next in a sequence — it
+   * reads as "the one after this one", which is wrong for a card that is
+   * itself the soonest shoot there is. «Найближча» is nearest in time, which is
+   * what the card actually shows.
+   *
+   * The English stays «Next shoot». A literal «Nearest shoot» is not idiomatic,
+   * and English "next" already means the soonest upcoming one rather than the
+   * one after the current — the distinction this rename fixes does not exist
+   * there. The key keeps its name for the same reason.
+   */
+  nextShootLabel: 'Найближча зйомка',
   /** The list under the two buttons, and its link through to the calendar. */
   upcomingShootsLabel: 'Наступні зйомки',
 
