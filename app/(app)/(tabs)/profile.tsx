@@ -33,6 +33,9 @@ import { useLanguage, useStrings } from '../../../src/i18n/LanguageProvider'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { failed, selected as tickSelection, succeeded, tapped } from '../../../src/lib/haptics'
 import { useProfile } from '../../../src/features/auth/useProfile'
+import { isAvatarTint, resolveAvatar, type AvatarTint } from '../../../src/features/auth/avatar'
+import { EmojiAvatarPicker } from '../../../src/features/auth/EmojiAvatarPicker'
+import { useAvatarSheet } from '../../../src/features/auth/useAvatarSheet'
 import {
   deleteOwnAccount,
   signOut,
@@ -50,7 +53,15 @@ type Draft = {
   customRole: string
   instagram: string
   telegram: string
+  /*
+    The three avatar columns travel together through the draft for the same
+    reason they travel together into `updateProfile`: the states are exclusive
+    (`users_avatar_one_of`), so «фото» and «емоджі» are one decision with three
+    outcomes, not three independent fields.
+  */
   avatarUrl: string | null
+  avatarEmoji: string | null
+  avatarTint: AvatarTint | null
 }
 
 /**
@@ -126,6 +137,8 @@ export default function ProfileScreen() {
       instagram: state.profile.socialHandle ?? '',
       telegram: state.profile.telegram ?? '',
       avatarUrl: state.profile.avatarUrl,
+      avatarEmoji: state.profile.avatarEmoji,
+      avatarTint: isAvatarTint(state.profile.avatarTint) ? state.profile.avatarTint : null,
     }
     setSaved(loaded)
     setDraft(loaded)
@@ -162,6 +175,59 @@ export default function ProfileScreen() {
     },
   })
 
+  /*
+    ── The avatar: a photo, an emoji, or neither ──────────────────────────────
+
+    **All of this sits above the loading and error returns**, because
+    `useAvatarSheet` and `useState` are hooks and the early returns below would
+    otherwise skip them on the first render — the same "Rendered more hooks than
+    during the previous render" crash the shoot screen's own note records. The
+    two plain functions come with them so the hook's callbacks can close over
+    something already defined.
+  */
+  const [emojiOpen, setEmojiOpen] = useState(false)
+
+  /** The one writer for all three columns, so a partial state cannot be built. */
+  const setAvatar = (next: Pick<Draft, 'avatarUrl' | 'avatarEmoji' | 'avatarTint'>) =>
+    setDraft((current) => (current ? { ...current, ...next } : current))
+
+  const pickPhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!permission.granted) return
+    const picked = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+      allowsEditing: true,
+      aspect: [1, 1],
+    })
+    if (picked.canceled) return
+
+    setBusy(true)
+    const path = await uploadAvatar(picked.assets[0])
+    setBusy(false)
+    if (!path) return setToast(t.attachmentTypeUnsupported)
+    // Clears the emoji pair with it: the constraint allows a photo OR an emoji,
+    // and the artboard's sheet offers them as one choice with three outcomes
+    // rather than as two independent settings.
+    setAvatar({ avatarUrl: path, avatarEmoji: null, avatarTint: null })
+  }
+
+  const { open: openAvatarSheet, sheet: avatarSheet } = useAvatarSheet({
+    onPickPhoto: () => void pickPhoto(),
+    onPickEmoji: () => setEmojiOpen(true),
+    /*
+      «Прибрати фото» clears all three, which is the third legal state and the
+      one that renders initials again. Not saved here — it is a draft edit like
+      the rest of the screen, so «Скасувати» puts the photo back.
+
+      The Storage object is left where it is. There is no DELETE grant anywhere
+      in v1 (`20260831120000_profile_editing.sql`: "No UPDATE and no DELETE
+      policy … the old one is unreachable and stays"), and nothing specifies
+      cleanup. Raised with the owner rather than decided here.
+    */
+    onRemove: () => setAvatar({ avatarUrl: null, avatarEmoji: null, avatarTint: null }),
+  })
+
   if (state.status === 'loading' || !draft || !saved) {
     return (
       <View className="bg-background flex-1 items-center justify-center">
@@ -193,7 +259,10 @@ export default function ProfileScreen() {
     (draft.role !== saved.role || draft.customRole.trim() !== saved.customRole) && t.role,
     draft.instagram.trim() !== saved.instagram && t.instagramLabel,
     draft.telegram.trim() !== saved.telegram && t.telegramLabel,
-    draft.avatarUrl !== saved.avatarUrl && t.changePhoto,
+    (draft.avatarUrl !== saved.avatarUrl ||
+      draft.avatarEmoji !== saved.avatarEmoji ||
+      draft.avatarTint !== saved.avatarTint) &&
+      t.changePhoto,
   ].filter((label): label is string => typeof label === 'string')
   const dirty = changed.length > 0
 
@@ -216,23 +285,14 @@ export default function ProfileScreen() {
 
   const version = Constants.expoConfig?.version
 
-  const pickPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) return
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 1,
-      allowsEditing: true,
-      aspect: [1, 1],
-    })
-    if (picked.canceled) return
-
-    setBusy(true)
-    const path = await uploadAvatar(picked.assets[0])
-    setBusy(false)
-    if (!path) return setToast(t.attachmentTypeUnsupported)
-    set('avatarUrl', path)
-  }
+  /*
+    What the draft currently means. Read from the DRAFT rather than from
+    `state.profile`, so the card shows the emoji the moment it is picked and
+    «Змінити фото» appears in the changed list — the avatar is an unsaved edit
+    like every other field on this screen, and «Скасувати» discards it with the
+    rest.
+  */
+  const avatar = resolveAvatar(draft)
 
   const save = async () => {
     const next: typeof errors = {}
@@ -259,6 +319,8 @@ export default function ProfileScreen() {
       socialHandle: draft.instagram,
       telegram: draft.telegram,
       avatarUrl: draft.avatarUrl,
+      avatarEmoji: draft.avatarEmoji,
+      avatarTint: draft.avatarTint,
     })
     setBusy(false)
 
@@ -354,7 +416,7 @@ export default function ProfileScreen() {
             <Pressable
               className="mb-3 active:opacity-70"
               disabled={busy}
-              onPress={() => void pickPhoto()}
+              onPress={openAvatarSheet}
               role="button"
               accessibilityLabel={t.changePhoto}
             >
@@ -364,11 +426,24 @@ export default function ProfileScreen() {
                 GENERATING a likeness by hashing a name; crew and clients still
                 get initials, because nobody uploaded anything for them.
               */}
-              {avatarUri ? (
+              {/*
+                The three states of `users_avatar_one_of`, resolved once by
+                `resolveAvatar` so this screen cannot invent a fourth. `emoji`
+                needs no signed URL and so has no loading state — it renders on
+                the frame the draft changes, which is why applying one feels
+                immediate where a photo does not.
+              */}
+              {avatar.kind === 'photo' && avatarUri ? (
                 <Image
                   source={{ uri: avatarUri }}
                   className="h-[72px] w-[72px] rounded-full"
                   resizeMode="cover"
+                />
+              ) : avatar.kind === 'emoji' ? (
+                <Avatar
+                  name={draft.name || state.profile.email}
+                  size={72}
+                  emoji={{ char: avatar.emoji, tint: avatar.tint }}
                 />
               ) : (
                 <Avatar name={draft.name || state.profile.email} size={72} />
@@ -740,6 +815,25 @@ export default function ProfileScreen() {
       </Sheet>
 
       {deleteDialog}
+      {/* «Фото профілю» — native on device, the app's own Sheet on web. */}
+      {avatarSheet}
+      {/*
+        The emoji picker. Mounted always and shown by `visible`, so its
+        selection state survives a cancel — reopening lands on what was last
+        looked at rather than resetting to 📷. It commits nothing until
+        «Встановити як фото профілю»; the draft is untouched until then.
+      */}
+      <EmojiAvatarPicker
+        visible={emojiOpen}
+        initial={avatar.kind === 'emoji' ? { emoji: avatar.emoji, tint: avatar.tint } : null}
+        onCancel={() => setEmojiOpen(false)}
+        onApply={(choice) => {
+          setEmojiOpen(false)
+          // Clears `avatarUrl` with it — a photo and an emoji cannot coexist.
+          setAvatar({ avatarUrl: null, avatarEmoji: choice.emoji, avatarTint: choice.tint })
+          setToast(t.profilePhotoUpdatedTemplate.replace('{emoji}', choice.emoji))
+        }}
+      />
       {/*
         Raised clear of the bottom bar. The toast portals to the root host, so
         it knows nothing about the navigator it was fired from — 21px above the

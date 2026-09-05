@@ -3806,3 +3806,70 @@ concatenating, so an organizer who had pasted their profile link got
 The form placeholders still say «@nickname». The fields accept a pasted link
 now and nothing tells anyone that — new user-facing copy, so not invented here
 (rule 1).
+
+---
+
+## An emoji as your profile photo (owner, 2026-09-05)
+
+`Edit Profile.dc.html`'s picker. Migration `20260905120000_profile_avatar_emoji.sql`,
+`src/features/auth/avatar.ts`, `EmojiAvatarPicker.tsx`, `useAvatarSheet.tsx`,
+`src/components/ui/action-sheet.tsx`, plus `Avatar`, the profile screen, the home
+header and «Публічний профіль».
+
+**No story covers it.** `US-016` is *viewing* a profile; the 2026-08-31 editing
+pass already put it in debt and this adds to it. `US-016` needs amending.
+
+### It does not reopen F-4
+
+F-4 ruled out emoji avatars picked by **hashing a name** — a hash asserts a skin
+tone, gender and age the person never gave. `20260831120000` narrowed that for an
+uploaded photo: the account holder supplied it. A chosen emoji is on the same
+side of the same line, so crew, clients and contacts still get initials, and the
+`PublicProfileView` type now *requires* every caller to say so — the three
+contact/client sites pass `avatarEmoji: null` explicitly because the compiler
+made them.
+
+Notably the artboard's 48 contain no faces, gestures or skin tones, which reads
+as the same instinct.
+
+| Decision | |
+|---|---|
+| **Three columns, one constraint** | `users_avatar_one_of` allows a photo, or an emoji WITH a tint, or nothing. The picker is one choice with three outcomes, so the database says so rather than trusting every writer |
+| **`avatar_tint` stores a key** | `'blue'`, not the gradient. Storing presentation would turn a palette tweak into a data migration |
+| **`oklch()` converted to hex** | The artboard's eight gradients are `oklch`, which `global.css` records as silently fatal in NativeWind's CSS-to-RN pass. Three pairs are sRGB-clipped, as `--warn-bg` and `--info-bg` were |
+| **Gradients via `react-native-svg`** | Already in the tree. `expo-linear-gradient` would have been a native module and a pod install for one shape — see `chore(build)` two commits earlier for what that costs |
+| **Glyph is half the diameter** | §5.8 tabulates 34→17, 38→19, 64→32 and the artboard draws 72→36, 112→58. One rule, no table |
+
+### Two corrections the owner found on device
+
+**`ActionSheetIOS` was wrong, and for a reason worth recording.** It was chosen
+on `DestructiveAction`'s argument — the system control is `UIAlertController`
+itself, not an approximation. **On iOS 26 that control no longer draws what the
+artboard draws**: an action sheet without a source anchor floats mid-screen
+instead of sitting on the bottom edge. So `ui/action-sheet.tsx` draws it. The
+principle did not change, the platform did. It also collapsed the web/native
+fork, since `ActionSheetIOS` does not exist in `react-native-web` at all.
+
+Its blur is approximated: `backdrop-filter` has no React Native equivalent and
+`expo-blur` is not a dependency. The fills are the artboard's rgba values
+flattened against the dimmed backdrop.
+
+**§5.7 was followed too literally.** «Задай `lineHeight` = розміру шрифту» is
+right for initials, whose glyphs fit the em box — an emoji's artwork is drawn
+taller than its em square, so a one-em line box crops the top of it. CSS
+`line-height:1` does not clip because a CSS line box does not crop its glyphs;
+RN's `Text` does. Now 1.2×, with `includeFontPadding:false` so Android still
+cannot add leading.
+
+**The grid's column count is derived, not the artboard's fixed six.** Six exact
+widths plus five 6pt gaps rounded over the container and the last cell wrapped,
+so the owner saw five. Measured and floored now: 6 at 393–402pt as drawn, 7 on a
+Pro Max, 5 on an SE rather than squeezing six into 44pt.
+
+### Still open
+
+The set is the artboard's 48, fixed. The owner is discussing extending it with
+the client. Nothing technical requires a fixed list — `avatar_emoji` is plain
+`text` and renders whatever it holds — so growing it is a one-array change, and
+opening it to the system keyboard would need a validation rule and a placeholder
+that no artboard supplies.

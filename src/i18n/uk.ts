@@ -89,6 +89,38 @@ export const uk = {
   confirmDeleteAccount:
     'Видалити акаунт? Зникнуть усі зйомки, клієнти, команда й посилання. Це незворотньо.',
   changePhoto: 'Змінити фото',
+  /*
+   * ── The avatar sheet and the emoji picker, from `Edit Profile.dc.html`
+   *    (owner, 2026-09-05) ──────────────────────────────────────────────────
+   *
+   * Every string here is the artboard's own, taken as written. Nothing is
+   * invented: the picker is a screen somebody drew, down to «Випадкове».
+   *
+   * «Фото профілю» is the sheet's title AND what the emoji CTA calls its
+   * result — «Встановити як фото профілю» — which is the artboard's way of
+   * saying an emoji IS the profile photo rather than an alternative to one.
+   * That is also what `users_avatar_one_of` enforces, so the copy and the
+   * constraint agree.
+   */
+  photoSheetTitle: 'Фото профілю',
+  setNewPhoto: 'Встановити нове фото',
+  emojiOption: 'Емоджі',
+  removePhoto: 'Прибрати фото',
+  /** The picker's two section labels, drawn uppercase with wide tracking. */
+  emojiBackgroundSection: 'ФОН',
+  emojiSection: 'ЕМОДЖІ',
+  /** Shuffles the emoji AND the background — the artboard rerolls both. */
+  emojiRandom: 'Випадкове',
+  emojiApply: 'Встановити як фото профілю',
+  /** The ✕, for a screen reader. The artboard gives it this aria-label. */
+  closeWord: 'Закрити',
+  /*
+   * «Фото профілю оновлено 🌙» — the emoji itself trails the sentence in the
+   * artboard's toast, which is why this is a template rather than a plain
+   * string.
+   */
+  profilePhotoUpdatedTemplate: 'Фото профілю оновлено {emoji}',
+  photoRemoved: 'Фото прибрано',
   logout: 'Вийти',
   contact: 'Контакт',
   // ADR-015 makes phone an optional profile field. Registration does not

@@ -82,6 +82,20 @@ export const en: Strings = {
   confirmDeleteAccount:
     'Delete your account? Every shoot, client, crew member and link goes with it. This cannot be undone.',
   changePhoto: 'Change photo',
+  /* The avatar sheet and emoji picker — see the note in uk.ts. English is the
+     switchable language for registered accounts (US-014/US-015); the link
+     views are Ukrainian-only and draw none of this. */
+  photoSheetTitle: 'Profile photo',
+  setNewPhoto: 'Set new photo',
+  emojiOption: 'Emoji',
+  removePhoto: 'Remove photo',
+  emojiBackgroundSection: 'BACKGROUND',
+  emojiSection: 'EMOJI',
+  emojiRandom: 'Random',
+  emojiApply: 'Set as profile photo',
+  closeWord: 'Close',
+  profilePhotoUpdatedTemplate: 'Profile photo updated {emoji}',
+  photoRemoved: 'Photo removed',
   logout: 'Log out',
   contact: 'Contact',
   phone: 'Phone',

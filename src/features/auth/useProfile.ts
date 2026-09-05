@@ -12,6 +12,15 @@ export type Profile = {
   telegram: string | null
   /** `20260831120000` — Storage path, not a URL. Sign it before display. */
   avatarUrl: string | null
+  /**
+   * The chosen emoji and its background — `20260905120000`.
+   *
+   * Both or neither, guaranteed by `users_avatar_one_of`, and never set at the
+   * same time as `avatarUrl`. Read them through `resolveAvatar` rather than
+   * branching on them here.
+   */
+  avatarEmoji: string | null
+  avatarTint: string | null
 }
 
 export type ProfileState =
@@ -34,7 +43,9 @@ export function useProfile(): ProfileState {
     void (async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('name, email, phone, role, social_handle, telegram, avatar_url')
+        .select(
+          'name, email, phone, role, social_handle, telegram, avatar_url, avatar_emoji, avatar_tint'
+        )
         .maybeSingle()
 
       if (!active) return
@@ -54,6 +65,8 @@ export function useProfile(): ProfileState {
           socialHandle: data.social_handle,
           telegram: data.telegram,
           avatarUrl: data.avatar_url,
+          avatarEmoji: data.avatar_emoji,
+          avatarTint: data.avatar_tint,
         },
       })
     })()

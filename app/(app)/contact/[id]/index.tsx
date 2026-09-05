@@ -123,6 +123,9 @@ export default function ContactProfileScreen() {
               instagram: client.instagram,
               telegram: client.telegram,
               avatarUri: null,
+              // Never for a contact or a client — F-4. Only the person
+              // themselves can choose one, and neither has an account.
+              avatarEmoji: null,
               note: client.notes,
               kind: 'client',
               backLabel: t.navContacts,
@@ -160,6 +163,9 @@ export default function ContactProfileScreen() {
               instagram: contact.instagram,
               telegram: contact.telegram,
               avatarUri: null,
+              // Never for a contact or a client — F-4. Only the person
+              // themselves can choose one, and neither has an account.
+              avatarEmoji: null,
               note: contact.note,
               kind: 'contact',
               backLabel: params.kind ? t.navContacts : t.crew,
@@ -179,6 +185,7 @@ export default function ContactProfileScreen() {
             instagram: params.instagram ?? null,
             telegram: params.telegram ?? null,
             avatarUri: null,
+            avatarEmoji: null,
             note: null,
             kind: 'contact',
             backLabel: t.crew,

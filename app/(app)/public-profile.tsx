@@ -6,6 +6,7 @@ import { Text } from '../../src/components/ui/text'
 import { useStrings } from '../../src/i18n/LanguageProvider'
 import { signedAvatarUrl } from '../../src/features/auth/profile'
 import { useProfile } from '../../src/features/auth/useProfile'
+import { resolveAvatar } from '../../src/features/auth/avatar'
 import { Starfield } from '../../src/components/Starfield'
 
 /**
@@ -74,6 +75,12 @@ export default function PublicProfileScreen() {
     instagram: state.profile.socialHandle,
     telegram: state.profile.telegram,
     avatarUri,
+    // The preview shows what others would see, so it shows the emoji for the
+    // same reason it shows the name — it is what the account holder chose.
+    avatarEmoji: (() => {
+      const resolved = resolveAvatar(state.profile)
+      return resolved.kind === 'emoji' ? { char: resolved.emoji, tint: resolved.tint } : null
+    })(),
     note: null,
     kind: 'self',
     backLabel: t.profileTitle,

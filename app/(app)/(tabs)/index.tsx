@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
-import { Pressable, ScrollView, View } from 'react-native'
+import { Image, Pressable, ScrollView, View } from 'react-native'
 import Animated, {
   Easing,
   ReduceMotion,
@@ -28,6 +28,8 @@ import MapPin from 'lucide-react-native/icons/map-pin'
 import { Icon } from '../../../src/components/ui/icon'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
 import { useProfile } from '../../../src/features/auth/useProfile'
+import { resolveAvatar } from '../../../src/features/auth/avatar'
+import { signedAvatarUrl } from '../../../src/features/auth/profile'
 import { failed, tapped } from '../../../src/lib/haptics'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
 import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
@@ -444,6 +446,33 @@ function HomeHeader() {
   const insets = useSafeAreaInsets()
   const profile = useProfile()
   const name = profile.status === 'loaded' ? profile.profile.name : ''
+  /*
+    The account holder's own avatar — all three states, so the header agrees
+    with the profile screen whatever is set there.
+
+    An emoji needs nothing but two columns. A photo needs a signed URL, and this
+    header briefly did not fetch one: it showed an emoji or initials and never a
+    photo, which would have read as the same bug the clipped glyph did, one
+    photo later. The signing is cheap — one call, only when there is a path, and
+    the screen already fetches shoots and crew on focus.
+  */
+  const avatar = profile.status === 'loaded' ? resolveAvatar(profile.profile) : null
+  const [photoUri, setPhotoUri] = useState<string | null>(null)
+  const photoPath = avatar?.kind === 'photo' ? avatar.path : null
+
+  useEffect(() => {
+    if (!photoPath) return setPhotoUri(null)
+    let active = true
+    void (async () => {
+      const signed = await signedAvatarUrl(photoPath)
+      if (active) setPhotoUri(signed)
+    })()
+    return () => {
+      active = false
+    }
+    // The path, not the resolved object: `resolveAvatar` returns a new one each
+    // render and would re-sign the same photo on every one.
+  }, [photoPath])
 
   return (
     <View
@@ -494,8 +523,16 @@ function HomeHeader() {
             role="button"
             accessibilityLabel={t.profileTitle}
           >
-            {name ? (
-              <Avatar name={name} size={40} />
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} className="h-10 w-10 rounded-full" />
+            ) : name ? (
+              <Avatar
+                name={name}
+                size={40}
+                emoji={
+                  avatar?.kind === 'emoji' ? { char: avatar.emoji, tint: avatar.tint } : null
+                }
+              />
             ) : (
               <View className="bg-secondary h-10 w-10 rounded-full" />
             )}

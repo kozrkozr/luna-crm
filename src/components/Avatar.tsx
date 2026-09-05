@@ -1,15 +1,27 @@
 import { View } from 'react-native'
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg'
 import { Text } from './ui/text'
+import { AVATAR_TINTS, emojiSize, type AvatarTint } from '../features/auth/avatar'
 
 /**
- * An initials avatar, tinted by hashing the name (design system §5.8, §3.1).
+ * An avatar: initials tinted by hashing the name, or a chosen emoji.
  *
- * Initials rather than the mockups' emoji, on purpose. The design system's own
- * §5.7 warns that an emoji used as an avatar breaks vertical centring on
- * Android and suggests `lineHeight` equal to `fontSize` or initials instead.
- * The deeper reason is that the mockups' emoji are fixtures — real crew have
- * names, and nothing in the data model holds an emoji for a person. Initials
- * are derivable; an emoji would have to be invented per person.
+ * **Initials remain the default, and for the original reason.** The mockups
+ * drew emoji picked by hashing a name, which asserts a skin tone, gender and
+ * age the person never gave — redesign-log F-4. Initials are derivable from
+ * what someone actually told us; a hashed emoji is invented.
+ *
+ * **`emoji` is the exception that argument always allowed** (owner,
+ * 2026-09-05). It is set only from `Edit Profile.dc.html`'s picker, by the
+ * account holder, about themselves — nothing is invented, it is supplied, which
+ * is the same line `20260831120000_profile_editing.sql` drew for an uploaded
+ * photo. Crew, clients and contacts pass no `emoji` and cannot: nobody has
+ * chosen one for them.
+ *
+ * This file used to argue that "an emoji would have to be invented per person".
+ * That was true while nothing in the data model could hold one. `users` holds
+ * one now, so the sentence has stopped being an argument against the feature
+ * and become the reason it is limited to a single person.
  *
  * **A hashed pastel tint again since 2026-09-04** — "Аватари: пастельна заливка
  * з `--chart-1…5` (персик, рожевий, мʼята, лаванда, небесний), ініціали
@@ -31,10 +43,18 @@ import { Text } from './ui/text'
  */
 type Props = {
   name: string
-  /** Diameter in points. The design uses 26 / 32 / 34 / 38 / 64. */
+  /** Diameter in points. The design uses 26 / 32 / 34 / 38 / 64 / 72 / 112. */
   size?: number
   /** Extra classes — a ring, usually. */
   className?: string
+  /**
+   * The account holder's chosen emoji, with the background it sits on.
+   *
+   * Both halves or neither — a `users_avatar_one_of` guarantee, resolved by
+   * `resolveAvatar`. Absent everywhere except the four surfaces that draw the
+   * account holder themselves.
+   */
+  emoji?: { char: string; tint: AvatarTint } | null
 }
 
 /**
@@ -86,8 +106,74 @@ function tintFor(name: string): string {
   return TINTS[hash % TINTS.length]
 }
 
-export function Avatar({ name, size = 38, className }: Props) {
+export function Avatar({ name, size = 38, className, emoji }: Props) {
   const label = initials(name)
+
+  if (emoji) {
+    const [from, to] = AVATAR_TINTS[emoji.tint]
+    const glyph = emojiSize(size)
+    return (
+      <View
+        className={`shrink-0 items-center justify-center overflow-hidden rounded-full ${className ?? ''}`}
+        style={{ width: size, height: size }}
+      >
+        {/*
+          The gradient, drawn rather than styled: React Native has no
+          `linear-gradient`, and `react-native-svg` is already in the tree — so
+          this needs no new native module and no rebuild, which is what
+          `expo-linear-gradient` would have cost for one shape.
+
+          `160deg` in CSS runs top-left-ish to bottom-right-ish; SVG's
+          objectBoundingBox coordinates express the same direction as x1/y1 →
+          x2/y2. A Rect rather than a Circle: the parent already clips to a
+          circle with `overflow-hidden` and `rounded-full`, so the paint only
+          has to cover the box.
+        */}
+        <Svg width={size} height={size} style={{ position: 'absolute' }}>
+          <Defs>
+            <LinearGradient id="avatarTint" x1="0.18" y1="0" x2="0.82" y2="1">
+              <Stop offset="0" stopColor={from} />
+              <Stop offset="1" stopColor={to} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={size} height={size} fill="url(#avatarTint)" />
+        </Svg>
+        {/*
+          **`lineHeight` is 1.2× the font size, not 1×** (owner saw the tops
+          clipped, 2026-09-05).
+
+          §5.7 says «емодзі як аватар — на Android вертикальне центрування
+          ламається. Задай `lineHeight` = розміру шрифту», and that was followed
+          literally. It is the right fix for the *initials* below, whose glyphs
+          fit inside the em box — but an emoji does not. Its artwork is drawn
+          taller than its em square, so a line box exactly one em high clips the
+          top of it, which is what a circle with a flat-topped 🌙 in it looks
+          like.
+
+          CSS `line-height:1` in the artboard does not clip because a CSS line
+          box does not crop its own glyphs; React Native's `Text` does. So the
+          rule survives — pin the line height so Android cannot add its own
+          leading — with enough room for the glyph to be whole. Centring is the
+          parent's job here anyway, so the extra 20% stays symmetric.
+
+          `includeFontPadding: false` is Android-only and ignored on iOS; it
+          drops the extra font metrics padding that would otherwise reintroduce
+          the offset this is fixing.
+        */}
+        <Text
+          style={{
+            fontSize: glyph,
+            lineHeight: Math.round(glyph * 1.2),
+            textAlign: 'center',
+            includeFontPadding: false,
+          }}
+        >
+          {emoji.char}
+        </Text>
+      </View>
+    )
+  }
+
   return (
     <View
       className={`${tintFor(name)} shrink-0 items-center justify-center rounded-full ${className ?? ''}`}

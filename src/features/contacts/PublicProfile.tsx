@@ -16,6 +16,7 @@ import { SectionLabel } from '../../components/ShootFormFields'
 import { VisibilityNote } from '../../components/Visibility'
 import { useStrings } from '../../i18n/LanguageProvider'
 import { handleLabel, handleUrl } from '../../lib/socialHandle'
+import type { AvatarTint } from '../auth/avatar'
 import { tapped } from '../../lib/haptics'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { Starfield } from '../../components/Starfield'
@@ -69,6 +70,15 @@ export type PublicProfileView = {
   telegram: string | null
   /** Signed already — `users.avatar_url` is a Storage path. */
   avatarUri: string | null
+  /**
+   * The account holder's chosen emoji — `self` only, and null everywhere else.
+   *
+   * A contact and a client have no such columns and never will: redesign-log
+   * F-4 rules out putting a face on somebody who did not choose one, and an
+   * emoji *you* pick for *someone else* is exactly the invention it objected
+   * to. Only the person themselves can supply this.
+   */
+  avatarEmoji: { char: string; tint: AvatarTint } | null
   /**
    * The creator's private note about this person. `null` on `self`, and on a
    * contact who has none.
@@ -211,9 +221,10 @@ export function PublicProfile({
               resizeMode="cover"
             />
           ) : (
-            /* Initials for anyone who has uploaded nothing — F-4's rule, and a
-               contact has no avatar column at all. */
-            <Avatar name={view.name} size={72} />
+            /* An emoji when the account holder chose one; initials for everyone
+               who supplied nothing — F-4's rule, and a contact has no avatar
+               column of any kind. */
+            <Avatar name={view.name} size={72} emoji={view.avatarEmoji} />
           )}
           <Text className="text-title-sm text-foreground mt-3 font-semibold" numberOfLines={1}>
             {view.name}

@@ -22,7 +22,18 @@ export type ProfileUpdate = {
   role: string
   socialHandle: string | null
   telegram: string | null
+  /**
+   * The three avatar columns, always written together.
+   *
+   * `users_avatar_one_of` allows a photo, or an emoji WITH a tint, or nothing —
+   * so a caller that set an emoji without clearing `avatarUrl` would be
+   * rejected by the database rather than quietly producing a fourth state.
+   * Passing all three on every save is what makes that impossible to get wrong:
+   * there is no partial update to forget.
+   */
   avatarUrl: string | null
+  avatarEmoji: string | null
+  avatarTint: string | null
 }
 
 /**
@@ -51,6 +62,8 @@ export async function updateProfile(input: ProfileUpdate): Promise<boolean> {
       social_handle: input.socialHandle?.trim() || null,
       telegram: input.telegram?.trim() || null,
       avatar_url: input.avatarUrl,
+      avatar_emoji: input.avatarEmoji,
+      avatar_tint: input.avatarTint,
     })
     // RLS restricts this to the caller's own row, but the filter is written
     // anyway: an UPDATE with no WHERE is one policy change away from being an
