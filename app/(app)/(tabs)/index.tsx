@@ -23,7 +23,6 @@ import { Avatar } from '../../../src/components/Avatar'
  * the web bundle last time (S-2 F-5). The same rule select.tsx follows.
  */
 import Bell from 'lucide-react-native/icons/bell'
-import CalendarIcon from 'lucide-react-native/icons/calendar'
 import MapPin from 'lucide-react-native/icons/map-pin'
 import { Icon } from '../../../src/components/ui/icon'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
@@ -301,38 +300,28 @@ export default function HomeScreen() {
               screen itself speaks, which is the part the owner changed.
             */}
 
-            <View className="gap-2">
-              {/* AC-3 — the primary action. 48px and a full pill, as
-                  `Home.dc.html` draws it (`height:48px;border-radius:999px`).
-                  The corner comes from `Button` — this className must not set
-                  one, or `cn()` merges it last and wins. */}
-              <Button
-                variant="cta"
-                size="cta"
-                className="h-12 justify-center py-0"
-                onPress={() => router.push('/(app)/new-shoot')}
-              >
-                <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
-              </Button>
+            {/* AC-3 — the primary action. 48px and a full pill, as
+                `Home.dc.html` draws it (`height:48px;border-radius:999px`).
+                The corner comes from `Button` — this className must not set
+                one, or `cn()` merges it last and wins.
 
-              {/* AC-3 — and the way to the list, which used to be this route.
-                  `outline` now, not `secondary`: the design gives it a border on
-                  the page colour rather than a raised fill. */}
-              <Button
-                variant="outline"
-                size="cta"
-                className="h-11 justify-center py-0"
-                onPress={() => router.push('/(app)/(tabs)/shoots')}
-              >
-                {/*
-                  `Icon` reads the surrounding TextClassContext, which Button sets
-                  per variant — so the glyph takes the label's colour rather than
-                  being told one, and cannot drift from it.
-                */}
-                <Icon as={CalendarIcon} size={15} strokeWidth={1.7} />
-                <Text className="text-body-sm text-foreground font-medium">{t.viewCalendar}</Text>
-              </Button>
-            </View>
+                **«Переглянути календар» stood under it until 2026-09-05**
+                (owner). It was the second half of AC-3 and the way back to the
+                list that used to be this route — but the calendar is a tab, one
+                reach away at the bottom of the screen, so the button spent a
+                row of the home screen duplicating a tab bar that is always
+                visible. `US-035` AC-3 wants amending; logged.
+
+                The wrapping `gap-2` View went with it: one child needs no gap,
+                and the parent column's `gap-3` already spaces this. */}
+            <Button
+              variant="cta"
+              size="cta"
+              className="h-12 justify-center py-0"
+              onPress={() => router.push('/(app)/new-shoot')}
+            >
+              <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
+            </Button>
 
             {/*
               «Наступні зйомки» — new on this screen. Everything after the shoot in

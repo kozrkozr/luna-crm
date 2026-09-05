@@ -214,7 +214,6 @@ export const en: Strings = {
     'Saturday',
     'Sunday',
   ],
-  viewCalendar: 'Open the calendar',
   nextShootLabel: 'Next shoot',
   upcomingShootsLabel: 'Upcoming shoots',
 

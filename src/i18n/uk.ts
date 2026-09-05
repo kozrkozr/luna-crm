@@ -350,7 +350,6 @@ export const uk = {
     'Субота',
     'Неділя',
   ],
-  viewCalendar: 'Переглянути календар',
   /**
    * Above the hero card on the home screen (owner, 2026-09-05).
    *

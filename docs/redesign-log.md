@@ -4386,3 +4386,24 @@ had to change there. `onDelete` without `onEdit` is unreachable: the route sets
 `onEdit` whenever there is a subject and `onDelete` only when that subject is
 `deletable`, and the pill is `flex-1` so an edit-only profile still fills the
 row.
+
+## «Переглянути календар» leaves the home screen (owner, 2026-09-05)
+
+The second of the home screen's two buttons is gone. «+ Нова зйомка» stays.
+
+**`US-035` AC-3 wants amending.** It asks for both — the primary action and a
+way through to the list, which used to be this route. The way through has not
+depended on this button since the app grew a tab bar: the calendar is a tab,
+permanently visible at the bottom of the same screen, so the button spent a row
+of the home screen duplicating a control the reader can already see. Removing it
+does not make the calendar harder to reach; it stops saying the same thing
+twice.
+
+The wrapping `gap-2` View went with it — one child needs no gap, and the parent
+column's `gap-3` already spaces the CTA.
+
+`viewCalendar` is deleted from both dictionaries rather than left behind. It had
+exactly one caller, and the repo's own convention is to remove a key that has
+none (see the note at the top of `uk.ts` about the five removed on 2026-08-31).
+`CalendarIcon`'s import goes too. No acceptance suite names the button, checked
+under `tests/`.
