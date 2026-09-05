@@ -4261,3 +4261,26 @@ figure the previous screen just displayed. Both halves are the owner's choice,
 taken a few hours apart. Hiding the card when `price` and `prepayment` are both
 null closes the seam whenever that reads badly: one condition, no migration,
 which is exactly what the nullable columns were for.
+
+## Creating a shoot lands on the shoot (owner, 2026-09-05)
+
+`ShootForm`'s create path was `router.back()` — the reader returned to whichever
+list pushed the form, usually the calendar, since that is where «+» lives. It
+now goes to the shoot that was just made.
+
+**`US-002` AC-1 wants amending**, though not urgently: "the new shoot appears in
+the shoot list" is still true, and the reader is one «Назад» from seeing it. The
+criterion describes a consequence of creating a shoot rather than a
+destination, and the old behaviour satisfied its letter by handing back a list
+to scan for the thing just created.
+
+**`replace`, not `push`.** The form must not stay on the stack. `push` would
+leave «Назад» from the new shoot landing on a filled-in create form for a shoot
+that already exists — and saving that again would make a second one. Replacing
+swaps the form for the shoot, so «Назад» reaches the list that opened the form,
+which is exactly where `back` went before.
+
+No toast. `New Shoot.dc.html` raises «Зйомку створено — …» on save, and the app
+has never shown it; the screen now being the created shoot says the same thing
+in a way a toast cannot contradict. Left as it was rather than added on the way
+past.

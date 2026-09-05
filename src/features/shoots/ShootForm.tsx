@@ -418,9 +418,24 @@ export function ShootForm(props: ShootFormMode) {
     }
 
     succeeded()
-    // AC-1 — the new shoot appears in the shoot list. `back` returns to
-    // whatever pushed this, and every list refetches on focus.
-    router.back()
+    /*
+      Straight onto the shoot that was just made (owner, 2026-09-05).
+
+      This was `router.back()`, which returned the reader to whichever list
+      pushed the form — usually the calendar, since that is where «+» lives.
+      `US-002` AC-1 asks that "the new shoot appears in the shoot list", and
+      that reading is unharmed: the shoot is in every list, and the reader is
+      one tap from seeing it. What the old behaviour actually did was hand back
+      a list to scan for the thing just created. The story wants amending;
+      logged in docs/redesign-log.md.
+
+      **`replace`, never `push`.** The form must not stay on the stack: `push`
+      would leave «Назад» from the new shoot landing on a filled-in create form
+      for a shoot that already exists, and saving it again would make a second
+      one. Replacing swaps the form for the shoot, so «Назад» reaches the list
+      that opened the form — which is where `back` used to go, and still is.
+    */
+    router.replace(`/(app)/shoot/${result.id}`)
   }
 
   /*
