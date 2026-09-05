@@ -1485,6 +1485,67 @@ function MaterialsTab({
 
   return (
     <>
+      {/*
+        ── «Файли» (`US-024`, `US-025`), and why it is first ──────────────────
+
+        The two were the other way round, which is how the shoot-detail handoff
+        draws them. Swapped on the owner's instruction, and the reason holds on
+        its own: the file links are the fixed part of this tab — two slots that
+        exist whether or not anything is in them (`US-024`, `US-025`) — where
+        the reference grid grows without limit. With the unbounded collection
+        first, a pair of one-line rows sat below a scroll on any shoot with more
+        than a handful of references.
+
+        The handoff's «Незабаром: перетягуйте сюди одразу багато файлів» note is
+        not built — it advertises a feature that does not exist and is on no
+        backlog (redesign-log S-6).
+      */}
+      <View className="gap-2">
+        <View className="flex-row items-baseline justify-between">
+          <SectionLabel label={t.editFilesTitle} />
+          <Text className="text-label text-muted-foreground">
+            {`${setLinks} ${pluralUk(setLinks, t.linkForms)}`}
+          </Text>
+        </View>
+        <Card variant="flat" className="gap-0 p-0">
+          {files.map((file, index) => (
+            <FileRow
+              key={file.field}
+              title={file.title}
+              url={file.url}
+              divided={index > 0}
+              editing={editingLink === file.field}
+              onStartEdit={() => setEditingLink(file.field)}
+              onCancelEdit={() => setEditingLink(null)}
+              onSave={async (value) => {
+                const ok = await updateShootLink(shoot.id, file.field, value)
+                if (!ok) return false
+                // The row reads from `shoot`, so the screen has to hear about
+                // it — a refetch would work too and would blink the whole tab.
+                onLinkSaved(file.field, value.trim() || null)
+                setEditingLink(null)
+                return true
+              }}
+              onCopied={onCopied}
+            />
+          ))}
+        </Card>
+      </View>
+
+      {/*
+        ── «Референси» ──
+
+        **The sticky «Додати референс або файл» CTA is gone** (owner,
+        2026-09-05). It opened the gallery picker — exactly what the `+` tile at
+        the end of the grid below already does. One action had two controls, and
+        the button named files it could not add: it reached the image picker
+        only, where «Файли» above are pasted links (`US-024`, `US-025`).
+
+        Adding a reference is the `+` tile now, and nothing else about it
+        changed. `t.addReferenceOrFile` survives as that tile's
+        `accessibilityLabel`, which is the one place the phrase was ever true of
+        what the control did.
+      */}
       <View className="gap-2.5">
         <View className="flex-row items-baseline justify-between">
           <SectionLabel label={t.references} />
@@ -1543,63 +1604,6 @@ function MaterialsTab({
         {error ? <Text className="text-destructive text-sm">{error}</Text> : null}
         {removeDialog}
       </View>
-
-      {/*
-        «Файли» — `US-024` and `US-025`.
-
-        The handoff's «Незабаром: перетягуйте сюди одразу багато файлів» note is
-        not built — it advertises a feature that does not exist and is on no
-        backlog (redesign-log S-6).
-      */}
-      <View className="gap-2">
-        <View className="flex-row items-baseline justify-between">
-          <SectionLabel label={t.editFilesTitle} />
-          <Text className="text-label text-muted-foreground">
-            {`${setLinks} ${pluralUk(setLinks, t.linkForms)}`}
-          </Text>
-        </View>
-        <Card variant="flat" className="gap-0 p-0">
-          {files.map((file, index) => (
-            <FileRow
-              key={file.field}
-              title={file.title}
-              url={file.url}
-              divided={index > 0}
-              editing={editingLink === file.field}
-              onStartEdit={() => setEditingLink(file.field)}
-              onCancelEdit={() => setEditingLink(null)}
-              onSave={async (value) => {
-                const ok = await updateShootLink(shoot.id, file.field, value)
-                if (!ok) return false
-                // The row reads from `shoot`, so the screen has to hear about
-                // it — a refetch would work too and would blink the whole tab.
-                onLinkSaved(file.field, value.trim() || null)
-                setEditingLink(null)
-                return true
-              }}
-              onCopied={onCopied}
-            />
-          ))}
-        </Card>
-      </View>
-
-      {/*
-        The sticky CTA belongs to this tab alone.
-
-        The handoff gives «Команда» one too — «Скопіювати для тих, хто не
-        підтвердив (2)» — and it is not built: copying for a GROUP is a feature
-        that does not exist (redesign-log S-5), and per-person copy lives in the
-        sheet. «Деталі» has none in the handoff either.
-      */}
-      <Button
-        variant="cta"
-        size="cta"
-        className="mt-2"
-        disabled={busy}
-        onPress={() => void pickFromGallery()}
-      >
-        <Text>{t.addReferenceOrFile}</Text>
-      </Button>
     </>
   )
 }

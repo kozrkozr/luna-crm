@@ -4284,3 +4284,31 @@ No toast. `New Shoot.dc.html` raises «Зйомку створено — …» o
 has never shown it; the screen now being the created shoot says the same thing
 in a way a toast cannot contradict. Left as it was rather than added on the way
 past.
+
+## «Матеріали»: files above references, and one fewer button (owner, 2026-09-05)
+
+Two changes to the shoot's «Матеріали» tab, both against the shoot-detail
+handoff rather than with it.
+
+**«Файли» now sits above «Референси».** The handoff draws references first. The
+file links are the fixed part of the tab — two slots that exist whether or not
+anything is in them (`US-024`, `US-025`, and `FileRow` renders the empty one
+deliberately) — where the reference grid grows without limit. With the unbounded
+collection on top, a pair of one-line rows ended up below a scroll on any shoot
+with more than a handful of references.
+
+**The sticky «Додати референс або файл» CTA is removed.** It opened the gallery
+picker, which is exactly what the `+` tile at the end of the reference grid
+already does — one action with two controls. The button was also misnamed for
+what it reached: it could add an image reference and nothing else, where «Файли»
+are pasted external links, so "або файл" promised something it never did.
+
+`addReferenceOrFile` keeps one caller, the `+` tile's `accessibilityLabel` —
+which is the one place the phrase describes the control accurately, since a
+screen reader needs to hear what the tile is for.
+
+Nothing else about adding a reference changed. No acceptance suite names the
+button — «Додати референс або файл» appears nowhere under `tests/` — so none of
+them drove it. That is checked, not assumed; whether the `US-003` suites still
+pass is a separate question, since they have not been run against the current
+stack.
