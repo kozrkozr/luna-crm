@@ -1,5 +1,10 @@
+// Deep per-icon imports — see the note in src/components/ui/select.tsx.
+import Plus from 'lucide-react-native/icons/plus'
+import X from 'lucide-react-native/icons/x'
 import { Pressable, View } from 'react-native'
 import { MonthPicker } from './MonthPicker'
+import { Badge } from './ui/badge'
+import { Icon } from './ui/icon'
 import { Input } from './ui/input'
 import { Text } from './ui/text'
 import { Textarea } from './ui/textarea'
@@ -334,6 +339,105 @@ export function LocationChips({
           active={value.trim() === place}
           onPress={() => onPick(value.trim() === place ? '' : place)}
         />
+      ))}
+    </View>
+  )
+}
+
+/**
+ * The header of a section the form can do without: its label, an optional
+ * badge, and the × that takes it away again.
+ *
+ * ── Why three sections became optional ──────────────────────────────────────
+ *
+ * `New Shoot.dc.html` and `Shoot Detail v3.dc.html` (owner, 2026-09-05).
+ * «Оплата», «Нотатки для команди» and «Нотатки для клієнта» are drawn closed,
+ * added from the dashed pills below the form, and removed from here. The two
+ * artboards reach that state by different routes — New Shoot holds three
+ * explicit booleans, the edit screen derives them from whether the field is
+ * filled and ORs in an `optAdded` override — and `openSections` collapses both
+ * into one rule. See its own comment.
+ *
+ * **The × clears the section's values, it does not merely hide it.** That is
+ * the artboard's `hide()`, and it is what makes the derivation safe: a section
+ * cannot be both filled and closed, so there is no hidden value waiting to be
+ * saved by a form that no longer shows it. The owner asked for a confirmation
+ * first when the section actually holds something (2026-09-05) — that lives in
+ * the form, because only the form knows what is in the fields.
+ */
+export function OptionalSectionHeader({
+  label,
+  badge,
+  removeLabel,
+  onRemove,
+}: {
+  label: string
+  /** «Клієнт не бачить» on the crew note. Absent on the other two. */
+  badge?: string
+  /** Spoken by a screen reader: «Прибрати оплату». The × itself has no text. */
+  removeLabel: string
+  onRemove: () => void
+}) {
+  return (
+    <View className="flex-row items-center gap-2">
+      <View className="flex-1">
+        <SectionLabel label={label} />
+      </View>
+      {badge ? <Badge variant="outline" label={badge} /> : null}
+      {/*
+        28pt as drawn, which is under the 44pt minimum — `hitSlop` makes up the
+        difference rather than a bigger circle, because the circle sits on the
+        same baseline as a 12px label and a taller one would push the heading
+        row out of line with every other section on the form.
+      */}
+      <Pressable
+        className="active:bg-secondary -mr-1 h-7 w-7 shrink-0 items-center justify-center rounded-full"
+        hitSlop={10}
+        onPress={() => {
+          tapped()
+          onRemove()
+        }}
+        role="button"
+        accessibilityLabel={removeLabel}
+      >
+        <Icon as={X} size={14} strokeWidth={2} className="text-muted-foreground" />
+      </Pressable>
+    </View>
+  )
+}
+
+/**
+ * The dashed «+ Оплата» pills, at the foot of the form.
+ *
+ * One per section that is currently closed, in a fixed order — the artboard's
+ * `defs` array, not the order they were removed in, so the row does not
+ * reshuffle itself as sections are added and taken away.
+ *
+ * Renders nothing when every section is open, which is the artboard's
+ * `hasAddable`; an empty flex row would still take its gap from the column
+ * above it.
+ */
+export function AddSectionPills({
+  sections,
+}: {
+  sections: { key: string; label: string; add: () => void }[]
+}) {
+  if (sections.length === 0) return null
+  return (
+    <View className="flex-row flex-wrap gap-1.5">
+      {sections.map((section) => (
+        <Pressable
+          key={section.key}
+          className="border-border-strong active:bg-secondary min-h-[38px] flex-row items-center gap-[7px] rounded-full border border-dashed py-2 pl-[11px] pr-3.5"
+          onPress={() => {
+            tapped()
+            section.add()
+          }}
+          role="button"
+        >
+          <Icon as={Plus} size={14} strokeWidth={2} className="text-muted-foreground" />
+          <Text className="text-body-sm text-muted-foreground font-medium">{section.label}</Text>
+        </Pressable>
       ))}
     </View>
   )

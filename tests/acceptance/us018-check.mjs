@@ -43,8 +43,12 @@ ok('detail screen offers the way into edit', body.includes('Редагувати
 
 await tap(btn('Редагувати')); await B.settle()
 body = await ev('document.body.innerText')
-ok('edit screen shows date and the Локація section',
-   body.includes('Локація') && body.includes('Адреса') && body.includes('Нотатки'),
+// «Нотатки для команди» is the DASHED PILL here, not a heading: this fixture has
+// no note, and since 2026-09-05 the section is closed until it holds something
+// or somebody opens it. The bare substring «Нотатки» passed either way, which
+// made the old assertion true by accident — it is named for what it now checks.
+ok('edit screen shows date, the Локація section and the notes section on offer',
+   body.includes('Локація') && body.includes('Адреса') && body.includes('Нотатки для команди'),
    body.replace(/\n/g,' | ').slice(0,140))
 // The files section IS on this screen now — US-024/US-025 put it there, where
 // ux-notes.md and the prototype place it. This assertion used to check it was

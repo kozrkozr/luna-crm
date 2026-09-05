@@ -382,7 +382,45 @@ export const uk = {
   locationDetailsPlaceholder: 'Поверх, код домофону, вхід, паркування',
   notesSection: 'Нотатки',
   clientCannotSee: 'Клієнт не бачить',
-  shootNotesPlaceholder: 'Побажання клієнта, обладнання, що взяти',
+  /**
+   * ── The three optional sections (owner, 2026-09-05) ────────────────────────
+   *
+   * «Оплата», «Нотатки для команди» and «Нотатки для клієнта» are added and
+   * removed on the shoot form now, so each needs a name in the dashed pill that
+   * adds it and in the × that takes it away.
+   *
+   * **`notesSection` is deliberately NOT renamed.** It reads «Нотатки» in three
+   * places — the shoot form, `ContactForm` and `PublicProfile` — and only the
+   * first became «Нотатки для команди». The other two are a CREW MEMBER's own
+   * note, which is a different field with a different audience (`ADR-013`), so
+   * `teamNotesSection` is a new key rather than an edit to that one.
+   */
+  teamNotesSection: 'Нотатки для команди',
+  /** The artboard's new placeholder — the old one named the client's wishes,
+      which is what «Нотатки для клієнта» collects now. */
+  shootNotesPlaceholder: 'Обладнання, що взяти, внутрішні домовленості',
+  /**
+   * `20260905160000` — the note the CLIENT reads. No badge beside it: the crew
+   * note earns «Клієнт не бачить» because its audience is surprising, and this
+   * one's is in its name.
+   */
+  clientNotesSection: 'Нотатки для клієнта',
+  clientNotesPlaceholder: 'Що взяти з собою, дрес-код, як дістатися',
+  /* Spoken by a screen reader on each ×, which has no text of its own. The
+     artboards' own `aria-label`s. */
+  removePaymentLabel: 'Прибрати оплату',
+  removeTeamNotesLabel: 'Прибрати нотатки',
+  removeClientNotesLabel: 'Прибрати нотатки для клієнта',
+  /**
+   * The confirmation before a × clears a section that holds something (owner,
+   * 2026-09-05 — the artboards clear it outright, with no step in between).
+   *
+   * **This copy is not from any artboard.** It is written here to cover a
+   * behaviour the owner chose after the design was drawn, and is flagged in
+   * docs/redesign-log.md as needing sign-off rather than presented as confirmed.
+   */
+  confirmRemoveSection: 'Прибрати «{section}»? Введене буде стерто.',
+  removeAction: 'Прибрати',
   createShootCta: 'Створити зйомку',
   fillClientAndTime: 'Заповніть клієнта й час',
   /** «Перетин із «Марія Литвин» 10:00 – 13:00» — a warning, never a block. */

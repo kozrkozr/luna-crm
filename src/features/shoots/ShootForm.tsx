@@ -8,11 +8,12 @@ import { Input } from '../../components/ui/input'
 import { Text } from '../../components/ui/text'
 import { Textarea } from '../../components/ui/textarea'
 import {
+  AddSectionPills,
+  OptionalSectionHeader,
   SectionLabel,
   ShootLocationFields,
   ShootWhenFields,
 } from '../../components/ShootFormFields'
-import { VisibilityNote } from '../../components/Visibility'
 import { Toast } from '../../components/Toast'
 import {
   AlertDialog,
@@ -81,6 +82,51 @@ import { Starfield } from '../../components/Starfield'
  */
 export type ShootFormMode = { mode: 'create' } | { mode: 'edit'; id: string }
 
+/**
+ * The three sections the form can do without, in the order the artboards' own
+ * `defs` array lists them.
+ *
+ * That order is the order the dashed pills appear in — **not** the order they
+ * were removed in, so the row does not reshuffle itself as sections come and
+ * go. The labels are string KEYS rather than words: this array is module-level
+ * and `useStrings` is not available here.
+ */
+const SECTIONS = [
+  { key: 'pay', label: 'paymentSection', remove: 'removePaymentLabel' },
+  { key: 'notes', label: 'teamNotesSection', remove: 'removeTeamNotesLabel' },
+  { key: 'clientNotes', label: 'clientNotesSection', remove: 'removeClientNotesLabel' },
+] as const
+
+type SectionKey = (typeof SECTIONS)[number]['key']
+
+/**
+ * Whether each optional section is showing — the one rule that covers both
+ * screens.
+ *
+ * The two artboards reach this by different routes. `New Shoot.dc.html` holds
+ * three explicit booleans and starts them all false; `Shoot Detail v3.dc.html`'s
+ * edit form derives them from whether the field is filled and ORs in an
+ * `optAdded` override, so a shoot that already has a price opens with «Оплата»
+ * showing. **The second rule subsumes the first**: on a blank create form
+ * nothing is filled, so `filled || added` starts every section closed by
+ * itself.
+ *
+ * It stays correct only because the × CLEARS the section as well as hiding it
+ * (`clearSection`). Were a value left behind, `filled` would immediately reopen
+ * the section the reader just closed — and a hide that did not clear would also
+ * mean a form saving a field it does not show, which is the worse half.
+ */
+function openSections(
+  filled: Record<SectionKey, boolean>,
+  added: Record<SectionKey, boolean>
+): Record<SectionKey, boolean> {
+  return {
+    pay: filled.pay || added.pay,
+    notes: filled.notes || added.notes,
+    clientNotes: filled.clientNotes || added.clientNotes,
+  }
+}
+
 export function ShootForm(props: ShootFormMode) {
   const t = useStrings()
   const router = useRouter()
@@ -112,6 +158,8 @@ export function ShootForm(props: ShootFormMode) {
   const [address, setAddress] = useState('')
   const [locationDetails, setLocationDetails] = useState('')
   const [notes, setNotes] = useState('')
+  /** `20260905160000` — the note the client reads. See `SECTIONS`. */
+  const [clientNotes, setClientNotes] = useState('')
   /*
     «Оплата» as TEXT, not numbers. The fields group as they are typed —
     «12 000» — so the string is what the user sees and `parseAmount` is the only
@@ -122,6 +170,20 @@ export function ShootForm(props: ShootFormMode) {
   const [prepayment, setPrepayment] = useState('')
   /** Every shoot, for the location chips and the overlap warning. */
   const [existing, setExisting] = useState<Shoot[]>([])
+
+  /**
+   * Which optional sections the reader has opened by hand this session.
+   *
+   * Only half of the answer — `open` below ORs this with whether the section
+   * holds anything. See `openSections`.
+   */
+  const [added, setAdded] = useState<Record<SectionKey, boolean>>({
+    pay: false,
+    notes: false,
+    clientNotes: false,
+  })
+  /** The section a × is asking about, or null. See `removeSection`. */
+  const [removing, setRemoving] = useState<SectionKey | null>(null)
 
   /** `US-029` AC-4 — the client this number turns out to belong to. */
   const [phoneMatch, setPhoneMatch] = useState<Client | null>(null)
@@ -188,6 +250,7 @@ export function ShootForm(props: ShootFormMode) {
         setAddress(shoot.locationAddress ?? '')
         setLocationDetails(shoot.locationNote ?? '')
         setNotes(shoot.notes ?? '')
+        setClientNotes(shoot.clientNotes ?? '')
         // Null renders as an EMPTY field, not «0» — the form must not look like
         // somebody priced this shoot at nothing when nobody priced it at all.
         setPrice(shoot.price === null ? '' : formatAmount(shoot.price))
@@ -315,6 +378,7 @@ export function ShootForm(props: ShootFormMode) {
       locationAddress: address.trim() || null,
       locationNote: locationDetails.trim() || null,
       notes: notes.trim() || null,
+      clientNotes: clientNotes.trim() || null,
       price: priceValue,
       prepayment: prepaymentValue,
     }
@@ -372,6 +436,47 @@ export function ShootForm(props: ShootFormMode) {
   const clashes =
     date && start && end ? overlappingShoots(existing, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
+
+  /*
+    ── The three optional sections (owner, 2026-09-05) ────────────────────────
+
+    Derived per render rather than held in state, so there is no second copy of
+    "is this section showing" to fall out of step with the fields themselves.
+  */
+  const filled: Record<SectionKey, boolean> = {
+    pay: price.trim() !== '' || prepayment.trim() !== '',
+    notes: notes.trim() !== '',
+    clientNotes: clientNotes.trim() !== '',
+  }
+  const open = openSections(filled, added)
+  const closed = SECTIONS.filter((section) => !open[section.key])
+
+  /** Empty the section and close it. Both halves, always — see `openSections`. */
+  const clearSection = (key: SectionKey) => {
+    if (key === 'pay') {
+      setPrice('')
+      setPrepayment('')
+    } else if (key === 'notes') {
+      setNotes('')
+    } else {
+      setClientNotes('')
+    }
+    setAdded((current) => ({ ...current, [key]: false }))
+  }
+
+  /**
+   * The ×.
+   *
+   * An empty section goes at once — there is nothing to lose and a dialog for
+   * it would be noise. A section holding something asks first (owner,
+   * 2026-09-05), which is **the one departure from the artboards on this pass**:
+   * both of them clear without asking. It matters most when editing, where the
+   * thing being cleared is a price or a note that was already saved.
+   */
+  const removeSection = (key: SectionKey) => {
+    if (filled[key]) return setRemoving(key)
+    clearSection(key)
+  }
 
   if (failedToLoad) {
     return (
@@ -568,95 +673,161 @@ export function ShootForm(props: ShootFormMode) {
             ── Оплата ── between the location and the notes, as both artboards
             place it. Two fields side by side and the percentage chips.
 
+            **Optional since 2026-09-05** — closed on a new shoot, open on one
+            that already has a figure, added back from the pills at the foot of
+            the form. See `openSections`.
+
             **No «Залишок після зйомки» row** (owner, 2026-09-05). The artboard
             draws one under the chips whenever a price is set; it is removed
             because the same number is already on the shoot's own screen, where
             it is the point of the card rather than a footnote to a form. The
             arithmetic is still live — `pay.invalid` is what blocks the save.
+
+            Nothing about the validation changed with the section: a closed
+            «Оплата» has two empty fields, `parseAmount` reads them as null, and
+            `pay.invalid` is false. A form cannot be blocked by a section it is
+            not showing.
           */}
-          <View className="gap-3.5">
-            <SectionLabel label={t.paymentSection} />
-
-            <View className="flex-row gap-2.5">
-              <AmountField
-                label={t.priceLabel}
-                value={price}
-                onChangeText={(text) => {
-                  const next = parseAmount(text)
-                  setPrice(next === null ? '' : formatAmount(next))
-                  /*
-                    Typing the price DOWN drags the prepayment with it, which is
-                    the artboard's own `onPrice`. Without it the form would sit
-                    in the error state the moment somebody corrected a price
-                    downwards, blaming the field they did not touch.
-                  */
-                  if (next !== null && prepaymentValue !== null && prepaymentValue > next) {
-                    setPrepayment(formatAmount(next))
-                  }
-                }}
+          {open.pay ? (
+            <View className="gap-3.5">
+              <OptionalSectionHeader
+                label={t.paymentSection}
+                removeLabel={t.removePaymentLabel}
+                onRemove={() => removeSection('pay')}
               />
-              <AmountField
-                label={t.prepaymentLabel}
-                value={prepayment}
-                invalid={pay.invalid}
-                onChangeText={(text) => {
-                  const next = parseAmount(text)
-                  setPrepayment(next === null ? '' : formatAmount(next))
-                }}
-              />
-            </View>
 
-            <View className="-mt-1 flex-row flex-wrap gap-1.5">
-              {PREPAYMENT_STEPS.map((step) => {
-                const chip = prepaymentChip(step, priceValue, prepaymentValue)
-                return (
-                  <RoleChip
-                    key={step}
-                    label={step === 0 ? t.prepaymentNone : `${step}${t.percentSuffix}`}
-                    active={chip.active}
-                    onPress={() =>
-                      setPrepayment(chip.value === null ? '' : formatAmount(chip.value))
+              <View className="flex-row gap-2.5">
+                <AmountField
+                  label={t.priceLabel}
+                  value={price}
+                  onChangeText={(text) => {
+                    const next = parseAmount(text)
+                    setPrice(next === null ? '' : formatAmount(next))
+                    /*
+                      Typing the price DOWN drags the prepayment with it, which is
+                      the artboard's own `onPrice`. Without it the form would sit
+                      in the error state the moment somebody corrected a price
+                      downwards, blaming the field they did not touch.
+                    */
+                    if (next !== null && prepaymentValue !== null && prepaymentValue > next) {
+                      setPrepayment(formatAmount(next))
                     }
-                  />
-                )
-              })}
+                  }}
+                />
+                <AmountField
+                  label={t.prepaymentLabel}
+                  value={prepayment}
+                  invalid={pay.invalid}
+                  onChangeText={(text) => {
+                    const next = parseAmount(text)
+                    setPrepayment(next === null ? '' : formatAmount(next))
+                  }}
+                />
+              </View>
+
+              <View className="-mt-1 flex-row flex-wrap gap-1.5">
+                {PREPAYMENT_STEPS.map((step) => {
+                  const chip = prepaymentChip(step, priceValue, prepaymentValue)
+                  return (
+                    <RoleChip
+                      key={step}
+                      label={step === 0 ? t.prepaymentNone : `${step}${t.percentSuffix}`}
+                      active={chip.active}
+                      onPress={() =>
+                        setPrepayment(chip.value === null ? '' : formatAmount(chip.value))
+                      }
+                    />
+                  )
+                })}
+              </View>
+
+              {pay.invalid ? (
+                <Text role="alert" className="text-caption text-destructive -mt-1 px-0.5">
+                  {t.prepaymentOverPrice}
+                </Text>
+              ) : null}
             </View>
+          ) : null}
 
-            {pay.invalid ? (
-              <Text role="alert" className="text-caption text-destructive -mt-1 px-0.5">
-                {t.prepaymentOverPrice}
-              </Text>
-            ) : null}
-          </View>
+          {/*
+            ── Нотатки для команди ──
 
-          {/* ── Нотатки ── */}
-          <View className="gap-2">
-            <SectionLabel label={t.notesSection} />
-            <Textarea
-              value={notes}
-              onChangeText={setNotes}
-              placeholder={t.shootNotesPlaceholder}
-              numberOfLines={4}
-              className="min-h-[88px]"
-            />
-            {/*
-              «Клієнт не бачить», in the same box the crew form gives its own
-              note (owner, 2026-09-03) rather than the outline `Badge` that used
-              to sit beside the heading — a tag shape for a sentence's job.
+            Renamed from «Нотатки» on 2026-09-05, when the form grew a second
+            note. The name is the whole point of the rename: two textareas a
+            line apart, one of which the client reads and one of which they must
+            not, cannot both be called «Нотатки».
 
-              **True by construction, not by the label**: the link gateway builds
-              both payloads from explicit column lists, and `shoots.notes` is
-              selected for `crewPayload` and never for `clientPayload`
-              (`ADR-013`, CLAUDE.md rule 2).
+            **«Клієнт не бачить» is back to a badge beside the heading**, where
+            it was a `VisibilityNote` box between 2026-09-03 and now. The box
+            was the better shape for a sentence, and it is given up because the
+            heading row already carries a × — a box below the label, a badge
+            above it and a × to the right of both is three affordances competing
+            in one small space. The new artboard draws the badge; taken as
+            drawn, and the reason is worth knowing before anyone puts the box
+            back.
 
-              The wording is unchanged. The crew form's box says who DOES see
-              the note as well as who does not; saying that here would need a
-              sentence nobody has written, and the shoot's note has a different
-              audience — crew receive it, where a crew member's own note reaches
-              nobody.
-            */}
-            <VisibilityNote label={t.clientCannotSee} />
-          </View>
+            **True by construction, not by the label**: the link gateway builds
+            each payload from an explicit column list, and `shoots.notes` is
+            selected for `crewPayload` and never for `clientPayload`
+            (`ADR-013`, CLAUDE.md rule 2).
+          */}
+          {open.notes ? (
+            <View className="gap-2">
+              <OptionalSectionHeader
+                label={t.teamNotesSection}
+                badge={t.clientCannotSee}
+                removeLabel={t.removeTeamNotesLabel}
+                onRemove={() => removeSection('notes')}
+              />
+              <Textarea
+                value={notes}
+                onChangeText={setNotes}
+                placeholder={t.shootNotesPlaceholder}
+                numberOfLines={4}
+                className="min-h-[88px]"
+              />
+            </View>
+          ) : null}
+
+          {/*
+            ── Нотатки для клієнта ──
+
+            New on 2026-09-05, and the first field on this form written to be
+            read by somebody outside the app: it is selected for the gateway's
+            `clientPayload` and for no other query (migration `20260905160000`).
+
+            **No badge.** The crew note earns «Клієнт не бачить» because its
+            audience is surprising — a note on a shoot sounds like something
+            everyone on the shoot can see. This one's audience is in its name,
+            and a «Клієнт бачить» badge would be a label restating its own
+            heading.
+          */}
+          {open.clientNotes ? (
+            <View className="gap-2">
+              <OptionalSectionHeader
+                label={t.clientNotesSection}
+                removeLabel={t.removeClientNotesLabel}
+                onRemove={() => removeSection('clientNotes')}
+              />
+              <Textarea
+                value={clientNotes}
+                onChangeText={setClientNotes}
+                placeholder={t.clientNotesPlaceholder}
+                numberOfLines={4}
+                className="min-h-[88px]"
+              />
+            </View>
+          ) : null}
+
+          {/* Whatever is closed, offered back. Renders nothing when all three
+              are open. */}
+          <AddSectionPills
+            sections={closed.map((section) => ({
+              key: section.key,
+              label: t[section.label],
+              add: () => setAdded((current) => ({ ...current, [section.key]: true })),
+            }))}
+          />
 
           {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
         </View>
@@ -696,6 +867,41 @@ export function ShootForm(props: ShootFormMode) {
               }}
             >
               <Text>{t.yesSamePerson}</Text>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/*
+        The × asking before it clears a section that holds something (owner,
+        2026-09-05). The artboards clear outright; this is the departure, and it
+        exists because on the edit screen the thing being cleared is a price or
+        a note that has already been saved.
+
+        Its copy is **not** from any artboard — see `confirmRemoveSection` in
+        uk.ts and the entry in docs/redesign-log.md. It names the section it is
+        about, because three ×s on one screen would otherwise raise the same
+        anonymous question.
+      */}
+      <AlertDialog open={!!removing} onOpenChange={(shown) => !shown && setRemoving(null)}>
+        <AlertDialogContent>
+          <AlertDialogDescription>
+            {t.confirmRemoveSection.replace(
+              '{section}',
+              removing ? t[SECTIONS.find((section) => section.key === removing)!.label] : ''
+            )}
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel onPress={() => setRemoving(null)}>
+              <Text>{t.cancel}</Text>
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onPress={() => {
+                if (removing) clearSection(removing)
+                setRemoving(null)
+              }}
+            >
+              <Text>{t.removeAction}</Text>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

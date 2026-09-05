@@ -235,7 +235,17 @@ export const en: Strings = {
   locationDetailsPlaceholder: 'Floor, door code, entrance, parking',
   notesSection: 'Notes',
   clientCannotSee: 'Hidden from the client',
-  shootNotesPlaceholder: "What the client wants, gear to bring",
+  /* The three optional sections. `notesSection` stays «Notes» — it is a crew
+     member's own note on two other screens; see the note in uk.ts. */
+  teamNotesSection: 'Notes for the crew',
+  shootNotesPlaceholder: 'Gear, what to bring, internal arrangements',
+  clientNotesSection: 'Notes for the client',
+  clientNotesPlaceholder: 'What to bring, dress code, how to get there',
+  removePaymentLabel: 'Remove payment',
+  removeTeamNotesLabel: 'Remove notes',
+  removeClientNotesLabel: 'Remove notes for the client',
+  confirmRemoveSection: 'Remove «{section}»? What you entered will be cleared.',
+  removeAction: 'Remove',
   createShootCta: 'Create shoot',
   fillClientAndTime: 'Fill in the client and the time',
   overlapTemplate: 'Overlaps «{name}» {range}',
