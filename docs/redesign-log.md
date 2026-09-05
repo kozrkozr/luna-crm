@@ -4312,3 +4312,48 @@ button — «Додати референс або файл» appears nowhere und
 them drove it. That is checked, not assumed; whether the `US-003` suites still
 pass is a separate question, since they have not been run against the current
 stack.
+
+## «Редагувати зйомку» and delete, as v3 draws them (owner, 2026-09-05)
+
+The two actions at the foot of the shoot's «Деталі» tab were two stacked
+outlined rectangles. `Shoot Detail v3.dc.html` draws one row: «Редагувати
+зйомку» as a filled pill taking the remaining width, and a 48pt circle beside it
+holding a trash glyph and no words.
+
+**What changes is what each one looks like it does.** Both were outlines of
+equal weight — the primary action and the irreversible one, drawn identically
+and told apart only by the colour of one label. Editing is now the obvious thing
+to tap; destroying is a small target you have to aim at.
+
+### The token trap
+
+The artboard's `--accent` is **not** this app's `--accent`. There it is the pale
+blue-white CTA fill; here that is `--primary`, and `--accent` is a raised chip
+surface (`#18191A`). The theme handoff states the mapping — "не використовувати
+чистий білий для кнопок — тільки `--primary`" — and `Badge` already carries a
+warning that the two share nothing but the word. So `--accent` / `--accent-ink`
+become `bg-primary` / `text-primary-foreground`.
+
+The delete circle's three tokens cross unchanged: `--danger-bg`,
+`--danger-border`, `--danger-soft`. `StatusPill`'s «Завершена» chip already uses
+that exact trio.
+
+### One departure
+
+The artboard fills the circle with `--danger` on hover. There is no such token —
+`danger` exists only as `soft`/`bg`/`border`, and `--destructive` is the colour
+of an *action* that destroys rather than a surface. The press state is
+`active:opacity-80`, the app's standard, rather than a colour invented to stand
+in for one.
+
+### The delete control has no text now
+
+«Скасувати зйомку» moves to `accessibilityLabel` — the artboard's own
+`aria-label`, and the only place the words exist before the confirmation dialog.
+
+That changes how `us019-check.mjs` has to reach it, and the suite is updated to
+tap by `aria-label`. **It could not have passed before this change either:** it
+waited for «Видалити зйомку» on this screen, which is `deleteShoot` — the
+confirm-dialog wording on the two LIST screens. This screen has said «Скасувати
+зйомку» since the v3 rebuild. Both the stale string and the new icon-only shape
+are fixed together. Not run: the local stack is not up.

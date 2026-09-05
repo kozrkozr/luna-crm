@@ -650,33 +650,71 @@ function DetailsTab({
       ) : null}
 
       {/*
-        The ⋯ menu's two items, as v3's two full-width buttons. `crew` is unused
-        by the card now that the confirmation count moved to the «Команда» tab, but
-        the prop stays: the tab is the natural owner of "how many people are on
-        this shoot" and the next thing that needs it will need it here.
+        ── The two actions, as `Shoot Detail v3.dc.html` draws them ────────────
+
+        One row, not two stacked outlines. «Редагувати зйомку» is a filled pill
+        taking the width that is left; deleting is a 48pt circle beside it
+        holding a trash glyph and no words.
+
+        **The change is what each one now looks like it does.** Both used to be
+        outlined rectangles of equal weight — the primary action and the
+        irreversible one, drawn identically and told apart only by the colour of
+        one label. Editing is now the obvious thing to tap, and destroying is a
+        small target you have to aim at.
+
+        The delete control is icon-only, so «Скасувати зйомку» moves to
+        `accessibilityLabel` — the artboard's own `aria-label`, and the only
+        place the words now exist before the confirmation dialog.
+
+        ── Tokens ─────────────────────────────────────────────────────────────
+
+        The artboard's `--accent` is **not** our `--accent`. There it is the
+        pale blue-white CTA fill; here that is `--primary`, and `--accent` is a
+        raised chip surface (`#18191A`). The theme handoff makes the mapping
+        explicit — "не використовувати чистий білий для кнопок — тільки
+        `--primary`" — and `Badge` carries the same warning about the word. So
+        `--accent`/`--accent-ink` become `bg-primary`/`text-primary-foreground`.
+
+        The delete circle's three tokens survive the crossing unchanged:
+        `--danger-bg`, `--danger-border`, `--danger-soft`. `StatusPill`'s
+        «Завершена» chip already uses that exact trio, which is why they exist.
+
+        **One departure.** The artboard fills the circle with `--danger` on
+        hover; we have no such token — `danger` is only `soft`/`bg`/`border`,
+        and `--destructive` is the colour of an *action* that destroys rather
+        than a surface. So the press state is `active:opacity-80`, the app's
+        standard, rather than a colour invented to stand in for one.
+
+        `crew` is unused by the card now that the confirmation count moved to
+        the «Команда» tab, but the prop stays: the tab is the natural owner of
+        "how many people are on this shoot" and the next thing that needs it
+        will need it here.
       */}
-      <View className="mt-1 gap-2">
+      <View className="mt-1 flex-row items-center gap-2.5">
         <Pressable
-          className="border-border active:bg-secondary min-h-12 flex-row items-center justify-center gap-2 rounded-lg border"
+          className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
           onPress={() => {
             tapped()
             onEdit()
           }}
           role="button"
         >
-          <Icon as={Pencil} size={16} strokeWidth={1.8} className="text-muted-foreground" />
-          <Text className="text-body-sm text-foreground font-semibold">{t.menuEditShoot}</Text>
+          <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
+          <Text className="text-body-sm text-primary-foreground font-semibold">
+            {t.menuEditShoot}
+          </Text>
         </Pressable>
 
         <Pressable
-          className="border-border active:bg-destructive/10 min-h-12 flex-row items-center justify-center rounded-lg border"
+          className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
           onPress={() => {
             tapped()
             onCancelShoot()
           }}
           role="button"
+          accessibilityLabel={t.cancelShoot}
         >
-          <Text className="text-body-sm text-destructive font-semibold">{t.cancelShoot}</Text>
+          <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
         </Pressable>
       </View>
     </>

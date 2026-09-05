@@ -24,11 +24,20 @@ let body = await B.text()
 ok('the shoot is in the list before deleting', body.includes(name))
 
 await B.navigate(`${APP}/shoot/${sid}`)
-await B.waitForText('Видалити зйомку', { label: 'the delete control' })
+/*
+  The delete control is a 48pt icon-only circle beside «Редагувати зйомку»
+  (`Shoot Detail v3.dc.html`, 2026-09-05), so it is reached by its `aria-label`
+  rather than by its text — it has none. The label is «Скасувати зйомку», which
+  is what this screen has called the action since the v3 rebuild; `deleteShoot`
+  («Видалити зйомку») is the confirm-dialog wording on the two LIST screens and
+  was never this button's. This suite had been asking for it here regardless.
+*/
+const deleteControl = `document.querySelector('[role=button][aria-label="Скасувати зйомку"]')`
+await B.waitFor(`!!${deleteControl}`, { label: 'the delete control' })
 ok('the shoot offers delete', true)
 
 // ---------- AC-2: tapping delete asks, and destroys nothing yet ----------
-await B.tapByText('Видалити зйомку')
+await B.tap(deleteControl)
 await B.waitForText('Видалити цю зйомку? Це незворотньо.', { label: 'the confirmation' })
 ok('AC-2 tapping delete asks for confirmation', true)
 let { data: stillThere } = await db.from('shoots').select('id, deleted_at').eq('id', sid)
@@ -40,12 +49,12 @@ await B.tapInDialog('Скасувати')
 ;({ data: stillThere } = await db.from('shoots').select('id, deleted_at').eq('id', sid))
 ok('AC-2 cancelling leaves the shoot intact',
    (stillThere?.length ?? 0) === 1 && !stillThere[0].deleted_at)
-ok('AC-2 still on the shoot after cancelling', (await B.text()).includes('Видалити зйомку'))
+ok('AC-2 still on the shoot after cancelling', await B.ev(`!!${deleteControl}`))
 
 // ---------- AC-1: confirming deletes ----------
-await B.tapByText('Видалити зйомку')
+await B.tap(deleteControl)
 await B.waitForText('Видалити цю зйомку? Це незворотньо.', { label: 'the confirmation, second time' })
-await B.tapInDialog('Видалити зйомку')
+await B.tapInDialog('Скасувати зйомку')
 await B.waitForText('Мої зйомки', { label: 'the shoot list after deleting' })
 const { data: gone } = await db.from('shoots').select('id').eq('id', sid)
 ok('AC-1 confirming deletes the shoot', (gone?.length ?? 0) === 0, 'rows readable after delete: ' + (gone?.length ?? 0))
