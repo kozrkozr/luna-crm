@@ -60,9 +60,11 @@ type State =
       /**
        * Whether the account has any shoot at all, past ones included.
        *
-       * Separate from `next` because the two absences are different screens: an
-       * account with nothing in it gets the empty state below, while one whose
-       * shoots are all in the past keeps AC-5's silence — see the note there.
+       * Separate from `next` because the two absences read differently: an
+       * account with nothing in it is told to create its first shoot, while one
+       * whose shoots are all in the past is told there is nothing scheduled.
+       * Same card, one word apart — and until 2026-09-05 the second said
+       * nothing at all (`US-035` AC-5).
        */
       hasAny: boolean
       /** How many of that shoot's crew have confirmed, and how many there are. */
@@ -171,21 +173,34 @@ export default function HomeScreen() {
           return
         }
         /*
-          Drop it locally first so the row goes at once, then refetch: the list
-          is what decides which shoot is next, and only the round trip can
-          promote one into the hero slot. Deleting the hero leaves that slot
-          empty for the length of the refetch rather than flashing the empty
-          state, because `hasAny` is untouched.
+          Drop it locally first so the row goes at once, then refetch, because
+          the full list is what decides which shoot is next.
+
+          **Deleting the hero promotes the first upcoming one locally**, rather
+          than leaving the slot empty until the round trip returns. It has to
+          since 2026-09-05: an empty hero slot with `hasAny` true now draws
+          «Немає запланованих зйомок», so the gap that used to be blank would
+          flash a sentence that is false — there ARE upcoming shoots, one of
+          them is simply about to move up. Promoting locally shows the true
+          answer immediately and the refetch confirms it.
+
+          The promoted shoot carries `confirmed: null`: the crew count is
+          fetched for the hero alone, so it is genuinely unknown until the
+          refetch. The card drops that line rather than showing a stale count
+          belonging to the shoot that was just deleted.
         */
-        setState((current) =>
-          current.status === 'loaded'
-            ? {
-                ...current,
-                next: current.next?.id === shoot.id ? null : current.next,
-                upcoming: current.upcoming.filter((row) => row.id !== shoot.id),
-              }
-            : current
-        )
+        setState((current) => {
+          if (current.status !== 'loaded') return current
+          const upcoming = current.upcoming.filter((row) => row.id !== shoot.id)
+          if (current.next?.id !== shoot.id) return { ...current, upcoming }
+          const [promoted, ...rest] = upcoming
+          return {
+            ...current,
+            next: promoted ?? null,
+            confirmed: promoted ? null : current.confirmed,
+            upcoming: promoted ? rest : upcoming,
+          }
+        })
         setReloadKey((key) => key + 1)
       })()
     },
@@ -199,7 +214,9 @@ export default function HomeScreen() {
           is painted behind and takes no touches; `deleteDialog` is outside
           because the boundary must not intercept the confirmation itself. */}
       <SwipeDismissBoundary>
-        <HomeHeader />
+        {/* `hasShoots` gates the bell — see the note there. Unknown while
+            loading, which is when the artboard draws nothing either. */}
+        <HomeHeader hasShoots={state.status === 'loaded' ? state.hasAny : false} />
         <ScrollView contentInsetAdjustmentBehavior="automatic">
           {/*
             `pb-10` — the artboard ends its scroll container at `padding-bottom:114`,
@@ -248,33 +265,40 @@ export default function HomeScreen() {
                     promise the type system is not making. */}
                 <HeroCard shoot={state.next} confirmed={state.confirmed} onRequestDelete={askDelete} />
               </View>
-            ) : state.status === 'loaded' && !state.hasAny ? (
+            ) : state.status === 'loaded' ? (
               /*
-                The empty state, now **on a card** rather than bare on the frame,
-                as drawn. Its copy changed with it: the old line said «Натисніть
-                «Нова зйомка» **вище**», and the button is below this block now.
+                Nothing is coming up — and there are two ways to arrive here.
+
+                `Home.dc.html` draws one of them: an account with no shoots at
+                all. **The other is new** (owner, 2026-09-05): shoots on the
+                account, all of them in the past. `US-035` AC-5 kept that one
+                silent and the log flagged it as needing the owner's word on
+                2026-08-29; this is that word. A screen whose only content is two
+                buttons was the thing AC-5 left behind.
+
+                One card either way. The states differ only in whether the reader
+                has history, so they get the same surface, the same glyph and
+                the same shape of sentence — a different voice would imply a
+                different kind of absence.
               */
-              <Card variant="flat" className="items-center px-5 py-7">
-                <Icon
-                  as={CalendarIcon}
-                  size={34}
-                  strokeWidth={1.6}
-                  className="text-border-strong mb-3"
-                />
-                <Text className="text-body text-foreground font-semibold">{t.emptyNextTitle}</Text>
+              <Card variant="flat" className="items-center px-5 py-[30px]">
+                <EmptyCalendarGlyph />
+                <Text className="text-body text-foreground font-semibold">
+                  {state.hasAny ? t.noUpcomingTitle : t.emptyNextTitle}
+                </Text>
                 <Text
                   className="text-body-sm text-muted-foreground mt-1.5 text-center leading-5"
                   style={{ maxWidth: 250 }}
                 >
-                  {t.emptyNextSub}
+                  {state.hasAny ? t.noUpcomingSub : t.emptyNextSub}
                 </Text>
               </Card>
             ) : null}
             {/*
-              AC-5 — with shoots on the account but none upcoming, the section is
-              still absent entirely, label included. That case is not the empty
-              state above: the design draws nothing for it, and «no upcoming
-              shoots» would be copy no story supplies.
+              «Наступні зйомки» stays absent when there is nothing in it — the
+              card above has already said so, and a heading over nothing would
+              say it twice. AC-5's silence now applies to this section only; the
+              screen itself speaks, which is the part the owner changed.
             */}
 
             <View className="gap-2">
@@ -344,6 +368,36 @@ export default function HomeScreen() {
         </ScrollView>
       </SwipeDismissBoundary>
       {deleteDialog}
+    </View>
+  )
+}
+
+/**
+ * The empty state's calendar — drawn, not a lucide icon.
+ *
+ * `Home.dc.html` builds it from two elements: a 38×34 rounded rectangle in
+ * 1.6px `--border-strong`, and a 1.6px rule 8px down for the calendar's header.
+ * That is all — **no tick marks on top**, which every lucide calendar has,
+ * including the one this used to borrow. At 34px the difference is two small
+ * strokes, but it is the difference between the drawing and something near it,
+ * and the placeholder's whole job is to suggest rather than depict.
+ *
+ * The one hand-drawn glyph in the app, and it stays a local component rather
+ * than joining `components/ui`: nothing else wants it, and a shared icon that
+ * exists for one empty state is a worse trade than eight lines here.
+ */
+function EmptyCalendarGlyph() {
+  return (
+    <View
+      className="border-border-strong mb-3.5 overflow-hidden rounded-md border-[1.6px]"
+      style={{ width: 38, height: 34 }}
+    >
+      {/* The header rule. `top: 8` measured from inside the border, which is
+          what both engines do: an absolutely positioned child is laid out
+          against the parent's padding edge in CSS and in Yoga alike, so the
+          artboard's `top:8px` transfers unchanged and needs no adjustment for
+          the 1.6px frame. `inset-x-0` reaches the same inner edges. */}
+      <View className="bg-border-strong absolute inset-x-0" style={{ top: 8, height: 1.6 }} />
     </View>
   )
 }
@@ -441,7 +495,7 @@ function UpcomingRow({ shoot }: { shoot: Shoot }) {
  * Outside the ScrollView (§5.1) and carrying the safe-area top inset, which the
  * mockups have no notion of.
  */
-function HomeHeader() {
+function HomeHeader({ hasShoots }: { hasShoots: boolean }) {
   const t = useStrings()
   const insets = useSafeAreaInsets()
   const profile = useProfile()
@@ -497,7 +551,20 @@ function HomeHeader() {
         {/*
           The bell. Inert — see the note on this screen. The dot is drawn as the
           mockup draws it and reflects nothing.
+
+          **Absent entirely on an empty account** (`Home.dc.html`, 2026-09-05):
+          the artboard wraps it in `sc-if hasNotifications`, and its own script
+          sets `hasNotifications: !isEmpty`. There is still no notification
+          system to ask, so `hasShoots` stands in for it exactly as the artboard
+          stands in for it — a photographer with no shoots has nothing anyone
+          could have confirmed.
+
+          It does shrink the screen's one untruth: a brand-new account no longer
+          gets an unread dot for messages that cannot exist. The dot still lies
+          the moment a shoot is created, which is unchanged and still the reason
+          to build notifications or drop the dot.
         */}
+        {hasShoots ? (
         <Pressable
           className="border-border h-10 w-10 shrink-0 items-center justify-center rounded-lg border active:bg-secondary"
           onPress={tapped}
@@ -513,6 +580,7 @@ function HomeHeader() {
               one. It still reflects nothing; see the note on this screen. */}
           <View className="border-background bg-foreground absolute right-[9px] top-[9px] h-[7px] w-[7px] rounded-full border-2" />
         </Pressable>
+        ) : null}
 
         <Link href="/(app)/(tabs)/profile" asChild>
           {/* A plain 40pt avatar. The chevron beside it is gone with the pill

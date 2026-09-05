@@ -497,14 +497,35 @@ export const uk = {
    */
   emptyNextTitle: 'Ще немає жодної зйомки',
   /*
-   * Replaced 2026-08-30 with `Home.dc.html`'s own copy. The previous line said
-   * «Натисніть «Нова зйомка» **вище**» — and the redesign moves that button
-   * BELOW this block, so the old text now pointed the wrong way. The new one
-   * describes the shoot instead of the button, which is why it does not care
-   * where the button sits.
+   * `Home.dc.html`'s own copy, twice over.
+   *
+   * It replaced «Натисніть «Нова зйомка» **вище**» on 2026-08-30, because the
+   * redesign moved that button BELOW this block and the old line pointed the
+   * wrong way. The artboard then **shortened it again** (2026-09-05): the
+   * trailing «разом із командою, локацією та нотатками» is gone.
+   *
+   * Worth knowing what that costs, since it was the more informative line: the
+   * empty state no longer says what a shoot holds. It now says only that one
+   * will appear here, which is the promise the screen can actually keep — the
+   * clause it dropped described fields the reader has not met yet.
    */
-  emptyNextSub:
-    'Створіть першу зйомку — вона зʼявиться тут разом із командою, локацією та нотатками.',
+  emptyNextSub: 'Створіть першу зйомку — вона зʼявиться тут.',
+  /*
+   * The THIRD absence on the home screen: shoots on the account, none of them
+   * ahead (owner, 2026-09-05).
+   *
+   * **New copy, and it answers a question the log opened on 2026-08-29** —
+   * "`US-035` AC-5 still holds for the third absence … If it should say
+   * something («Немає запланованих зйомок»?), that is new copy and needs the
+   * owner." It should, and this is the owner's answer; the title is that note's
+   * own suggestion.
+   *
+   * Deliberately parallel to `emptyNext*` above — same card, same glyph, one
+   * word apart — because the two states differ only in whether the reader has
+   * history, and a different voice would imply a different kind of absence.
+   */
+  noUpcomingTitle: 'Немає запланованих зйомок',
+  noUpcomingSub: 'Створіть нову зйомку — вона зʼявиться тут.',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',
   createFirst: 'Створити першу зйомку',

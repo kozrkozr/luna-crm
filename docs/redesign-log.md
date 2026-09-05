@@ -3996,3 +3996,53 @@ LOCAL stack's config; the linked project keeps its own. `supabase config push`
 sends it — but it pushes the whole `[auth]` block, not this line, so anything
 set in the dashboard and not mirrored in the file would be overwritten. The
 alternative is changing the one setting in the dashboard. Not done here.
+
+---
+
+## The home screen's third absence gets a card (owner, 2026-09-05)
+
+`app/(app)/(tabs)/index.tsx`. **This answers an open question raised on
+2026-08-29**, quoted from this file: "`US-035` AC-5 still holds for the third
+absence — shoots on the account but none upcoming keeps the section hidden,
+label included. `home-screen-2.html` has no state for it either. If it should say
+something («Немає запланованих зйомок»?), that is new copy and needs the owner."
+
+It should. The title is that note's own suggestion; the subtitle mirrors the
+first-run card's.
+
+|  | Title | Subtitle |
+|---|---|---|
+| No shoots at all (drawn) | «Ще немає жодної зйомки» | «Створіть першу зйомку — вона зʼявиться тут.» |
+| **All in the past (new)** | «Немає запланованих зйомок» | «Створіть нову зйомку — вона зʼявиться тут.» |
+
+One card, one glyph, one word apart. The two states differ only in whether the
+reader has history, and a different voice would imply a different kind of
+absence. `US-035` AC-5's silence now covers the «Наступні зйомки» section alone —
+a heading over nothing would say twice what the card already says.
+
+### Also aligned to `Home.dc.html` in the same pass
+
+- **The bell is gone on an empty account.** The artboard wraps it in
+  `sc-if hasNotifications` and sets `hasNotifications: !isEmpty`. There is still
+  no notification system, so `hasShoots` stands in for it exactly as the
+  artboard's fixture does. It shrinks the screen's one untruth — a brand-new
+  account no longer gets an unread dot for messages that cannot exist — but the
+  dot still lies the moment a shoot exists. Unchanged, and still the reason to
+  build notifications or drop the dot.
+- **The glyph is drawn, not lucide.** The artboard builds a 38×34 rounded
+  rectangle plus a 1.6px rule 8px down — **no tick marks**, which every lucide
+  calendar has. Eight lines, kept local.
+- **Padding is 30/20**, and the subtitle **shortened**: «разом із командою,
+  локацією та нотатками» is gone from the artboard. The empty state no longer
+  says what a shoot holds — it says only that one will appear, which is the
+  promise the screen can keep.
+
+### A consequence worth recording
+
+Deleting the hero shoot used to leave that slot blank until the refetch. With a
+card there now, blank became a false sentence — «Немає запланованих зйомок»
+while more shoots were queued — so the delete handler **promotes the first
+upcoming shoot locally** instead. It carries `confirmed: null`, because the crew
+count is fetched for the hero alone and is genuinely unknown until the refetch;
+the card drops that line rather than showing a count belonging to the shoot just
+deleted.

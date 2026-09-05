@@ -289,8 +289,11 @@ export const en: Strings = {
   attachVideo: '+ Video',
   // home-screen-2.html's «Порожньо» state — see the note in uk.ts.
   emptyNextTitle: 'No shoots yet',
-  emptyNextSub:
-    'Create your first shoot — it will appear here with its crew, location and notes.',
+  /* Shortened with the artboard on 2026-09-05 — see uk.ts. */
+  emptyNextSub: 'Create your first shoot — it will appear here.',
+  /* Shoots on the account, none ahead — see the note in uk.ts. */
+  noUpcomingTitle: 'No upcoming shoots',
+  noUpcomingSub: 'Create a new shoot — it will appear here.',
   emptyShoots: "You don't have any shoots yet.",
   emptyShootsSub: 'Create your first one — it takes a minute.',
   createFirst: 'Create first shoot',
