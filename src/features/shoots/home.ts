@@ -77,6 +77,60 @@ export function distanceLabel(
   return `${strings.inDaysPrefix} ${days} ${pluralUk(days, strings.dayForms)}`
 }
 
+/**
+ * «51 хв» · «2 год 30 хв» · «12 днів 23 год» — how long until a shoot starts.
+ *
+ * The shoot screen printed hours and minutes at every scale, so a shoot a
+ * fortnight out read «Початок через 311 год 51 хв» — arithmetic the reader had
+ * to do themselves. The owner asked for days past 24 hours (2026-09-06).
+ *
+ * ── Two units, always the two that matter ───────────────────────────────────
+ *
+ * The shape is unchanged — a large unit and the next one down — and only which
+ * two moves with the distance:
+ *
+ *   under an hour   «51 хв»
+ *   under a day     «2 год 30 хв»
+ *   a day or more   «12 днів 23 год»
+ *
+ * Minutes are dropped once days appear. At that range they are noise, and
+ * carrying three units would give «12 днів 23 год 51 хв» for a fact the reader
+ * wanted rounded in the first place.
+ *
+ * **A zero remainder is omitted**, which the old inline version could not do: it
+ * always appended `startsIn % 60`, so a shoot exactly two hours away read
+ * «2 год 0 хв». Nothing chose that; it fell out of the template.
+ *
+ * Here rather than in `date.ts` because it needs `pluralUk`, which lives in this
+ * file — and `date.ts` imports nothing at all, while this file imports it.
+ * Reversing that to move one function would make a cycle out of a tidy edge.
+ */
+export function countdownLabel(
+  minutes: number,
+  strings: { dayForms: readonly string[]; hoursShort: string; minutesShort: string }
+): string {
+  const MINUTES_IN_DAY = 24 * 60
+
+  if (minutes >= MINUTES_IN_DAY) {
+    const days = Math.floor(minutes / MINUTES_IN_DAY)
+    const hours = Math.floor((minutes % MINUTES_IN_DAY) / 60)
+    return [
+      `${days} ${pluralUk(days, strings.dayForms)}`,
+      hours ? `${hours} ${strings.hoursShort}` : null,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  }
+
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return [hours ? `${hours} ${strings.hoursShort}` : null, rest ? `${rest} ${strings.minutesShort}` : null]
+    .filter(Boolean)
+    // A span under a minute would otherwise render as nothing at all — the
+    // caller only asks while `startsIn > 0`, so «0 хв» is the honest floor.
+    .join(' ') || `0 ${strings.minutesShort}`
+}
+
 /** «Пʼятниця, 28 серпня» — AC-2's date line. */
 export function todayLabel(
   today: Date,

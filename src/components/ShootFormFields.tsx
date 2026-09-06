@@ -3,7 +3,6 @@ import Plus from 'lucide-react-native/icons/plus'
 import X from 'lucide-react-native/icons/x'
 import { Pressable, View } from 'react-native'
 import { MonthPicker } from './MonthPicker'
-import { Badge } from './ui/badge'
 import { Icon } from './ui/icon'
 import { Input } from './ui/input'
 import { Text } from './ui/text'
@@ -367,13 +366,10 @@ export function LocationChips({
  */
 export function OptionalSectionHeader({
   label,
-  badge,
   removeLabel,
   onRemove,
 }: {
   label: string
-  /** «Клієнт не бачить» on the crew note. Absent on the other two. */
-  badge?: string
   /** Spoken by a screen reader: «Прибрати оплату». The × itself has no text. */
   removeLabel: string
   onRemove: () => void
@@ -383,7 +379,6 @@ export function OptionalSectionHeader({
       <View className="flex-1">
         <SectionLabel label={label} />
       </View>
-      {badge ? <Badge variant="outline" label={badge} /> : null}
       {/*
         28pt as drawn, which is under the 44pt minimum — `hitSlop` makes up the
         difference rather than a bigger circle, because the circle sits on the
@@ -443,15 +438,24 @@ export function AddSectionPills({
   )
 }
 
-/** The design's 12/600 uppercase group label, letter-spacing 0.04em. */
-export function SectionLabel({ label }: { label: string }) {
+/**
+ * The design's 12/600 uppercase group label, letter-spacing 0.04em.
+ *
+ * `emoji` prefixes a glyph and one space — «📍 ЛОКАЦІЯ» (owner, 2026-09-06).
+ * A prop rather than the caller building the string, so the spacing is decided
+ * once and a label cannot arrive with the glyph jammed against the word.
+ *
+ * It is not part of the dictionary for the same reason `ROLE_EMOJI` is not: a
+ * glyph is not copy, and `en.ts` would repeat it to say nothing different.
+ */
+export function SectionLabel({ label, emoji }: { label: string; emoji?: string }) {
   return (
     <Text
       className="text-label text-muted-foreground font-semibold uppercase"
       // RN letterSpacing is absolute, never em — 0.04em at 12px is 0.48.
       style={{ letterSpacing: 0.48 }}
     >
-      {label}
+      {emoji ? `${emoji} ${label}` : label}
     </Text>
   )
 }

@@ -18,7 +18,6 @@ import Pencil from 'lucide-react-native/icons/pencil'
 import Plus from 'lucide-react-native/icons/plus'
 import Trash from 'lucide-react-native/icons/trash'
 import UserIcon from 'lucide-react-native/icons/user'
-import { Badge } from '../../../../src/components/ui/badge'
 import { FormScrollView } from '../../../../src/components/ui/form-scroll-view'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
@@ -49,9 +48,10 @@ import {
   formatTimeRange,
   minutesUntilStart,
 } from '../../../../src/features/shoots/date'
-import { pluralUk } from '../../../../src/features/shoots/home'
+import { countdownLabel, pluralUk } from '../../../../src/features/shoots/home'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { roleWithEmoji } from '../../../../src/i18n/uk'
+import { LinkifiedText } from '../../../../src/components/LinkifiedText'
 import { failed, succeeded, tapped } from '../../../../src/lib/haptics'
 import { takePendingToast } from '../../../../src/lib/nextScreenToast'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
@@ -277,9 +277,15 @@ export default function ShootDetailScreen() {
   const fileCount = [shoot.rawFilesUrl, shoot.finishedPhotosUrl].filter(Boolean).length
 
   const startsIn = minutesUntilStart(shoot.date, shoot.startTime, now)
+  /*
+    Days once the span passes 24 hours (owner, 2026-09-06) — this read «Початок
+    через 311 год 51 хв» for a shoot a fortnight out, which is arithmetic left
+    to the reader. `countdownLabel` also drops a zero remainder, so a shoot
+    exactly two hours away no longer reads «2 год 0 хв».
+  */
   const countdown =
     startsIn !== null && startsIn > 0
-      ? `${t.startsInPrefix} ${Math.floor(startsIn / 60) ? `${Math.floor(startsIn / 60)} ${t.hoursShort} ` : ''}${startsIn % 60} ${t.minutesShort}`
+      ? `${t.startsInPrefix} ${countdownLabel(startsIn, t)}`
       : /*
           Nothing once the shoot has started. The handoff defines only the
           counting-down state — no «Триває» and no «Почалася» — and writing one
@@ -531,22 +537,50 @@ function DetailsTab({
       */}
       <Card variant="flat" className="gap-0 p-0">
         <View className="p-4 pb-3.5">
+          {/*
+            ── «Клієнт», and the status on the right (owner, 2026-09-06) ───────
+
+            The card names its section the way «Локація» and «Оплата» name
+            theirs — it held the shoot's title with no label at all, which made
+            it the one block on the tab a reader had to infer.
+
+            **The status moved right** and onto this row. It led the card from
+            the left, which gave «Запланована» more weight than the client whose
+            shoot it is; the label leads now and the state trails, which is the
+            arrangement the payment card already uses for its own badge.
+
+            The countdown keeps the pill's company rather than the label's — the
+            two are one fact between them, «за 3 дні · Запланована».
+          */}
           <View className="mb-2.5 flex-row items-center gap-2">
-            <StatusPill value={shoot.status} />
+            <View className="flex-1">
+              <SectionLabel label={t.clientSection} />
+            </View>
             {countdown ? (
               <Text className="text-label text-muted-foreground">{countdown}</Text>
             ) : null}
+            <StatusPill value={shoot.status} />
           </View>
+
           {/* The client's name is the shoot's title, as the handoff has it —
               `-0.01em` becomes an absolute value because RN's letterSpacing is
-              never em (tailwind.config.js). */}
-          <Text
-            className="text-title-lg text-foreground font-semibold"
-            style={{ letterSpacing: -0.2 }}
-            numberOfLines={2}
-          >
-            {shoot.clientName}
-          </Text>
+              never em (tailwind.config.js).
+
+              The avatar is the app's own, at the 40 the «Команда» rows use: the
+              closest analogue is a person's name in a row, and this is the same
+              object one size of type larger. It carries initials, since a
+              client is an `ADR-018` row with no photo and no emoji — `Avatar`
+              falls back to them on its own, so nothing here asks for it. */}
+          <View className="flex-row items-center gap-3">
+            <Avatar name={shoot.clientName} size={40} />
+            <Text
+              className="text-title-lg text-foreground flex-1 font-semibold"
+              style={{ letterSpacing: -0.2 }}
+              numberOfLines={2}
+            >
+              {shoot.clientName}
+            </Text>
+          </View>
         </View>
 
         <SeparatorRow
@@ -591,9 +625,23 @@ function DetailsTab({
           role="button"
         >
           <Icon as={LinkIcon} size={14} strokeWidth={1.8} className="text-muted-foreground" />
-          <Text className="text-label text-muted-foreground font-semibold">
-            {t.copyPersonLink}
-          </Text>
+          {/*
+            `text-foreground` — the theme's near-white, `#FAFAFB` (owner,
+            2026-09-06). Not a literal `#fff`: the theme handoff says "не
+            використовувати чистий білий", and every other light text on this
+            screen is this token.
+
+            **The row on the «Команда» tab keeps `muted-foreground`**, and the
+            two are now deliberately unlike. This one is the only way to share a
+            shoot with the client and sits alone at the foot of their card; the
+            crew one is a per-person action repeated down a list, where lifting
+            every copy to full white would make the list shout.
+
+            The glyph beside it stays muted, which is what was asked for — text
+            only. Worth an eye on a device: an icon and its label in two tones
+            can read as an oversight rather than a hierarchy.
+          */}
+          <Text className="text-label text-foreground font-semibold">{t.copyPersonLink}</Text>
         </Pressable>
       </Card>
 
@@ -606,23 +654,24 @@ function DetailsTab({
         2026-09-05.
 
         It was the handoff's very first item and went unbuilt twice for want of a
-        column — redesign-log S-1, then H-1. The owner added
-        `shoots.notes` (migration `20260830160000`), so it is here as drawn:
-        the label, the «Клієнт не бачить» badge, and the body preserving line
-        breaks.
+        column — redesign-log S-1, then H-1. The owner added `shoots.notes`
+        (migration `20260830160000`), so it is here as drawn: the label and the
+        body, line breaks preserved.
 
-        The «Клієнт не бачить» badge is true by construction, not by anything
-        this screen does: the link gateway selects this column for `crewPayload`
-        and never for `clientPayload` (ADR-013, CLAUDE.md rule 2).
+        **The «Клієнт не бачить» badge is gone** (owner, 2026-09-06), the last
+        of the three that carried it — the form and the crew link view lost
+        theirs the same day. The card is titled «Нотатки для команди» and sits
+        directly above «Нотатки для клієнта»; the two headings say who each is
+        for, and the badge was a third element restating one of them.
+
+        It was never what made the rule true, either. The gateway selects this
+        column for `crewPayload` and never for `clientPayload` (`ADR-013`,
+        CLAUDE.md rule 2) — the badge only ever described that, and describing
+        it is what stopped.
       */}
       {shoot.notes ? (
         <Card variant="flat" className="gap-2.5">
-          <View className="flex-row items-center gap-2">
-            <View className="flex-1">
-              <SectionLabel label={t.teamNotesSection} />
-            </View>
-            <Badge variant="outline" label={t.clientCannotSee} />
-          </View>
+          <SectionLabel label={t.teamNotesSection} />
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.notes}</Text>
         </Card>
       ) : null}
@@ -822,25 +871,27 @@ function PaymentCard({ shoot }: { shoot: Shoot }) {
   const pay = payment(shoot)
 
   /*
-    The badge's three states, and the only place in the app that uses
-    `--warn-*` as a fill. A partly-paid shoot is a state that has not finished
-    rather than an error, which is what an amber says and a red would not.
+    ── The «Оплачено» / «Часткова оплата» / «Без передплати» chip is gone ─────
+
+    Removed on the owner's instruction, 2026-09-06. It sat beside the heading
+    and named a state the two figures under it already state: «Передплата» and
+    «Залишок» are what the chip summarised, and the remainder is coloured, so
+    the card said the same thing three ways.
+
+    The comment it replaces claimed the chip was "the only place in the app
+    that uses `--warn-*` as a fill". That was not true when it was written and
+    is not true now: `ResponsePill`'s «Очікує» and the calendar's
+    tight-turnaround chip both fill with it. Corrected rather than carried over.
+
+    `pay.badge` is still read, one line below the removal — it decides whether
+    «Залишок» reads green or amber. `payment()` is unchanged, and so is the
+    arithmetic: nothing about what is owed depended on the chip.
   */
-  const badge = {
-    paid: { label: t.paymentPaid, className: 'border-success', text: 'text-success' },
-    none: { label: t.prepaymentNone, className: 'border-border', text: 'text-muted-foreground' },
-    partial: { label: t.paymentPartial, className: 'border-warn-border bg-warn-bg', text: 'text-warn' },
-  }[pay.badge]
 
   return (
     <Card variant="flat" className="gap-0 p-0">
-      <View className="flex-row items-center gap-2 px-4 pb-2.5 pt-4">
-        <View className="flex-1">
-          <SectionLabel label={t.paymentSection} />
-        </View>
-        <View className={`rounded-full border px-2 py-[3px] ${badge.className}`}>
-          <Text className={`text-caption font-medium ${badge.text}`}>{badge.label}</Text>
-        </View>
+      <View className="px-4 pb-2.5 pt-4">
+        <SectionLabel label={t.paymentSection} emoji="💵" />
       </View>
 
       {/* 26px, `-0.5` tracking — the one number on this screen drawn large
@@ -917,7 +968,7 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
   return (
     <Card variant="flat" className="gap-0 p-0">
       <View className="gap-3 p-4">
-        <SectionLabel label={t.locationSection} />
+        <SectionLabel label={t.locationSection} emoji="📍" />
         {/* The venue leads, the address supports it — which is the order v3
             draws and the reason the two are separate columns
             (`location_name`, migration 20260903120000). */}
@@ -926,10 +977,12 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
             {shoot.locationName}
           </Text>
         ) : null}
+        {/* A creator pastes a maps pin into the address as often as a street:
+            any URL inside it is tappable since 2026-09-06. See `linkify`. */}
         {shoot.locationAddress ? (
-          <Text className="text-body-sm text-muted-foreground leading-5">
+          <LinkifiedText className="text-body-sm text-muted-foreground leading-5">
             {shoot.locationAddress}
-          </Text>
+          </LinkifiedText>
         ) : null}
         {/*
           **The card has no buttons**, as v3 draws it. «Маршрут» went first — it
@@ -948,8 +1001,12 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
       {shoot.locationNote ? (
         <View className="border-border gap-2 border-t p-4">
           <SectionLabel label={t.accessDetailsLabel} />
-          {/* Line breaks are preserved: a creator writes directions as lines. */}
-          <Text className="text-body-sm text-foreground/90 leading-5">{shoot.locationNote}</Text>
+          {/* Line breaks are preserved: a creator writes directions as lines.
+              A URL among them is tappable — a floor plan or a parking map is
+              the usual reason one is here at all. */}
+          <LinkifiedText className="text-body-sm text-foreground/90 leading-5">
+            {shoot.locationNote}
+          </LinkifiedText>
         </View>
       ) : null}
 

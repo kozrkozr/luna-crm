@@ -772,25 +772,23 @@ export function ShootForm(props: ShootFormMode) {
             line apart, one of which the client reads and one of which they must
             not, cannot both be called «Нотатки».
 
-            **«Клієнт не бачить» is back to a badge beside the heading**, where
-            it was a `VisibilityNote` box between 2026-09-03 and now. The box
-            was the better shape for a sentence, and it is given up because the
-            heading row already carries a × — a box below the label, a badge
-            above it and a × to the right of both is three affordances competing
-            in one small space. The new artboard draws the badge; taken as
-            drawn, and the reason is worth knowing before anyone puts the box
-            back.
+            **No «Клієнт не бачить» marker at all**, since 2026-09-06 (owner).
+            It was a `VisibilityNote` box from 2026-09-03, then a badge beside
+            the heading when the new artboard drew one, and now neither. The
+            section is called «Нотатки для команди» and sits a field above
+            «Нотатки для клієнта»; between the two names, a third element saying
+            which audience this one has was restating the heading.
 
-            **True by construction, not by the label**: the link gateway builds
-            each payload from an explicit column list, and `shoots.notes` is
-            selected for `crewPayload` and never for `clientPayload`
-            (`ADR-013`, CLAUDE.md rule 2).
+            **The guarantee never lived in the label anyway**: the link gateway
+            builds each payload from an explicit column list, and `shoots.notes`
+            is selected for `crewPayload` and never for `clientPayload`
+            (`ADR-013`, CLAUDE.md rule 2). Removing the badge removes a claim
+            about that rule, not the rule.
           */}
           {open.notes ? (
             <View className="gap-2">
               <OptionalSectionHeader
                 label={t.teamNotesSection}
-                badge={t.clientCannotSee}
                 removeLabel={t.removeTeamNotesLabel}
                 onRemove={() => removeSection('notes')}
               />

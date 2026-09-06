@@ -4685,3 +4685,199 @@ because one calls the other.
 There is only one chip on the hero card. The shoot's status renders as text in
 the line under the client's name, not as a pill, and was left that way — it was
 not part of the ask.
+
+## A URL in «Адреса» or «Деталі» is tappable (owner, 2026-09-06)
+
+Both location fields are prose a creator types, and they routinely hold a link —
+a maps pin, a floor plan, a studio's page. They rendered as text. Now any URL
+inside them is tappable, on the creator's «Деталі» tab and on both link views.
+
+`src/lib/linkify.ts` splits the text; `LinkifiedText` renders it. Four call
+sites, two per surface.
+
+### Inline, not whole-field
+
+"Check if it is a link" also reads as "is this whole field a URL", which is less
+code. It is not what the fields hold: «Паркування у дворі, мапа: https://…» is
+the ordinary case and a whole-field test finds nothing in it. Splitting covers
+both — a field that IS a link comes back as a single segment.
+
+### `http(s)` only, scheme required
+
+The rule the app already applies to every link a creator gives it —
+`isValidReferenceLink` (`US-003` AC-2) and `normaliseFilesLink`
+(`US-024`/`US-025`). A third answer here would make the same text a link on one
+screen and not on another.
+
+So «maps.google.com/…» without a scheme stays plain text, deliberately: guessing
+at bare hostnames puts «вул. Хрещатик, 1» and «буд. 3, кв. 12» in scope, and a
+wrong guess on an address is worse than an untappable one. The reader can still
+read plain text; a link to nowhere claims to work and does not.
+
+### A nested `Text`, not a `Pressable`
+
+The link sits inside a sentence, so it must be part of the same text run — a
+`Pressable` is a view, and wrapping one around a word takes that word out of the
+paragraph's line-breaking and drops it onto its own line.
+
+`Field` on the crew page keeps its `Pressable`: there the whole value is one
+handle and nothing wraps around it. Two shapes because there are two situations.
+
+### The splitter is lossless
+
+Joining every segment's text reproduces the input exactly, so a renderer cannot
+drop a character of somebody's address. Verified against ten cases including
+trailing punctuation («…/abc.»), a URL inside brackets («(див. …/y)»), a URL
+that legitimately ends in one (`…/Foo_(bar)`), two links in one line, guillemets,
+and a bare hostname.
+
+### Not covered by a test
+
+No fixture puts a URL in either column, so every existing assertion renders
+through the unchanged single-`Text` path and none of them moved. That also means
+the new behaviour has no acceptance coverage on either surface, and the tap
+itself has never been exercised in a real browser on the static export — the
+same is true of the Instagram row on a crew member's page, which has shipped
+this way since 2026-09-05.
+
+## The «Деталі» tab: a named client section, and two glyphs (owner, 2026-09-06)
+
+Four changes to the shoot's «Деталі» tab.
+
+**The card names its section.** «Локація» and «Оплата» both announce themselves;
+the client card held the shoot's title with no label at all, which made it the
+one block on the tab a reader had to infer. It gets «Клієнт», the same
+`SectionLabel` the other two use.
+
+**The status moved to the right.** It led the card from the left, which gave
+«Запланована» more weight than the client whose shoot it is. The label leads
+now and the state trails — the arrangement the payment card already uses for its
+own badge. The countdown moved with it rather than staying by the label: «за 3
+дні · Запланована» is one fact between them.
+
+**The client gets an avatar**, the app's own component at size 40 — what the
+«Команда» rows use, since the closest analogue is a person's name in a row and
+this is the same object one size of type larger. It shows initials without being
+asked: a client is an `ADR-018` row with no photo and no emoji, and `Avatar`
+falls back on its own.
+
+**📍 on «Локація», 💵 on «Оплата».** `SectionLabel` takes an optional `emoji`
+prop rather than callers building the string, so the single space between glyph
+and word is decided once. Not a dictionary key, for the reason `ROLE_EMOJI` is
+not one: a glyph is not copy, and `en.ts` would repeat it to say nothing
+different.
+
+### Scope, and what it leaves uneven
+
+The two glyphs are on **this tab only**, which is what was asked. The same
+labels appear without them on the shoot form (`ShootLocationFields`, and
+«Оплата» on the create/edit form) and on both link views. `emoji` is one prop
+away at each of those if the glyphs should follow — the role emoji took three
+passes to reach everywhere for want of asking, and this is the same shape of
+decision.
+
+### No test moved
+
+`us020-check.mjs` finds the status pill by exact text, not position, so moving
+it right changes nothing. `SectionLabel` renders uppercase, so the new «КЛІЄНТ»
+does not collide with `us009`'s assertions about clients literally named
+«Клієнт А» and «Клієнт Б».
+
+## The «Оплата» card loses its badge (owner, 2026-09-06)
+
+«Оплачено» / «Часткова оплата» / «Без передплати» sat beside the card's heading
+and is removed.
+
+It named a state the two figures under it already state. «Передплата» and
+«Залишок» are exactly what the chip summarised, and the remainder is already
+coloured — green when settled, amber while anything is outstanding — so the card
+said one thing three ways.
+
+`payment()` is untouched and `pay.badge` is still read: it decides the colour of
+«Залишок». Only the chip is gone, and none of the arithmetic depended on it.
+
+`paymentPaid` and `paymentPartial` had exactly one caller between them and are
+deleted from both dictionaries, the treatment `uk.ts`'s header records for the
+five removed on 2026-08-31. `prepaymentNone` stays — the create/edit form still
+uses «Без передплати» on its 0% prepayment chip, which is a different control
+saying a different thing.
+
+### A stale claim, corrected on the way past
+
+The removed code carried a comment calling the chip "the only place in the app
+that uses `--warn-*` as a fill". That was untrue when written and untrue now:
+`ResponsePill`'s «Очікує» and the calendar's tight-turnaround chip both fill
+with it. Corrected rather than carried over into the replacement comment.
+
+## The shoot's countdown counts in days (owner, 2026-09-06)
+
+«Початок через 311 год 51 хв» is arithmetic left to the reader. The countdown on
+the «Деталі» tab now shifts unit with the distance:
+
+| span | reads |
+|---|---|
+| under an hour | «51 хв» |
+| under a day | «2 год 30 хв» |
+| a day or more | «12 днів 23 год» |
+
+The shape is unchanged — a large unit and the next one down — and only which two
+moves. Minutes are dropped once days appear: at that range they are noise, and
+three units would give «12 днів 23 год 51 хв» for a figure the reader wanted
+rounded in the first place.
+
+**It also fixes a zero the old version could not drop.** The countdown was an
+inline template that always appended `startsIn % 60`, so a shoot exactly two
+hours away read «2 год 0 хв». Nothing chose that; it fell out of the template.
+
+Ukrainian plurals go through `pluralUk` and `dayForms`, the same pair
+`distanceLabel` uses — «1 день», «2 дні», «12 днів», «21 день», «31 день», all
+checked.
+
+`countdownLabel` lives in `home.ts` rather than `date.ts` because it needs
+`pluralUk`, which is in `home.ts`. `date.ts` imports nothing at all and this
+file imports it; reversing that to move one function would make a cycle out of a
+tidy edge.
+
+No acceptance suite asserts on the countdown.
+
+## «Клієнт не бачить» comes off the form and the link view (owner, 2026-09-06)
+
+The badge is removed from the shoot form — create and edit share one component —
+and from the crew link view's «Нотатки від організатора».
+
+It was a `VisibilityNote` box from 2026-09-03, a badge beside the heading when
+the newer artboard drew one, and now neither. On the form the section is called
+«Нотатки для команди» and sits one field above «Нотатки для клієнта»: between
+those two names, a third element naming the audience was restating the heading.
+
+**The guarantee never lived in the label.** The gateway builds each payload from
+an explicit column list, and `shoots.notes` is selected for `crewPayload` and
+never for `clientPayload` (`ADR-013`, rule 2). What went is a claim about the
+rule, not the rule.
+
+**What it costs on the link view**, which is the one surface where the badge
+addressed somebody other than the note's author: a crew member reading the
+organizer's note is no longer told the client cannot see the same text. The note
+still never reaches a client.
+
+`OptionalSectionHeader`'s `badge` prop had no callers left and is deleted with
+it, along with the now-unused `Badge` import in that file. Four lines to put
+back if the marker returns a third time.
+
+### And then the third, an hour later
+
+The «Нотатки для команди» card on the «Деталі» tab kept its badge in the first
+pass — it was not among the three surfaces named, and it is the one place the
+marker was neither on a form nor on a link. The owner asked for it too, so
+**«Клієнт не бачить» now appears nowhere in the app.**
+
+`clientCannotSee` is deleted from both dictionaries and `Badge`'s import from
+the shoot screen with it, the same treatment `paymentPaid` and `paymentPartial`
+got the same day. The string has been a box, a badge, and gone in the space of
+four days; one line puts it back.
+
+`client-notes-check.mjs`'s «no badge on a card the client is reading» assertion
+still passes, and is now **vacuous** — the phrase exists nowhere, so it cannot
+fail. Left in place rather than churning the suite's baseline a second time in
+one day, but it is no longer evidence of anything and should go with the next
+pass over those tests.

@@ -393,7 +393,6 @@ export const uk = {
   locationDetails: 'Деталі',
   locationDetailsPlaceholder: 'Поверх, код домофону, вхід, паркування',
   notesSection: 'Нотатки',
-  clientCannotSee: 'Клієнт не бачить',
   /**
    * ── The three optional sections (owner, 2026-09-05) ────────────────────────
    *
@@ -607,9 +606,6 @@ export const uk = {
   balanceLabel: 'Залишок',
   /** The prepayment column when nothing has been paid. */
   prepaymentNoneValue: 'Немає',
-  /* The badge: paid in full, nothing paid, something paid. */
-  paymentPaid: 'Оплачено',
-  paymentPartial: 'Часткова оплата',
   emptyShoots: 'У вас ще немає зйомок.',
   emptyShootsSub: 'Створіть першу — це займе хвилину.',
   createFirst: 'Створити першу зйомку',
@@ -650,7 +646,6 @@ export const uk = {
   crewName: "Ім'я",
   crewRole: 'Роль',
   crewContact: 'Телефон або email',
-  crewInstagram: "Instagram (необов'язково)",
   crewNotes: 'Нотатки',
   // US-023 — a crew member reading a peer's record.
   peerDetailsTitle: 'Деталі учасника',

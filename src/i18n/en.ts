@@ -233,7 +233,6 @@ export const en: Strings = {
   locationDetails: 'Details',
   locationDetailsPlaceholder: 'Floor, door code, entrance, parking',
   notesSection: 'Notes',
-  clientCannotSee: 'Hidden from the client',
   /* The three optional sections. `notesSection` stays «Notes» — it is a crew
      member's own note on two other screens; see the note in uk.ts. */
   teamNotesSection: 'Notes for the crew',
@@ -315,8 +314,6 @@ export const en: Strings = {
   fullPrice: 'total price',
   balanceLabel: 'Outstanding',
   prepaymentNoneValue: 'None',
-  paymentPaid: 'Paid',
-  paymentPartial: 'Partly paid',
   emptyShoots: "You don't have any shoots yet.",
   emptyShootsSub: 'Create your first one — it takes a minute.',
   createFirst: 'Create first shoot',
@@ -337,7 +334,6 @@ export const en: Strings = {
   crewName: 'Name',
   crewRole: 'Role',
   crewContact: 'Phone or email',
-  crewInstagram: 'Instagram (optional)',
   crewNotes: 'Notes',
   peerDetailsTitle: 'Crew member details',
   removeCrewTitle: 'Remove',

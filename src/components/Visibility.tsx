@@ -55,14 +55,18 @@ export function OwnerOnlyTag({ label }: { label: string }) {
 /**
  * Who can read the field above — a sentence in a quiet box, not a chip.
  *
- * **Boxed since 2026-09-03**, and it has callers again. `Shoot Detail v3`'s
- * crew form draws this as `7px 9px` on `#18181b` inside `#27272a`, and the same
- * treatment now carries «Клієнт не бачить» under the shoot's notes — where that
- * was an outline `Badge` sitting beside the heading, saying the same thing in a
- * shape that reads as a tag rather than as an explanation.
+ * **Boxed since 2026-09-03.** `Shoot Detail v3`'s crew form draws this as
+ * `7px 9px` on `#18181b` inside `#27272a`.
  *
- * It had none between the shoot-detail rebuild and now, which is why the
- * boxed version could replace the bare one without a second look.
+ * Its three callers are all `crewNotesPrivate` — the add-crew form, the contact
+ * form, and a contact's profile. **The shoot's own note no longer carries any
+ * visibility marker at all**: «Клієнт не бачить» was this box, then an outline
+ * `Badge`, and on 2026-09-06 the owner removed it from all three of its
+ * surfaces. `clientCannotSee` is gone from both dictionaries with it.
+ *
+ * So this component is now only ever about a CREW MEMBER's note, which is the
+ * one `ADR-013` exists for — not about `shoots.notes`, which is the one it
+ * used to explain here.
  *
  * `items-start`, not centred: two lines of text should begin level with the
  * eye rather than straddle it.
