@@ -3,6 +3,8 @@ import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-nat
 import { useLocalSearchParams } from 'expo-router'
 import { Text } from '../../../../src/components/ui/text'
 import { Card } from '../../../../src/components/ui/card'
+import { HandleRow } from '../../../../src/components/HandleRow'
+import { InstagramIcon } from '../../../../src/components/ui/instagram-icon'
 import { ImageViewer } from '../../../../src/components/ImageViewer'
 import { roleWithEmoji, uk } from '../../../../src/i18n/uk'
 import {
@@ -121,15 +123,6 @@ export default function CrewMemberDetailScreen() {
               <Field label={uk.crewName} value={member.name} strong />
               <Field label={uk.crewRole} value={roleWithEmoji(member.role)} />
               <Field label={uk.crewContact} value={member.contact} />
-              {/* Tappable since 2026-09-05, and shown as «@nickname» whatever
-                  the creator pasted in. This is a phone browser with no app
-                  around it — a handle the reader has to retype into Instagram
-                  by hand is the least useful form it could take. */}
-              <Field
-                label={uk.crewInstagram}
-                value={handleLabel('instagram', member.instagram)}
-                url={handleUrl('instagram', member.instagram)}
-              />
               {/*
                 Telegram, on both audiences since 2026-09-05 (owner). The column
                 has existed since `20260831140000` and the add-crew form has
@@ -144,6 +137,38 @@ export default function CrewMemberDetailScreen() {
                 value={handleLabel('telegram', member.telegram)}
                 url={handleUrl('telegram', member.telegram)}
               />
+
+              {/*
+                Instagram as the CLIENT's row, not as a `Field` (owner,
+                2026-09-06): glyph, label, handle on the right, the whole row
+                tappable. The shoot link has drawn the client's handle that way
+                since 2026-09-05 and this page drew a crew member's stacked —
+                two shapes for the same kind of fact.
+
+                **It is absent when there is no handle**, where `Field` would
+                have shown «—». That is the other half of matching the client's
+                row, and it is why this is a condition rather than a nullable
+                value.
+
+                `-mx-3.5 px-3.5` because the card around it is `variant="block"`
+                (`p-3.5`) where the client's is `p-0`: the negative margin lets
+                the rule reach both edges while the padding puts the glyph back
+                in line with the labels above it.
+
+                It also drops the label «Instagram (необовʼязково)» — the
+                add-crew FORM's key, "(optional)" and all, which had been
+                rendering on a read-only page for both audiences since this
+                screen was built. It reads «Instagram» now, as the client's does.
+              */}
+              {member.instagram ? (
+                <HandleRow
+                  icon={InstagramIcon}
+                  label={uk.instagramLabel}
+                  value={handleLabel('instagram', member.instagram)}
+                  url={handleUrl('instagram', member.instagram)}
+                  className="-mx-3.5 mt-1 px-3.5"
+                />
+              ) : null}
 
               {/* US-026 AC-1 — everything above is shared; this is the one
                   difference, and it is an absence rather than a blank. */}

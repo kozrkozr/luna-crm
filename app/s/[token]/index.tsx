@@ -12,6 +12,8 @@ import { Avatar } from '../../../src/components/Avatar'
 import { Badge } from '../../../src/components/ui/badge'
 import { Button } from '../../../src/components/ui/button'
 import { Card } from '../../../src/components/ui/card'
+import { HandleRow } from '../../../src/components/HandleRow'
+import { LinkifiedText } from '../../../src/components/LinkifiedText'
 import { Icon } from '../../../src/components/ui/icon'
 import { Sheet } from '../../../src/components/ui/sheet'
 import { Text } from '../../../src/components/ui/text'
@@ -243,7 +245,7 @@ export default function LinkView() {
                       </Text>
                     ) : null}
                     {shoot.locationAddress ? (
-                      <Text
+                      <LinkifiedText
                         className={`leading-5 ${
                           shoot.locationName
                             ? 'text-body-sm text-muted-foreground mt-1'
@@ -251,7 +253,7 @@ export default function LinkView() {
                         }`}
                       >
                         {shoot.locationAddress}
-                      </Text>
+                      </LinkifiedText>
                     ) : null}
                   </View>
                   {shoot.locationAddress ? (
@@ -278,9 +280,13 @@ export default function LinkView() {
               {shoot.locationNote ? (
                 <View className="border-border gap-2 border-t p-4">
                   <SectionLabel label={uk.howToGetIn} />
-                  <Text className="text-body-sm text-foreground/90 leading-5">
+                  {/* Tappable URLs since 2026-09-06. This surface is the reason
+                      the feature exists: a reader here is in a phone browser
+                      with no app around it, and a link they cannot tap is a
+                      link they have to retype. */}
+                  <LinkifiedText className="text-body-sm text-foreground/90 leading-5">
                     {shoot.locationNote}
-                  </Text>
+                  </LinkifiedText>
                 </View>
               ) : null}
             </Card>
@@ -373,10 +379,12 @@ export default function LinkView() {
                      organizer's «Написати» uses — one handle, one destination.
                      Inert when the field holds something that is not a handle,
                      which is the rule everywhere these rows appear. */
-                  <ClientHandleRow
+                  <HandleRow
+                    icon={InstagramIcon}
                     label={uk.instagramLabel}
                     value={handleLabel('instagram', shoot.client.instagram)}
                     url={handleUrl('instagram', shoot.client.instagram)}
+                    className="px-4"
                   />
                 ) : null}
               </Card>
@@ -408,70 +416,141 @@ export default function LinkView() {
                   : `${payload.crew.length} ${pluralUk(payload.crew.length, uk.peopleForms)}`}
               </Text>
             </View>
-            <Card variant="flat" className="gap-0 p-0">
-              {payload.crew.map((member, index) => {
+            {/*
+              **A card each, 8px apart** (owner, 2026-09-06). This was one card
+              with hairlines between the members, which is how the artboard
+              draws it — but a member is two rows now, the person and their
+              handle, and a hairline had to serve as both "the handle belongs to
+              the name above" and "a different person starts here". It could not
+              be both, so the boundary between people is space and the boundary
+              inside a person stays a rule.
+
+              The same arrangement `Home.dc.html` gives «Наступні зйомки», and
+              for the same reason it was built that way there.
+            */}
+            <View className="gap-2">
+              {payload.crew.map((member) => {
                 const isYou = isCrew && member.id === payload.crewMemberId
+                /*
+                  **Tappable again** — a regression, fixed 2026-09-06.
+
+                  `US-023` AC-1 gives a crew member a peer's full record and
+                  `US-026` AC-1 gives a client the same minus the notes; both are
+                  reached by tapping a row here. `4a8d8bf` ("rebuild every screen
+                  against the Claude Design handoffs") dropped the `Link`, and
+                  `/s/[token]/crew/[crewId]` has been unreachable from the app
+                  ever since — the page still rendered, and nothing led to it.
+
+                  That is why a crew member's contact, Instagram and Telegram
+                  looked missing for both audiences. They were on a page nobody
+                  could open.
+                */
                 return (
-                  <View
+                  /*
+                    One member = the person's row, and their handle underneath —
+                    the shape the client's card has (owner, 2026-09-06). The
+                    handle was appended to the role line for a few hours; a
+                    crew member and the client are the same kind of thing on
+                    this screen, and drawing one as «Роль · @nick» and the other
+                    as a labelled row made them look like different objects.
+
+                    The `Card` carries the key, since it is what the map returns
+                    — and the reader's own «ВИ» tint, so it covers the person AND
+                    their handle rather than stopping at a rule halfway down
+                    their own block.
+
+                    `overflow-hidden` so the press state and the handle row's
+                    rule both stop at the rounded corner instead of squaring it
+                    off, which is the same pairing the shoot card uses for its
+                    3px stripe.
+                  */
+                  <Card
                     key={member.id}
-                    className={`min-h-16 flex-row items-center gap-3 px-4 py-3 ${
-                      index > 0 ? 'border-border border-t' : ''
-                    } ${isYou ? 'bg-muted' : ''}`}
+                    variant="flat"
+                    className={`gap-0 overflow-hidden p-0 ${isYou ? 'bg-muted' : ''}`}
                   >
-                    <Avatar name={member.name} size={38} />
-                    <View className="min-w-0 flex-1">
-                      <View className="flex-row items-center gap-2">
-                        <Text
-                          className="text-body text-foreground shrink font-semibold"
-                          numberOfLines={1}
-                        >
-                          {member.name}
-                        </Text>
-                        {isYou ? <Badge variant="solid" label={uk.youBadge} /> : null}
-                      </View>
-                      {/* The role alone. The artboard also appends « · це ви»
-                          here, and it was built and then removed (owner,
-                          2026-09-03): the «ВИ» badge beside the name already
-                          says whose row this is, and saying it twice on one row
-                          is noise. */}
-                      <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-                        {roleWithEmoji(member.role)}
-                      </Text>
-                    </View>
+                    <Link href={`/s/${token}/crew/${member.id}`} asChild>
+                      <Pressable
+                        className="active:bg-secondary min-h-16 flex-row items-center gap-3 px-4 py-3"
+                        role="link"
+                        accessibilityLabel={member.name}
+                      >
+                        <Avatar name={member.name} size={38} />
+                        <View className="min-w-0 flex-1">
+                          <View className="flex-row items-center gap-2">
+                            <Text
+                              className="text-body text-foreground shrink font-semibold"
+                              numberOfLines={1}
+                            >
+                              {member.name}
+                            </Text>
+                            {isYou ? <Badge variant="solid" label={uk.youBadge} /> : null}
+                          </View>
+                          {/* The role alone. The handle is its own row below,
+                              as it is on the client's card — see the `HandleRow`
+                              after this `Link`. The artboard also appends « · це
+                              ви» here; that was built and removed (owner,
+                              2026-09-03) because the «ВИ» badge beside the name
+                              already says whose row this is. */}
+                          <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
+                            {roleWithEmoji(member.role)}
+                          </Text>
+                        </View>
+                        {/*
+                          Response badges on the CREW link only. A client is not shown
+                          who has and has not answered — `US-026` gives them the crew
+                          list, and nothing says an internal confirmation state is
+                          theirs to read (L-5).
+
+                          `ResponsePill`, not a hand-rolled `Badge`, since 2026-09-03:
+                          the creator's screen and this one drew the same three states
+                          from the same three keys and had already drifted apart on
+                          two of them. One control now decides the shape, the tick and
+                          which states are worth a chip at all.
+
+                          **Only the reader's own row shows a pending chip**, reading
+                          «Ваша черга». Someone else's silence is not news; the
+                          reader's own is the thing the respond bar below is asking
+                          about.
+                        */}
+                        {isCrew && 'response' in member ? (
+                          <ResponsePill
+                            value={member.response}
+                            showPending={isYou}
+                            label={
+                              member.response === 'confirmed'
+                                ? uk.responseConfirmed
+                                : member.response === 'declined'
+                                  ? uk.responseDeclined
+                                  : uk.yourTurn
+                            }
+                          />
+                        ) : null}
+                      </Pressable>
+                    </Link>
                     {/*
-                      Response badges on the CREW link only. A client is not shown
-                      who has and has not answered — `US-026` gives them the crew
-                      list, and nothing says an internal confirmation state is
-                      theirs to read (L-5).
+                      Tappable, unlike the row above it — this one opens Instagram
+                      where the row opens the member's page. Two targets, but they
+                      are two rows, which is exactly why the handle moved off the
+                      role line.
 
-                      `ResponsePill`, not a hand-rolled `Badge`, since 2026-09-03:
-                      the creator's screen and this one drew the same three states
-                      from the same three keys and had already drifted apart on
-                      two of them. One control now decides the shape, the tick and
-                      which states are worth a chip at all.
-
-                      **Only the reader's own row shows a pending chip**, reading
-                      «Ваша черга». Someone else's silence is not news; the
-                      reader's own is the thing the respond bar below is asking
-                      about.
+                      Absent when there is no handle, as on the client's card: an
+                      empty row would say a person has an Instagram they have not
+                      given.
                     */}
-                    {isCrew && 'response' in member ? (
-                      <ResponsePill
-                        value={member.response}
-                        showPending={isYou}
-                        label={
-                          member.response === 'confirmed'
-                            ? uk.responseConfirmed
-                            : member.response === 'declined'
-                              ? uk.responseDeclined
-                              : uk.yourTurn
-                        }
+                    {member.instagram ? (
+                      <HandleRow
+                        icon={InstagramIcon}
+                        label={uk.instagramLabel}
+                        value={handleLabel('instagram', member.instagram)}
+                        url={handleUrl('instagram', member.instagram)}
+                        className="px-4"
                       />
                     ) : null}
-                  </View>
+                  </Card>
                 )
               })}
-            </Card>
+            </View>
           </View>
 
           {payload.references.length > 0 ? (
@@ -491,12 +570,18 @@ export default function LinkView() {
           */}
           {isCrew && payload.shoot.notes ? (
             <View className="gap-2">
-              <View className="flex-row items-center gap-2">
-                <View className="flex-1">
-                  <SectionLabel label={uk.organizerNotes} />
-                </View>
-                <Badge variant="outline" label={uk.clientCannotSee} />
-              </View>
+              {/*
+                The «Клієнт не бачить» badge that sat here is gone (owner,
+                2026-09-06), matching the form the note is written on.
+
+                Worth knowing what that costs, since this surface is the one
+                where it was addressed to somebody other than the author: a crew
+                member reading «Нотатки від організатора» is no longer told the
+                client cannot see the same text. The note still never reaches a
+                client — `clientPayload` does not select the column — so what
+                went is the disclosure, not the rule.
+              */}
+              <SectionLabel label={uk.organizerNotes} />
               <Card variant="flat">
                 <Text className="text-body-sm text-foreground/90 leading-6">
                   {payload.shoot.notes}
@@ -709,43 +794,6 @@ export default function LinkView() {
  * creator's screens pass an explicit `linkTone` instead. If this ever grows a
  * phone row, it needs that flag too.
  */
-function ClientHandleRow({
-  label,
-  value,
-  url,
-}: {
-  label: string
-  value: string
-  url: string | null
-}) {
-  const body = (
-    <>
-      <View className="w-[18px] shrink-0 items-center">
-        <Icon as={InstagramIcon} size={16} className="text-muted-foreground" />
-      </View>
-      <Text className="text-body-sm text-muted-foreground flex-1">{label}</Text>
-      <Text
-        className={`text-body-sm font-medium ${url ? 'text-link' : 'text-foreground'}`}
-      >
-        {value}
-      </Text>
-    </>
-  )
-  const rowClass = 'border-border flex-row items-center gap-2.5 border-t px-4 py-3'
-
-  return url ? (
-    <Pressable
-      className={`${rowClass} active:opacity-70`}
-      onPress={() => void openExternalUrl(url)}
-      role="link"
-      accessibilityLabel={`${label}: ${value}`}
-    >
-      {body}
-    </Pressable>
-  ) : (
-    <View className={rowClass}>{body}</View>
-  )
-}
 
 /**
  * «Організатор» — who to reach when something changes on the day.

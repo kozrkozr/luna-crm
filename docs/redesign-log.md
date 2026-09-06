@@ -4881,3 +4881,175 @@ still passes, and is now **vacuous** — the phrase exists nowhere, so it cannot
 fail. Left in place rather than churning the suite's baseline a second time in
 one day, but it is no longer evidence of anything and should go with the next
 pass over those tests.
+
+## A crew member's page was unreachable, and had been since 4a8d8bf (2026-09-06)
+
+The owner asked for a crew member's Instagram to be visible on the link views,
+for both audiences. It already was — on `/s/[token]/crew/[crewId]`, a page
+nothing linked to.
+
+`4a8d8bf` ("rebuild every screen against the Claude Design handoffs") replaced
+the crew row's `Link` with a plain `View`. The route kept working, the page kept
+rendering, and no path through the app reached it. `git log -S` puts the last
+`Link href={.../crew/...}` in that commit's parent; it was built by `US-023`
+(`50f8893`) and extended to the client by `US-026` (`ff716cb`).
+
+**What was invisible as a result** — for a crew member AND a client:
+
+| field | where it lives |
+|---|---|
+| contact (phone or email) | crew member's page only |
+| Instagram | crew member's page only |
+| Telegram | crew member's page only |
+| note + note image (crew audience) | crew member's page only |
+
+The list row shows an avatar, the name and the role, and nothing else. So every
+contact detail on both link surfaces has been unreachable for two weeks, while
+the payloads carried all of it correctly — which is why no amount of reading the
+gateway would have found this.
+
+The row is a `Link` again, wrapping a `Pressable` with `role="link"` and the
+member's name as its accessibility label.
+
+### Two suites have been failing on this, silently
+
+`us026-check.mjs` taps `a[role=link]` containing the crew member's name and
+asserts the path reaches `/crew/` — there has been no such anchor.
+`us023-check.mjs` reaches the same page. Neither could have passed since
+`4a8d8bf`, and neither run recently: the local stack is twelve migrations behind
+with its edge runtime stopped, which is how a fortnight went by.
+
+### The same commit did it twice — reported, not fixed
+
+`4a8d8bf` also dropped `Link href={/s/${token}/references}`, so the
+all-references page is unreachable by the same mechanism. `us021-check.mjs:64`
+asserts «AC-1 the link opens the all-references page», so `US-021` AC-1 is
+broken too.
+
+**Left alone deliberately.** `LinkReferenceGrid` now renders every reference
+inline with tap-to-open, so a separate "all references" page may have been
+dropped on purpose rather than lost — that is a design question, and the crew
+page's case (nothing else shows a contact) does not apply to it. Needs the
+owner.
+
+## The crew list shows each member's Instagram (owner, 2026-09-06)
+
+The crew row on both link views read «💄 Візажист»; it now reads «💄 Візажист ·
+@oksana». Same row, same line, one more fact — the member's own page is
+unchanged.
+
+**Not tappable in the row.** The row is a `Link` to that person's page (restored
+earlier today), and a second target inside it would make one tap mean two things
+depending on where a thumb landed. The handle opens Instagram on the page it
+leads to, where it is a row of its own.
+
+A member with no handle gets the role alone: `handleLabel` returns an empty
+string for null and `filter(Boolean)` drops it, so no row reads «Візажист · ».
+Checked against a bare handle, an `@`-prefixed one, a full profile URL, null and
+an empty string — all five render correctly, and the first three normalise to
+«@oksana» through the same helper the contact screens use.
+
+### The option not taken
+
+The owner was offered the alternative reading — keep Instagram as the *only*
+contact row on a crew member's page, dropping «Телефон або email» and
+«Telegram» — and chose this instead. Nothing is removed, and `US-026` AC-1's
+enumeration of contact and Instagram stands unamended. Worth recording, because
+that alternative would have contradicted the story rather than extended it.
+
+### Left alone
+
+The creator's own «Команда» tab still shows name and role without a handle. It
+is not a link audience and was not in the ask; one call to `handleLabel` if it
+should match.
+
+## A crew member's Instagram takes the client's row (owner, 2026-09-06)
+
+On a crew member's page in a посилання, Instagram was a stacked `Field` — label
+above, value below — while the client's on the shoot link was a row: glyph,
+label, handle on the right, the whole row tappable. Two shapes for the same kind
+of fact. The crew member's is now the row.
+
+`ClientHandleRow` is extracted from `app/s/[token]/index.tsx` as
+`src/components/HandleRow.tsx` and both surfaces call it. The icon is a prop now
+rather than hardcoded, so Telegram could take the same row whenever anyone wants
+it to.
+
+**It is absent when there is no handle**, where `Field` renders «—». That is the
+other half of matching the client's row: a crew member without Instagram should
+have no Instagram row, not an empty one.
+
+`-mx-3.5 px-3.5` on the crew page because the card there is `variant="block"`
+(`p-3.5`) where the client's is `p-0` — the negative margin lets the rule reach
+both edges while the padding puts the glyph back in line with the labels above.
+The padding is the caller's to pass for exactly that reason.
+
+### A form label that had been on a read-only page all along
+
+The row was labelled `crewInstagram` — «Instagram (необовʼязково)», "(optional)"
+and all — on a page where nothing is optional because nothing is being entered.
+It reads «Instagram» now, the client's own key.
+
+That key turns out to have had **no other caller**: the add-crew form labels its
+input `crewInstagramLabel` («Інстаграм») and its placeholder
+`crewInstagramPlaceholder`. So «Instagram (необовʼязково)» existed solely to be
+wrong on this one screen, for both audiences, since the screen was built. Pruned
+from both dictionaries.
+
+### Checked rather than assumed
+
+`us026-check.mjs` asserts the client's crew page contains **zero `<img>`
+elements** — the guard that a client never receives the note image. Adding an
+icon there could have broken it; `InstagramIcon` is `react-native-svg`, which
+renders `<svg>`, so the assertion is untouched. Its `@oksana` assertion still
+passes: the handle moved rows, it did not go away.
+
+## The crew list draws a handle the way the client's card does (owner, 2026-09-06)
+
+The Instagram handle was appended to the crew row's role line — «💄 Візажист ·
+@oksana» — for a few hours this afternoon. It is now a `HandleRow` beneath the
+person, which is what the client's card has always had.
+
+The owner's reason is the right one: a crew member and the client are the same
+kind of thing on this screen — an avatar, a name, a role, a handle — and drawing
+one as «Роль · @nick» and the other as a labelled row with a glyph made them
+look like different objects.
+
+So each member is now a person row plus their handle row, and the two cards are
+built from the same two pieces.
+
+**The handle is tappable again.** When it sat on the role line it could not be:
+the person row is a `Link` to their page, and a second target inside it would
+have made one tap mean two things depending on where a thumb landed. As its own
+row it opens Instagram, and the row above still opens the page. Two targets,
+because there are two rows — which is the argument the previous shape could not
+make.
+
+Absent when there is no handle, as on the client's card.
+
+**The «ВИ» tint moved to the wrapper.** It was on the person row, so the
+reader's own block would have been tinted down to a rule and pale below it.
+
+`className` on `HandleRow` earns its keep here: the crew list's card is `p-0`
+like the client's, so both pass `px-4`, while the crew member's own page passes
+`-mx-3.5 px-3.5` for its padded card. One component, three call sites, three
+different surrounds.
+
+## The crew list becomes a card each (owner, 2026-09-06)
+
+One card with hairlines between members became a card per member, 8px apart —
+the arrangement `Home.dc.html` gives «Наступні зйомки», and now the same
+reasoning applies here.
+
+**A hairline could no longer do both jobs.** A member is two rows since this
+afternoon — the person, and their Instagram beneath — so a rule had to mean
+"this handle belongs to the name above it" in one place and "a different person
+starts here" in another. It cannot be both. The boundary between people is space
+now; the boundary inside a person stays a rule.
+
+The per-member `index > 0 ? 'border-t'` goes with it, and `index` is no longer
+destructured. `overflow-hidden` on each card so the press state and the handle
+row's rule stop at the rounded corner rather than squaring it off — the pairing
+the home screen's shoot card already uses for its stripe.
+
+The «ВИ» tint is on the card, so the reader's own member is tinted whole.
