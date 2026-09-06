@@ -5280,3 +5280,62 @@ progress indication, and that is the more likely thing to want fixing first.
 
 No acceptance suite drives the picker: they all seed Storage directly, so
 nothing here is covered either way.
+
+## The profile tab opens as the public profile (owner, 2026-09-06)
+
+It opened straight into the edit form, with «Переглянути публічний профіль»
+pushing a separate route to show what others see. That is backwards for the
+screen a reader opens to check themselves: the common visit is a look, and the
+form was the price of it.
+
+The tab now renders `PublicProfile` — the same component a contact's page uses —
+and «Редагувати профіль» switches to the form. Saving returns to it, which is
+the fastest way to see that a change took; «Скасувати» does too, and the
+discard sheet with it.
+
+`app/(app)/public-profile.tsx` is **deleted**, along with its `Stack.Screen`
+registration and the button that was its only way in. This view is that screen
+now, so keeping the route would have left a second copy reachable only by URL —
+the shape of the crew-page bug found this morning, planted deliberately.
+`viewPublicProfile` is pruned from both dictionaries; `Eye`'s import went with
+its button.
+
+### Two changes to `PublicProfile`
+
+`backLabel` takes null, which draws no back control. A tab root has nothing to
+pop, and the existing fallback would have replaced the route with itself — a
+control that looks like one and is not. The 88px spacer stays so the title is
+still centred on the screen.
+
+The edit pill reads «Редагувати профіль» on your own and «Редагувати контакт» on
+somebody else's, keyed off the `kind` the type already carries.
+
+### The view is built from `draft`, not `saved`
+
+So the public view reflects what is in the form, and `leave`/`save` keep the two
+in step — `leave` restores `saved` into `draft` on the way out, `save` writes it.
+`email` stays absent for the reason it always was: this is what others see, and
+they never receive it.
+
+### `us014-check.mjs` moved, and `us015-check.mjs` was already broken
+
+**Changed:** `us014` asserted the profile screen contains «Профіль». The title is
+«Публічний профіль» now, whose second word is lowercase, so the substring is
+gone. Repointed at the new title. Count unchanged at 16.
+
+**Not changed, and not caused here:** `us015` looks for the language switcher
+immediately after login, on the shoot list — but `LanguageSwitcher` has only
+ever been rendered on the profile screen, so that assertion has been failing
+independently of anything today. This change does move the switcher one tap
+deeper (it is inside the edit form), so whoever repairs that suite now has to
+navigate to the tab and tap «Редагувати профіль» first. Seventh stale suite.
+
+### Worth the owner's eye
+
+The form holds more than a profile: «Підписка», «Акаунт», the language switcher,
+notifications, «Вийти» and «Видалити акаунт». All of that is now behind a button
+labelled «Редагувати профіль», which is not what "edit" suggests. Settings that
+are hard to find are a different complaint from a form that opens too eagerly,
+and this trades one for the other. Splitting them — a public view with a
+«Налаштування» route beside «Редагувати профіль» — is the obvious next move if
+it reads badly on a device.

@@ -96,7 +96,15 @@ export type PublicProfileView = {
    */
   kind: 'self' | 'contact' | 'client'
   /** «Профіль» previewing yourself, «Команда» from a shoot, «Контакти» from the list. */
-  backLabel: string
+  /**
+   * The back control's word, or **null for no back control at all**.
+   *
+   * Null since 2026-09-06, when the profile tab began rendering this as its own
+   * default view: a tab root has nothing to pop, and the fallback below would
+   * have replaced the route with itself — a control that looks like one and is
+   * not.
+   */
+  backLabel: string | null
 }
 
 export function PublicProfile({
@@ -183,6 +191,11 @@ export function PublicProfile({
         style={{ paddingTop: insets.top }}
       >
         <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
+          {/* The spacer stays when the control does not, so the title is centred
+              on the SCREEN either way rather than on what is left beside it. */}
+          {view.backLabel === null ? (
+            <View className="min-h-11 w-[88px] shrink-0" />
+          ) : (
           <Pressable
             className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
             onPress={() => {
@@ -198,6 +211,7 @@ export function PublicProfile({
               {view.backLabel}
             </Text>
           </Pressable>
+          )}
           <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
             {t.publicProfileTitle}
           </Text>
@@ -400,7 +414,10 @@ export function PublicProfile({
               >
                 <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
                 <Text className="text-body-sm text-primary-foreground font-semibold">
-                  {t.editContactTitle}
+                  {/* «Редагувати профіль» on your own, «Редагувати контакт» on
+                      somebody else's — the same control, and the word that is
+                      true of what it opens. */}
+                  {view.kind === 'self' ? t.editProfileAction : t.editContactTitle}
                 </Text>
               </Pressable>
             ) : null}

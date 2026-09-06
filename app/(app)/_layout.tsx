@@ -99,7 +99,6 @@ function AppStack() {
         subline under it saying what the reader is looking at. A native header
         holds none of the three.
       */}
-      <Stack.Screen name="public-profile" options={{ headerShown: false }} />
       {/*
         «Мої контакти»'s three pushed screens (2026-09-04). The profile draws its
         own header; so do the two form routes, which share one `ContactForm` the

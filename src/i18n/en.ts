@@ -50,6 +50,7 @@ export const en: Strings = {
   profileTitle: 'Profile',
 
   myProfileTitle: 'My profile',
+  editProfileAction: 'Edit profile',
   accountSection: 'Account',
   yourRoleSection: 'Your role',
   socialSection: 'Social',
@@ -66,7 +67,6 @@ export const en: Strings = {
   keepEditingAction: 'Keep editing',
   changesDiscarded: 'Changes discarded',
   /* Second pass against `Edit Profile.dc.html` — see the note in uk.ts. */
-  viewPublicProfile: 'View public profile',
   subscriptionSection: 'Subscription',
   planLabel: 'Plan',
   planFree: 'Free',

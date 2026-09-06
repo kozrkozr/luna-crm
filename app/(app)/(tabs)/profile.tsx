@@ -7,7 +7,6 @@ import * as ImagePicker from 'expo-image-picker'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import type { LucideIcon } from 'lucide-react-native'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
-import Eye from 'lucide-react-native/icons/eye'
 import Lock from 'lucide-react-native/icons/lock'
 import Mail from 'lucide-react-native/icons/mail'
 import Pencil from 'lucide-react-native/icons/pencil'
@@ -35,6 +34,7 @@ import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { failed, selected as tickSelection, succeeded, tapped } from '../../../src/lib/haptics'
 import { useProfile } from '../../../src/features/auth/useProfile'
 import { isAvatarTint, resolveAvatar, type AvatarTint } from '../../../src/features/auth/avatar'
+import { PublicProfile } from '../../../src/features/contacts/PublicProfile'
 import { EmojiAvatarPicker } from '../../../src/features/auth/EmojiAvatarPicker'
 import { useAvatarSheet } from '../../../src/features/auth/useAvatarSheet'
 import {
@@ -111,6 +111,20 @@ export default function ProfileScreen() {
   const [errors, setErrors] = useState<{ name?: string; phone?: string; role?: string }>({})
   const [busy, setBusy] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  /*
+    ── The tab opens as the PUBLIC profile (owner, 2026-09-06) ───────────────
+
+    It opened straight into the edit form, with «Переглянути публічний профіль»
+    pushing a separate route to show what others see. That is backwards for the
+    screen a reader opens to check themselves: the common visit is a look, and
+    the form was the price of it.
+
+    So the tab renders `PublicProfile` — the same component a contact's page and
+    a crew member's own screen use — and «Редагувати профіль» switches to the
+    form. `app/(app)/public-profile.tsx` is deleted with the button that was its
+    only way in; this view IS that screen now.
+  */
+  const [editing, setEditing] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   /*
@@ -328,6 +342,9 @@ export default function ProfileScreen() {
     if (!ok) return setToast(t.somethingWentWrong)
     succeeded()
     setSaved(draft)
+    // Back to the public view, which is what the reader has just changed and
+    // the fastest way to see that the change took.
+    setEditing(false)
     setToast(t.profileSaved)
   }
 
@@ -337,14 +354,52 @@ export default function ProfileScreen() {
     here: with unsaved changes it opens the «Скасувати зміни?» sheet, which is
     not the same thing as going back.
 
-    With nothing to discard it goes to the Головна tab rather than `back()`.
-    This screen has nothing to pop any more — it is a tab, not a pushed
-    screen — and the artboard's own handler toasts «Назад до головного», so
-    home is where it means.
+    With nothing to discard it now returns to the public view rather than to the
+    Головна tab. Since 2026-09-06 the form is a mode of this tab and not the tab
+    itself, so «Скасувати» means "stop editing" — leaving the app's whole
+    profile section to get out of a form would be a strange exit, and the tab bar
+    is right there for anyone who wanted Головна.
   */
   const leave = () => {
     if (dirty) return setConfirmDiscard(true)
-    router.navigate('/(app)/(tabs)')
+    setEditing(false)
+  }
+
+  /*
+    The public view, and the tab's default.
+
+    Built from `draft` rather than `saved`, so opening the form, typing, and
+    cancelling out shows the reader what they actually have — `leave` restores
+    `saved` into `draft` on the way out, and `save` writes it, so the two agree
+    at every point where this is on screen.
+
+    `backLabel: null` — a tab root has nothing to pop. `note: null` because a
+    note is what somebody else wrote about a person, and `email` is absent for
+    the reason it always was: this is what OTHERS see, and they never receive it.
+  */
+  if (!editing) {
+    const resolved = resolveAvatar(draft)
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <PublicProfile
+          view={{
+            name: draft.name,
+            role: resolvedRole,
+            phone: draft.phone,
+            instagram: draft.instagram,
+            telegram: draft.telegram,
+            avatarUri,
+            avatarEmoji:
+              resolved.kind === 'emoji' ? { char: resolved.emoji, tint: resolved.tint } : null,
+            note: null,
+            kind: 'self',
+            backLabel: null,
+          }}
+          onEdit={() => setEditing(true)}
+        />
+      </>
+    )
   }
 
   return (
@@ -462,21 +517,10 @@ export default function ProfileScreen() {
               {resolvedRole}
             </Text>
 
-            {/* Live since 2026-09-04 — it was drawn and inert for two days,
-                waiting for `app/(app)/public-profile.tsx`. */}
-            <Pressable
-              className="border-border active:bg-secondary mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5"
-              onPress={() => {
-                tapped()
-                router.push('/(app)/public-profile')
-              }}
-              role="button"
-            >
-              <Icon as={Eye} size={15} strokeWidth={1.7} className="text-muted-foreground" />
-              <Text className="text-body-sm text-foreground font-medium">
-                {t.viewPublicProfile}
-              </Text>
-            </Pressable>
+            {/* «Переглянути публічний профіль» stood here, pushing a route that
+                showed what others see. Both are gone (owner, 2026-09-06): the
+                tab now OPENS as that view, so the button would have led from a
+                thing to itself. */}
           </Card>
 
           {/* ── Підписка ── STUB: no plan concept, no column, no billing. */}
@@ -799,6 +843,9 @@ export default function ProfileScreen() {
                 setDraft(saved)
                 setErrors({})
                 setConfirmDiscard(false)
+                // Out of the form as well as out of the changes: this sheet is
+                // reached from «Скасувати», which now means "stop editing".
+                setEditing(false)
                 setToast(t.changesDiscarded)
               }}
             >

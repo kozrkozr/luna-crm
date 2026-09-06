@@ -39,6 +39,8 @@ export const uk = {
 
   /* ── «Мій профіль», from `Edit Profile.dc.html`. Verbatim. ── */
   myProfileTitle: 'Мій профіль',
+  /** The pill on your own public profile, where a contact's reads «Редагувати контакт». */
+  editProfileAction: 'Редагувати профіль',
   accountSection: 'Акаунт',
   yourRoleSection: 'Ваша роль',
   socialSection: 'Соцмережі',
@@ -65,7 +67,6 @@ export const uk = {
    * Four sections replaced them and **all four are UI-only stubs** (owner,
    * 2026-09-02), so the copy below labels controls that write nothing yet.
    */
-  viewPublicProfile: 'Переглянути публічний профіль',
   subscriptionSection: 'Підписка',
   planLabel: 'Тариф',
   /** The only plan there is. A product name, so it is not translated. */

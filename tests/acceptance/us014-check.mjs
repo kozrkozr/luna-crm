@@ -57,7 +57,14 @@ ok('AC-2 weekdays are Ukrainian and Monday-first',
 
 await B.navigate(`${APP}/profile`)
 body = await ev('document.body.innerText')
-ok('AC-2 the profile screen is Ukrainian', body.includes('Профіль'), body.replace(/\n/g, ' | ').slice(0, 110))
+/*
+  «Публічний профіль» since 2026-09-06: the tab opens as the public view, with
+  the edit form behind «Редагувати профіль». The old assertion looked for
+  «Профіль» with a capital П, which the new title does not contain — its second
+  word is lowercase.
+*/
+ok('AC-2 the profile screen is Ukrainian',
+   body.includes('Публічний профіль'), body.replace(/\n/g, ' | ').slice(0, 110))
 ok('AC-1 and shows no untranslated placeholder text', !body.includes('undefined') && !body.includes('[object'))
 
 // ---------- the preference is READ, not assumed ----------
