@@ -5405,3 +5405,56 @@ the day has not gone anywhere.
 `us004-check.mjs` is unaffected: it collects elements whose whole text is one or
 two digits and which carry a background, so it reads day cells rather than
 dots — a dot has no text at all.
+
+## The calendar's list starts at today (owner, 2026-09-06)
+
+With no date selected the agenda returned every shoot on record, oldest first —
+so the screen opened on the earliest one and the reader scrolled through their
+whole history to reach anything upcoming. `US-004` AC-4 says "all of it when
+nothing is selected", which was implemented literally and reads badly at any
+real number of shoots: fine at ten, unusable at two hundred, with the useful end
+at the far end.
+
+**From today 00:00, not from now.** A shoot that happened this morning stays in
+the list: it is still today's, the reader was probably at it, and a day that
+empties itself as it passes is a worse surprise than one that keeps what has
+been.
+
+That is deliberately **not** the rule the home screen took the same day. There,
+«Найближча зйомка» skips a shoot that has finished — that card names one shoot
+and answers "what is next", where this is a day's agenda answering "what is on".
+Three rules now sit side by side, each keyed to what its surface claims:
+
+| surface | boundary |
+|---|---|
+| «Найближча зйомка» | not finished (`statusOf`) |
+| the calendar's agenda | date ≥ today |
+| a past day's red dot | date < today |
+
+**Selecting a date still reaches the past**, whatever its date, so history is one
+tap away in the calendar rather than gone — which is also what makes the red
+dots on past days worth drawing.
+
+`US-004` AC-4 wants amending.
+
+### Two things left alone, both flagged
+
+**The empty-state copy.** «На цьому тижні…» / «У цьому місяці…» were always
+approximate — the list has never been scoped to the calendar's period, and
+`inPeriod` feeds the header's meta line and nothing else. Now they are wrong in
+a new way: an account whose every shoot is past falls to «У цьому місяці ще
+немає зйомок» when what is true is that nothing is ahead. «Попереду зйомок
+немає» is the sentence it wants, and it is not the owner's to assume.
+
+**`us004-check.mjs` becomes date-dependent.** It seeds two shoots on the 7th and
+22nd of the current month and asserts both are listed. Run before the 7th, both
+are ahead and it passes; run on the 10th, «Раніша» is correctly filtered out and
+the assertion fails — the suite would report a bug that is the feature working.
+
+Not repaired here. The fix is to seed relative to today rather than on fixed
+days, and to derive the calendar's expected marks from the same values — but
+two future days do not always fall inside the focused month, so it needs the
+month arrow tapped in that case. That is a test-design change, and it cannot be
+verified while the local stack is down; guessing at it blind is how the other
+edits today became unverified. Recorded so it is found deliberately rather than
+as a mystery failure.

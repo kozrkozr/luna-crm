@@ -163,7 +163,7 @@ export default function ShootListScreen() {
 
   const all = state.status === 'loaded' ? rows(state.shoots, state.crewShoots) : []
   const inPeriod = all.filter((row) => withinPeriod(row.date, mode, focus))
-  const shown = visible(all, selectedDate)
+  const shown = visible(all, selectedDate, toIsoDate(new Date()))
 
   return (
     <View className="bg-background flex-1">
@@ -281,6 +281,19 @@ export default function ShootListScreen() {
               */
               <Card variant="flat" className="items-center px-4 py-7">
                 <Text className="text-body-sm text-muted-foreground text-center">
+                  {/*
+                    The last two read «На цьому тижні…» / «У цьому місяці…», and
+                    the list has never been scoped to the calendar's period —
+                    `inPeriod` feeds the header's meta line and nothing else. So
+                    they were already approximate, and since the list starts at
+                    today they are wrong in a new way: an account whose every
+                    shoot is in the past now falls to «У цьому місяці ще немає
+                    зйомок» when what is true is that nothing is ahead.
+
+                    Left as they are rather than invented over: «Попереду зйомок
+                    немає» is the sentence this wants and it is not the owner's.
+                    Recorded in docs/redesign-log.md.
+                  */}
                   {all.length === 0
                     ? t.emptyShoots
                     : selectedDate
@@ -420,9 +433,32 @@ function rows(shoots: Shoot[], crewShoots: CrewShoot[]): Row[] {
   )
 }
 
-/** AC-4 — the list narrowed to one date, or all of it when nothing is selected. */
-function visible(all: Row[], selectedDate: string | null): Row[] {
-  return selectedDate ? all.filter((row) => row.date === selectedDate) : all
+/**
+ * `US-004` AC-4 — the list narrowed to one date, or **today onwards** when
+ * nothing is selected.
+ *
+ * ── It was everything, oldest first, until 2026-09-06 ───────────────────────
+ *
+ * With no date selected this returned `all`, so the screen opened on the
+ * earliest shoot on record and the reader scrolled through their whole history
+ * to reach anything upcoming. Fine at ten shoots and unusable at two hundred,
+ * with the useful end at the far end.
+ *
+ * **From today 00:00, not from now** (owner, 2026-09-06). A shoot that happened
+ * this morning stays in the list: it is still today's, the reader was probably
+ * at it, and a day that empties itself as it passes is a worse surprise than one
+ * that keeps what has been. That is deliberately NOT the rule the home screen's
+ * «Найближча зйомка» uses — that card names one shoot and answers "what is
+ * next", where this is a day's agenda and answers "what is on".
+ *
+ * **Selecting a date still reaches the past.** Tapping a day in the calendar
+ * filters to it whatever its date, so history stays one tap away rather than
+ * gone — which is also what makes the red dots on past days worth drawing.
+ */
+function visible(all: Row[], selectedDate: string | null, todayIso: string): Row[] {
+  return selectedDate
+    ? all.filter((row) => row.date === selectedDate)
+    : all.filter((row) => row.date >= todayIso)
 }
 
 /**
