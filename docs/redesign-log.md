@@ -5053,3 +5053,96 @@ row's rule stop at the rounded corner rather than squaring it off — the pairin
 the home screen's shoot card already uses for its stripe.
 
 The «ВИ» tint is on the card, so the reader's own member is tinted whole.
+
+## The shoot's tab actions get pinned (owner, 2026-09-06)
+
+«Деталі» and «Команда» each had their action inside the scroll. Both are pinned
+to the bottom of the screen now, where «+ Нова зйомка» sits on the calendar.
+
+**Why it matters more here than on a list.** The «Деталі» tab's two buttons sat
+below however much location, payment and notes a particular shoot carried — so
+"edit this shoot" was a different distance down the page on every shoot, and on
+a full one it was past everything. Pinned, it is the same place every time.
+
+`DetailsActions` is lifted out of `DetailsTab` as its own component, because a
+sticky footer has to be a sibling of the scroll view rather than a child of it.
+`DetailsTab` lost `onEdit` and `onCancelShoot` in the move; the screen already
+held both handlers.
+
+**«+ Додати учасника» is now the calendar's CTA.** It was a centred
+`muted-foreground` row closing the crew card — which read as another crew member
+until the eye reached the «+» — and it is the only action on that tab, so it
+takes the shape this app gives one action per screen. `PeopleTab` lost its
+`shoot` prop with it: the row's `href` was the only thing there that used it.
+
+A plain `Button` with `router.push`, not `Link asChild`, for two reasons: the
+calendar's «+ Нова зйомка» is a plain `Button` and this is meant to be the same
+control, and it keeps the rendered element a button rather than whatever
+`asChild` resolves to on the web export.
+
+### Two things the old code had wrong
+
+**`insets.bottom` is added here** where the calendar's footer deliberately omits
+it. That screen lives in `(tabs)`, where the bar owns the safe area; this one
+does not, so its own bottom edge runs into the home indicator.
+
+**The scroll's `paddingBottom` said one thing and did another.** Its comment
+read "room for the sticky CTA on the tabs that have one" while applying 96pt to
+all three — correct while «Матеріали» had a CTA of its own, and left behind when
+that was removed earlier today. It is now 96 on the two tabs with a footer and
+24 on «Матеріали», which has none: adding a reference is the `+` tile in its
+grid, and its file links are edited in place.
+
+### `us005-check.mjs` should start passing again
+
+It asserts the crew tab holds `'+ Додати учасника'` and taps an element whose
+`innerText` equals exactly that. The old row rendered a `Plus` **icon** beside
+the bare label, so the string «+ Додати учасника» never existed in the DOM —
+that suite has been failing on it, and the new CTA renders the literal text.
+Unverified: the local stack is still down. That makes four suites found stale
+today (`us007`, `us018`, `us030`, `us005`), on top of the two the crew-link
+regression broke.
+
+## An expanded crew row keeps only its actions (owner, 2026-09-06)
+
+The «Команда» tab's expanded row held «Телефон», «Email», «Instagram» and
+«Telegram» in a sub-card above its buttons. It now holds three things, and all
+three are actions: «Профіль учасника», «Запрошення на зйомку», «Видалити».
+
+**The contacts had two homes and this was the worse one.** «Профіль учасника» —
+one tap below them — is the person's own screen, showing the same four fields
+with room for them. Here they were a nested card inside an expanded row inside a
+card, three surfaces deep, and every one of them was something to read rather
+than something to do.
+
+«Запрошення на зйомку» takes `text-foreground`. That row was deliberately left
+muted this morning when the client's equivalent went white, on the grounds that
+it repeats down a list — but only one row is ever expanded, so it does not
+repeat, and the earlier reasoning does not survive the row being open. The glyph
+stays muted; the ask was the label, both times.
+
+`handleLabel` and `handleUrl` keep their callers — the client's rows on «Деталі»
+still show contacts inline, and rightly: a shoot has one client, so nothing is
+nested and there is no second screen to send them to.
+
+### `US-005` AC-1 wants amending
+
+Its acceptance test asserted «the expanded row shows the contact» against the
+phone number. That is now false by design — the contact is a tap away on the
+profile.
+
+The assertion is rewritten rather than deleted, and deliberately not weakened to
+"the row still says something": it now checks that the row offers «Профіль
+учасника» **and** that the phone is absent from the row itself. A stale copy
+left behind is exactly the failure the original was catching, and it still would.
+
+### The baseline was already wrong
+
+`us005-check.mjs` had **14** `ok()` calls against a `run-all.sh` baseline of
+**16**, with none of them in a loop — so that suite has been reporting
+off-baseline before anything today touched it. It is set to 15 to match the file
+after this change, which is an arithmetic correction rather than a verified one:
+the local stack is still down, and only a real run can confirm it.
+
+That is the fifth stale suite found today, after `us005`'s own «+ Додати
+учасника» assertion, `us007`, `us018` and `us030`.

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SectionLabel } from '../../../../src/components/ShootFormFields'
 import { ActivityIndicator, Image, Pressable, View } from 'react-native'
-import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Clipboard from 'expo-clipboard'
 import * as ImagePicker from 'expo-image-picker'
@@ -352,8 +352,13 @@ export default function ShootDetailScreen() {
         contentContainerStyle={{
           // The measured header height, never a constant — the banner grows it.
           paddingTop: headerHeight,
-          // Room for the sticky CTA on the tabs that have one.
-          paddingBottom: insets.bottom + 96,
+          /*
+            Room for the pinned footer, on the two tabs that have one. It said
+            "the tabs that have one" while applying 96pt to all three — true
+            when «Матеріали» had a CTA of its own, and left behind when that was
+            removed earlier today.
+          */
+          paddingBottom: insets.bottom + (tab === 'materials' ? 24 : 96),
         }}
       >
         <View className="gap-3 p-4">
@@ -362,8 +367,6 @@ export default function ShootDetailScreen() {
               shoot={shoot}
               countdown={countdown}
               crew={crew}
-              onEdit={() => router.push(`/(app)/shoot/${shoot.id}/edit`)}
-              onCancelShoot={() => askCancelShoot(null)}
               onCopyClientLink={() =>
                 void copyLinkFor({
                   id: shoot.clientId,
@@ -381,7 +384,6 @@ export default function ShootDetailScreen() {
 
           {tab === 'people' ? (
             <PeopleTab
-              shoot={shoot}
               crew={crew}
               onCopyLink={(person) => void copyLinkFor(person)}
               onRemove={removePerson}
@@ -421,6 +423,60 @@ export default function ShootDetailScreen() {
           ) : null}
         </View>
       </FormScrollView>
+
+      {/*
+        ── The pinned footer (owner, 2026-09-06) ──────────────────────────────
+
+        Each tab's action, in the place «+ Нова зйомка» occupies on the calendar:
+        the same spot on every shoot, rather than below however much location,
+        payment and notes this particular one carries.
+
+        `insets.bottom` IS added here, unlike the calendar's — that screen sits
+        inside `(tabs)` where the bar owns the safe area, and this one does not,
+        so its own bottom edge runs into the home indicator.
+
+        «Матеріали» has no action: adding a reference is the `+` tile at the end
+        of its grid, and its two file links are edited in place. The footer is
+        absent rather than empty there, and `paddingBottom` above drops with it —
+        96pt of blank scroll under a tab with nothing pinned to it is what the
+        old constant did, and it did it on every tab.
+      */}
+      {tab === 'details' || tab === 'people' ? (
+        <View
+          className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-2.5"
+          style={{ paddingBottom: insets.bottom + 10 }}
+        >
+          {tab === 'details' ? (
+            <DetailsActions
+              onEdit={() => router.push(`/(app)/shoot/${shoot.id}/edit`)}
+              onCancelShoot={() => askCancelShoot(null)}
+            />
+          ) : (
+            /*
+              «+ Додати учасника» as the calendar's CTA, not the centred row that
+              used to close the crew list (owner, 2026-09-06). It was a quiet
+              `muted-foreground` row inside the card — which read as another crew
+              member until you got to the «+» — and it is the only action on this
+              tab, so it takes the shape the app gives its one action per screen.
+            */
+            <Button
+              variant="cta"
+              size="cta"
+              onPress={() => {
+                tapped()
+                router.push(`/(app)/shoot/${shoot.id}/crew/add`)
+              }}
+            >
+              {/* `router.push`, not `Link asChild` — the calendar's «+ Нова
+                  зйомка» is a plain `Button` and this is meant to be the same
+                  control. It also keeps the rendered element a button rather
+                  than whatever `asChild` resolves to on the web export, which
+                  is what `us005-check.mjs` matches on. */}
+              <Text className="text-subtitle font-semibold">{`+ ${t.addCrewMember}`}</Text>
+            </Button>
+          )}
+        </View>
+      ) : null}
 
       {cancelShootDialog}
 
@@ -470,15 +526,11 @@ function DetailsTab({
   shoot,
   countdown,
   crew,
-  onEdit,
-  onCancelShoot,
   onCopyClientLink,
 }: {
   shoot: Shoot
   countdown: string | null
   crew: CrewMember[]
-  onEdit: () => void
-  onCancelShoot: () => void
   onCopyClientLink: () => void
 }) {
   const t = useStrings()
@@ -699,75 +751,81 @@ function DetailsTab({
         </Card>
       ) : null}
 
-      {/*
-        ── The two actions, as `Shoot Detail v3.dc.html` draws them ────────────
-
-        One row, not two stacked outlines. «Редагувати зйомку» is a filled pill
-        taking the width that is left; deleting is a 48pt circle beside it
-        holding a trash glyph and no words.
-
-        **The change is what each one now looks like it does.** Both used to be
-        outlined rectangles of equal weight — the primary action and the
-        irreversible one, drawn identically and told apart only by the colour of
-        one label. Editing is now the obvious thing to tap, and destroying is a
-        small target you have to aim at.
-
-        The delete control is icon-only, so «Скасувати зйомку» moves to
-        `accessibilityLabel` — the artboard's own `aria-label`, and the only
-        place the words now exist before the confirmation dialog.
-
-        ── Tokens ─────────────────────────────────────────────────────────────
-
-        The artboard's `--accent` is **not** our `--accent`. There it is the
-        pale blue-white CTA fill; here that is `--primary`, and `--accent` is a
-        raised chip surface (`#18191A`). The theme handoff makes the mapping
-        explicit — "не використовувати чистий білий для кнопок — тільки
-        `--primary`" — and `Badge` carries the same warning about the word. So
-        `--accent`/`--accent-ink` become `bg-primary`/`text-primary-foreground`.
-
-        The delete circle's three tokens survive the crossing unchanged:
-        `--danger-bg`, `--danger-border`, `--danger-soft`. `StatusPill`'s
-        «Завершена» chip already uses that exact trio, which is why they exist.
-
-        **One departure.** The artboard fills the circle with `--danger` on
-        hover; we have no such token — `danger` is only `soft`/`bg`/`border`,
-        and `--destructive` is the colour of an *action* that destroys rather
-        than a surface. So the press state is `active:opacity-80`, the app's
-        standard, rather than a colour invented to stand in for one.
-
-        `crew` is unused by the card now that the confirmation count moved to
-        the «Команда» tab, but the prop stays: the tab is the natural owner of
-        "how many people are on this shoot" and the next thing that needs it
-        will need it here.
-      */}
-      <View className="mt-1 flex-row items-center gap-2.5">
-        <Pressable
-          className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
-          onPress={() => {
-            tapped()
-            onEdit()
-          }}
-          role="button"
-        >
-          <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
-          <Text className="text-body-sm text-primary-foreground font-semibold">
-            {t.menuEditShoot}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
-          onPress={() => {
-            tapped()
-            onCancelShoot()
-          }}
-          role="button"
-          accessibilityLabel={t.cancelShoot}
-        >
-          <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
-        </Pressable>
-      </View>
     </>
+  )
+}
+
+/**
+ * «Редагувати зйомку» and delete, **pinned to the bottom of the «Деталі» tab**.
+ *
+ * ── Why it is out here and not in `DetailsTab` ──────────────────────────────
+ *
+ * It scrolled with the card stack until 2026-09-06, which put the screen's two
+ * actions below however much location, payment and notes a shoot happened to
+ * carry — reachable only by scrolling past everything. Pinned, they are where
+ * «+ Нова зйомка» is on the calendar: the same place on every shoot.
+ *
+ * Living outside the tab is what lets it be pinned at all — a sticky footer has
+ * to be a sibling of the scroll view, not a child of it. `DetailsTab` lost its
+ * `onEdit` and `onCancelShoot` props in the move; the screen already holds both
+ * handlers.
+ *
+ * ── The row itself, from `Shoot Detail v3.dc.html` ──────────────────────────
+ *
+ * One row, not two stacked outlines. «Редагувати зйомку» is a filled pill taking
+ * the width that is left; deleting is a 48pt circle beside it holding a trash
+ * glyph and no words. Both used to be outlines of equal weight — the primary
+ * action and the irreversible one, drawn identically and told apart only by the
+ * colour of one label. Editing is now the obvious thing to tap, and destroying
+ * is a small target you have to aim at.
+ *
+ * The delete control is icon-only, so «Скасувати зйомку» lives in
+ * `accessibilityLabel` — the artboard's own `aria-label`, and the only place the
+ * words exist before the confirmation dialog.
+ *
+ * **The artboard's `--accent` is not this app's `--accent`.** There it is the
+ * pale blue-white CTA fill; here that is `--primary`, and `--accent` is a raised
+ * chip surface. `Badge` carries the same warning about the word. The circle's
+ * `--danger-bg`/`--danger-border`/`--danger-soft` cross unchanged, and its press
+ * state is `active:opacity-80` because the artboard's hover fill (`--danger`)
+ * has no token here.
+ */
+function DetailsActions({
+  onEdit,
+  onCancelShoot,
+}: {
+  onEdit: () => void
+  onCancelShoot: () => void
+}) {
+  const t = useStrings()
+  return (
+    <View className="flex-row items-center gap-2.5">
+      <Pressable
+        className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
+        onPress={() => {
+          tapped()
+          onEdit()
+        }}
+        role="button"
+      >
+        <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
+        <Text className="text-body-sm text-primary-foreground font-semibold">
+          {t.menuEditShoot}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
+        onPress={() => {
+          tapped()
+          onCancelShoot()
+        }}
+        role="button"
+        accessibilityLabel={t.cancelShoot}
+      >
+        <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
+      </Pressable>
+    </View>
   )
 }
 
@@ -1077,13 +1135,16 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
  * The confirmation count is that heading now, rather than a «Команда» row two
  * tabs away on «Деталі».
  */
+/**
+ * «Команда». The «+ Додати учасника» row that closed this list moved out to the
+ * screen's pinned footer on 2026-09-06 (owner) — see `PeopleActions`. `shoot`
+ * went with it: the row's `href` was the only thing here that needed it.
+ */
 function PeopleTab({
-  shoot,
   crew,
   onCopyLink,
   onRemove,
 }: {
-  shoot: Shoot
   crew: CrewMember[]
   onCopyLink: (person: SheetPerson) => void
   onRemove: (person: SheetPerson) => void
@@ -1164,25 +1225,6 @@ function PeopleTab({
             }}
           />
         ))}
-
-        <Link href={`/(app)/shoot/${shoot.id}/crew/add`} asChild>
-          <Pressable
-            /* Centred, as the handoff draws it (`justify-content:center` on its
-               «+ Додати учасника» row). It read left-aligned here, which made it
-               look like another crew row rather than the action that closes the
-               list. */
-            className={`flex-row items-center justify-center gap-2 px-4 py-3.5 active:bg-secondary ${
-              crew.length > 0 ? 'border-border border-t' : ''
-            }`}
-            onPress={tapped}
-            role="button"
-          >
-            <Icon as={Plus} size={16} strokeWidth={2.2} className="text-muted-foreground" />
-            <Text className="text-body-sm text-muted-foreground font-medium">
-              {t.addCrewMember}
-            </Text>
-          </Pressable>
-        </Link>
       </Card>
 
       {removeDialog}
@@ -1233,44 +1275,22 @@ function PersonRow({
   const router = useRouter()
 
   /*
-    `url` since 2026-09-05: these rows were plain text, so a crew member's
-    Instagram was something to read off the screen and retype. They open the
-    same place the person sheet's rows open — `handleUrl` is shared, so the two
-    surfaces cannot disagree about where one handle goes — and `handleLabel`
-    means a pasted profile URL shows as «@nickname» here too.
+    ── The contact rows are gone (owner, 2026-09-06) ─────────────────────────
 
-    A phone dials. An email is left alone: `mailto:` is not something any story
-    asks for, and the row is the crew-matching key as often as it is an address.
+    An expanded row held «Телефон», «Email», «Instagram» and «Telegram» in a
+    sub-card above the actions. It now holds three things and they are all
+    actions: «Профіль учасника», «Запрошення на зйомку», «Видалити».
+
+    The contacts had two homes and this was the worse of them. «Профіль
+    учасника» — one tap below — is the person's own screen, which shows the same
+    four fields with room for them; here they were a nested card inside an
+    expanded row inside a card, three surfaces deep, and every one of them was
+    something to read rather than something to do.
+
+    `handleLabel`/`handleUrl` are still imported by this file for the client's
+    rows on «Деталі», which keep theirs: a shoot has one client and it is not a
+    list, so nothing is nested and there is no second screen to send them to.
   */
-  type Row = { label: string; value: string; url: string | null; linkTone?: boolean }
-  const rows: (Row | null)[] = [
-    // Tappable, and deliberately not blue: a phone dials. See `ContactRow`.
-    member.phone
-      ? {
-          label: t.phoneField,
-          value: member.phone,
-          url: `tel:${member.phone.replace(/[^+\d]/g, '')}`,
-        }
-      : null,
-    member.email ? { label: t.email, value: member.email, url: null } : null,
-    member.instagram
-      ? {
-          label: t.instagramLabel,
-          value: handleLabel('instagram', member.instagram),
-          url: handleUrl('instagram', member.instagram),
-          linkTone: true,
-        }
-      : null,
-    member.telegram
-      ? {
-          label: t.telegramLabel,
-          value: handleLabel('telegram', member.telegram),
-          url: handleUrl('telegram', member.telegram),
-          linkTone: true,
-        }
-      : null,
-  ]
-  const contacts = rows.filter((row): row is Row => row !== null)
 
   return (
     /*
@@ -1344,54 +1364,6 @@ function PersonRow({
 
       {open ? (
         <View className="gap-2 px-4 pb-3.5">
-          {contacts.length > 0 ? (
-            /* `background:var(--bg)` in the artboard — a step below the open
-               row, which is itself a step below the card. */
-            <View className="bg-background border-border overflow-hidden rounded-lg border">
-              {contacts.map((contact, index) => {
-                const rowClass = `flex-row items-center justify-between gap-2.5 px-3 py-2.5 ${
-                  index > 0 ? 'border-border border-t' : ''
-                }`
-                const body = (
-                  <>
-                    <Text className="text-label text-muted-foreground shrink-0">
-                      {contact.label}
-                    </Text>
-                    {/* Handles are blue; a phone dials and is not. See `ContactRow`. */}
-                    <Text
-                      className={`text-body-sm min-w-0 flex-1 text-right font-medium ${
-                        contact.linkTone ? 'text-link' : 'text-foreground'
-                      }`}
-                      numberOfLines={1}
-                    >
-                      {contact.value}
-                    </Text>
-                  </>
-                )
-                /* No `url`, no press state. An affordance that leads nowhere is
-                   worse than none — the rule `DetailRow` was written to. */
-                return contact.url ? (
-                  <Pressable
-                    key={contact.label}
-                    className={`${rowClass} active:bg-muted`}
-                    onPress={() => {
-                      tapped()
-                      void openExternalUrl(contact.url as string)
-                    }}
-                    role="link"
-                    accessibilityLabel={`${contact.label}: ${contact.value}`}
-                  >
-                    {body}
-                  </Pressable>
-                ) : (
-                  <View key={contact.label} className={rowClass}>
-                    {body}
-                  </View>
-                )
-              })}
-            </View>
-          ) : null}
-
           {/*
             Live since 2026-09-04 — inert for two days, waiting for
             `app/(app)/contact/[id].tsx`.
@@ -1443,7 +1415,17 @@ function PersonRow({
               role="button"
             >
               <Icon as={LinkIcon} size={14} strokeWidth={1.8} className="text-muted-foreground" />
-              <Text className="text-label text-muted-foreground font-semibold" numberOfLines={1}>
+              {/*
+                `text-foreground` (owner, 2026-09-06), as on the client's row on
+                «Деталі». That row was lifted to white first and this one was
+                deliberately left muted, on the grounds that it repeats down a
+                list — but only one row is ever expanded, so it does not repeat.
+                The earlier reasoning does not survive the row being open.
+
+                The glyph stays muted, which is what was asked for both times:
+                the label, not the icon.
+              */}
+              <Text className="text-label text-foreground font-semibold" numberOfLines={1}>
                 {t.copyPersonLink}
               </Text>
             </Pressable>

@@ -9,7 +9,7 @@
 # See README.md for the servers each suite needs.
 cd "$(dirname "$0")" || exit 1
 
-SUITES="us009-db:17 us009-check:15 us014-check:16 us015-check:17 softdelete-fn:8 us003-check:12 us018-media:10 us005-media:8 us006-gateway:17 us007-check:27 us008-check:19 us023-check:16 us026-check:23 us024-check:18 us025-check:18 us010-check:23 us027-check:12 us022-check:17 us003-ui:7 us004-check:9 us004b-check:12 us005-check:16 us006-ui:9 us018-check:11 us019-check:9 us020-check:10 us021-check:9 us030-check:11 client-notes-check:15"
+SUITES="us009-db:17 us009-check:15 us014-check:16 us015-check:17 softdelete-fn:8 us003-check:12 us018-media:10 us005-media:8 us006-gateway:17 us007-check:27 us008-check:19 us023-check:16 us026-check:23 us024-check:18 us025-check:18 us010-check:23 us027-check:12 us022-check:17 us003-ui:7 us004-check:9 us004b-check:12 us005-check:15 us006-ui:9 us018-check:11 us019-check:9 us020-check:10 us021-check:9 us030-check:11 client-notes-check:15"
 
 # With names on the command line, run only those — same baselines.
 if [ "$#" -gt 0 ]; then

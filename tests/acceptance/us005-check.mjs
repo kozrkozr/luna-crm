@@ -90,7 +90,23 @@ ok('AC-1 the crew member appears in the list', body.includes('Наталія'), 
 const crewRow=(n)=>`[...document.querySelectorAll('div[role=button]')].find(e=>e.innerText.trim().startsWith(${JSON.stringify(n)}))`
 await tap(crewRow('Наталія')); await wait()
 body=await ev('document.body.innerText')
-ok('AC-1 the expanded row shows the contact', body.includes('+380501234567'))
+/*
+  **AC-1's "shows the contact" moved a tap further away** (owner, 2026-09-06).
+
+  The expanded row held «Телефон», «Email», «Instagram» and «Telegram» in a
+  sub-card; it now holds three actions and nothing else. The contact is on
+  «Профіль учасника», which this row offers — the same four fields with room for
+  them, instead of a nested card three surfaces deep.
+
+  So this asserts what the row now promises rather than what it used to show,
+  and `US-005` AC-1 wants amending. It is NOT weakened to «the row still says
+  something»: the phone must be absent here, because a stale copy of it left
+  behind is exactly the failure this would otherwise stop catching.
+*/
+ok('AC-1 the expanded row offers the profile, where the contact now lives',
+   body.includes('Профіль учасника'), body.replace(/\n/g, ' | ').slice(0, 160))
+ok('AC-1 and the contact is no longer duplicated onto the row itself',
+   !body.includes('+380501234567'), body.replace(/\n/g, ' | ').slice(0, 160))
 /*
   **No response-pill assertion.** An unanswered invitation carries no chip now:
   v3 badges only «Підтверджено», and the shortfall is reported once by
