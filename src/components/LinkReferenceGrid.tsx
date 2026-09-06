@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import LinkIcon from 'lucide-react-native/icons/link'
 import { Image, Pressable, View } from 'react-native'
 import { ImageViewer } from './ImageViewer'
 import { Card } from './ui/card'
+import { Icon } from './ui/icon'
 import { Text } from './ui/text'
 import { uk } from '../i18n/uk'
 import { openExternalUrl } from '../lib/openExternalUrl'
@@ -106,12 +108,27 @@ export function LinkReferenceGrid({
                 ) : (
                   <Pressable
                     key={reference.id}
-                    className="bg-muted border-border h-[58px] w-[58px] justify-end rounded-lg border p-1.5 active:opacity-70"
+                    className="bg-muted border-border h-[58px] w-[58px] items-center justify-center rounded-lg border p-1.5 active:opacity-70"
                     onPress={() => reference.url && void openExternalUrl(reference.url)}
                     role="button"
                     accessibilityLabel={hostOf(reference.url)}
                   >
-                    <Text className="text-micro" numberOfLines={3}>
+                    {/* A chain above the host, centred — the creator's grid
+                        again (owner, 2026-09-06). At 58px the glyph does most
+                        of the work: the host is often too long to read at this
+                        size, and «a link» is the part that has to land. Two
+                        lines rather than three, since the icon takes the room
+                        the third had. */}
+                    <Icon
+                      as={LinkIcon}
+                      size={14}
+                      strokeWidth={1.7}
+                      className="text-muted-foreground"
+                    />
+                    <Text
+                      className="text-micro text-muted-foreground mt-1 text-center"
+                      numberOfLines={2}
+                    >
                       {hostOf(reference.url)}
                     </Text>
                   </Pressable>

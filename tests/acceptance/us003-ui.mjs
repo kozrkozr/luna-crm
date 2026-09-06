@@ -60,15 +60,35 @@ await B.navigate(`${BASE}/shoot/${SHOOT}`)
 let body = await text()
 ok('shoot detail screen shows the shoot and the references section',
    body.includes('Референс-тест') && body.includes('Референси'), body.replace(/\n/g, ' | ').slice(0, 120))
-ok('reference field placeholder present (from the prototype, verbatim)',
-   await evalJs(`!!document.querySelector('input[placeholder="Посилання на референс (напр. Pinterest)"]')`))
+/*
+  ── The link field is behind a sheet now (owner, 2026-09-06) ────────────────
+
+  It used to sit open on the screen. `Shoot Detail v3.dc.html` puts an action
+  sheet behind the grid's «+» — «Зображення» or «Посилання» — and the second
+  opens the card this suite types into. So the field is two taps in, and its
+  placeholder is the artboard's «pinterest.com/…» rather than the prototype's
+  sentence; `refPlaceholder` is deleted from both dictionaries.
+
+  **This suite could not have passed since `4a8d8bf` regardless.** That commit
+  took the link form off the screen and left `addLinkReference` with no caller,
+  so there was no field of any placeholder to find, and no way to add a link at
+  all — `US-003` AC-1 and AC-2 have been unreachable for a fortnight.
+*/
+await B.tap(`document.querySelector('[role=button][aria-label="Додати референс або файл"]')`)
+await B.settle()
+await B.tap(
+  `[...document.querySelectorAll('div[role=button],button')].find(e => e.innerText.trim() === 'Посилання')`
+)
+await B.settle()
+ok('the «+» tile offers «Посилання», and it opens the link field',
+   await evalJs(`!!document.querySelector('input[placeholder="pinterest.com/…"]')`))
 
 const refCount = () => evalJs(`document.body.innerText.split('\\n').filter(l => l.includes('pinterest.com') || l.includes('example.com')).length`)
 
 // --- AC-2 first: invalid link is rejected, list unchanged --------------
 const before = await refCount()
 await evalJs(`(() => {
-  const el = document.querySelector('input[placeholder="Посилання на референс (напр. Pinterest)"]');
+  const el = document.querySelector('input[placeholder="pinterest.com/…"]');
   const d = Object.getOwnPropertyDescriptor(el.constructor.prototype, 'value');
   d.set.call(el, 'not a link at all');
   el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -84,7 +104,7 @@ ok('AC-2 reference list unchanged after rejection', (await refCount()) === befor
 
 // --- AC-1: a valid link is added and appears ---------------------------
 await evalJs(`(() => {
-  const el = document.querySelector('input[placeholder="Посилання на референс (напр. Pinterest)"]');
+  const el = document.querySelector('input[placeholder="pinterest.com/…"]');
   const d = Object.getOwnPropertyDescriptor(el.constructor.prototype, 'value');
   d.set.call(el, 'https://pinterest.com/luna/board-1');
   el.dispatchEvent(new Event('input', { bubbles: true }));

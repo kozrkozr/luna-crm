@@ -1,8 +1,10 @@
 import { Portal } from '@rn-primitives/portal'
+import type { LucideIcon } from 'lucide-react-native'
 import { Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideOutDown } from 'react-native-reanimated'
 import { NativeOnlyAnimatedView } from './native-only-animated-view'
+import { Icon } from './icon'
 import { Text } from './text'
 import { tapped } from '../../lib/haptics'
 
@@ -48,6 +50,19 @@ export type ActionSheetItem = {
   onPress: () => void
   /** Red, and conventionally last before cancel. */
   destructive?: boolean
+  /**
+   * A glyph before the label, 18px, in the row's own colour.
+   *
+   * `Shoot Detail v3.dc.html`'s «Додати референс» sheet draws one on each row —
+   * a picture for «Зображення», a chain for «Посилання» — where the avatar
+   * sheet it shares this component with draws none. Optional for that reason,
+   * and the row centres its content either way, so a sheet that mixes rows with
+   * and without one still lines up.
+   *
+   * iOS's own sheets put icons on the trailing edge; the artboard centres them
+   * beside the label, and that is what is built.
+   */
+  icon?: LucideIcon
 }
 
 const IOS_BLUE = '#0A84FF'
@@ -140,17 +155,33 @@ export function ActionSheet({
                   role="button"
                 >
                   {/* 20px, and `letterSpacing: -0.3` — the artboard's, and what
-                      makes these read as system rows rather than app buttons. */}
-                  <Text
-                    style={{
-                      fontSize: 20,
-                      lineHeight: 25,
-                      letterSpacing: -0.3,
-                      color: item.destructive ? IOS_RED : IOS_BLUE,
-                    }}
-                  >
-                    {item.label}
-                  </Text>
+                      makes these read as system rows rather than app buttons.
+
+                      `flex-row` with a 9px gap when there is a glyph, which is
+                      the artboard's own spacing. The icon takes the row's
+                      colour rather than a muted one: it is part of the label,
+                      not a decoration beside it, and a grey glyph next to blue
+                      text would read as disabled. */}
+                  <View className="flex-row items-center gap-[9px]">
+                    {item.icon ? (
+                      <Icon
+                        as={item.icon}
+                        size={18}
+                        strokeWidth={1.7}
+                        color={item.destructive ? IOS_RED : IOS_BLUE}
+                      />
+                    ) : null}
+                    <Text
+                      style={{
+                        fontSize: 20,
+                        lineHeight: 25,
+                        letterSpacing: -0.3,
+                        color: item.destructive ? IOS_RED : IOS_BLUE,
+                      }}
+                    >
+                      {item.label}
+                    </Text>
+                  </View>
                 </Pressable>
               ))}
             </View>

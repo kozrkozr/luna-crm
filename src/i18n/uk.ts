@@ -614,7 +614,6 @@ export const uk = {
   allReferencesTitle: 'Усі референси',
   // US-003 — the reference field and the gallery icon, from the prototype's
   // referencesBlock. `pickFromGallery` is the icon glyph itself, as there.
-  refPlaceholder: 'Посилання на референс (напр. Pinterest)',
   addRefBtn: 'Додати',
   pickFromGallery: '🖼',
   back: '← Назад',
@@ -1074,6 +1073,28 @@ export const uk = {
    */
   linkForms: ['посилання', 'посилання', 'посилань'],
   addReferenceOrFile: 'Додати референс або файл',
+  /**
+   * ── «Додати референс», the type sheet (owner, 2026-09-06) ─────────────────
+   *
+   * `Shoot Detail v3.dc.html` puts an iOS action sheet behind the grid's «+»:
+   * «Зображення» or «Посилання», then the inline card the second one opens.
+   *
+   * **This is a regression being repaired as much as a feature.** `US-003` has
+   * always been "attach a reference by link OR gallery image", and the link half
+   * lost its UI in `4a8d8bf`; `addLinkReference` has sat callable and uncalled
+   * since. The artboard's sheet is how it comes back.
+   */
+  addReferenceSheetTitle: 'Додати референс — «{category}»',
+  /** The sheet's title when «Всі» is the active chip, so there is no group to
+      name and the link lands ungrouped. */
+  addReferenceSheetTitleAll: 'Додати референс',
+  referenceKindImage: 'Зображення',
+  referenceKindLink: 'Посилання',
+  /* The card «Посилання» opens. `referenceLinkInvalid` already carries the
+     rejection — see `US-003` AC-2. */
+  newReferenceLink: 'Нове посилання',
+  newReferenceLinkPlaceholder: 'pinterest.com/…',
+  addReferenceLinkAction: 'Додати',
   copyWord: 'Копіювати',
 
   /*

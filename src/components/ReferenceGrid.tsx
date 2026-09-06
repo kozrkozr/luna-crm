@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Image, Pressable, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
+import LinkIcon from 'lucide-react-native/icons/link'
 import X from 'lucide-react-native/icons/x'
 import { ImageViewer } from './ImageViewer'
 import { Icon } from './ui/icon'
@@ -145,12 +146,25 @@ function ReferenceThumb({
       </Pressable>
     ) : (
       <Pressable
-        className="bg-muted aspect-square w-full justify-end rounded-[10px] p-2 active:opacity-70"
+        className="bg-muted aspect-square w-full items-center justify-center rounded-[10px] p-2 active:opacity-70"
         onPress={() => void openExternalUrl(reference.urlOrPath)}
         role="button"
         accessibilityLabel={hostOf(reference.urlOrPath)}
       >
-        <Text className="text-xs" numberOfLines={3}>
+        {/*
+          A glyph above the host (owner, 2026-09-06), the pair centred both ways.
+
+          The tile was `justify-end` with the text left-aligned — bottom-left,
+          which is where a caption sits under a picture. There is no picture:
+          this is the one tile in the grid with nothing to show, so it says what
+          it is instead. The chain reads as "a link" before the host is even
+          legible, which at three tiles to a row it often is not.
+
+          `gap-1.5` and a muted tone on both, so the pair reads as one object
+          rather than an icon with a label stuck under it.
+        */}
+        <Icon as={LinkIcon} size={18} strokeWidth={1.7} className="text-muted-foreground" />
+        <Text className="text-xs text-muted-foreground mt-1.5 text-center" numberOfLines={2}>
           {hostOf(reference.urlOrPath)}
         </Text>
       </Pressable>

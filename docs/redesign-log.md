@@ -5146,3 +5146,137 @@ the local stack is still down, and only a real run can confirm it.
 
 That is the fifth stale suite found today, after `us005`'s own «+ Додати
 учасника» assertion, `us007`, `us018` and `us030`.
+
+## Adding a reference asks which kind (owner, 2026-09-06)
+
+The grid's «+» opened the gallery straight away, so a reference could only be an
+image. It now opens the artboard's action sheet — «Зображення» or «Посилання» —
+and the second reveals an inline «Нове посилання» card with a field, «Додати»
+and «Скасувати».
+
+**This is a regression repaired as much as a feature.** `US-003` has always been
+"attach a reference by link OR gallery image". `4a8d8bf` ("rebuild every screen
+against the Claude Design handoffs") took the link form off this screen, and
+`addLinkReference` has sat fully built, validated and **uncalled** ever since —
+so AC-1 and AC-2 have been unreachable for a fortnight. Link references still
+*rendered*, which is why nobody noticed: the tiles you could see were seeded
+directly into the database.
+
+That makes three things this commit dropped silently, after the crew member's
+page and the all-references page.
+
+### Links stay tiles
+
+The artboard also moves links out of the grid into a list card beneath it — a
+row each, with the domain, a copy button and a remove ✕. **Not built** (owner):
+links keep the square tiles they have, in the same grid as the images, on the
+creator's screen and both link views alike. So `ReferenceGrid` and
+`LinkReferenceGrid` are untouched and the three surfaces still render references
+identically, which is the property `US-021`'s page was built to preserve.
+
+### Details
+
+### The sheet's rows carry glyphs
+
+The artboard draws an 18px icon on each row — a picture for «Зображення», a
+chain for «Посилання» — centred beside the label with a 9px gap. `ActionSheetItem`
+gains an optional `icon`, and the avatar sheet that shares this component passes
+none, so a row still centres correctly without one.
+
+The glyph takes the row's own colour rather than a muted tone: it is part of the
+label, not a decoration beside it, and a grey icon next to blue text reads as
+disabled. iOS's own sheets put icons on the trailing edge; the artboard centres
+them, and the artboard is what is built.
+
+### The link is typed into iOS's own prompt
+
+`Alert.prompt` where the platform has one; the in-app card everywhere else. The
+owner asked for the native popup, and the fallback is not optional: `Alert.prompt`
+exists on **iOS alone** — react-native-web has no such method, and Android's
+`Alert` has no text field. Without it, adding a link would do nothing in a
+browser, which is also where every acceptance suite drives this screen.
+
+That is the split `useDestructiveConfirm` already makes, for the same reason:
+the platform's own dialog when it has one, something built when it does not.
+
+`'url'` as the keyboard type, so iOS offers «.com» and turns autocorrect off.
+
+**The rejection message stays under the grid** rather than reopening as a second
+alert. `US-003` AC-2 asks for a message and `handle` already writes one; a modal
+that reappears to complain is a worse way to read it than a line that stays put
+while the reader taps «+» again. The consequence worth knowing: on iOS a
+rejected link is gone from the prompt, where the web card keeps it for editing.
+Native prompts have no "stay open and show an error" state, so the two paths
+differ there and cannot be made to agree.
+
+The sheet's title names the active filter chip, because that chip is also the
+destination — whichever group is filtered to is the one the reference is filed
+under, for a link exactly as for an image. «Всі» has no group to name, so the
+title drops the clause rather than printing «Всі» as though it were one.
+
+The web card stays open when a link is rejected, holding what was typed: AC-2
+asks for the link to be refused, and a card that closed would make the reader
+paste it again to fix a typo. Validation is `addLinkReference`'s own, so "the
+list is unchanged" is true of the database rather than of the screen.
+
+### `us003-ui.mjs` and a dead key
+
+The suite typed into an always-present field with the placeholder «Посилання на
+референс (напр. Pinterest)». It now opens the sheet first and uses the
+artboard's «pinterest.com/…». `refPlaceholder` had no caller left — orphaned by
+the same commit — and is pruned from both dictionaries.
+
+Its assertion count is unchanged at 7, so `run-all.sh` needs no edit. It has not
+been run: the local stack is still twelve migrations behind with its edge
+runtime stopped.
+
+## The link tile shows a chain above its host (owner, 2026-09-06)
+
+A link reference is the one tile in the grid with nothing to show. It read as
+bottom-left text — where a caption sits under a picture, except there is no
+picture. It now centres a link glyph with the host beneath it, on the creator's
+grid and both link views.
+
+The glyph does most of the work at small sizes: three tiles to a row on the
+creator's screen and 58px on a посилання, where a host is often too long to read
+but «this is a link» has to land immediately. The host drops from three lines to
+two, since the icon takes the room the third had.
+
+Both in `--muted-foreground` with a small gap, so the pair reads as one object
+rather than an icon with a label stuck under it.
+
+The artboard draws a generic 15px outlined square here, its corner radius
+varying by kind — a shape standing in for whatever the tile is. A chain says the
+same thing without needing the reader to learn the convention, and `lucide`'s
+`link` is already what every other link on these screens uses.
+
+## Many images at once (owner, 2026-09-06)
+
+«Зображення» took `assets[0]` and dropped the rest, so a moodboard of twelve was
+twelve trips through the picker. `allowsMultipleSelection` is the whole of the
+change on the picker's side; the rest is what to do with more than one result.
+
+**One at a time, deliberately.** `addImageReference` uploads to Storage and then
+inserts, and each is awaited before the next starts. `Promise.all` would be
+faster and wrong twice: the list is ordered by `created_at`, so parallel inserts
+would land the selection in an arbitrary order, and a dozen simultaneous uploads
+on a phone's connection is how one fails for reasons nothing here can report
+usefully. Each success is handed up as it lands, so the grid fills in as the
+upload runs.
+
+### Two things left for the owner
+
+**Reporting a partial failure.** The successes are kept — `US-003` AC-2's "the
+list is unchanged" is about a rejected reference, not the ones beside it — and
+the FIRST failure's existing message is shown. Saying «3 з 12 не додалися» needs
+copy nobody has written, and showing the *last* message instead would let a
+later success blank the error entirely. So one message, understating a multiple
+failure. It wants a count template and the owner's words.
+
+**No selection limit.** `selectionLimit` is left unset, because no story gives a
+number and picking one would be inventing a rule. A reader who selects fifty
+waits for fifty uploads with only the disabled «+» tile to say so — there is no
+progress indication, and that is the more likely thing to want fixing first.
+
+No acceptance suite drives the picker: they all seed Storage directly, so
+nothing here is covered either way.
