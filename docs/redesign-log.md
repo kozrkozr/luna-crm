@@ -5534,3 +5534,36 @@ field is added to one of them.
 
 Checked: untouched leaves at once; one character makes it dirty; whitespace
 alone does not, because every field is trimmed; picking a date does.
+
+## «+ Нова зйомка» is pinned on the home screen too (owner, 2026-09-06)
+
+The calendar has pinned its CTA since 2026-09-04; the home screen's still
+scrolled with the list, so the screen's one action sat halfway down it. Now both
+tabs put the button in the same place.
+
+`Home.dc.html` draws it inline, under the next shoot — this is a departure from
+the artboard, and the same one the calendar already made for the same reason.
+
+**No bottom inset**, matching the calendar and unlike the shoot screen's footer:
+both of these are `(tabs)` routes where the bar owns the safe area and its
+screens sit above it rather than underneath, so the screen's own bottom edge is
+already clear of the home indicator. `pb-10` became `pb-24` on the scroll — the
+40 was the artboard's figure for clearing the bar alone, and the button now
+occupies that space.
+
+### And then made identical, because they were not
+
+The two buttons were **almost** the same, which the owner spotted immediately and
+which is worse than either being different on purpose. The home one carried
+`className="h-12 justify-center py-0"` and a **double** space after the «+»; the
+calendar's had neither.
+
+Both came from the home button's earlier life as an inline, artboard-driven
+control: `Home.dc.html` specifies `height:48px`, so it was given one. Pinned, it
+is a CTA like every other, and `size="cta"`'s `py-[15px]` lands at the same ~48
+— while being padding rather than a fixed height, so a label that wraps to two
+lines still fits. `Button` chose that deliberately for Ukrainian, «Позначити як
+«Закінчена»» being 22 characters, and the override quietly opted out of it.
+
+Every pinned CTA in the app is now bare `variant="cta" size="cta"`: this one, the
+calendar's, and the shoot's «Деталі» and «Команда» footers.

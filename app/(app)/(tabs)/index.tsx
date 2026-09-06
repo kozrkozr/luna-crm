@@ -218,12 +218,17 @@ export default function HomeScreen() {
         <HomeHeader hasShoots={state.status === 'loaded' ? state.hasAny : false} />
         <ScrollView contentInsetAdjustmentBehavior="automatic">
           {/*
-            `pb-10` — the artboard ends its scroll container at `padding-bottom:114`,
-            and 75 of that is the bottom bar. The navigator reserves the bar's
-            height (its screens are a flex child ABOVE it, not underneath), so what
-            belongs here is the remaining 39.
+            Room for the pinned CTA below (owner, 2026-09-06), where this was
+            `pb-10`.
+
+            That 40 came from the artboard, which ends its scroll container at
+            `padding-bottom:114` with 75 of it the bottom bar — the navigator
+            reserves the bar's height, its screens being a flex child ABOVE it
+            rather than underneath, so 39 was what belonged here. The button now
+            sits in that space instead of scrolling with the list, so the
+            padding has to clear the button as well as the bar.
           */}
-          <View className="gap-3 px-4 pb-10">
+          <View className="gap-3 px-4 pb-24">
             {/*
               `Home.dc.html`'s order, and it is a reversal: the next shoot comes
               FIRST and the two buttons sit under it. They used to lead the screen.
@@ -300,29 +305,6 @@ export default function HomeScreen() {
               screen itself speaks, which is the part the owner changed.
             */}
 
-            {/* AC-3 — the primary action. 48px and a full pill, as
-                `Home.dc.html` draws it (`height:48px;border-radius:999px`).
-                The corner comes from `Button` — this className must not set
-                one, or `cn()` merges it last and wins.
-
-                **«Переглянути календар» stood under it until 2026-09-05**
-                (owner). It was the second half of AC-3 and the way back to the
-                list that used to be this route — but the calendar is a tab, one
-                reach away at the bottom of the screen, so the button spent a
-                row of the home screen duplicating a tab bar that is always
-                visible. `US-035` AC-3 wants amending; logged.
-
-                The wrapping `gap-2` View went with it: one child needs no gap,
-                and the parent column's `gap-3` already spaces this. */}
-            <Button
-              variant="cta"
-              size="cta"
-              className="h-12 justify-center py-0"
-              onPress={() => router.push('/(app)/new-shoot')}
-            >
-              <Text className="text-subtitle font-semibold">{`+  ${t.newShootTitle}`}</Text>
-            </Button>
-
             {/*
               «Наступні зйомки» — new on this screen. Everything after the shoot in
               the card above, so the two never show the same shoot twice (see
@@ -355,6 +337,41 @@ export default function HomeScreen() {
             ) : null}
           </View>
         </ScrollView>
+
+        {/*
+          «+ Нова зйомка», pinned (owner, 2026-09-06) — the arrangement the
+          calendar has had since 2026-09-04, and the same reasoning: the
+          screen's one action was halfway down a scrolling list, reachable only
+          from the top of it. `Home.dc.html` draws it inline, under the next
+          shoot; taken as drawn until now.
+
+          **No bottom inset**, like the calendar's and unlike the shoot screen's.
+          This is a `(tabs)` route, and the bar owns the safe area — its screens
+          are a flex child above the bar rather than underneath it — so the
+          screen's own bottom edge is already clear of the home indicator.
+          Adding `insets.bottom` here would float the CTA 34pt up into the list.
+
+          `py-2.5` is the calendar's own padding, so the two tabs put their
+          button in the same place to the pixel.
+        */}
+        <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
+          {/*
+            Bare `cta`/`cta`, with no height override and ONE space after the
+            «+» — identical to the calendar's, which is the point (owner,
+            2026-09-06: the two read as almost-the-same, which is worse than
+            either being different on purpose).
+
+            What went: `h-12 justify-center py-0` and a double space. The fixed
+            48 came from `Home.dc.html`'s `height:48px` while this button was
+            inline and artboard-driven; `size="cta"`'s `py-[15px]` lands at the
+            same ~48 and, being padding rather than a height, still fits a label
+            that wraps to two lines — which `Button` chose deliberately for
+            Ukrainian, «Позначити як «Закінчена»» being 22 characters.
+          */}
+          <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
+            <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
+          </Button>
+        </View>
       </SwipeDismissBoundary>
       {deleteDialog}
     </View>
