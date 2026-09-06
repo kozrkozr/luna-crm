@@ -33,6 +33,8 @@ export type LinkCrewMember = {
   /** Phone or email, whichever was stored (US-005). */
   contact: string | null
   instagram: string | null
+  /** `20260831140000`, on both payloads since 2026-09-05. */
+  telegram: string | null
   note: string | null
   noteImageUrl: string | null
 }
@@ -97,6 +99,15 @@ export type LinkClientCrewMember = {
   role: string
   contact: string | null
   instagram: string | null
+  /**
+   * Added 2026-09-05 on the owner's instruction. `US-026` AC-1 lists four
+   * fields; this is a fifth, and the story wants amending.
+   *
+   * Still no `note` and no `noteImageUrl`, and this type is still written out
+   * rather than derived from `LinkCrewMember` — so a field added there does not
+   * arrive here by inheritance. That is the whole reason for the duplication.
+   */
+  telegram: string | null
 }
 
 export type ClientLinkPayload = {

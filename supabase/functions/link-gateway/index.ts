@@ -203,6 +203,12 @@ type PeerRow = MemberRow & {
   phone: string | null
   email: string | null
   instagram: string | null
+  /**
+   * `20260831140000`. Collected by the add-crew form since it existed and read
+   * by `CREW_COLUMNS`, but selected by neither payload until 2026-09-05 — the
+   * gateway names its columns, so a column nobody names reaches nobody.
+   */
+  telegram: string | null
   note: string | null
   note_image: string | null
 }
@@ -352,7 +358,7 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
   // listed on a live shoot.
   const { data: crew } = await supabase
     .from('crew_members')
-    .select('id, name, role, response, phone, email, instagram, note, note_image')
+    .select('id, name, role, response, phone, email, instagram, telegram, note, note_image')
     .eq('shoot_id', shootId)
     .is('removed_at', null)
     .order('created_at', { ascending: true })
@@ -415,6 +421,7 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
         // it back.
         contact: member.phone ?? member.email,
         instagram: member.instagram,
+        telegram: member.telegram,
         note: member.note,
         noteImageUrl: await signed(supabase, member.note_image),
       }))
@@ -539,7 +546,7 @@ async function clientPayload(supabase: Supabase, shootId: string) {
   // bypasses RLS, so a removed person would otherwise still be listed.
   const { data: crew } = await supabase
     .from('crew_members')
-    .select('id, name, role, phone, email, instagram')
+    .select('id, name, role, phone, email, instagram, telegram')
     .eq('shoot_id', shootId)
     .is('removed_at', null)
     .order('created_at', { ascending: true })
@@ -623,9 +630,22 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       id: member.id,
       name: member.name,
       role: member.role,
-      // US-026 AC-1 — name, role, contact and Instagram. Nothing else.
+      /*
+        `US-026` AC-1 enumerates name, role, contact and Instagram — and
+        **Telegram is a fifth, added on the owner's instruction (2026-09-05)**.
+        The story wants amending; logged in docs/redesign-log.md rather than
+        slipped in as if it had always said five.
+
+        What has NOT changed is the thing AC-1 exists for: `note` and
+        `note_image` are absent from the select above and from this object, and
+        adding either is still the edit that breaks `ADR-013` and rule 2. A
+        contact handle and a private note are different kinds of fact — the
+        first is how a client reaches a person on their own shoot, the second is
+        what the photographer wrote about them.
+      */
       contact: member.phone ?? member.email,
       instagram: member.instagram,
+      telegram: member.telegram,
     })),
   }
 }

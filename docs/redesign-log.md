@@ -4541,3 +4541,50 @@ exactly as before — checked against `crewPerson` directly rather than assumed.
 
 Storage is untouched for the third time: `roleWithEmoji` runs at render, and
 `sub` is a formatted display line that nothing reads back.
+
+## Telegram reaches a crew member's card on both link views (owner, 2026-09-05)
+
+A client opening a посилання now sees a crew member's Telegram beside their
+Instagram, and so does a crew member. Instagram was already there for both.
+
+Nothing needed building. `crew_members.telegram` has existed since
+`20260831140000`, the add-crew form has always collected it, `CREW_COLUMNS`
+reads it, and `handleUrl` already knew how to turn a handle into a `t.me` link
+for the contact screens. **The gateway simply never selected the column** — which
+is what "the SELECT is what decides" means in practice, and the cheapest
+possible demonstration of it: a field can sit fully built on both sides of the
+network and reach nobody.
+
+### `US-026` AC-1 wants amending
+
+It enumerates name, role, contact and Instagram. Telegram is a fifth, on the
+owner's instruction. Recorded rather than slipped in as though the story had
+always said five.
+
+**What has not changed is what AC-1 is for.** `note` and `note_image` remain
+absent from `clientPayload`'s select and from the object it builds, and
+`LinkClientCrewMember` is still written out in full rather than derived from
+`LinkCrewMember` — so a field added to the crew type does not arrive on the
+client's by inheritance. A contact handle and a private note are different kinds
+of fact: the first is how a client reaches somebody working on their own shoot,
+the second is what the photographer wrote about that person.
+
+### The guard moved, deliberately
+
+`us026-check.mjs` asserts the client's crew object has *exactly* the expected
+keys — the assertion that fails when someone widens the select without meaning
+to. It went five → six here, which is the only way it should ever move.
+
+Two other corrections to that suite while in it: the fixture's own comment
+promises "one person with EVERY field filled, so an absence in the client's view
+is always the rule working and never a missing fixture", and it had not been
+given a `telegram` since the column was added. It has one now, and the value is
+asserted positively — so the key count cannot be satisfied by a field that
+arrives empty. Baseline 22 → 23.
+
+### Noticed, not fixed
+
+The crew detail page labels the Instagram row `uk.crewInstagram`, which reads
+«Instagram (необовʼязково)» — a FORM label, "(optional)" and all, on a read-only
+page. Telegram uses `telegramLabel` («Telegram») and reads correctly. Left alone
+because it is not this change, but it is wrong on both audiences' screens.

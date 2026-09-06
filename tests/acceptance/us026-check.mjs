@@ -40,7 +40,8 @@ await db.storage.from('shoot-media').upload(notePath, jpg, { contentType: 'image
 // always the rule working and never a missing fixture.
 const { data: subject } = await db.from('crew_members').insert({
   shoot_id: sid, name: 'Оксана', role: 'Візажист',
-  phone: '+380509876543', instagram: '@oksana', note: NOTE, note_image: notePath,
+  phone: '+380509876543', instagram: '@oksana', telegram: '@oksana_tg',
+  note: NOTE, note_image: notePath,
 }).select('id').single()
 const { data: viewer } = await db.from('crew_members')
   .insert({ shoot_id: sid, name: 'Ігор', role: 'Гафер', phone: '+380501112233' })
@@ -63,12 +64,26 @@ ok('AC-1 the client receives the same person', clientSubject?.id === subject.id 
 ok('AC-1 with name, role, contact and Instagram',
    clientSubject?.role === 'Візажист' && clientSubject?.contact === '+380509876543' && clientSubject?.instagram === '@oksana',
    JSON.stringify(clientSubject))
+/*
+  Telegram is a FIFTH field, added on the owner's instruction 2026-09-05.
+  `US-026` AC-1 names four and wants amending — see docs/redesign-log.md. It is
+  asserted positively here so the count below cannot be satisfied by a key that
+  arrives empty.
+*/
+ok('AC-1 and Telegram, added 2026-09-05', clientSubject?.telegram === '@oksana_tg',
+   JSON.stringify(clientSubject?.telegram))
 ok('AC-1 RULE 2: no note text anywhere in the client payload', !clientRaw.includes(NOTE))
 ok('AC-1 and no `note` key — "not even an empty one"',
    !clientRaw.includes('"note"') && !clientRaw.includes('noteImage'),
    Object.keys(clientSubject ?? {}).join(','))
-ok('AC-1 the client is given exactly five fields and no more',
-   JSON.stringify(Object.keys(clientSubject ?? {}).sort()) === JSON.stringify(['contact','id','instagram','name','role']),
+/*
+  The list is exhaustive on purpose: this is the assertion that fails when
+  somebody widens `clientPayload`'s crew select without meaning to. It went from
+  five to six on 2026-09-05 when Telegram was added deliberately — which is the
+  only way it should ever move.
+*/
+ok('AC-1 the client is given exactly six fields and no more',
+   JSON.stringify(Object.keys(clientSubject ?? {}).sort()) === JSON.stringify(['contact','id','instagram','name','role','telegram']),
    Object.keys(clientSubject ?? {}).sort().join(','))
 ok('AC-1 the note image path never reaches the client either', !clientRaw.includes(notePath))
 

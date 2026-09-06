@@ -130,6 +130,20 @@ export default function CrewMemberDetailScreen() {
                 value={handleLabel('instagram', member.instagram)}
                 url={handleUrl('instagram', member.instagram)}
               />
+              {/*
+                Telegram, on both audiences since 2026-09-05 (owner). The column
+                has existed since `20260831140000` and the add-crew form has
+                always collected it; the gateway simply never selected it, which
+                is what "the SELECT decides" means in practice.
+
+                Tappable the same way, through the same helper — `handleUrl`
+                already knew how to build a `t.me` link for the contact screens.
+              */}
+              <Field
+                label={uk.telegramLabel}
+                value={handleLabel('telegram', member.telegram)}
+                url={handleUrl('telegram', member.telegram)}
+              />
 
               {/* US-026 AC-1 — everything above is shared; this is the one
                   difference, and it is an absence rather than a blank. */}
