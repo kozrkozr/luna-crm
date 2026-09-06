@@ -5374,3 +5374,34 @@ a day where everything has finished (which returns null, so `US-035` AC-5 shows
 the section as absent rather than empty).
 
 `toIsoDate`'s import went with the last date comparison.
+
+## A past day's calendar dot is red (owner, 2026-09-06)
+
+Every marked day carried the same blue dot. A day before today now carries
+`--danger-soft` — the tone `StatusPill` gives «Завершена».
+
+A month grid is mostly history, and a column of identical dots said "something
+is on this day" without saying whether it had happened. That is the one thing
+the reader already knows about half the grid and could not see on any of it.
+
+**`bg-danger-soft`, not `bg-danger-bg` or the border.** At 4px only the scale's
+visible tone registers, and `--danger-soft` is to `--danger-*` what `--info` is
+to the blue it replaces. Not `--destructive`, which is the colour of an action
+that destroys where this is a state that has ended — the distinction
+`status.ts` and `StatusPill` already keep.
+
+### Strictly before today, and deliberately not "finished"
+
+A day is past because it is before today, not because a shoot on it has ended.
+That second question is `statusOf`'s, and answering it here would make today's
+dot change colour halfway through the afternoon — while the day is still the
+one the reader is living in and the agenda below still lists it.
+
+Which is a different call from the home screen's, made the same day: there,
+«Найближча зйомка» skips a shoot that has finished, because the card names one
+shoot and a finished one is the wrong answer. Here the dot names a *day*, and
+the day has not gone anywhere.
+
+`us004-check.mjs` is unaffected: it collects elements whose whole text is one or
+two digits and which carry a background, so it reads day cells rather than
+dots — a dot has no text at all.

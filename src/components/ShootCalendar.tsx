@@ -209,6 +209,7 @@ function MonthGrid({
                 hasShoot={marked.has(iso)}
                 isSelected={selected === iso}
                 isToday={iso === today}
+                isPast={iso < today}
                 onSelect={onSelect}
               />
             )
@@ -248,6 +249,7 @@ function WeekStrip({
             hasShoot={marked.has(iso)}
             isSelected={selected === iso}
             isToday={iso === today}
+            isPast={iso < today}
             onSelect={onSelect}
           />
         )
@@ -282,6 +284,7 @@ function DayCell({
   hasShoot,
   isSelected,
   isToday,
+  isPast,
   onSelect,
 }: {
   iso: string
@@ -290,6 +293,8 @@ function DayCell({
   hasShoot: boolean
   isSelected: boolean
   isToday: boolean
+  /** Strictly before today. Today is not past, however late in the day it is. */
+  isPast: boolean
   onSelect: (iso: string) => void
 }) {
   return (
@@ -328,7 +333,7 @@ function DayCell({
       </Text>
       {/* No dot on the selected day — see `Dot`. The fill already says the day
           is chosen, and the dot said the same thing twice. */}
-      <Dot state={!isSelected && hasShoot ? 'marked' : 'none'} />
+      <Dot state={!isSelected && hasShoot ? (isPast ? 'past' : 'marked') : 'none'} />
     </Pressable>
   )
 }
@@ -346,6 +351,22 @@ function DayCell({
  * blue is the whole point of the dot, and it was `muted-foreground` only because
  * the monochrome theme had no blue to give it.
  *
+ * **A past day's dot is red** (owner, 2026-09-06): `--danger-soft`, the tone
+ * `StatusPill` gives «Завершена». A month grid is mostly history, and a column
+ * of identical blue dots said "something is on this day" without saying whether
+ * it had happened — which is the one thing the reader already knows about half
+ * the grid and cannot see on any of it.
+ *
+ * `bg-danger-soft` rather than `bg-danger-bg` or the border: at 4px only the
+ * scale's visible tone registers, and `--danger-soft` is to `--danger-*` what
+ * `--info` is to the blue it replaces. **Not `--destructive`** — that is the
+ * colour of an action that destroys, where this is a state that has ended, and
+ * `status.ts` keeps the two apart for the same reason.
+ *
+ * Strictly before today: a day is not past because a shoot on it has finished.
+ * That is a different question, answered by `statusOf`, and answering it here
+ * would make today's dot change colour halfway through the afternoon.
+ *
  * **The selected day now gets no dot at all** (owner, 2026-09-05), which is a
  * departure from that same `cellStyle`: the artboard keeps the dot on a selected
  * day and inverts it to `--accent-ink`, and this had an `onFill` state to do
@@ -356,10 +377,10 @@ function DayCell({
  * agenda below is listing. The dot repeated what the fill and the list had both
  * said, and a dark speck on a bright cell read as a smudge rather than a mark.
  */
-function Dot({ state }: { state: 'marked' | 'none' }) {
-  return (
-    <View className={`h-1 w-1 rounded-full ${state === 'marked' ? 'bg-info' : 'bg-transparent'}`} />
-  )
+function Dot({ state }: { state: 'marked' | 'past' | 'none' }) {
+  const tone =
+    state === 'marked' ? 'bg-info' : state === 'past' ? 'bg-danger-soft' : 'bg-transparent'
+  return <View className={`h-1 w-1 rounded-full ${tone}`} />
 }
 
 /**
