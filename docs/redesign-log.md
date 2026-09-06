@@ -5567,3 +5567,36 @@ lines still fits. `Button` chose that deliberately for Ukrainian, «Познач
 
 Every pinned CTA in the app is now bare `variant="cta" size="cta"`: this one, the
 calendar's, and the shoot's «Деталі» and «Команда» footers.
+
+## «Редагувати профіль» is pinned too (owner, 2026-09-06)
+
+`PublicProfile`'s edit pill and delete circle sat at the foot of the scroll, so
+on a profile with notes and three contact rows the edit button was below all of
+them. Pinned, it is where every other primary action in the app now is: «+ Нова
+зйомка» on both tabs, «Редагувати зйомку» and «+ Додати учасника» on the shoot.
+
+### `aboveTabBar`, and why it has to be a prop
+
+This component renders in two places with opposite answers about the bottom
+inset. The profile TAB sits inside `(tabs)`, where `BottomNav` is mounted by the
+layout and owns the safe area. A contact's page is PUSHED, covers the bar, and
+owns the inset itself.
+
+`insets.bottom` is therefore right in exactly one of the two, and adding it in
+the other floats the row 34pt up the page — the mistake the calendar's footer
+comment has warned about since 2026-09-04.
+
+It defaults to **false**, which is the safe way round: a caller that forgets it
+gets a footer clear of the home indicator rather than one underneath it.
+
+The same value drives the scroll's bottom padding, which is 96 when there are
+actions to clear and the original 32 when there are none — a profile with
+neither handler still has no footer.
+
+### Note the shape this did NOT take
+
+`backLabel === null` already means "this is a tab root" at every present call
+site, so the inset could have been derived from it without a new prop. That
+would have been two facts riding on one field, and the first screen that wants a
+back control inside the tabs — or a pushed screen without one — would find them
+silently welded together.

@@ -397,6 +397,10 @@ export default function ProfileScreen() {
             backLabel: null,
           }}
           onEdit={() => setEditing(true)}
+          /* This is a tab: `BottomNav` sits below and owns the bottom safe
+             area, so the pinned row must not add it a second time. The contact
+             screen is pushed, covers the bar, and passes nothing. */
+          aboveTabBar
         />
       </>
     )

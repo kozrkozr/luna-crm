@@ -111,8 +111,23 @@ export function PublicProfile({
   view,
   onEdit,
   onDelete,
+  aboveTabBar = false,
 }: {
   view: PublicProfileView
+  /**
+   * True when this renders inside `(tabs)`, where `BottomNav` sits below and
+   * owns the bottom safe area.
+   *
+   * It has to be told rather than guessed. The same component is the profile
+   * TAB and a PUSHED contact screen, and the bar is mounted once by the tabs
+   * layout — a pushed screen covers it and owns the inset itself. So
+   * `insets.bottom` belongs in exactly one of the two, and adding it in the
+   * other floats the pinned row 34pt up the page.
+   *
+   * Defaults to false, which is the safe way round: a screen that forgets to
+   * pass it gets a footer clear of the home indicator rather than one under it.
+   */
+  aboveTabBar?: boolean
   /**
    * «Редагувати контакт». Absent when there is nothing to edit — your own
    * profile, or a crew member with no contact row behind them.
@@ -226,7 +241,16 @@ export function PublicProfile({
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+      {/*
+        Room for the pinned actions when there are any — 96 clears the 48pt row
+        and the footer's own padding. With no handlers there is no footer, and
+        the original 32 is still right.
+      */}
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: (aboveTabBar ? 0 : insets.bottom) + (onEdit || onDelete ? 96 : 32),
+        }}
+      >
         <View className="gap-5 p-4">
         {/* ── Identity ── */}
         <Card variant="flat" className="items-center px-4 pb-[18px] pt-[22px]">
@@ -356,89 +380,110 @@ export function PublicProfile({
             </Card>
           </View>
         ) : null}
-
-        {/*
-          ── «Редагувати контакт» · «Видалити контакт» ──
-
-          At the foot of the scroll, as drawn, and each present only when the
-          route passed a handler. The artboard gates both on `showNotes` — i.e.
-          "not my own profile"; ours gates them on there being a row to act on,
-          which is the same rule plus the two cases the artboard has no state
-          for: a crew member with no contact behind them, and a client with
-          shoots (see `deleteClient`).
-
-          The delete does NOT confirm here. It asks the route, which owns
-          `useDestructiveConfirm` — a real iOS alert rather than the artboard's
-          in-page dialog, the same machinery `US-019` and `US-022` use. R-1's
-          answer, applied again.
-
-          ── Drawn as the shoot's two actions are (owner, 2026-09-05) ──────────
-
-          A filled pill taking the width that is left, and a 48pt circle holding
-          a trash glyph and no words — the row `Shoot Detail v3.dc.html` gives
-          «Редагувати зйомку», reused here so the two screens that offer the
-          same pair of actions offer them in the same shape.
-
-          **This is a deliberate departure from `Public Profile.dc.html`**,
-          which draws two stacked outlined pills and keeps edit quiet. The owner
-          chose the shoot screen's arrangement on 2026-09-05, which promotes
-          editing to the primary action here as well. Logged in
-          docs/redesign-log.md; the artboard is the older of the two drawings.
-
-          Tokens are the shoot row's, and the same trap applies: the artboards'
-          `--accent` is this app's `--primary` (see `Badge`'s note and the theme
-          handoff), while `--danger-bg`/`--danger-border`/`--danger-soft` cross
-          unchanged. The press state on the circle is `active:opacity-80`
-          because no `--danger` fill token exists here.
-
-          «Видалити контакт» moves to `accessibilityLabel`: the control has no
-          text now, and this is the only place the words exist before the
-          confirmation the route puts up.
-        */}
-        {onEdit || onDelete ? (
-          <View className="flex-row items-center gap-2.5">
-            {/*
-              `onDelete` without `onEdit` cannot happen — the route sets `onEdit`
-              whenever there is a subject and `onDelete` only when that subject
-              is `deletable`. The pill is `flex-1`, so an edit-only profile still
-              fills the row.
-            */}
-            {onEdit ? (
-              <Pressable
-                className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
-                onPress={() => {
-                  tapped()
-                  onEdit()
-                }}
-                role="button"
-              >
-                <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
-                <Text className="text-body-sm text-primary-foreground font-semibold">
-                  {/* «Редагувати профіль» on your own, «Редагувати контакт» on
-                      somebody else's — the same control, and the word that is
-                      true of what it opens. */}
-                  {view.kind === 'self' ? t.editProfileAction : t.editContactTitle}
-                </Text>
-              </Pressable>
-            ) : null}
-
-            {onDelete ? (
-              <Pressable
-                className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
-                onPress={() => {
-                  tapped()
-                  onDelete()
-                }}
-                role="button"
-                accessibilityLabel={t.deleteContactAction}
-              >
-                <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
         </View>
       </ScrollView>
+
+      {/*
+        ── Pinned to the bottom (owner, 2026-09-06) ────────────────────────────
+
+        The row sat at the foot of the scroll, so on a profile with notes and
+        three contact rows the edit button was below them. Pinned, it is where
+        every other primary action in the app is — «+ Нова зйомка» on both tabs,
+        «Редагувати зйомку» on the shoot.
+
+        `aboveTabBar` decides the inset, and it has to be told rather than
+        guessed: this component renders on the profile TAB, where the bar owns
+        the safe area, and on a pushed contact screen, which covers the bar and
+        owns it itself. `BottomNav` is mounted once by the tabs layout, so
+        `insets.bottom` is right in exactly one of the two places.
+      */}
+      {/*
+        ── «Редагувати контакт» · «Видалити контакт» ──
+
+        Pinned to the bottom since 2026-09-06, and each present only when the
+        route passed a handler. The artboard gates both on `showNotes` — i.e.
+        "not my own profile"; ours gates them on there being a row to act on,
+        which is the same rule plus the two cases the artboard has no state
+        for: a crew member with no contact behind them, and a client with
+        shoots (see `deleteClient`).
+
+        The delete does NOT confirm here. It asks the route, which owns
+        `useDestructiveConfirm` — a real iOS alert rather than the artboard's
+        in-page dialog, the same machinery `US-019` and `US-022` use. R-1's
+        answer, applied again.
+
+        ── Drawn as the shoot's two actions are (owner, 2026-09-05) ──────────
+
+        A filled pill taking the width that is left, and a 48pt circle holding
+        a trash glyph and no words — the row `Shoot Detail v3.dc.html` gives
+        «Редагувати зйомку», reused here so the two screens that offer the
+        same pair of actions offer them in the same shape.
+
+        **This is a deliberate departure from `Public Profile.dc.html`**,
+        which draws two stacked outlined pills and keeps edit quiet. The owner
+        chose the shoot screen's arrangement on 2026-09-05, which promotes
+        editing to the primary action here as well. Logged in
+        docs/redesign-log.md; the artboard is the older of the two drawings.
+
+        Tokens are the shoot row's, and the same trap applies: the artboards'
+        `--accent` is this app's `--primary` (see `Badge`'s note and the theme
+        handoff), while `--danger-bg`/`--danger-border`/`--danger-soft` cross
+        unchanged. The press state on the circle is `active:opacity-80`
+        because no `--danger` fill token exists here.
+
+        «Видалити контакт» moves to `accessibilityLabel`: the control has no
+        text now, and this is the only place the words exist before the
+        confirmation the route puts up.
+      */}
+      {onEdit || onDelete ? (
+        <View
+          className={`bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 ${
+            aboveTabBar ? 'py-2.5' : 'pt-2.5'
+          }`}
+          style={aboveTabBar ? undefined : { paddingBottom: insets.bottom + 10 }}
+        >
+          <View className="flex-row items-center gap-2.5">
+          {/*
+            `onDelete` without `onEdit` cannot happen — the route sets `onEdit`
+            whenever there is a subject and `onDelete` only when that subject
+            is `deletable`. The pill is `flex-1`, so an edit-only profile still
+            fills the row.
+          */}
+          {onEdit ? (
+            <Pressable
+              className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
+              onPress={() => {
+                tapped()
+                onEdit()
+              }}
+              role="button"
+            >
+              <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
+              <Text className="text-body-sm text-primary-foreground font-semibold">
+                {/* «Редагувати профіль» on your own, «Редагувати контакт» on
+                    somebody else's — the same control, and the word that is
+                    true of what it opens. */}
+                {view.kind === 'self' ? t.editProfileAction : t.editContactTitle}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {onDelete ? (
+            <Pressable
+              className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
+              onPress={() => {
+                tapped()
+                onDelete()
+              }}
+              role="button"
+              accessibilityLabel={t.deleteContactAction}
+            >
+              <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
+            </Pressable>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
     </View>
   )
 }
