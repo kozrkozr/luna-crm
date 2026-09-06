@@ -5458,3 +5458,79 @@ month arrow tapped in that case. That is a test-design change, and it cannot be
 verified while the local stack is down; guessing at it blind is how the other
 edits today became unverified. Recorded so it is found deliberately rather than
 as a mystery failure.
+
+## «Скасувати» asks before discarding (owner, 2026-09-06)
+
+The shoot form, the add-crew screen and the contact form all left on the first
+tap, dropping whatever had been typed without a word. The profile screen has
+asked since 2026-09-04, so the behaviour existed on one screen out of four.
+
+`useDiscardGuard` is the shared version — `{ ask, dialog }`, the shape
+`useDestructiveConfirm` already uses, so the caller decides where the sheet
+mounts and the hook owns whether there is anything to ask about. A clean form
+leaves at once: a confirmation nobody can answer "no" to is a dialog that only
+ever says yes.
+
+**The platform's own alert on device, the sheet on web.** Exactly the split
+`useDestructiveConfirm` makes: iOS has a shape for "are you sure" and imitating
+it is worse than using it, while react-native-web has no `Alert` worth the name
+— and the acceptance suites drive every one of these forms in a browser, so a
+native-only dialog would make «Скасувати» untestable and silently inert there.
+
+It was a `Sheet` on both platforms for an hour, on the reasoning that
+`Edit Profile.dc.html` draws one and the profile screen had rendered it that way
+since it was built. The owner asked for the system dialog, which is the second
+time today the same call has gone that way — `Alert.prompt` for the reference
+link was the first. The pattern is now explicit: **a form-level question uses
+the platform's dialog where the platform has one.**
+
+`cancel` first and `destructive` second, so iOS lays the buttons out the way
+people expect — staying is the safe default, leaving is the one that acts.
+
+### What counts as dirty is each form's own answer
+
+| form | baseline |
+|---|---|
+| shoot (create) | every field empty |
+| shoot (edit) | a fingerprint taken when the shoot loaded |
+| contact | the `initial` draft it opened with |
+| add crew | an untouched form **and an empty selection** |
+
+The shoot form had no snapshot to compare against, so it takes one: every field
+joined into a string when the row loads, and the empty string on a new shoot.
+A string rather than an object because comparing is the only thing done with it,
+and a dozen `useState`s have no natural object to snapshot.
+
+The add-crew screen counts a **selection** as work. Someone who has ticked four
+people from «Мої контакти» and taps «Скасувати» loses four decisions, which is no
+less annoying for having been made by tapping rather than typing.
+
+### Two things worth knowing
+
+**The create shoot form is guarded too**, though only the edit one was named. It
+is where the most can be lost — an entire shoot rather than an edit to one — and
+an untouched form still leaves at once, so the guard costs nothing when there is
+nothing to lose.
+
+**The profile keeps its own copy of this sheet.** Its body names the fields that
+changed (`changedFieldsTemplate`) and it toasts «Зміни відхилено» afterwards;
+threading two options through the hook for a single caller would be worse than
+the duplication. Worth unifying the moment a second screen wants either.
+
+No acceptance suite taps «Скасувати» on any of these screens — the only matches
+under `tests/` are `us019`'s «Скасувати зйомку», which is the delete control and
+untouched.
+
+### Fixed the same day: a new shoot was dirty before a key was pressed
+
+The shoot form's snapshot started at `''`, and `fingerprint` of an empty form is
+a row of separators rather than nothing — so `current !== snapshot` was true the
+moment «Нова зйомка» rendered, and «Скасувати» always asked. Reported by the
+owner within the hour.
+
+It starts at `EMPTY_FINGERPRINT` now, built by the same function from the same
+empty values, so the two cannot disagree about what empty looks like when a
+field is added to one of them.
+
+Checked: untouched leaves at once; one character makes it dirty; whitespace
+alone does not, because every field is trimmed; picking a date does.

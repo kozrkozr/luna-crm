@@ -16,6 +16,7 @@ import { Text } from '../../../../../src/components/ui/text'
 import { Textarea } from '../../../../../src/components/ui/textarea'
 import { Avatar } from '../../../../../src/components/Avatar'
 import { RoleChip } from '../../../../../src/components/RoleChip'
+import { useDiscardGuard } from '../../../../../src/components/DiscardGuard'
 import { FieldLabel } from '../../../../../src/components/ShootFormFields'
 import { ROLES_UK, roleWithEmoji, uk } from '../../../../../src/i18n/uk'
 import { VisibilityNote } from '../../../../../src/components/Visibility'
@@ -222,6 +223,31 @@ export default function AddCrewScreen() {
     the free-text value stores like any other.
   */
   const resolvedRole = role === uk.otherRole ? customRole.trim() : role
+
+  /*
+    «Скасувати» asks before discarding (owner, 2026-09-06).
+
+    This screen has two modes and both can hold work. «Новий контакт» is the
+    obvious one — a typed name, role and contact. «Мої контакти» holds a
+    SELECTION: someone who has ticked four people and taps «Скасувати» loses four
+    decisions, which is no less annoying for having been made by tapping rather
+    than typing.
+
+    `ROLES_UK[0]` is the role a fresh form starts on, so it is not a change; a
+    reader who picks a different one has changed something.
+  */
+  const dirty =
+    picked.size > 0 ||
+    name.trim() !== '' ||
+    phone.trim() !== '' ||
+    instagram.trim() !== '' ||
+    telegram.trim() !== '' ||
+    note.trim() !== '' ||
+    resolvedRole !== ROLES_UK[0]
+  const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
+    dirty,
+    onLeave: () => router.back(),
+  })
   const newReady = name.trim().length > 1 && !!resolvedRole
   const contacts = filterContacts(past ?? [], query, onShoot)
 
@@ -244,7 +270,7 @@ export default function AddCrewScreen() {
           hitSlop={10}
           onPress={() => {
             tapped()
-            router.back()
+            askLeave()
           }}
           role="button"
         >
@@ -356,6 +382,8 @@ export default function AddCrewScreen() {
           </Button>
         )}
       </View>
+
+      {discardDialog}
     </View>
   )
 }

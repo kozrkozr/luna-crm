@@ -54,6 +54,9 @@ export const uk = {
   savingProfile: 'Зберігаємо…',
   /* The discard sheet. «Ви змінили: Імʼя, Email.» names what would be lost. */
   discardChangesQuestion: 'Скасувати зміни?',
+  /** The body of the shared discard sheet (`useDiscardGuard`). The profile's
+      own sheet names the changed fields instead — see `changedFieldsTemplate`. */
+  discardChangesBody: 'Введене не буде збережено.',
   changedFieldsTemplate: 'Ви змінили: {fields}. Ці зміни не буде збережено.',
   discardChangesAction: 'Відхилити зміни',
   keepEditingAction: 'Продовжити редагування',

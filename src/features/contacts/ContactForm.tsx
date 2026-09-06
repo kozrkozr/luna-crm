@@ -9,6 +9,7 @@ import { Text } from '../../components/ui/text'
 import { Textarea } from '../../components/ui/textarea'
 import { FieldLabel } from '../../components/ShootFormFields'
 import { RoleChip } from '../../components/RoleChip'
+import { useDiscardGuard } from '../../components/DiscardGuard'
 import { VisibilityNote } from '../../components/Visibility'
 import { ROLES_UK, roleWithEmoji, uk } from '../../i18n/uk'
 import { useStrings } from '../../i18n/LanguageProvider'
@@ -99,6 +100,7 @@ export function ContactForm({
   const [customRole, setCustomRole] = useState(known ? '' : initial.role)
   const [chosenKind, setChosenKind] = useState<DirectoryKind>(kind)
   const [busy, setBusy] = useState(false)
+
   const [failed, setFailed] = useState(false)
 
   const set = <K extends keyof ContactDraft>(key: K, value: ContactDraft[K]) =>
@@ -111,6 +113,26 @@ export function ContactForm({
   */
   const nameOk = draft.name.trim().length > 1
   const resolvedRole = role === uk.otherRole ? customRole.trim() : role
+
+  /*
+    «Скасувати» asks before discarding (owner, 2026-09-06). `initial` is what
+    this form opened with — `EMPTY_DRAFT` when creating a contact, the saved row
+    when editing one — so the comparison is the same on both paths.
+
+    `chosenKind` counts: switching «Учасник» to «Клієнт» is a change the reader
+    would not expect to lose silently, even with every field still empty.
+  */
+  const dirty =
+    draft.name !== initial.name ||
+    draft.phone !== initial.phone ||
+    draft.instagram !== initial.instagram ||
+    draft.note !== initial.note ||
+    resolvedRole !== initial.role ||
+    chosenKind !== kind
+  const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
+    dirty,
+    onLeave: () => router.back(),
+  })
 
   const save = async () => {
     if (!nameOk || busy) return
@@ -183,7 +205,7 @@ export function ContactForm({
           className="active:bg-secondary min-h-11 w-16 shrink-0 justify-center rounded-lg px-1"
           onPress={() => {
             tapped()
-            router.back()
+            askLeave()
           }}
           role="button"
         >
@@ -328,6 +350,8 @@ export function ContactForm({
           </Text>
         </Button>
       </View>
+
+      {discardDialog}
     </View>
   )
 }

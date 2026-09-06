@@ -62,6 +62,7 @@ export const en: Strings = {
   checkHighlightedFields: 'Check the highlighted fields',
   savingProfile: 'Saving…',
   discardChangesQuestion: 'Discard changes?',
+  discardChangesBody: 'What you entered will not be saved.',
   changedFieldsTemplate: 'You changed: {fields}. These will not be saved.',
   discardChangesAction: 'Discard changes',
   keepEditingAction: 'Keep editing',

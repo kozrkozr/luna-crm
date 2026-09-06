@@ -15,6 +15,7 @@ import {
   ShootWhenFields,
 } from '../../components/ShootFormFields'
 import { Toast } from '../../components/Toast'
+import { useDiscardGuard } from '../../components/DiscardGuard'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -116,6 +117,78 @@ type SectionKey = (typeof SECTIONS)[number]['key']
  * the section the reader just closed — and a hide that did not clear would also
  * mean a form saving a field it does not show, which is the worse half.
  */
+/**
+ * Every value the form collects, as one comparable string.
+ *
+ * Used only to answer "has anything changed since this loaded" for
+ * «Скасувати» — `submit` reads the fields themselves, so nothing depends on the
+ * shape or the order here beyond both sides using this same function.
+ *
+ * The date is reduced to its ISO day: `Date` objects are never equal by value,
+ * and only the day is ever stored.
+ */
+function fingerprint(values: {
+  typedName: string
+  phone: string
+  instagram: string
+  telegram: string
+  date: Date | null
+  start: string | null
+  end: string | null
+  locationName: string
+  address: string
+  locationDetails: string
+  notes: string
+  clientNotes: string
+  price: string
+  prepayment: string
+}): string {
+  return [
+    values.typedName.trim(),
+    values.phone.trim(),
+    values.instagram.trim(),
+    values.telegram.trim(),
+    values.date ? isoOf(values.date) : '',
+    values.start ?? '',
+    values.end ?? '',
+    values.locationName.trim(),
+    values.address.trim(),
+    values.locationDetails.trim(),
+    values.notes.trim(),
+    values.clientNotes.trim(),
+    values.price.trim(),
+    values.prepayment.trim(),
+  ].join('\u0000')
+}
+
+/**
+ * What `fingerprint` returns for a form nobody has touched.
+ *
+ * The snapshot started as `''`, and an empty form fingerprints to a row of
+ * separators rather than to nothing — so a brand-new shoot counted as dirty
+ * before a key was pressed, and «Скасувати» always asked (owner reported it,
+ * 2026-09-06).
+ *
+ * Built by the same function rather than written out, so the two cannot
+ * disagree about what empty looks like when a field is added to one of them.
+ */
+const EMPTY_FINGERPRINT = fingerprint({
+  typedName: '',
+  phone: '',
+  instagram: '',
+  telegram: '',
+  date: null,
+  start: null,
+  end: null,
+  locationName: '',
+  address: '',
+  locationDetails: '',
+  notes: '',
+  clientNotes: '',
+  price: '',
+  prepayment: '',
+})
+
 function openSections(
   filled: Record<SectionKey, boolean>,
   added: Record<SectionKey, boolean>
@@ -184,6 +257,19 @@ export function ShootForm(props: ShootFormMode) {
   })
   /** The section a × is asking about, or null. See `removeSection`. */
   const [removing, setRemoving] = useState<SectionKey | null>(null)
+
+  /**
+   * What the form held when it was last in agreement with the database — every
+   * field, joined into one string.
+   *
+   * Empty on a new shoot, so anything typed makes it dirty; replaced with the
+   * loaded shoot when editing, so «Скасувати» only asks about real edits. A
+   * string rather than an object because the comparison is the only thing ever
+   * done with it, and a dozen `useState`s have no natural object to snapshot.
+   *
+   * `EMPTY_FINGERPRINT`, not `''` — see the constant.
+   */
+  const [snapshot, setSnapshot] = useState(EMPTY_FINGERPRINT)
 
   /** `US-029` AC-4 — the client this number turns out to belong to. */
   const [phoneMatch, setPhoneMatch] = useState<Client | null>(null)
@@ -255,6 +341,29 @@ export function ShootForm(props: ShootFormMode) {
         // somebody priced this shoot at nothing when nobody priced it at all.
         setPrice(shoot.price === null ? '' : formatAmount(shoot.price))
         setPrepayment(shoot.prepayment === null ? '' : formatAmount(shoot.prepayment))
+        /*
+          The baseline «Скасувати» compares against. Built from the same values
+          just set, not read back out of state — these setters have not applied
+          yet at this point in the effect.
+        */
+        setSnapshot(
+          fingerprint({
+            typedName: owner?.name ?? shoot.clientName,
+            phone: shoot.clientContact ?? '',
+            instagram: shoot.clientInstagram ?? '',
+            telegram: shoot.clientTelegram ?? '',
+            date: new Date(year, month - 1, day),
+            start: shoot.startTime,
+            end: shoot.endTime,
+            locationName: shoot.locationName ?? '',
+            address: shoot.locationAddress ?? '',
+            locationDetails: shoot.locationNote ?? '',
+            notes: shoot.notes ?? '',
+            clientNotes: shoot.clientNotes ?? '',
+            price: shoot.price === null ? '' : formatAmount(shoot.price),
+            prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment),
+          })
+        )
         setLoading(false)
       })()
       return () => {
@@ -453,6 +562,37 @@ export function ShootForm(props: ShootFormMode) {
   const chips = pastLocations(existing)
 
   /*
+    «Скасувати» asks before discarding (owner, 2026-09-06). It left on the first
+    tap, so a half-filled shoot went with it silently — on the edit screen that
+    is somebody's corrections, and on the create screen it is everything they
+    have typed.
+
+    Both modes are guarded, though only the edit one was named: the create form
+    is where the most can be lost, and `snapshot` starts empty so an untouched
+    form still leaves at once.
+  */
+  const current = fingerprint({
+    typedName,
+    phone,
+    instagram,
+    telegram,
+    date,
+    start,
+    end,
+    locationName,
+    address,
+    locationDetails,
+    notes,
+    clientNotes,
+    price,
+    prepayment,
+  })
+  const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
+    dirty: current !== snapshot,
+    onLeave: () => router.back(),
+  })
+
+  /*
     ── The three optional sections (owner, 2026-09-05) ────────────────────────
 
     Derived per render rather than held in state, so there is no second copy of
@@ -533,7 +673,7 @@ export function ShootForm(props: ShootFormMode) {
           hitSlop={10}
           onPress={() => {
             tapped()
-            router.back()
+            askLeave()
           }}
           role="button"
         >
@@ -919,6 +1059,8 @@ export function ShootForm(props: ShootFormMode) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {discardDialog}
 
       <Toast message={toast} onDone={() => setToast(null)} />
     </View>
