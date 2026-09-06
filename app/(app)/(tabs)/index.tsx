@@ -239,11 +239,11 @@ export default function HomeScreen() {
                 {daysUntil(state.next.date) <= 0 ? (
                   /*
                     The «Сьогодні» state. It was amber, then monochrome-white for
-                    the fortnight the app had no colour, and it is now what
-                    `Home.dc.html` actually draws: a **`--success` pulsing dot**
-                    over an `--accent-solid` stripe and chip. Three signals, and
-                    none of them is merely "brighter than the rest of the screen",
-                    which is what the white version had to be.
+                    the fortnight the app had no colour, then a `--success` dot
+                    over a blue stripe and chip — and since 2026-09-06 all three
+                    are `--success` (owner). Three signals, one colour, and none
+                    of them merely "brighter than the rest of the screen", which
+                    is what the white version had to be.
                   */
                   <View className="mb-2 flex-row items-center gap-1.5 px-0.5">
                     <PulseDot />
@@ -653,14 +653,25 @@ function PulseDot() {
  * and it is now the same lifted `--card` surface as every other card. See the
  * inline note on the View.
  *
- * **Blue is what marks "today" here, since 2026-09-04.** `Home.dc.html` gives a
- * shoot happening today three signals and the handoff supplies the tokens for
- * all three: a pulsing `--success` dot above the card, an `--accent-solid`
- * stripe down its left edge, and the «Сьогодні» chip filled with the same
- * `--accent-solid` (`Badge`'s `accent` variant). A shoot further out gets a
- * grey stripe and an outlined chip. That replaces the monochrome arrangement,
- * where "today" was only *brighter* — white stripe, solid white chip — and had
- * to compete with every other white thing on the screen.
+ * **The card is green, whatever the date, since 2026-09-06.** The 3px stripe
+ * and the countdown chip are `--success`; the chip is the tinted shape, so it
+ * is the same object as the `StatusPill`s on the shoots below the CTA.
+ *
+ * Two changes on one day got it here, both the owner's. First the stripe and
+ * chip went from `--accent-solid` (blue) to green, because the pulsing dot
+ * above the card had been `--success` since 2026-09-04 and three signals saying
+ * "today" in two colours read as two facts. Then the green stopped being
+ * conditional: the card holds exactly one shoot, the nearest, and the chip
+ * already says «Сьогодні» or «за 5 днів» in words — a stripe that changed
+ * colour was restating it.
+ *
+ * What still marks today, and it is all above or around the card rather than
+ * in it: the pulsing dot, the word «Сьогодні» in place of «Найближча зйомка»,
+ * and a stronger border.
+ *
+ * Before any of that it was monochrome, where "today" was only *brighter* —
+ * white stripe, solid white chip — and had to compete with every other white
+ * thing on the screen.
  *
  * `overflow-hidden` with the elevation on the same View is what lets the stripe
  * reach the rounded corners — the same arrangement as the agenda row.
@@ -705,20 +716,27 @@ function NextShootCard({
           and `muted-foreground` are light and would have vanished on white.
           Those are simply the right tokens again.
 
-          A stronger border when the shoot is today, which is the design's
-          quietest way of marking it — and now the least of three.
+          A stronger border when the shoot is today. It was the quietest of
+          three signals on this card; since 2026-09-06 it is the ONLY one — the
+          stripe and the chip are green whatever the date. The loud half of
+          «сьогодні» moved above the card, to the pulsing dot and the word
+          itself, which is where a reader looks first anyway.
         */}
         <View
           className={`flex-row overflow-hidden rounded-xl border bg-card ${
             isToday ? 'border-border-strong' : 'border-border'
           }`}
         >
-          {/* 3px. `Home.dc.html`'s `nextBar`: `--accent-solid` when the shoot
-              is today, a receding grey otherwise. The status has never picked
-              it — that went with the amber `STRIPE`. */}
-          <View
-            className={`w-[3px] self-stretch ${isToday ? 'bg-accent-solid' : 'bg-border-strong'}`}
-          />
+          {/*
+            3px, `Home.dc.html`'s `nextBar`. **Green whatever the date**, since
+            2026-09-06 (owner) — it was green for today and a receding grey
+            otherwise. The card only ever holds one shoot, the nearest, and the
+            stripe was marking a distinction the «Сьогодні»/«за N днів» chip
+            beside it already states in words.
+
+            The status has never picked this — that went with the amber `STRIPE`.
+          */}
+          <View className="bg-success w-[3px] self-stretch" />
 
           <View className="flex-1 px-4 py-3.5">
             <View className="flex-row items-center justify-between gap-2.5">
@@ -729,15 +747,16 @@ function NextShootCard({
                 The countdown badge. «Сьогодні» and «Завтра» are new copy — the
                 mockups only ever show the «за N днів» form.
 
-                Solid when the shoot is today, outlined otherwise: the same
-                fill-vs-outline pair the monochrome pass gave every other badge,
-                and `Badge` already holds it. It used to be amber-on-amber, which
-                is what retired the `warning` scale.
+                **The green tint whatever the date**, since 2026-09-06 (owner):
+                it was filled for today and outlined otherwise. Same reasoning as
+                the stripe — the label already says which day it is.
+
+                `success` is the tinted shape now, so this chip is the same
+                object as the `StatusPill`s on the shoots below the CTA, in the
+                colour this card marks itself with. That is what the owner asked
+                for, and it is also what took the chip from 4.20:1 to 6.87:1.
               */}
-              <Badge
-                variant={isToday ? 'accent' : 'outline'}
-                label={distanceLabel(days, t)}
-              />
+              <Badge variant="success" label={distanceLabel(days, t)} />
             </View>
 
             <Text className="text-title-sm text-foreground mt-2.5 font-semibold" numberOfLines={1}>

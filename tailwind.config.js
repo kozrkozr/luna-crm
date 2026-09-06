@@ -119,10 +119,21 @@ module.exports = {
           border: 'hsl(var(--warn-border) / <alpha-value>)',
         },
 
-        /** «Підтверджено» — `bg-success text-success-foreground`. */
+        /**
+         * Two shapes, like `--danger-*` and unlike it in having both:
+         *
+         * - solid — `bg-success text-success-foreground`. «Підтверджено», the
+         *   home card's pulsing dot, and its 3px stripe.
+         * - tinted — `bg-success-bg text-success-soft border-success-border`,
+         *   the same object `info`, `warn` and `danger` are. The home card's
+         *   «Сьогодні» chip (2026-09-06).
+         */
         success: {
           DEFAULT: 'hsl(var(--success) / <alpha-value>)',
           foreground: 'hsl(var(--success-foreground) / <alpha-value>)',
+          soft: 'hsl(var(--success-soft) / <alpha-value>)',
+          bg: 'hsl(var(--success-bg) / <alpha-value>)',
+          border: 'hsl(var(--success-border) / <alpha-value>)',
         },
 
         /*

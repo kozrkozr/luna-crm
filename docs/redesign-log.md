@@ -4588,3 +4588,100 @@ The crew detail page labels the Instagram row `uk.crewInstagram`, which reads
 «Instagram (необовʼязково)» — a FORM label, "(optional)" and all, on a read-only
 page. Telegram uses `telegramLabel` («Telegram») and reads correctly. Left alone
 because it is not this change, but it is wrong on both audiences' screens.
+
+## «Сьогодні» on the home card turns green (owner, 2026-09-06)
+
+The hero card gives a shoot happening today three signals: a pulsing dot above
+the card, a 3px stripe down its left edge, and the «Сьогодні» chip. The dot has
+been `--success` since 2026-09-04; the stripe and the chip were `--accent-solid`
+(blue). All three are `--success` now.
+
+Three signals saying one thing in two colours read as two facts. That was
+inherited from the handoff, which supplied the tokens that way, and it is the
+owner's call to reconcile them.
+
+`Badge` gains a `success` variant for the chip. Its `accent` variant is left in
+place with no callers: `--accent-solid` exists in the theme for exactly that
+shape, and deleting the variant would strand the token.
+
+### The contrast is worse, and by how much
+
+Measured rather than eyeballed:
+
+| | ratio |
+|---|---|
+| chip, old — `--accent-solid` fill, `--primary-foreground` ink | **8.17:1** |
+| chip, new — `--success` fill, `--success-foreground` ink | **4.20:1** |
+| stripe, old — `--accent-solid` on `--card` | 7.91:1 |
+| stripe, new — `--success` on `--card` | 4.27:1 |
+
+The blue chip was a *light* fill with near-black ink; green inverts that to a
+dark fill with near-white ink, and `--success` (`#098B47`) is the only green in
+the theme. 4.20:1 clears AA for large text (3:1) but not for normal text
+(4.5:1), and the chip's label is 11px — neither 18pt nor 14pt bold — so it is
+**just under AA**.
+
+The stripe is decoration carrying no information the chip does not, so its ratio
+is not held to a text threshold.
+
+Left as built rather than "fixed" by inventing a lighter green: there is no such
+token, adding one is a theme decision, and the gap is small enough that it is
+the owner's to weigh. Raised here so it is a choice on the record and not an
+oversight.
+
+**Answered the same day** — see the entry below. The owner asked for the chip to
+take `StatusPill`'s tinted shape, which needed the green scale this entry said
+was missing, and took the ratio from 4.20:1 to 6.87:1 as a side effect.
+
+## The home card is green whatever the date, and its chip is a tinted one (owner, 2026-09-06)
+
+Two changes, hours after the one above.
+
+**The green stopped being conditional.** The 3px stripe and the countdown chip
+were green for a shoot today and grey/outlined otherwise; both are green now.
+The card holds exactly one shoot — the nearest — and the chip already says
+«Сьогодні» or «за 5 днів» in words. A stripe that changed colour was restating
+what the label states.
+
+What still marks today, all of it above or around the card rather than in it:
+the pulsing dot, the word «Сьогодні» in place of «Найближча зйомка», and a
+stronger border. `isToday` now drives only that border, and the comment which
+called it "the least of three" says "the only one" instead.
+
+**The chip took `StatusPill`'s shape.** The owner asked for it to look like the
+status chips on the shoots under the CTA — a soft tint with a matching border
+and coloured text, not a solid fill.
+
+### The green tinted scale, derived rather than picked
+
+`--info-*`, `--warn-*` and `--danger-*` were the only tinted scales; green had
+only its solid pair. The three new tokens take **`--info-*`'s exact lightness
+and chroma at the success hue (152)**, which makes the green chip structurally
+the same object as the blue «Запланована» one — which is what "the same as those
+chips, but green" means:
+
+| | oklch | hex |
+|---|---|---|
+| `--success-soft` (text) | 0.720 0.150 152 | `#4DBF74` |
+| `--success-bg` (surface) | 0.245 0.050 152 | `#0A2714` |
+| `--success-border` | 0.560 0.130 152 | `#26894C` |
+
+**One departure, forced.** `--info-bg` carries chroma 0.075, and green at
+L 0.245 has no such chroma inside sRGB — it clips. 0.050 is what fits, and it is
+what `--warn-bg` (0.055) and `--danger-bg` (0.048) already use at that
+lightness, so the family agrees anyway.
+
+Measured: text on tint **6.87:1**, against info 6.44, danger 8.91, warn 9.95.
+That also settles the AA question the previous entry left open — the solid fill
+was 4.20:1.
+
+### What was not done
+
+`StatusPill` stays a separate component. It maps a `ShootStatus`; this chip
+marks how near a date is, and `Badge` is where proximity has lived since the
+`accent` variant. They now look alike because they are the same shape, not
+because one calls the other.
+
+There is only one chip on the hero card. The shoot's status renders as text in
+the line under the client's name, not as a pill, and was left that way — it was
+not part of the ask.

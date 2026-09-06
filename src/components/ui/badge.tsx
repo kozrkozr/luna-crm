@@ -26,13 +26,28 @@ import { View } from 'react-native'
  * to a tone; adding four colour variants to this primitive would let any caller
  * pick «Очікує» styling for something that is not a pending answer.
  *
- * `accent` is the exception, and the fourth variant:
+ * `accent` and `success` are the exception, and the fourth and fifth variants:
  *
- * - `accent` — `bg-accent-solid` with the primary ink, no border. The
- *   handoff's «Сьогодні» chip. It is here rather than in a pill because it
- *   marks *proximity*, not a domain value — the home card computes it from a
- *   date, and no enum on `Shoot` carries it. It has no relation to `--accent`
- *   beyond the word; see the token note in src/theme/global.css.
+ * - `accent` — `bg-accent-solid` with the primary ink, no border. It is here
+ *   rather than in a pill because it marks *proximity*, not a domain value —
+ *   the home card computes it from a date, and no enum on `Shoot` carries it.
+ *   It has no relation to `--accent` beyond the word; see the token note in
+ *   src/theme/global.css.
+ *
+ *   **It was the «Сьогодні» chip until 2026-09-06** and now has no callers. Kept
+ *   rather than deleted: `--accent-solid` exists in the theme for exactly this
+ *   shape, and removing the variant would strand the token.
+ *
+ * - `success` — `bg-success-bg text-success-soft border-success-border`. The
+ *   home card's countdown chip since 2026-09-06 (owner). Same argument as
+ *   `accent` for living here: it marks proximity rather than a domain state.
+ *
+ *   **It is the tinted shape, not a solid fill**, because the owner asked for
+ *   this chip to look like the `StatusPill`s on the shoots below it. That is
+ *   also what fixed its contrast: a solid `--success` fill with near-white ink
+ *   measured 4.20:1, under AA for an 11px label; the tint measures 6.87:1.
+ *   `StatusPill` is a separate component and stays one — it maps a
+ *   `ShootStatus`, where this marks how near a date is.
  *
  * ── Three changes from the 2026-09-04 handoff ───────────────────────────────
  *
@@ -60,6 +75,7 @@ const badgeVariants = cva('shrink-0 flex-row items-center rounded-full px-2 py-1
       outline: 'border-border-strong border',
       muted: 'bg-accent',
       accent: 'bg-accent-solid',
+      success: 'bg-success-bg border-success-border border',
     },
   },
   defaultVariants: { variant: 'muted' },
@@ -72,6 +88,7 @@ const badgeTextVariants = cva('text-caption font-medium', {
       outline: 'text-foreground/85',
       muted: 'text-accent-foreground',
       accent: 'text-primary-foreground',
+      success: 'text-success-soft',
     },
   },
   defaultVariants: { variant: 'muted' },

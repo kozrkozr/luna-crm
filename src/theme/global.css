@@ -180,9 +180,34 @@
     --warn-bg: 32 100% 8.7%; /* #2C1800  oklch(0.230 0.055 72) */
     --warn-border: 35 54.1% 48.2%; /* #BD8638  oklch(0.660 0.115 72) */
 
-    /* «Підтверджено» — green, solid, no border. */
+    /* «Підтверджено» — green, solid, no border. Also the home card's pulsing
+       dot and its 3px stripe, where it is an accent rather than a surface. */
     --success: 149 88.4% 29%; /* #098B47  oklch(0.560 0.145 152) */
     --success-foreground: 132 54.3% 97.6%; /* #F5FCF7  oklch(0.985 0.010 152) */
+
+    /*
+     * The same green as a TINTED CHIP — `bg-success-bg text-success-soft
+     * border-success-border`, the shape `--info-*`, `--warn-*` and `--danger-*`
+     * already have. Added 2026-09-06 for the home card's «Сьогодні» badge, which
+     * the owner asked to look like the status chips on the shoots below it.
+     *
+     * **Derived, not picked.** The lightness and chroma are `--info-*`'s exact
+     * triplet moved to this scale's own hue (152): text `oklch(0.720 0.150)`,
+     * surface `oklch(0.245 …)`, border `oklch(0.560 0.130)`. That makes the
+     * green chip structurally the same object as the blue «Запланована» one,
+     * which is what was asked for.
+     *
+     * The surface is the one departure: `--info-bg` carries chroma 0.075, and
+     * green at L 0.245 has no such chroma inside sRGB — it clips. 0.050 is what
+     * fits, and it is what `--warn-bg` (0.055) and `--danger-bg` (0.048) use at
+     * the same lightness, so the family agrees anyway.
+     *
+     * Measured, not eyeballed: text on tint is **6.87:1**, against info 6.44,
+     * danger 8.91, warn 9.95.
+     */
+    --success-soft: 141 47.1% 52.5%; /* #4DBF74  oklch(0.720 0.150 152) */
+    --success-bg: 141 59.2% 9.6%; /* #0A2714  oklch(0.245 0.050 152) */
+    --success-border: 143 56.6% 34.3%; /* #26894C  oklch(0.560 0.130 152) */
 
     /*
      * «Завершена» — a red outlined badge, and the reason a finished shoot is no
