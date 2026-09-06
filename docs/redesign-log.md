@@ -5339,3 +5339,38 @@ are hard to find are a different complaint from a form that opens too eagerly,
 and this trades one for the other. Splitting them — a public view with a
 «Налаштування» route beside «Редагувати профіль» — is the obvious next move if
 it reads badly on a device.
+
+## The home screen kept showing a shoot that had already ended (owner, 2026-09-06)
+
+A shoot at 11:00 was still «Найближча зйомка» at 16:50. `nextShoot` and
+`upcomingShoots` both selected on the DATE — "today or later" — so a shoot that
+finished at noon led the home screen until midnight.
+
+**The reasoning behind the date rule was right; the rule was too coarse.** Its
+comment said a 09:00 shoot is still the answer at 10:00, because it is what the
+photographer is in the middle of and the card should not vanish mid-shoot. True,
+and "today" lasts eight hours longer than that argument does.
+
+`statusOf` already draws the line in exactly the right place, so both functions
+delegate to it: a shoot counts while it is **not finished**. That also removes an
+incoherence nobody had reported — the hero card could show a shoot whose own
+`StatusPill` read «Завершена».
+
+| | before | after |
+|---|---|---|
+| later today | shown | shown |
+| in progress now | shown | shown — the card still does not vanish |
+| ended earlier today | **shown** | skipped |
+| no `end_time` (`US-030` AC-6 rows) | shown all day | shown all day |
+| already past | skipped | skipped |
+
+Delegating rather than comparing `endTime` here is the point: the null fallback
+and the local-vs-UTC parsing `endOfShoot` exists to get right are already solved
+in `status.ts`, and a second copy of that reasoning is how the two would drift.
+
+Checked against the owner's exact case — 2026-09-06 16:50, an 11:00–13:00 shoot
+and an 18:00 one — plus a shoot in progress, a legacy row with no end time, and
+a day where everything has finished (which returns null, so `US-035` AC-5 shows
+the section as absent rather than empty).
+
+`toIsoDate`'s import went with the last date comparison.

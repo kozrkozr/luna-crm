@@ -1,25 +1,44 @@
 import type { Shoot } from './api'
-import { toIsoDate } from './date'
+import { statusOf } from './status'
 
 /**
- * `US-035` AC-4 — the soonest shoot dated today or later.
+ * `US-035` AC-4 — the soonest shoot that has not finished.
  *
- * "Today or later", not "later than now": a shoot at 09:00 is still the answer
- * to "what is next" at 10:00, because it is the thing the photographer is in
- * the middle of. Comparing against the *date* rather than the timestamp is what
- * makes that true, and it also means the card does not vanish mid-shoot.
+ * ── It compared DATES until 2026-09-06, and that was the bug ────────────────
+ *
+ * The rule was "dated today or later", written that way on purpose: a shoot at
+ * 09:00 is still the answer to "what is next" at 10:00, because it is the thing
+ * the photographer is in the middle of, and the card should not vanish
+ * mid-shoot. That reasoning is right and the implementation was too coarse —
+ * "today" lasts until midnight, so a shoot that ENDED at 12:00 went on leading
+ * the home screen all afternoon (owner, 2026-09-06: 11:00 shoot, still shown at
+ * 16:50).
+ *
+ * `statusOf` already draws the line in the right place, and drawing it anywhere
+ * else here would mean the hero card could show a shoot whose own `StatusPill`
+ * reads «Завершена». So: a shoot counts while it is not finished.
+ *
+ * That keeps every case the date rule was protecting —
+ *
+ *   later today          not finished  → still the answer
+ *   in progress now      not finished  → still the answer, card stays put
+ *   ended earlier today  finished      → skipped, which is the fix
+ *   no `end_time` at all finished at midnight (`US-030` AC-6 rows) → all day
+ *
+ * — and the last line is why this delegates rather than comparing `endTime`
+ * itself: the null fallback, and the local-vs-UTC parsing that `endOfShoot`
+ * exists to get right, are already solved there.
  *
  * Soft-deleted shoots cannot appear here because they never reach the client:
  * the RLS policy excludes them from `listShoots` (`ADR-014`, CLAUDE.md rule 3).
  * AC-6 holds without a filter of its own, which is the point of enforcing it in
  * the policy.
  *
- * Returns null when everything is in the past, which AC-5 renders as the
- * section being absent rather than as an empty card.
+ * Returns null when everything has finished, which AC-5 renders as the section
+ * being absent rather than as an empty card.
  */
 export function nextShoot(shoots: Shoot[], today: Date = new Date()): Shoot | null {
-  const todayIso = toIsoDate(today)
-  const upcoming = shoots.filter((shoot) => shoot.date >= todayIso)
+  const upcoming = shoots.filter((shoot) => statusOf(shoot, today) === 'new')
   if (upcoming.length === 0) return null
   // `listShoots` already orders by date ascending, but this does not rely on
   // that: a caller passing an unsorted array should still get the soonest, and
@@ -152,14 +171,15 @@ export function todayLabel(
  * its `UPCOMING.slice(1)` guard is silently discarded — so the shoot in the card
  * is listed again underneath itself. Not copied.
  *
- * Today counts as upcoming, matching `nextShoot`: a shoot later today has not
- * happened yet.
+ * A shoot counts while it has not finished, matching `nextShoot` — so one
+ * later today is here, one in progress is here, and one that ended this morning
+ * is not. It compared dates until 2026-09-06 and carried the same bug: a shoot
+ * over at noon sat in «Наступні зйомки» until midnight.
  */
 export function upcomingShoots(shoots: Shoot[], today: Date = new Date()): Shoot[] {
   const next = nextShoot(shoots, today)
-  const todayIso = toIsoDate(today)
   return shoots
-    .filter((shoot) => shoot.date >= todayIso && shoot.id !== next?.id)
+    .filter((shoot) => statusOf(shoot, today) === 'new' && shoot.id !== next?.id)
     .sort((a, b) =>
       a.date === b.date
         ? (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
