@@ -23,10 +23,22 @@ const account = async (tag, email = `us009-${tag}-${stamp}@example.com`, role = 
   await client.auth.signInWithPassword({ email, password: 'testpass123' })
   return { client, id: data.user.id, email }
 }
-const shootFor = async (photo, client) =>
-  (await photo.client.from('shoots')
-    .insert({ creator_id: photo.id, client_name: client, client_contact: 'x@example.com', date: '2026-12-30' })
+/**
+ * A shoot, and the client row it now hangs off.
+ *
+ * `client_name` and `client_contact` were columns on `shoots` when this suite
+ * was written; `ADR-018` (migration 20260829100000) replaced them with a
+ * `clients` row and a not-null `client_id`, which left every insert here
+ * failing on a column the schema cache no longer knows.
+ */
+const shootFor = async (photo, clientName) => {
+  const clientId = (await photo.client.from('clients')
+    .insert({ creator_id: photo.id, name: clientName })
     .select('id').single()).data.id
+  return (await photo.client.from('shoots')
+    .insert({ creator_id: photo.id, client_id: clientId, date: '2026-12-30' })
+    .select('id').single()).data.id
+}
 
 const photoA = await account('photoa', undefined, 'Фотограф')
 const photoB = await account('photob', undefined, 'Фотограф')
@@ -75,7 +87,7 @@ ok('the schedule carries no client details',
    !('client_name' in sched.data[0]) && !('client_contact' in sched.data[0]),
    Object.keys(sched.data[0]).join(','))
 ok('and a crew member still cannot read the shoots table itself',
-   ((await crew.client.from('shoots').select('id, client_name')).data ?? []).length === 0)
+   ((await crew.client.from('shoots').select('id, client_id')).data ?? []).length === 0)
 
 // ---------- AC-2 ----------
 ok('AC-2 an anonymous caller has no schedule', ((await anon().rpc('my_crew_shoots')).data ?? []).length === 0)
