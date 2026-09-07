@@ -70,6 +70,12 @@ export const uk = {
    * Four sections replaced them and **all four are UI-only stubs** (owner,
    * 2026-09-02), so the copy below labels controls that write nothing yet.
    */
+  /*
+   * Back since 2026-09-07, with the form as the tab's default again — the pill
+   * `Edit Profile.dc.html` draws under the name. It was pruned on 2026-09-06
+   * when the public view became the tab root and nothing needed a way in.
+   */
+  viewPublicProfile: 'Переглянути публічний профіль',
   subscriptionSection: 'Підписка',
   planLabel: 'Тариф',
   /** The only plan there is. A product name, so it is not translated. */

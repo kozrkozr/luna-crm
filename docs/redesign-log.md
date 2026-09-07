@@ -5876,3 +5876,65 @@ The screen itself was driven in a real browser against a local Supabase: log in,
 switch all three periods, screenshot each. The figures matched a hand-computed
 scene in all three (2 shoots / 30 000 ₴ for the month, 4 / 78 000 for the year,
 5 / 118 000 and «З листопада 2025» for all time).
+
+## The profile tab opens as the form again (owner, 2026-09-07)
+
+One day, reversed. The tab has opened as `PublicProfile` since 2026-09-06 on the
+reasoning that the common visit is a look rather than an edit; the owner has
+asked for **edit mode by default**.
+
+That is the risk the 2026-09-06 entry named the same day, under "Worth the
+owner's eye": the form holds «Підписка», «Акаунт», the language switcher,
+«Сповіщення», «Вийти з акаунту» and «Видалити акаунт», and putting the public
+view first put all of it behind a button labelled «Редагувати профіль».
+Settings that cannot be found are the worse of the two complaints.
+
+**Both views survive; only the default moved** — `editing` starts `true`. The
+public view is still a MODE of this tab rather than a route, so
+`app/(app)/public-profile.tsx` stays deleted: a second URL onto a view this
+screen already renders is the shape of the crew-page bug found on 2026-09-06.
+
+### Four consequences, each of them the artboard's own answer
+
+**«Переглянути публічний профіль» is back**, in the identity card under the
+name, where `Edit Profile.dc.html` draws it — with the eye glyph, at 40pt on
+radius 8. It switches mode instead of pushing the route the old pill opened.
+`viewPublicProfile` is back in both dictionaries, having been pruned when
+nothing needed a way in.
+
+**Saving stays on the form.** It used to drop to the public view, which was the
+fastest way to see a change take while that view was the tab. The form is the
+tab now, and the toast is the whole of the feedback — as the artboard has it.
+
+**«Скасувати» is drawn only while there is something to cancel**, which is the
+artboard's own `sc-if isDirty`. The control has now had three destinations:
+Головна (2026-09-04, the form being the tab root), the public view (2026-09-06,
+the form being a mode), and — with the form as the root again — none. "Stop
+editing" has nowhere to go, and leaving the profile section entirely is a strange
+thing for a form's cancel to do. The 92px spacer stays, so the title is still
+centred on the screen. What survives is the half that was always real work:
+with unsaved changes it opens the «Скасувати зміни?» sheet, and discarding now
+restores `saved` and **stays** on the form.
+
+**The public view gets its back control back**, labelled «Мій профіль», because
+there is something behind it again. That needed a new prop: `PublicProfile`'s
+control calls `router.back()`, which from a mode of this tab would pop the
+reader out of the tab entirely — so `onBack` is now optional on that component
+and the pushed contact screen keeps the router behaviour by passing nothing.
+
+### `us014-check.mjs`, moved for the second day running
+
+Its «AC-2 the profile screen is Ukrainian» assertion looked for «Профіль» until
+2026-09-06, then for «Публічний профіль». It now accepts **either** title, so
+the line stops moving every time the default does — what `US-014` AC-2 asks is
+that the screen be Ukrainian, not which of the two views is in front. Count
+unchanged at 16. (Still one of the stale suites; see this file's header.)
+
+### Verified
+
+Driven in a browser against a local Supabase: the tab opens on «Мій профіль»
+with «ПІДПИСКА», «АКАУНТ» and the role chips; «Скасувати» is absent while clean
+and appears on the first keystroke; the pill reaches «Публічний профіль», whose
+«Мій профіль» control returns to the form; and the account email is absent from
+the public view, which is the one thing on that screen that must stay true
+(`ADR-003`, and `e3db32d` before it).

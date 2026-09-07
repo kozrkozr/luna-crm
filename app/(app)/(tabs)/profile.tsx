@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import type { LucideIcon } from 'lucide-react-native'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
+import Eye from 'lucide-react-native/icons/eye'
 import Lock from 'lucide-react-native/icons/lock'
 import Mail from 'lucide-react-native/icons/mail'
 import Pencil from 'lucide-react-native/icons/pencil'
@@ -112,19 +113,26 @@ export default function ProfileScreen() {
   const [busy, setBusy] = useState(false)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   /*
-    ── The tab opens as the PUBLIC profile (owner, 2026-09-06) ───────────────
+    ── The tab opens as the FORM again (owner, 2026-09-07) ───────────────────
 
-    It opened straight into the edit form, with «Переглянути публічний профіль»
-    pushing a separate route to show what others see. That is backwards for the
-    screen a reader opens to check themselves: the common visit is a look, and
-    the form was the price of it.
+    It opened as the form until 2026-09-06, then as `PublicProfile` for a day —
+    the reasoning being that the common visit is a look, not an edit. The owner
+    has reversed it: **edit mode is the default.**
 
-    So the tab renders `PublicProfile` — the same component a contact's page and
-    a crew member's own screen use — and «Редагувати профіль» switches to the
-    form. `app/(app)/public-profile.tsx` is deleted with the button that was its
-    only way in; this view IS that screen now.
+    That was the risk this file's own log entry named on the day: the form holds
+    «Підписка», «Акаунт», the language switcher, «Сповіщення», «Вийти» and
+    «Видалити акаунт», and one day of use put all of it behind a button labelled
+    «Редагувати профіль». Settings that cannot be found are the worse of the two
+    complaints.
+
+    **Both views survive; only the default moved.** The public view is still a
+    mode of this tab rather than a route of its own — `Edit Profile.dc.html`
+    reaches it through «Переглянути публічний профіль» in the identity card, and
+    its back control returns here. Keeping it modal is what keeps
+    `app/(app)/public-profile.tsx` deleted: a second URL onto the same view is
+    the shape of the crew-page bug found on 2026-09-06.
   */
-  const [editing, setEditing] = useState(false)
+  const [editing, setEditing] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
 
   /*
@@ -342,27 +350,33 @@ export default function ProfileScreen() {
     if (!ok) return setToast(t.somethingWentWrong)
     succeeded()
     setSaved(draft)
-    // Back to the public view, which is what the reader has just changed and
-    // the fastest way to see that the change took.
-    setEditing(false)
+    /*
+      Stays on the form, with the toast as the whole of the feedback — which is
+      what `Edit Profile.dc.html` does. It used to drop to the public view,
+      because that view was the tab and saving was a visit to the form; now the
+      form is the tab and saving is not a reason to leave it.
+    */
     setToast(t.profileSaved)
   }
 
   /*
-    «Скасувати» — kept on a tab root (owner, 2026-09-04), because
-    `Edit Profile.dc.html` still draws it beside the bar. It does real work
-    here: with unsaved changes it opens the «Скасувати зміни?» sheet, which is
-    not the same thing as going back.
+    «Скасувати» — and since 2026-09-07 it is **drawn only while there is
+    something to cancel**, which is `Edit Profile.dc.html`'s own
+    `sc-if isDirty`.
 
-    With nothing to discard it now returns to the public view rather than to the
-    Головна tab. Since 2026-09-06 the form is a mode of this tab and not the tab
-    itself, so «Скасувати» means "stop editing" — leaving the app's whole
-    profile section to get out of a form would be a strange exit, and the tab bar
-    is right there for anyone who wanted Головна.
+    The three arrangements this control has had, because the reasoning only
+    makes sense as a sequence: on 2026-09-04 it left for the Головна tab (the
+    form was the tab root); on 2026-09-06 it stopped editing and dropped to the
+    public view (the form had become a mode). The form is the root again, so
+    "stop editing" has no destination and "leave the profile section entirely"
+    is a strange thing for a form's cancel to do — the tab bar is right there.
+
+    What is left is the half that was always real work: with unsaved changes it
+    opens the «Скасувати зміни?» sheet. With none, there is nothing to draw, so
+    the artboard's condition is now the control's condition.
   */
   const leave = () => {
     if (dirty) return setConfirmDiscard(true)
-    setEditing(false)
   }
 
   /*
@@ -394,8 +408,15 @@ export default function ProfileScreen() {
               resolved.kind === 'emoji' ? { char: resolved.emoji, tint: resolved.tint } : null,
             note: null,
             kind: 'self',
-            backLabel: null,
+            /*
+              A back control again, and it goes to the FORM — the public view is
+              no longer the tab root, so there is something behind it. `onBack`
+              rather than the component's own `router.back()`: this is a mode of
+              this screen, and popping the router would leave the tab.
+            */
+            backLabel: t.myProfileTitle,
           }}
+          onBack={() => setEditing(true)}
           onEdit={() => setEditing(true)}
           /* This is a tab: `BottomNav` sits below and owns the bottom safe
              area, so the pinned row must not add it a second time. The contact
@@ -420,18 +441,24 @@ export default function ProfileScreen() {
         className="bg-background border-border flex-row items-center border-b px-3 pb-2"
         style={{ paddingTop: insets.top }}
       >
-        <Pressable
-          className="active:bg-secondary min-h-11 w-[92px] shrink-0 justify-center rounded-lg px-2"
-          onPress={() => {
-            tapped()
-            leave()
-          }}
-          role="button"
-        >
-          <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
-            {t.cancel}
-          </Text>
-        </Pressable>
+        {/* `sc-if isDirty` — the spacer stays when the control does not, so the
+            title is centred on the SCREEN either way. See `leave`. */}
+        {dirty ? (
+          <Pressable
+            className="active:bg-secondary min-h-11 w-[92px] shrink-0 justify-center rounded-lg px-2"
+            onPress={() => {
+              tapped()
+              leave()
+            }}
+            role="button"
+          >
+            <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
+              {t.cancel}
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="min-h-11 w-[92px] shrink-0" />
+        )}
 
         <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
           {t.myProfileTitle}
@@ -520,6 +547,31 @@ export default function ProfileScreen() {
             <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
               {resolvedRole}
             </Text>
+
+            {/*
+              «Переглянути публічний профіль», as `Edit Profile.dc.html` draws
+              it — the way into the public view now that the form is the tab
+              root again (owner, 2026-09-07).
+
+              It **switches mode rather than pushing a route**, which is the one
+              difference from the pill this replaces: that one opened
+              `app/(app)/public-profile.tsx`, deleted on 2026-09-06, and a route
+              recreated for one button would be a second URL onto a view this
+              screen already renders.
+            */}
+            <Pressable
+              className="border-border active:bg-secondary mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5"
+              onPress={() => {
+                tapped()
+                setEditing(false)
+              }}
+              role="button"
+            >
+              <Icon as={Eye} size={15} strokeWidth={1.7} className="text-muted-foreground" />
+              <Text className="text-body-sm text-foreground font-medium">
+                {t.viewPublicProfile}
+              </Text>
+            </Pressable>
 
             {/* «Переглянути публічний профіль» stood here, pushing a route that
                 showed what others see. Both are gone (owner, 2026-09-06): the
@@ -847,9 +899,13 @@ export default function ProfileScreen() {
                 setDraft(saved)
                 setErrors({})
                 setConfirmDiscard(false)
-                // Out of the form as well as out of the changes: this sheet is
-                // reached from «Скасувати», which now means "stop editing".
-                setEditing(false)
+                /*
+                  Out of the changes, not out of the form: «Скасувати» meant
+                  "stop editing" for one day (2026-09-06) and the sheet left
+                  with it. The form is the tab again, so discarding restores
+                  `saved` and stays put — «Продовжити редагування» beside it
+                  would otherwise be the only button that did not leave.
+                */
                 setToast(t.changesDiscarded)
               }}
             >

@@ -58,13 +58,16 @@ ok('AC-2 weekdays are Ukrainian and Monday-first',
 await B.navigate(`${APP}/profile`)
 body = await ev('document.body.innerText')
 /*
-  «Публічний профіль» since 2026-09-06: the tab opens as the public view, with
-  the edit form behind «Редагувати профіль». The old assertion looked for
-  «Профіль» with a capital П, which the new title does not contain — its second
-  word is lowercase.
+  «Мій профіль» again since 2026-09-07: the tab opens as the edit form, with the
+  public view behind «Переглянути публічний профіль». It was «Публічний
+  профіль» for one day (2026-09-06), and before that the assertion looked for
+  «Профіль» with a capital П — which matches both titles and told the two apart
+  from neither. Either title is accepted here so this line stops moving with the
+  default; what `US-014` AC-2 actually asks is that the screen be Ukrainian.
 */
 ok('AC-2 the profile screen is Ukrainian',
-   body.includes('Публічний профіль'), body.replace(/\n/g, ' | ').slice(0, 110))
+   body.includes('Мій профіль') || body.includes('Публічний профіль'),
+   body.replace(/\n/g, ' | ').slice(0, 110))
 ok('AC-1 and shows no untranslated placeholder text', !body.includes('undefined') && !body.includes('[object'))
 
 // ---------- the preference is READ, not assumed ----------

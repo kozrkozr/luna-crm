@@ -109,11 +109,21 @@ export type PublicProfileView = {
 
 export function PublicProfile({
   view,
+  onBack,
   onEdit,
   onDelete,
   aboveTabBar = false,
 }: {
   view: PublicProfileView
+  /**
+   * What the back control does, when the caller owns the answer.
+   *
+   * The profile tab needs it: since 2026-09-07 the public view is a MODE of
+   * that screen rather than its root, so "back" means "show the form again" and
+   * `router.back()` would pop the reader out of the tab entirely. A pushed
+   * screen passes nothing and keeps the router behaviour below.
+   */
+  onBack?: () => void
   /**
    * True when this renders inside `(tabs)`, where `BottomNav` sits below and
    * owns the bottom safe area.
@@ -215,6 +225,8 @@ export function PublicProfile({
             className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
             onPress={() => {
               tapped()
+              // A caller-owned destination wins: see `onBack`.
+              if (onBack) return onBack()
               if (router.canGoBack()) router.back()
               else router.replace('/(app)/(tabs)/profile')
             }}
