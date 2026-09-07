@@ -41,6 +41,13 @@ import {
   shortMonth,
 } from '../../../src/features/shoots/date'
 import {
+  listNotifications,
+  unreadNotificationCount,
+  markNotificationsRead,
+  type ShootNotification,
+} from '../../../src/features/notifications/api'
+import { NotificationsPopover } from '../../../src/components/NotificationsPopover'
+import {
   daysUntil,
   distanceLabel,
   nextShoot,
@@ -56,6 +63,13 @@ type State =
       status: 'loaded'
       /** AC-4's shoot, or null when nothing is upcoming (AC-5). */
       next: Shoot | null
+      /**
+       * Unread notifications — what the bell's dot means since 2026-09-06.
+       *
+       * A count and not a list: this screen only ever asks whether there are
+       * any, and the screen behind the bell does its own fetch.
+       */
+      unread: number
       /**
        * Whether the account has any shoot at all, past ones included.
        *
@@ -85,12 +99,17 @@ type State =
  *
  * ── Departures from home-screen.html, all in the story's Out of scope ────────
  *
- * **The bell does nothing.** Its mockup handler shows «Гліб підтвердив участь
- * у зйомці 19 вересня», which implies a notification system: there is no table,
- * no read state and no delivery anywhere in the product. Rendered inert at the
- * owner's decision (2026-08-28) so the screen matches. **The unread dot is drawn
- * and reflects nothing** — the one thing on this screen that states something
- * untrue, and the reason it is worth building notifications or removing the dot.
+ * **The bell works as of 2026-09-06.** It was inert from 2026-08-28 — no table,
+ * no read state, no delivery — with an unread dot drawn unconditionally, which
+ * this note called "the one thing on this screen that states something untrue".
+ * Migration `20260906120000` gives it a table and a trigger; the bell opens
+ * «Сповіщення» and the dot counts unread crew answers.
+ *
+ * Its mockup handler showed «Гліб підтвердив участь у зйомці 19 вересня», and
+ * that sentence is still NOT what the screen behind it says: Ukrainian needs a
+ * gendered verb for it and nothing here stores a gender, so the list reuses the
+ * crew list's own «Підтверджено» / «Відмова» pill instead. See
+ * `app/(app)/notifications.tsx`.
  *
  * **No name in the greeting.** «Доброго дня, Дарино» is the vocative of
  * «Дарина» and we store one nominative `name`; declining it in code would
@@ -112,6 +131,34 @@ export default function HomeScreen() {
   */
   const [reloadKey, setReloadKey] = useState(0)
 
+  /*
+    The bell's popover — `Home.dc.html` draws one anchored under the bell rather
+    than a screen behind it, so it lives here on the screen it belongs to.
+
+    Held as `null` when closed and a list when open: the fetch happens on the
+    tap, not on every focus. The home screen already asks for a COUNT on focus,
+    which is all the bell itself needs.
+  */
+  const [notifications, setNotifications] = useState<ShootNotification[] | null>(null)
+
+  const openBell = async () => {
+    const items = await listNotifications()
+    // A failure opens nothing rather than an empty popover claiming there is
+    // nothing to see. The bell's dot still says otherwise, which is the honest
+    // pair of states.
+    if (!items) return
+    setNotifications(items)
+    /*
+      Opening IS the reading, so this marks everything read and drops the dot on
+      the next focus. The rows keep the tint they opened with — nothing here
+      re-renders them — so the reader can still tell which were new while the
+      popover is up.
+    */
+    void markNotificationsRead().then(() => setState((current) =>
+      current.status === 'loaded' ? { ...current, unread: 0 } : current
+    ))
+  }
+
   useFocusEffect(
     useCallback(() => {
       let active = true
@@ -128,9 +175,19 @@ export default function HomeScreen() {
         const crew = next ? await listCrew(next.id) : null
         if (!active) return
 
+        /*
+          The bell's dot, which reflected nothing until 2026-09-06 — see
+          `HomeHeader`. Fetched here rather than in the header so the screen
+          makes one pass over the network per focus, and counted rather than
+          listed: the home screen never needs the bodies.
+        */
+        const unread = await unreadNotificationCount()
+        if (!active) return
+
         setState({
           status: 'loaded',
           next,
+          unread,
           hasAny: shoots.length > 0,
           confirmed: crew
             ? { done: crew.filter((m) => m.response === 'confirmed').length, total: crew.length }
@@ -215,7 +272,11 @@ export default function HomeScreen() {
       <SwipeDismissBoundary>
         {/* `hasShoots` gates the bell — see the note there. Unknown while
             loading, which is when the artboard draws nothing either. */}
-        <HomeHeader hasShoots={state.status === 'loaded' ? state.hasAny : false} />
+        <HomeHeader
+          hasShoots={state.status === 'loaded' ? state.hasAny : false}
+          unread={state.status === 'loaded' ? state.unread : 0}
+          onOpenBell={() => void openBell()}
+        />
         <ScrollView contentInsetAdjustmentBehavior="automatic">
           {/*
             Room for the pinned CTA below (owner, 2026-09-06), where this was
@@ -374,6 +435,22 @@ export default function HomeScreen() {
         </View>
       </SwipeDismissBoundary>
       {deleteDialog}
+
+      {/*
+        Outside `SwipeDismissBoundary`, like `deleteDialog` and for the same
+        reason: the boundary closes an open swipe on any touch inside it, and
+        the popover's own scrim is a touch target that must not be intercepted.
+
+        It portals to the root, so it covers the header and the tab bar as the
+        artboard's scrim does — `inset:0` on the frame, not on the scroll.
+      */}
+      {notifications ? (
+        <NotificationsPopover
+          items={notifications}
+          onClose={() => setNotifications(null)}
+          onOpenShoot={(shootId) => router.push(`/(app)/shoot/${shootId}`)}
+        />
+      ) : null}
     </View>
   )
 }
@@ -501,7 +578,16 @@ function UpcomingRow({ shoot }: { shoot: Shoot }) {
  * Outside the ScrollView (§5.1) and carrying the safe-area top inset, which the
  * mockups have no notion of.
  */
-function HomeHeader({ hasShoots }: { hasShoots: boolean }) {
+function HomeHeader({
+  hasShoots,
+  unread,
+  onOpenBell,
+}: {
+  hasShoots: boolean
+  unread: number
+  /** Opens the popover, which the SCREEN owns — see the note there. */
+  onOpenBell: () => void
+}) {
   const t = useStrings()
   const insets = useSafeAreaInsets()
   const profile = useProfile()
@@ -565,15 +651,26 @@ function HomeHeader({ hasShoots }: { hasShoots: boolean }) {
           stands in for it — a photographer with no shoots has nothing anyone
           could have confirmed.
 
-          It does shrink the screen's one untruth: a brand-new account no longer
-          gets an unread dot for messages that cannot exist. The dot still lies
-          the moment a shoot is created, which is unchanged and still the reason
-          to build notifications or drop the dot.
+          **It does something as of 2026-09-06** (owner, migration
+          `20260906120000`): it opens «Сповіщення», and the dot below counts
+          unread crew answers instead of being drawn unconditionally. That
+          retires the note this screen carried for nine days — "the one thing on
+          this screen that states something untrue".
+
+          `hasShoots` still gates the bell itself, as the artboard's
+          `sc-if hasNotifications` does. It is now a weaker claim than it was:
+          somebody with shoots and no answers gets a bell with nothing behind
+          it, where the artboard would hide it. Kept because the alternative is
+          a control that appears and disappears as invitations are answered,
+          which reads as a bug.
         */}
         {hasShoots ? (
         <Pressable
           className="border-border h-10 w-10 shrink-0 items-center justify-center rounded-lg border active:bg-secondary"
-          onPress={tapped}
+          onPress={() => {
+            tapped()
+            void onOpenBell()
+          }}
           hitSlop={4}
           role="button"
           accessibilityLabel={t.notifications}
@@ -581,10 +678,28 @@ function HomeHeader({ hasShoots }: { hasShoots: boolean }) {
           {/* A lucide bell, not the 🔔 emoji this drew: an emoji renders in its
               own colours and is a different glyph on every platform. */}
           <Icon as={Bell} size={17} strokeWidth={1.7} className="text-foreground" />
-          {/* The unread dot. `foreground` now, not `destructive` — the design
-              draws it white, and the monochrome pass left no reason for a red
-              one. It still reflects nothing; see the note on this screen. */}
-          <View className="border-background bg-foreground absolute right-[9px] top-[9px] h-[7px] w-[7px] rounded-full border-2" />
+          {/*
+            The unread dot, **blue** since 2026-09-06 (owner) — `bg-accent-solid`,
+            which is what `Home.dc.html` draws: `background:var(--accent-solid)`
+            with a 2px `--bg` ring.
+
+            It was `foreground` on the note that "the design draws it white",
+            which was true of the monochrome pass and stopped being true when
+            the 2026-09-04 handoff brought colour back. White also made it the
+            same tone as the bell it sits on, so the one thing it had to do —
+            catch the eye — was the one thing it did not.
+
+            This gives `--accent-solid` a caller again. `Badge`'s `accent`
+            variant lost its last one when «Сьогодні» went green, and was kept
+            on the grounds that the token existed for that shape; the token is
+            in use here regardless of what happens to the variant.
+
+            **It reflects `notifications.read_at`**, so a photographer with
+            nothing unread sees a plain bell.
+          */}
+          {unread > 0 ? (
+            <View className="border-background bg-accent-solid absolute right-[9px] top-[9px] h-[7px] w-[7px] rounded-full border-2" />
+          ) : null}
         </Pressable>
         ) : null}
 

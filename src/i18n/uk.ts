@@ -461,6 +461,34 @@ export const uk = {
   tomorrowWord: 'Завтра',
   crewConfirmedTemplate: 'команда: {done} з {total} підтвердили',
   notifications: 'Сповіщення',
+  /* ── The bell's screen (owner, 2026-09-06, migration 20260906120000) ──
+     No story covers notifications, so this copy has no source. It is built out
+     of words the app already uses — `responseConfirmed` and `responseDeclined`
+     say «Підтверджено» / «Відмова» on the crew list — rather than out of new
+     sentences: «Гліб підтвердив участь» is the mockup's, and a gendered verb
+     needs a gender we do not store. Wants the owner's wording. */
+  notificationsEmpty: 'Поки що нічого',
+  /*
+     The popover's row: «Гліб Лозовий — участь підтверджено».
+
+     `Home.dc.html` writes «підтвердив участь» and «відмовилася від зйомки» —
+     gendered verbs, correct per person in a mock that hardcodes each one.
+     Nothing in the schema stores a gender, so the app cannot reproduce them:
+     it would have to guess, and guessing wrong about a person's gender in a
+     sentence about them is worse than not using a verb.
+
+     So the passive, which needs none — and echoes `responseConfirmed` /
+     `responseDeclined` on the crew list. Invented copy; wants the owner.
+  */
+  notificationConfirmedAction: '— участь підтверджено',
+  notificationDeclinedAction: '— відмова від зйомки',
+  /* The row's «2 год». See `relativeTime`: the artboard shows «2 год», «4 год»
+     and «вчора», and the rest of the scale is invented. */
+  timeJustNow: 'щойно',
+  timeYesterday: 'вчора',
+  notificationsEmptySub: 'Тут з’являться відповіді на запрошення.',
+  /** «Марія Литвин · 19 вересня» — which shoot the answer was about. */
+  notificationShootTemplate: '{client} · {date}',
   // ADR-017 client-match-flow.html, US-029.
   clientField: 'Клієнт',
   clientNameSearchPlaceholder: "Ім'я клієнта",

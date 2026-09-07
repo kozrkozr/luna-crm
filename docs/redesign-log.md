@@ -5600,3 +5600,153 @@ site, so the inset could have been derived from it without a new prop. That
 would have been two facts riding on one field, and the first screen that wants a
 back control inside the tabs — or a pushed screen without one — would find them
 silently welded together.
+
+## The bell becomes real: notifications for crew answers (owner, 2026-09-06)
+
+The home screen has drawn a bell since 2026-08-28 with nothing behind it, and an
+unread dot that was drawn unconditionally — which that screen's own comment
+called "the one thing on this screen that states something untrue". It now opens
+«Сповіщення», and the dot counts unread crew answers.
+
+**Scope is one event**: a crew member confirming or declining. The owner's
+choice, and `notification_kind` has exactly those two values.
+
+### No story, and no glossary entry
+
+Nothing in the PRD's requirement register or any epic mentions notifications.
+`US-008` gives a crew member the ability to answer and says nothing about
+telling the photographer.
+
+**`Notification` is not in the glossary either.** Rule 5 says entity names come
+from `data-model.md`, which confirms `Shoot`, `CrewMember`, `Reference`,
+`AccessLink` and `User` and no sixth. The name is chosen here because the thing
+needs one; it is the only table in the schema whose name nobody has agreed, and
+it wants confirming in the discovery repo.
+
+### A table, not two columns
+
+Every answer already lives in `crew_members.response`, so the cheaper design was
+`responded_at` plus a per-user `notifications_seen_at` — no new entity. Both
+were put to the owner and the table was chosen, knowing it is the heavier one.
+
+What it buys: per-row read state; an event that survives its subject, where a
+derived version reads a CURRENT value and loses the event when the value moves;
+and room for a second kind without another schema decision.
+
+### The trigger, and a bug the DDL check could not see
+
+`notify_crew_response` fires only on the move away from `pending`, which is what
+`US-008`'s "a submitted response is final" and `20260826190000`'s WHERE clause
+already guarantee — so a crew member produces at most one row and there is no
+supersession rule to write.
+
+It is `security definer` with a pinned `search_path`, because the writer is the
+link gateway under the service role and because **nobody holds INSERT on the
+table** — not `authenticated`, not `service_role`. Every row comes from the
+trigger, so a notification cannot be fabricated by the one component reachable
+by anyone with a URL.
+
+**The first version was broken and applying it cleanly did not show that.** The
+`case … end` yielded `text` where the column is an enum, which raises on insert
+— and because the insert happens inside the crew member's own UPDATE, the
+failure would not have been a missing notification but a crew member's answer
+refusing to save at all. Found by exercising the trigger against real rows in a
+rolled-back transaction: pending notifies nobody, each answer reaches the shoot's
+creator unread, and re-updating a settled response adds nothing.
+
+### Reads, and rule 3
+
+`listNotifications` uses `!inner` joins on `crew_members` and `shoots`, whose
+SELECT policies carry `removed_at is null` and `deleted_at is null` themselves.
+So **removing a crew member removes their notification**, and deleting a shoot
+removes its own. That is a decision as much as a mechanism: `ADR-014` makes
+`removed_at` how access is revoked, and a bell still announcing somebody the
+photographer took off the shoot is the resurrection rule 3 exists to prevent.
+The row stays in the table; it stops being shown.
+
+`authenticated` is granted `select` and `update (read_at)` — column-level, the
+same reasoning `20260826190000` applies to `response`. The only thing a reader
+may change about a notification is whether they have read it.
+
+### The copy is not the mockup's
+
+The mockup's handler reads «Гліб підтвердив участь у зйомці 19 вересня». That
+sentence needs a gendered verb — `підтвердив` or `підтвердила` — and nothing in
+the schema stores a gender. The row uses `ResponsePill` with the crew list's own
+«Підтверджено» / «Відмова» instead: no new sentence, no gender, and one control
+deciding what an answer looks like on both screens.
+
+`notificationsEmpty`, `notificationsEmptySub` and `notificationShootTemplate`
+are new and have no source. They want the owner's words.
+
+### It is a popover, not a screen — `Home.dc.html`'s own
+
+Built first as a pushed route with a header and a back control, then replaced:
+the artboard draws a popover anchored under the bell. The difference is not only
+visual — it keeps the reader on the screen the notification is about, and closes
+by tapping anywhere.
+
+Taken from the artboard: `right:14px; width:306px`, a 12px caret rotated 45° at
+`top:-5 right:19`, a `--border-strong` hairline at radius 14, and a
+`0 18px 44px rgba(0,0,0,.6)` shadow.
+
+**`top` is computed, not the artboard's 104.** That number counts from the
+frame's own top, 60px of which is its drawn status bar. Ours is `insets.top`
+plus the header's padding plus the bell, so the caret lands under the bell on
+every device rather than on the one it was drawn at.
+
+Two departures beyond that:
+
+**The mark's ink.** Each row's avatar carries a 16pt tick or cross in its
+corner. The artboard strokes both in `var(--bg)` — a dark tick on `--success`,
+which is `#098B47` here and would hide it. Each takes its own scale's ink
+instead: `--success-foreground` on green, `--destructive-foreground` on red.
+`--danger-*` has no solid fill in this theme, which is why a refusal uses
+`--destructive` — the one place in the app where that token marks a state rather
+than an action.
+
+**It scrolls.** The artboard draws four rows and stops; a real account has any
+number, and a popover that grew past the screen would put its last row under the
+tab bar. Capped near five rows.
+
+### The gendered verb, which the artboard does not solve
+
+`Home.dc.html` writes «підтвердив участь» and «відмовилася від зйомки» —
+correct per person in a mock that hardcodes each. Nothing in the schema stores a
+gender, so the app cannot reproduce them without guessing, and guessing wrong
+about a person's gender in a sentence about them is worse than using no verb.
+
+So the passive: «— участь підтверджено» / «— відмова від зйомки», which needs
+none and echoes `responseConfirmed` / `responseDeclined` on the crew list.
+Invented copy, and it wants the owner.
+
+`relativeTime` is invented in the same way. The artboard shows «2 год», «4 год»
+and «вчора»; the rest of the scale — «щойно», «14 хв», «3 дні» — is filled in
+here. **Calendar days, not elapsed hours**: something at 23:00 last night reads
+«вчора» at 01:00 rather than «2 год», which would be technically right and
+useless.
+
+### The dot is blue
+
+`bg-accent-solid`, which is what `Home.dc.html` draws:
+`background:var(--accent-solid)` with a 2px `--bg` ring. It was `foreground`, on
+a code note reading "the design draws it white" — true of the monochrome pass,
+and untrue since the 2026-09-04 handoff brought colour back. White also made the
+dot the same tone as the bell glyph it sits on, so the one thing it exists to do
+was the one thing it could not.
+
+8.37:1 against the page, against 18.97:1 for the white it replaces — lower and
+far more than enough for a 7px mark whose job is to be noticed rather than read.
+What actually improved is the 2.27:1 it now has against the bell beside it,
+where white had none at all.
+
+This also gives `--accent-solid` a caller again: `Badge`'s `accent` variant lost
+its last one when «Сьогодні» went green, and was kept on the grounds that the
+token existed for that shape.
+
+### Not built
+
+Delivery of any kind — push, email, badge counts on the app icon. This is an
+in-app popover and a dot, which is what was asked for. `notifyNewConfirmations`
+on the profile screen is still the stub it has always been, and now sits next to
+a feature it does not control.
