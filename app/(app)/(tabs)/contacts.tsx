@@ -3,7 +3,6 @@ import { ActivityIndicator, Pressable, View } from 'react-native'
 import { Link, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
-import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Search from 'lucide-react-native/icons/search'
 import { Button } from '../../../src/components/ui/button'
@@ -31,6 +30,7 @@ import {
   type DirectoryPerson,
 } from '../../../src/features/contacts/directory'
 import { Starfield } from '../../../src/components/Starfield'
+import { TabHeader } from '../../../src/components/TabHeader'
 
 type State =
   | { status: 'loading' }
@@ -127,6 +127,8 @@ export default function ContactsScreen() {
     <View className="bg-background flex-1">
       <Starfield />
       <ContactsHeader
+        shown={groups.reduce((count, group) => count + group.people.length, 0)}
+        total={state.status === 'loaded' ? state.people.length : 0}
         query={query}
         onQuery={setQuery}
         filter={filter}
@@ -249,29 +251,40 @@ function PersonRow({ person, divided }: { person: DirectoryPerson; divided: bool
 }
 
 /**
- * The screen's own header: a back control, the title, the search field and the
- * three filter chips — 222px of it in the artboard, which is why it is a
- * sibling of the ScrollView rather than an absolute overlay the content would
- * have to be offset by.
+ * The screen's own header: the title with its count, the search field and the
+ * three filter chips — the shared `TabHeader` since 2026-09-07, with the second
+ * block passed as children.
  *
- * **«Головна» stays** (owner, 2026-09-04), like the calendar's chevron: the
- * artboard draws a back control on a tab root beside the bar that replaced it,
- * and this one is explicit about where it goes — `Home.dc.html` is its href.
+ * `Contacts.dc.html` draws those two under the title row and INSIDE the same
+ * bordered container (`padding:0 12px 10px`, `gap:9`), which is what keeps them
+ * still while the list scrolls beneath. That is why they are children of the
+ * header rather than the first rows of the list.
+ *
+ * **«Головна» is gone** (owner, 2026-09-07). It was kept on 2026-09-04 because
+ * the artboard drew a back control on a tab root; the artboard draws none now,
+ * and neither does the calendar's — see `CalendarHeader` in `shoots.tsx`.
+ *
+ * **The count is the artboard's own `headerMeta`** — `visible.length` of
+ * `people.length`, so filtering or typing says how much of the address book is
+ * on screen. It reads «9 з 9» untouched, which is the drawing's own answer to
+ * the unfiltered case rather than a blank.
  */
 function ContactsHeader({
+  shown,
+  total,
   query,
   onQuery,
   filter,
   onFilter,
 }: {
+  shown: number
+  total: number
   query: string
   onQuery: (value: string) => void
   filter: DirectoryFilter
   onFilter: (value: DirectoryFilter) => void
 }) {
   const t = useStrings()
-  const router = useRouter()
-  const insets = useSafeAreaInsets()
 
   const chips: { value: DirectoryFilter; label: string }[] = [
     { value: 'all', label: t.contactsFilterAll },
@@ -280,32 +293,12 @@ function ContactsHeader({
   ]
 
   return (
-    <View
-      className="bg-background border-border border-b"
-      style={{ paddingTop: insets.top }}
+    <TabHeader
+      title={t.myContactsTitle}
+      meta={t.contactsCountTemplate
+        .replace('{shown}', String(shown))
+        .replace('{total}', String(total))}
     >
-      <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
-        <Pressable
-          className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
-          onPress={() => {
-            tapped()
-            router.navigate('/(app)/(tabs)')
-          }}
-          role="button"
-          accessibilityLabel={t.navHome}
-        >
-          <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
-          <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
-            {t.navHome}
-          </Text>
-        </Pressable>
-        <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
-          {t.myContactsTitle}
-        </Text>
-        {/* Matches the control opposite, so the title is centred on the screen. */}
-        <View className="w-[88px] shrink-0" />
-      </View>
-
       <View className="gap-2.5 px-3 pb-2.5">
         {/* The search field, with the artboard's leading magnifier. `pl-9`
             leaves room for it; the icon is positioned rather than wrapped so the
@@ -336,7 +329,7 @@ function ContactsHeader({
           ))}
         </View>
       </View>
-    </View>
+    </TabHeader>
   )
 }
 

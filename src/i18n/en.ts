@@ -369,6 +369,8 @@ export const en: Strings = {
 
   /* «Мої контакти», from `Contacts.dc.html` — see the note in uk.ts. */
   myContactsTitle: 'My contacts',
+  // See the note in uk.ts.
+  contactsCountTemplate: '{shown} of {total}',
   contactsSearchPlaceholder: 'Search by name or role',
   contactsFilterAll: 'All',
   contactsGroupClients: 'Clients',

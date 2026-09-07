@@ -5938,3 +5938,78 @@ and appears on the first keystroke; the pill reaches «Публічний про
 «Мій профіль» control returns to the form; and the account email is absent from
 the public view, which is the one thing on that screen that must stay true
 (`ADR-003`, and `e3db32d` before it).
+
+## The four tab headers become one component (owner, 2026-09-07)
+
+Every artboard with a bottom bar opens with the same header, to the pixel:
+
+    padding:54px 0 0                       ← the safe area, which no drawing has
+    border-bottom:1px solid var(--border)
+    row: align-items:center; gap:6px; padding:4px 14px 8px
+      flex:1  → 16px/600 title
+              → 11.5px `--text-dim` meta line, margin-top:1px
+      flex:none → whatever that screen puts on the right
+
+Four screens had drifted apart from it while each was built against its own
+artboard. `src/components/TabHeader.tsx` is that block, and all four now render
+it — `Statistics.dc.html`'s was already the closest, so it moved wholesale and
+the others were measured against it.
+
+| Screen | What it had | What changed |
+|---|---|---|
+| Головна | Greeting at `text-numeric-xl` **bold** (22px), date at 13px, no hairline, 40pt bell and avatar, `pb-5` | 16/600 over an 11px line, hairline, both controls 36pt as every artboard draws them. The unread dot moves to the artboard's `top:5px right:5px` and is 8px, since it now sits on a smaller bell |
+| Календар | A back chevron, then title + meta | Chevron gone. **«Сьогодні» stays gone** (owner asked again on 2026-09-07; it went on 2026-09-05) |
+| Мої контакти | A «Головна» back control, a **centred** title, no meta line | Title left with the artboard's own `headerMeta` under it — «3 з 3», `visible` of `people` — and the search field and chips passed as the header's children, which is where `Contacts.dc.html` draws them (inside the same bordered container, so they hold still while the list scrolls) |
+| Статистика | Title + period line, `pb-2.5` | The shared component, `pb-2` |
+
+### And the home screen needed its top padding back
+
+«НАЙБЛИЖЧА ЗЙОМКА» ended up straight under the header's hairline (owner,
+2026-09-07). The screen had **no** top padding at all and had never needed one:
+the old header's `pb-5` was doing that work, and the shared one ends at the
+artboard's `pb-2`. So the gap moved to the content, where it belongs — `pt-3`,
+which is the artboard's own figure (its scroll container starts at
+`padding-top:112` against a header measuring ~100) and what the other three tabs
+already use. Measured after the change: 12pt from the hairline to the label, 36
+to the card.
+
+### Both back controls are gone, and the artboards are why
+
+The calendar's chevron and «Мої контакти»'s «Головна» were both kept on
+2026-09-04 **because the artboards then drew them** — the calendar's with no
+handler at all, so where it went was ours to pick. Neither artboard draws one
+now. They were the weakest reading of that drawing anyway: every one of the four
+is a tab root with nothing to pop, and the bar that reaches all four sits 46pt
+below. A control that navigates sideways to a tab one tap away is what went.
+
+### The greeting still carries no name
+
+`Home.dc.html` reads «Доброго дня, Дарино» and `t.greeting` is «Доброго дня»
+alone. Ukrainian puts the name in the **vocative** there — Дарина → Дарино,
+Олег → Олеже — which is a case this app cannot derive from a `name` column, and
+getting it wrong is worse than leaving it out. Unchanged by this pass, and a
+copy question rather than a header one. **The owner's call**: a name in the
+nominative («Доброго дня, Дарина») is what most apps do and is mildly wrong in
+Ukrainian; the alternative is the greeting as it stands.
+
+### Found while verifying: `public.contacts` has no GRANT
+
+Not caused here, and not fixed here. Every other table names its privileges in
+a migration — `20260825140000_grants.sql` for the original five,
+`20260829100000` for `clients`, `20260906120000` for `notifications`. The
+contacts table (`20260904100000_crew_contacts_directory.sql`) declares three RLS
+policies and **no grant at all**, and RLS cannot grant what the role does not
+have:
+
+    contacts | authenticated | REFERENCES,TRIGGER,TRUNCATE
+
+against `clients | authenticated | INSERT,REFERENCES,SELECT,TRIGGER,…`. So
+`listContacts()` fails with «permission denied for table contacts», the whole
+«Мої контакти» tab falls to its error state, and saving a contact cannot write.
+Measured in the local database; the same migration set is what `db push` sends,
+so the deployed project is in the same state unless somebody granted it by hand.
+
+One line — `grant select, insert, update on public.contacts to authenticated;` —
+in a new migration. Applied by hand to the local database to verify this
+change's header meta line, and deliberately **not** committed: it wants its own
+migration and its own commit.

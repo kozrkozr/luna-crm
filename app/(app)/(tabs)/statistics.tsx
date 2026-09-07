@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useFocusEffect } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import Camera from 'lucide-react-native/icons/camera'
 import ChartColumn from 'lucide-react-native/icons/chart-column'
@@ -15,6 +14,7 @@ import { Tabs, type TabItem } from '../../../src/components/ui/tabs'
 import { Text } from '../../../src/components/ui/text'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { Starfield } from '../../../src/components/Starfield'
+import { TabHeader } from '../../../src/components/TabHeader'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
 import type { Strings } from '../../../src/i18n'
 import { listShoots, type Shoot } from '../../../src/features/shoots/api'
@@ -82,7 +82,9 @@ export default function StatisticsScreen() {
   return (
     <View className="bg-background flex-1">
       <Starfield />
-      <StatisticsHeader line={line} />
+      {/* The shared tab header (2026-09-07). This screen's own was the block
+          the other three were measured against, so it moved wholesale. */}
+      <TabHeader title={t.statsTitle} meta={line} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <View className="gap-2.5 px-4 pt-3">
@@ -184,27 +186,6 @@ function periodLine(
   if (!stats.firstMonth) return ''
   const { year, month } = stats.firstMonth
   return `${t.statsSincePrefix} ${t.monthsGenitive[month - 1]} ${year}`
-}
-
-/**
- * The screen's own header — the title over the period line, as the artboard
- * draws it: 16/600 with an 11.5px dim line under it, and no back control.
- *
- * A sibling of the ScrollView rather than an absolute overlay, so the content
- * needs no offset of its own. `headerShown` is false for every tab.
- */
-function StatisticsHeader({ line }: { line: string }) {
-  const t = useStrings()
-  const insets = useSafeAreaInsets()
-
-  return (
-    <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
-      <View className="px-3.5 pb-2.5 pt-1">
-        <Text className="text-title-sm text-foreground font-semibold">{t.statsTitle}</Text>
-        {line ? <Text className="text-caption text-muted-foreground mt-px">{line}</Text> : null}
-      </View>
-    </View>
-  )
 }
 
 /**

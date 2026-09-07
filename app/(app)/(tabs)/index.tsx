@@ -17,6 +17,7 @@ import { Card } from '../../../src/components/ui/card'
 import { StatusPill } from '../../../src/components/StatusPill'
 import { Text } from '../../../src/components/ui/text'
 import { Avatar } from '../../../src/components/Avatar'
+import { TabHeader } from '../../../src/components/TabHeader'
 /*
  * A deep per-icon import, never the `lucide-react-native` barrel: Metro does
  * not tree-shake, so the barrel ships all ~2,000 icon components and doubled
@@ -289,7 +290,19 @@ export default function HomeScreen() {
             sits in that space instead of scrolling with the list, so the
             padding has to clear the button as well as the bar.
           */}
-          <View className="gap-3 px-4 pb-24">
+          {/*
+            `pt-3` (owner, 2026-09-07) — «НАЙБЛИЖЧА ЗЙОМКА» was sitting straight
+            under the header's hairline. This screen had no top padding at all,
+            and did not need one while the header carried `pb-5`; the shared
+            `TabHeader` ends at the artboard's own `pb-2`, so the gap the
+            greeting used to provide had to move here, where it belongs.
+
+            12 is the artboard's figure — its scroll container starts at
+            `padding-top:112` against a header that measures ~100 — and it is
+            what «Календар», «Мої контакти» and «Статистика» already use, so the
+            four tabs now begin at the same height as well as ending at one.
+          */}
+          <View className="gap-3 px-4 pb-24 pt-3">
             {/*
               `Home.dc.html`'s order, and it is a reversal: the next shoot comes
               FIRST and the two buttons sit under it. They used to lead the screen.
@@ -589,7 +602,6 @@ function HomeHeader({
   onOpenBell: () => void
 }) {
   const t = useStrings()
-  const insets = useSafeAreaInsets()
   const profile = useProfile()
   const name = profile.status === 'loaded' ? profile.profile.name : ''
   /*
@@ -621,25 +633,25 @@ function HomeHeader({
   }, [photoPath])
 
   return (
-    <View
-      /*
-        px-4, matching the content below. The mockup writes the header as
-        `padding: 0 6px` — but that sits inside `.phone`'s own 14px, landing at
-        20. This header is a sibling of the ScrollView, not nested in a padded
-        container, so 6px here would be 6px absolute and the greeting would sit
-        10px left of the buttons under it.
-      */
-      className="flex-row items-start justify-between px-4 pb-5"
-      style={{ paddingTop: insets.top + 10 }}
-    >
-      <View className="flex-1 pr-3">
-        <Text className="text-numeric-xl text-foreground font-bold">{t.greeting}</Text>
-        <Text className="text-body-sm text-muted-foreground mt-1 font-medium">
-          {todayLabel(new Date(), t.weekdaysFull, t.monthsGenitive)}
-        </Text>
-      </View>
+    /*
+      The shared `TabHeader` since 2026-09-07 (owner) — the greeting is this
+      screen's title and the date its meta line, which is exactly how
+      `Home.dc.html` draws them and had drifted furthest from it: the greeting
+      was `text-numeric-xl` and bold at 22px against the artboard's 16/600, the
+      date was 13px where the drawing says 11.5, there was no hairline under any
+      of it, and the two controls were 40pt rather than 36.
 
-      <View className="mt-0.5 flex-row items-center gap-2">
+      **The greeting still carries no name.** The artboard reads «Доброго дня,
+      Дарино» and `t.greeting` is «Доброго дня» alone — because Ukrainian puts
+      the name in the vocative there («Дарина» → «Дарино»), which is a case this
+      app cannot derive from a `name` column. Unchanged by this pass and logged
+      in docs/redesign-log.md; it is a copy question, not a header one.
+    */
+    <TabHeader
+      title={t.greeting}
+      meta={todayLabel(new Date(), t.weekdaysFull, t.monthsGenitive)}
+      right={
+      <View className="flex-row items-center gap-2">
         {/*
           The bell. Inert — see the note on this screen. The dot is drawn as the
           mockup draws it and reflects nothing.
@@ -666,7 +678,7 @@ function HomeHeader({
         */}
         {hasShoots ? (
         <Pressable
-          className="border-border h-10 w-10 shrink-0 items-center justify-center rounded-lg border active:bg-secondary"
+          className="border-border h-9 w-9 shrink-0 items-center justify-center rounded-lg border active:bg-secondary"
           onPress={() => {
             tapped()
             void onOpenBell()
@@ -698,7 +710,7 @@ function HomeHeader({
             nothing unread sees a plain bell.
           */}
           {unread > 0 ? (
-            <View className="border-background bg-accent-solid absolute right-[9px] top-[9px] h-[7px] w-[7px] rounded-full border-2" />
+            <View className="border-background bg-accent-solid absolute right-[5px] top-[5px] h-2 w-2 rounded-full border-2" />
           ) : null}
         </Pressable>
         ) : null}
@@ -713,22 +725,23 @@ function HomeHeader({
             accessibilityLabel={t.profileTitle}
           >
             {photoUri ? (
-              <Image source={{ uri: photoUri }} className="h-10 w-10 rounded-full" />
+              <Image source={{ uri: photoUri }} className="h-9 w-9 rounded-full" />
             ) : name ? (
               <Avatar
                 name={name}
-                size={40}
+                size={36}
                 emoji={
                   avatar?.kind === 'emoji' ? { char: avatar.emoji, tint: avatar.tint } : null
                 }
               />
             ) : (
-              <View className="bg-secondary h-10 w-10 rounded-full" />
+              <View className="bg-secondary h-9 w-9 rounded-full" />
             )}
           </Pressable>
         </Link>
       </View>
-    </View>
+      }
+    />
   )
 }
 

@@ -1,9 +1,7 @@
 import { useCallback, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link, Stack, useFocusEffect, useRouter } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
-import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import { Button } from '../../../src/components/ui/button'
 import { Icon } from '../../../src/components/ui/icon'
 import { Tabs } from '../../../src/components/ui/tabs'
@@ -27,6 +25,7 @@ import {
   type CalendarMode,
 } from '../../../src/components/ShootCalendar'
 import { Starfield } from '../../../src/components/Starfield'
+import { TabHeader } from '../../../src/components/TabHeader'
 
 type State =
   | { status: 'loading' }
@@ -347,62 +346,30 @@ export default function ShootListScreen() {
 }
 
 /**
- * The screen's own header: a back chevron, «Календар» with a meta line under
- * it, and «Сьогодні».
+ * The calendar's header — now the shared `TabHeader` (owner, 2026-09-07).
  *
- * **«Сьогодні» is gone** (owner, 2026-09-05). It was added on 2026-08-30 on the
- * reasoning that a screen whose whole subject is dates should be able to jump
- * back to the current one rather than only walk there with the arrows.
+ * Kept as a named wrapper rather than inlined, because the screen renders it in
+ * two branches and the meta line is the only thing that differs.
  *
- * That reasoning still describes what was lost: the arrows remain the only way
- * back to this month, so a reader who has paged to next March walks home. The
- * meta line beside the title still names where they are, which is what keeps
- * that navigable rather than disorienting. Worth reinstating if anyone reports
- * the walk; removed because the owner asked and the header reads calmer with
- * the title alone.
+ * ── Two controls this header has shed, and the reasoning for each ───────────
  *
- * **The chevron stays, now that this is a tab root** (owner, 2026-09-04).
- * `Calendar.dc.html` still draws it beside the bar that made it redundant — and
- * draws it with *no handler at all*, so where it goes was ours to decide: the
- * Головна tab, which is what the same artboard's Contacts sibling links its own
- * back control to. It is a second route to a tab that is already one tap away.
+ * **«Сьогодні» went on 2026-09-05** (owner) and stays gone (owner, 2026-09-07,
+ * asked again). It was added on 2026-08-30 so that a screen whose whole subject
+ * is dates could jump back to the current one rather than only walk there with
+ * the arrows — and that still describes what was lost: a reader who has paged
+ * to next March walks home. The meta line beside the title names where they
+ * are, which is what keeps that navigable rather than disorienting.
+ *
+ * **The back chevron went on 2026-09-07**, with «Мої контакти»'s «Головна» and
+ * for the same reason: `Calendar.dc.html` no longer draws one. It was kept on
+ * 2026-09-04 because the artboard then drew it — with no handler, so where it
+ * went was ours — and a sideways route to a tab already one tap away was the
+ * weakest reading of a drawing that has since changed its mind.
  */
 function CalendarHeader({ meta }: { meta: string }) {
   const t = useStrings()
-  const router = useRouter()
-  const insets = useSafeAreaInsets()
 
-  return (
-    <View
-      className="bg-background border-border flex-row items-center gap-1.5 border-b px-2.5 pb-2"
-      style={{ paddingTop: insets.top }}
-    >
-      <Pressable
-        className="active:bg-secondary h-10 w-10 items-center justify-center rounded-lg"
-        onPress={() => {
-          tapped()
-          /*
-            The Головна tab, always — not `router.back()`. A tab router keeps a
-            history of visited tabs, so `back()` from here would return to
-            whichever tab was last focused, and a chevron that lands somewhere
-            different each time is worse than one that always goes home.
-          */
-          router.navigate('/(app)/(tabs)')
-        }}
-        role="button"
-        accessibilityLabel={t.cancel}
-      >
-        <Icon as={ChevronLeft} size={22} strokeWidth={1.9} className="text-foreground" />
-      </Pressable>
-
-      <View className="min-w-0 flex-1">
-        <Text className="text-title-sm text-foreground font-semibold">{t.calendarTitle}</Text>
-        <Text className="text-caption text-muted-foreground mt-px" numberOfLines={1}>
-          {meta}
-        </Text>
-      </View>
-    </View>
-  )
+  return <TabHeader title={t.calendarTitle} meta={meta} />
 }
 
 /** Whether a date falls in the month, or the week, currently on screen. */

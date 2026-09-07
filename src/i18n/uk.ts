@@ -782,6 +782,12 @@ export const uk = {
    * reused rather than the app carrying two of them.
    */
   myContactsTitle: 'Мої контакти',
+  /*
+   * «9 з 9» — `Contacts.dc.html`'s `headerMeta`, which is `visible.length` of
+   * `people.length`. A template rather than two keys, because the word between
+   * the numbers is the part that translates.
+   */
+  contactsCountTemplate: '{shown} з {total}',
   contactsSearchPlaceholder: 'Пошук за імʼям або роллю',
   contactsFilterAll: 'Всі',
   contactsGroupClients: 'Клієнти',
