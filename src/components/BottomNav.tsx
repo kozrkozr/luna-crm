@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react-native'
  * not tree-shake and the barrel ships all ~2,000 icon components (S-2 F-5).
  */
 import Calendar from 'lucide-react-native/icons/calendar'
-import CircleUserRound from 'lucide-react-native/icons/circle-user-round'
+import ChartColumn from 'lucide-react-native/icons/chart-column'
 import House from 'lucide-react-native/icons/house'
 import Users from 'lucide-react-native/icons/users'
 import { Icon } from './ui/icon'
@@ -33,7 +33,7 @@ export function bottomNavHeight(insetBottom: number) {
 
 type NavItem = {
   /** The route inside `app/(app)/(tabs)/`. */
-  route: 'index' | 'shoots' | 'contacts' | 'profile'
+  route: 'index' | 'shoots' | 'contacts' | 'statistics'
   label: string
   icon: LucideIcon
 }
@@ -97,7 +97,19 @@ export function BottomNav({ state, navigation, insets }: BottomTabBarProps) {
       reads. See `src/features/contacts/directory.ts`.
     */
     { route: 'contacts', label: t.navContacts, icon: Users },
-    { route: 'profile', label: t.navProfile, icon: CircleUserRound },
+    /*
+      **«Статистика» took «Профіль»'s place** (owner, 2026-09-07). Both
+      artboards that draw a bar now show Головна · Календар · Контакти ·
+      Статистика: `Statistics.dc.html` marks the fourth item current, and
+      `Edit Profile.dc.html` draws the same four with none of them current —
+      the profile screen is no longer in its own bar.
+
+      `/profile` did not move and is not orphaned: the home header's avatar chip
+      links to it (`app/(app)/(tabs)/index.tsx`), which is where
+      `Home.dc.html` has always put it. It stays a `Tabs.Screen` so that URL,
+      `public/_redirects` and the theme playground's manifest are untouched.
+    */
+    { route: 'statistics', label: t.navStats, icon: ChartColumn },
   ]
 
   const activeRoute = state.routes[state.index]?.name

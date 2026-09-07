@@ -447,6 +447,40 @@ The English is a translation of that invented Ukrainian, which is the weaker hal
 - **Raised by:** implementing the owner's 2026-09-05 answer
 - **Blocks:** nothing; the dialog works. It wants the owner's words before v1.
 
+### 29. «Статистика» has no zero state
+
+`Statistics.dc.html` draws one account with figures in it and nothing else. An account with no
+finished shoots — a new one, or an existing one in a month where nothing has happened yet — is
+not drawn, and neither is the whole-account case.
+
+**What ships:** the cards stay and every figure reads 0 («0 ₴», «0 зйомок», «0»). The «Весь час»
+line is the one thing that cannot be zeroed — it dates itself from the earliest counted shoot —
+so with nothing counted the header shows the title alone. That is the quietest honest answer, not
+a designed one: the home screen's own third absence got a card and copy of its own (owner,
+2026-09-05), and this screen may deserve the same.
+
+- **Raised by:** `US-036`, building `Statistics.dc.html`
+- **Placeholder in code:** `app/(app)/(tabs)/statistics.tsx` — the figures render whatever
+  `statistics()` returns, zeros included.
+- **Blocks:** nothing. It is the first screen a new account would open.
+
+### 30. How «Годин на зйомках» should read a shoot that ends before it starts
+
+`US-030` AC-3 is unwritten (the spec's own open questions, item 14), so nothing forbids an end
+time at or before the start — and the time picker reaches one on purpose: «23:00 + one step is
+24:00», stored as `00:00` (`docs/redesign-log.md`, S-15).
+
+**What ships:** such a shoot is read as crossing midnight, so 23:00–00:00 counts one hour rather
+than none. The cost is at the other end of the same rule: a mistyped 09:00–08:00 counts 23 hours
+instead of being ignored, and nothing on the screen shows which shoots contributed.
+
+The alternative — ignore any non-positive range — loses the midnight case, which is the reachable
+one. Either way this is arithmetic standing in for a validation rule that does not exist.
+
+- **Raised by:** `US-036`
+- **Placeholder in code:** `shootMinutes` in `src/features/shoots/stats.ts`
+- **Blocks:** nothing. Answering `US-030` AC-3 removes the question entirely.
+
 ## Answered by re-reading the spec
 
 ### What tapping a reference does — answered by the owner, 2026-08-26

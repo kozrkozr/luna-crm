@@ -53,6 +53,11 @@ export default function TabsLayout() {
           for one commit, because `Contacts.dc.html` needed a decision the bar
           did not — see the screen. */}
       <Tabs.Screen name="contacts" />
+      {/* Live since 2026-09-07, and it took `profile`'s place in the bar —
+          see `BottomNav`. */}
+      <Tabs.Screen name="statistics" />
+      {/* Still a tab screen, no longer a tab BUTTON: `/profile` keeps its URL
+          and its state, and the home header's avatar chip is what opens it. */}
       <Tabs.Screen name="profile" />
     </Tabs>
   )

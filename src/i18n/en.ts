@@ -105,10 +105,12 @@ export const en: Strings = {
   // See the note in uk.ts.
   calendarTitle: 'Calendar',
 
-  // The bottom navigation's four labels. See the note in uk.ts.
+  // The bottom navigation's four labels. See the note in uk.ts — `navProfile`
+  // is no longer one of them, and is kept for the home header's avatar chip.
   navHome: 'Home',
   navCalendar: 'Calendar',
   navContacts: 'Contacts',
+  navStats: 'Statistics',
   navProfile: 'Profile',
 
   clientName: 'Client name',
@@ -563,5 +565,23 @@ export const en: Strings = {
   contactWillBeSaved:
     'The contact is saved — next time you can add them from your saved list.',
   saveAndAdd: 'Save and add',
+
+  // ── «Статистика» — see the notes in uk.ts ──
+  statsTitle: 'Statistics',
+  statsPeriodMonth: 'Month',
+  statsPeriodYear: 'Year',
+  statsPeriodAll: 'All time',
+  /*
+   * Empty on purpose, and trimmed away by `periodLine`: Ukrainian names the
+   * unit after the number («2026 рік») and English does not («2026»). The key
+   * is a language difference, not a missing string.
+   */
+  statsYearWord: '',
+  statsSincePrefix: 'Since',
+  statsIncome: 'Income',
+  statsShootsDone: 'Shoots completed',
+  statsAverage: 'Average shoot',
+  statsUnpaid: 'Awaiting payment',
+  statsHours: 'Hours on shoots',
 
 }

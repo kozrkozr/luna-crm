@@ -5791,3 +5791,88 @@ stack rather than of the code.
 A confirmation carries no reason — the link view does not collect one — and
 "a submitted response is final" means there is no earlier reason to clear: the
 WHERE clause only ever matches a `pending` row.
+
+## «Статистика» — a fourth tab, and the profile leaves the bar (owner, 2026-09-07)
+
+`Statistics.dc.html`, built as drawn. A new screen rather than a redesign of an
+existing one: nothing in `docs/product/` mentions statistics, and no story
+covers money at all — `src/features/shoots/api.ts` has said so since the payment
+columns arrived on 2026-09-05.
+
+**It is `US-036`, and the story does not exist yet.** Routed the way `US-035`
+(home) and `US-031` (the conflict marker) were: the story is written in the
+discovery repo, and this entry is the debt until it is. Rule 6 wants one ID per
+commit, and this is the ID the commit carries.
+
+### No schema change, which was not obvious before looking
+
+Every figure the artboard draws already had a column behind it:
+
+| Figure | Source |
+|---|---|
+| «Дохід» | `shoots.prepayment` (`20260905140000`) |
+| «Проведено зйомок» | a count, `finished` derived from `date` + `end_time` (`status.ts`) |
+| «Середній чек» | `income / shoots`, rounded — the artboard's own arithmetic |
+| «Очікує оплати» | `price − prepayment`, through `payment()` |
+| «Годин на зйомках» | `end_time − start_time` (`US-030`) |
+
+So there is no migration, no view and no aggregate query: `listShoots` on focus,
+and `src/features/shoots/stats.ts` reduces it. Soft-deleted shoots cannot reach
+it — the filter is in the RLS policy, not in a query that could forget it
+(`ADR-014`, rule 3).
+
+### The three things the artboard defines and the drawing does not
+
+Asked before a line was written, and answered by the owner on 2026-09-07:
+
+1. **«Дохід» is money RECEIVED** — the sum of `prepayment`, not of `price`. So
+   «Дохід» and «Очікує оплати» divide a shoot between them and never
+   double-count it.
+2. **Only FINISHED shoots count**, and the same set feeds all five figures, so
+   the two hero cards always describe the same shoots. **The cost:** a
+   prepayment already banked for next week's shoot appears in no figure until
+   that shoot happens.
+3. **The period is the current month or year**, with no way back to an earlier
+   one — the artboard draws no picker.
+
+### Needs the owner's answer
+
+| # | What the artboard does | Consequence as built |
+|---|---|---|
+| ST-1 | Draws a **dollar glyph** for «Середній чек» — its path is lucide's `dollar-sign`, in an app whose only currency is ₴ | Shipped as drawn. lucide has no hryvnia icon, so a ₴ would be a hand-drawn SVG like `instagram-icon.tsx` — one file if you want it |
+| ST-2 | Sets the two figures at **38px** | The type scale tops out at `display` (24px), so this is an arbitrary `text-[38px]`. A scale step for two figures on one screen is what `--border-strong` cost in tokens; say if it is worth one |
+| ST-3 | Draws the segmented control as `--surface-soft` on `--surface` | It is the app's shared `Tabs` instead — `bg-background` on `bg-secondary`, the same control as the auth screen, the shoot's tabs and the calendar's switcher. Consistency was chosen over the two tokens |
+| ST-4 | Has a **`showSecondary` toggle** in its mock props | A mockup switch, not a state: the three rows always render |
+| ST-5 | Draws **no zero state** | Zeros render in place, and the «Весь час» line disappears with nothing to date from. Logged as `docs/open-questions.md` #29 — the home screen's equivalent absence got a card and copy of its own |
+| ST-6 | Puts «Статистика» in the bar and **drops «Профіль»** — `Edit Profile.dc.html` draws the same four items with none of them current | Built as drawn. `/profile` keeps its URL, its state and its `Tabs.Screen`; the home header's avatar chip is what opens it, which is where `Home.dc.html` has always put it |
+
+### Also fixed here, because it hid the whole app on web
+
+`FormScrollView` called `Keyboard.metrics()` at first render, and
+react-native-web's `Keyboard` is a five-method stub with no such function — so
+the call threw and took the tree down with it. Every screen wrapped in that view
+rendered **blank** on web, the login form included, which takes the theme
+playground and every browser acceptance suite with it. Introduced with the view
+itself (`e97bc80`, 2026-09-05) and invisible on device, where the function
+exists.
+
+One guard, the same one its effect already had, one render earlier. Found by
+driving the new screen in a browser, which is the only reason it surfaced now.
+
+### Verification
+
+`stats.ts` is pure, and its arithmetic was checked against 21 assertions —
+period boundaries, finished-only counting, the midnight case, missing times, an
+empty account — plus the artboard's own three datasets, whose «Середній чек»
+values reproduce exactly (142 500 / 12 = 11 875; and the year and all-time
+figures likewise). **The check is not in the repo**: it ran through `jiti`,
+which arrives only as a transitive dependency, and there is still no unit
+runner here — `money.ts` has never had one either. The suites in
+`tests/acceptance/` are browser- and database-bound and none of them has run
+since the seeds went stale (see this file's header), so a new one there would
+not have run.
+
+The screen itself was driven in a real browser against a local Supabase: log in,
+switch all three periods, screenshot each. The figures matched a hand-computed
+scene in all three (2 shoots / 30 000 ₴ for the month, 4 / 78 000 for the year,
+5 / 118 000 and «З листопада 2025» for all time).

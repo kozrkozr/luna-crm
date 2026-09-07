@@ -145,14 +145,20 @@ export const uk = {
   /*
    * ── The bottom navigation's four labels, from `Home.dc.html` ──────────────
    *
-   * Their own keys, though `navCalendar` and `navProfile` read the same as
-   * `calendarTitle` and `profileTitle` today: a 10px tab label and a screen
+   * Their own keys, though `navCalendar` and `navStats` read the same as
+   * `calendarTitle` and `statsTitle` today: a 10px tab label and a screen
    * title are different copy slots — either can be shortened without the other
    * — and the bar's four words should come from one place, not two.
+   *
+   * **`navProfile` is no longer one of the four** (owner, 2026-09-07):
+   * `Statistics.dc.html` and `Edit Profile.dc.html` both draw «Статистика» in
+   * its place. The key stays because `/profile` is still a screen with a title,
+   * and the avatar chip in the home header is labelled with it.
    */
   navHome: 'Головна',
   navCalendar: 'Календар',
   navContacts: 'Контакти',
+  navStats: 'Статистика',
   navProfile: 'Профіль',
 
   clientName: "Ім'я клієнта",
@@ -1242,6 +1248,30 @@ export const uk = {
   contactWillBeSaved:
     'Контакт збережеться в системі — наступного разу додасте його зі списку збережених.',
   saveAndAdd: 'Зберегти й додати',
+
+  /*
+   * ── «Статистика» — `Statistics.dc.html` (owner, 2026-09-07) ───────────────
+   *
+   * Every string below is the artboard's own word, verbatim. Nothing here is
+   * translated or invented; the figures they label are defined in
+   * src/features/shoots/stats.ts.
+   *
+   * `statsYearWord` and `statsSincePrefix` exist because the two period lines
+   * are assembled from a number and a word — «2026 рік», «З березня 2023» — and
+   * a template string would have to be split for the month name anyway. See
+   * `periodLine` in the screen.
+   */
+  statsTitle: 'Статистика',
+  statsPeriodMonth: 'Місяць',
+  statsPeriodYear: 'Рік',
+  statsPeriodAll: 'Весь час',
+  statsYearWord: 'рік',
+  statsSincePrefix: 'З',
+  statsIncome: 'Дохід',
+  statsShootsDone: 'Проведено зйомок',
+  statsAverage: 'Середній чек',
+  statsUnpaid: 'Очікує оплати',
+  statsHours: 'Годин на зйомках',
 } as const
 
 export type CopyKey = keyof typeof uk

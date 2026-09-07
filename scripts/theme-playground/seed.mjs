@@ -481,6 +481,7 @@ const screens = [
   { group: 'app', title: 'Зйомка — порожня', url: `/shoot/${bare.id}` },
   { group: 'app', title: 'Нова зйомка', url: '/new-shoot' },
   { group: 'app', title: 'Клієнт', url: `/client/${marta.id}` },
+  { group: 'app', title: 'Статистика', url: '/statistics' },
   { group: 'app', title: 'Профіль', url: '/profile' },
   { group: 'app', title: 'Зміна пароля', url: '/password' },
   { group: 'auth', title: 'Вхід', url: '/login' },
