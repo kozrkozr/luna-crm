@@ -90,7 +90,17 @@ export function FormScrollView(props: React.ComponentProps<typeof ScrollView>) {
      "a bit further down" needs to know where we already are. */
   const offset = useRef(0)
   /** Where the keyboard's top edge is, or null when it is away. */
-  const keyboardTop = useRef<number | null>(Keyboard.metrics()?.screenY ?? null)
+  /*
+    `Keyboard.metrics` does not exist in react-native-web — its Keyboard is a
+    five-method stub (isVisible / addListener / dismiss / remove*) — so calling
+    it threw during the first render and took the whole tree down with it on
+    web. Every screen wrapped in this view was blank: the login form, and with
+    it the theme playground and every browser acceptance suite. The effect below
+    already returns early on web; this is the same guard, one render earlier.
+  */
+  const keyboardTop = useRef<number | null>(
+    Platform.OS === 'web' ? null : (Keyboard.metrics()?.screenY ?? null)
+  )
   /** The field waiting to be revealed. Cleared when the keyboard goes. */
   const pending = useRef<Measurable | null>(null)
   /**
