@@ -377,8 +377,19 @@ Not a defect in `US-009` — it works by email, which is what it was built and t
 gap between two stories that no story owns: adding a phone field at registration, or making the
 profile editable, would close it and neither exists.
 
+**Half of this is now closed — updated 2026-09-07.** The profile became editable
+(`20260831120000`) and `updateProfile` writes `phone`, so a number can be supplied after
+registration; migration `20260907120000` adds the `after update` trigger that makes supplying it
+actually match, which is what `ADR-015` said would happen and what nothing implemented. A crew
+member added by phone alone can now reach their schedule, in two steps.
+
+What remains open is the first step: **registration still does not ask for a phone**, so nobody
+is told that the number is what connects them, and `users.phone` stays null until someone opens
+their own profile and volunteers it. Adding the field to `US-001`'s form is a product decision,
+not a build one.
+
 - **Raised by:** spike `S-5`
-- **Blocks:** nothing; `US-009` ships without it. Related to `#4`.
+- **Blocks:** nothing; `US-009` ships without it. Related to `#4` and `#31`.
 
 ### 25. Copy for a crew shoot on the shoot list
 `US-009` needed a way to tell a shoot you were added to from one you created, on the same list.
@@ -480,6 +491,32 @@ one. Either way this is arithmetic standing in for a validation rule that does n
 - **Raised by:** `US-036`
 - **Placeholder in code:** `shootMinutes` in `src/features/shoots/stats.ts`
 - **Blocks:** nothing. Answering `US-030` AC-3 removes the question entirely.
+
+### 31. The crew-matching keys are self-declared, and matching crosses accounts
+
+`match_contact_to_user` (`20260827100000`) links a `CrewMember` row to a `User` by email or
+phone, and `my_crew_shoots()` then shows that account every shoot it is on **across every
+photographer**. Neither key is verified: `enable_confirmations = false` is a deliberate `US-001`
+AC-1 decision (registration must yield a session immediately), and `users.phone` has never been
+verified because `ADR-015` took no SMS provider.
+
+So an account that types an address or a number it does not own inherits that person's crew rows.
+What stands between it and a wrong match is S-5 F-2's exactly-one rule, which refuses when two
+accounts are candidates — that catches ambiguity, not impersonation.
+
+This is not introduced by any one change. It is the shape of the feature as specified, and it was
+already reachable through email at signup. Migration `20260907120000` widens it by one key and one
+moment, and is flagged here rather than narrowed on my own judgement: narrowing it would
+un-implement `ADR-015`'s stated consequence.
+
+Options, none of them chosen here: verify the phone (an SMS provider, which `ADR-015` rejected on
+cost); confirm the email (contradicts `US-001` AC-1 as currently written); or make the crew link's
+own token the claim — every crew member already has an unguessable per-person `AccessLink`, so
+registering from it would prove identity without either.
+
+- **Raised by:** building the `after update` half of the matching trigger, 2026-09-07
+- **Blocks:** nothing today. It decides how much `US-009` can be trusted once more than one
+  photographer uses the product.
 
 ## Answered by re-reading the spec
 
