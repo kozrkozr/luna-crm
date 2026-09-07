@@ -446,11 +446,32 @@ async function crewPayload(supabase: Supabase, shootId: string, viewer: MemberRo
 async function respond(
   supabase: Supabase,
   crewMemberId: string,
-  response: 'confirmed' | 'declined'
+  response: 'confirmed' | 'declined',
+  /**
+   * `US-008`'s optional «Причина — за бажанням», already trimmed and capped by
+   * the caller.
+   *
+   * **It was accepted and dropped until 2026-09-06.** The call site has passed
+   * it since `20260831180000` added the column and widened the grant to
+   * `(response, decline_reason)`, and this function took three parameters and
+   * wrote one — so the reason was parsed, bounded, handed over and thrown away,
+   * and the creator's screen has been reading a column nothing ever filled.
+   *
+   * Nothing caught it: a spare argument is a type error, and `tsconfig.json`
+   * excludes `supabase/functions` because this is Deno. `deno check` on this
+   * file is the thing that would have.
+   */
+  reason: string | null
 ) {
   const { data } = await supabase
     .from('crew_members')
-    .update({ response })
+    /*
+      The column is named only when declining. A confirmation carries no reason
+      — the link view does not collect one — and `US-008`'s "a submitted
+      response is final" means there can be no earlier reason to clear: the
+      WHERE below only ever matches a `pending` row.
+    */
+    .update(response === 'declined' ? { response, decline_reason: reason } : { response })
     .eq('id', crewMemberId)
     .is('removed_at', null)
     .eq('response', 'pending')

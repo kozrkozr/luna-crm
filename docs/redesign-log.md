@@ -5750,3 +5750,44 @@ Delivery of any kind — push, email, badge counts on the app icon. This is an
 in-app popover and a dot, which is what was asked for. `notifyNewConfirmations`
 on the profile screen is still the stub it has always been, and now sits next to
 a feature it does not control.
+
+## The decline reason was accepted and dropped (2026-09-06)
+
+`US-008` offers «Причина — за бажанням» when a crew member declines. The link
+view collects it, `respondToLink` sends it, the gateway parses it — trimmed and
+capped at 120 characters — and passes it to `respond()`.
+
+`respond()` took **three** parameters and wrote one column. The reason went
+nowhere, and the creator's screen has been reading a column nothing ever filled.
+
+Found while tracing whether a crew member's answer would reach the new
+notifications table. It has been broken since `20260831180000` added the column
+six days ago — that migration widened the grant to `(response, decline_reason)`
+specifically so this write could happen, and the write was never added.
+
+**Nothing could have caught it here.** A call with a spare argument is a type
+error, and `tsconfig.json` excludes `supabase/functions` because it is Deno.
+`deno check` on that file is the thing that would have; it cannot run in this
+checkout without a `deno install`, which is worth setting up.
+
+### Two test corrections
+
+**`us008-check.mjs` never asserted the reason lands.** It now declines *with*
+one and reads the column back. That assertion is the one that would have caught
+this, and it did not exist.
+
+**Its grant assertion was stale.** It expected `UPDATE:response` alone and has
+been failing since the same migration widened the grant. Now compared as a set,
+so the catalogue's ordering is not part of the claim. Baseline 19 → 20.
+
+Confirmed against a migrated schema in a rolled-back transaction: the statement
+`respond()` now issues stores both, and the grant reads
+`UPDATE:decline_reason,UPDATE:response`. The local database still reports one
+column, because it is twelve migrations behind — an artifact of the stale local
+stack rather than of the code.
+
+### The column is named only when declining
+
+A confirmation carries no reason — the link view does not collect one — and
+"a submitted response is final" means there is no earlier reason to clear: the
+WHERE clause only ever matches a `pending` row.

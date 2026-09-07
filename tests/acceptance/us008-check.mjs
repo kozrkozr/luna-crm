@@ -61,15 +61,35 @@ ok('a submitted response is final — changing it is refused', r.status===404 &&
 ok('...and it is still confirmed', (await responseOf(a))==='confirmed')
 
 // ---------- declining works too, and only for its own link ----------
-r=await post({token:tB,response:'declined'})
+/*
+  With a reason, because `US-008` offers one («Причина — за бажанням») and
+  nothing here ever checked that it lands.
+
+  It did not. `respond()` took three parameters and wrote one, so the reason was
+  parsed, trimmed, capped, passed and dropped — for six days, since
+  `20260831180000` added the column. Fixed 2026-09-06; this is the assertion
+  that would have caught it.
+*/
+const REASON='Вже зайнятий цього дня'
+r=await post({token:tB,response:'declined',reason:REASON})
 ok('declining works', r.body?.ok===true && r.body?.response==='declined')
+const reasonOf=(id)=>execSync(`docker exec supabase_db_luna-crm psql -U postgres -d postgres -t -A -c "select coalesce(decline_reason,'') from public.crew_members where id='${id}';"`).toString().trim()
+ok('AC-1 the optional reason is stored, not dropped', reasonOf(b)===REASON, JSON.stringify(reasonOf(b)))
 ok('one link answers only for its own person', (await responseOf(a))==='confirmed' && (await responseOf(b))==='declined')
 
 // ---------- the column-level grant ----------
 // Still psql: `information_schema.column_privileges` is catalogue metadata, not
 // something PostgREST or an RPC exposes.
 const admin=execSync(`docker exec supabase_db_luna-crm psql -U postgres -d postgres -t -A -c "select string_agg(privilege_type||':'||column_name,',') from information_schema.column_privileges where table_name='crew_members' and grantee='service_role' and privilege_type='UPDATE';"`).toString().trim()
-ok('the gateway can only ever write `response`', admin==='UPDATE:response', admin)
+/*
+  Two columns since `20260831180000`, which widened the grant to
+  `(response, decline_reason)` so a decline could carry its reason. This
+  asserted the single-column version and has been failing since — a stale
+  expectation, not a lost privilege. Compared as a SET, so the catalogue's
+  ordering is not part of the claim.
+*/
+ok('the gateway can only ever write `response` and `decline_reason`',
+   admin.split(',').sort().join(',')==='UPDATE:decline_reason,UPDATE:response', admin)
 
 // ---------- the creator sees it (AC-1's second half) ----------
 const {data:asCreator}=await db.from('crew_members').select('name, response').eq('shoot_id',sid).order('created_at')
