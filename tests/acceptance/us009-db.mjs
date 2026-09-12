@@ -13,6 +13,18 @@ import { ok } from './cdp.mjs'
 const anon = () => createClient(process.env.SB_URL, process.env.SB_ANON, { auth: { persistSession: false } })
 const stamp = Date.now()
 
+/**
+ * Phone numbers, derived from `stamp` like the email addresses are.
+ *
+ * The local database is not reset between runs and nothing here cleans up, so a
+ * hardcoded number gains another holder on every run — and the S-5 F-2
+ * exactly-one rule then refuses to match it, correctly, turning a green suite
+ * red on its second execution. `tail` keeps them UA-mobile shaped so
+ * `normalise_phone` recognises them: `0XXXXXXXXX`, ten digits.
+ */
+const tail = String(stamp).slice(-7)
+const ua = (prefix) => `0${prefix}${tail}`
+
 /** A signed-in client for a fresh account. */
 const account = async (tag, email = `us009-${tag}-${stamp}@example.com`, role = 'Візажист') => {
   const client = anon()
@@ -67,7 +79,7 @@ ok('AC-1 someone added after registering is matched on insert', added.user_id ==
 
 // ---------- S-5 F-2: no guessing ----------
 const stranger = (await photoA.client.from('crew_members')
-  .insert({ shoot_id: shootC, name: 'Чужий', role: 'Гафер', phone: '+380501110000' }).select('user_id').single()).data
+  .insert({ shoot_id: shootC, name: 'Чужий', role: 'Гафер', phone: ua('93') }).select('user_id').single()).data
 ok('a contact with no account stays unmatched', stranger.user_id === null, JSON.stringify(stranger))
 const junk = (await photoA.client.from('crew_members')
   .insert({ shoot_id: shootC, name: 'Текст', role: 'Гафер', phone: 'спитати у Наталії' }).select('user_id').single()).data
@@ -117,7 +129,7 @@ ok('a creator added to their own crew does not see their own shoot as a commitme
 // as crew by phone number only must also enter that phone on their profile
 // before the match can fire". Entering it did nothing until the update trigger
 // existed — `users_match_crew_members` was `after insert` alone.
-const latePhone = '+380671234567'
+const latePhone = ua('67')
 const shootD = await shootFor(photoA, 'Клієнт Г')
 await photoA.client.from('crew_members')
   .insert({ shoot_id: shootD, name: 'Ігор', role: 'Гафер', phone: latePhone })
@@ -135,13 +147,13 @@ ok('and the shoot reaches their schedule',
 
 // Additive only. Revoking a crew member is `removed_at` and the photographer's
 // decision (ADR-014, US-022), not a side effect of someone editing a profile.
-await late.client.from('users').update({ phone: '+380670000009' }).eq('id', late.id)
+await late.client.from('users').update({ phone: ua('63') }).eq('id', late.id)
 ok('changing the key away does not unmatch',
    (await lateRow()).user_id === late.id, JSON.stringify(await lateRow()))
 
 // S-5 F-2 still decides on this path too: two accounts carrying the same phone
 // are two candidates, and two candidates is no match.
-const shared = '+380509998877'
+const shared = ua('66')
 const twinA = await account('twina')
 const twinB = await account('twinb')
 await twinA.client.from('users').update({ phone: shared }).eq('id', twinA.id)
@@ -150,7 +162,7 @@ const shootE = await shootFor(photoA, 'Клієнт Д')
 await photoA.client.from('crew_members')
   .insert({ shoot_id: shootE, name: 'Двійник', role: 'Гафер', phone: shared })
 // Away and back, because the trigger's WHEN ignores a write that changes nothing.
-await twinB.client.from('users').update({ phone: '+380670000008' }).eq('id', twinB.id)
+await twinB.client.from('users').update({ phone: ua('68') }).eq('id', twinB.id)
 await twinB.client.from('users').update({ phone: shared }).eq('id', twinB.id)
 ok('S-5 F-2 two accounts on one phone stay two candidates, so the row keeps no match',
    (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootE).single()).data.user_id === null)
