@@ -15,6 +15,17 @@ export type RegistrationInput = {
   socialHandle?: string
   /** `20260831100000` — a second handle beside `socialHandle` (Instagram). */
   telegram?: string
+  /**
+   * Optional, and not really a profile field at all — it is the second
+   * crew-matching key (`match_contact_to_user`, migration `20260827100000`).
+   *
+   * `ADR-015` made the phone optional on the account and required on the
+   * add-crew form for exactly this reason: someone added by phone alone has no
+   * other way to be recognised. Nothing collected it here until 2026-09-07, so
+   * `users.phone` was null at the only moment the signup trigger looks and the
+   * match could only ever fire on email (`docs/open-questions.md` #24).
+   */
+  phone?: string
 }
 
 export type RegistrationFailure = 'weakPassword' | 'emailTaken' | 'failed'
@@ -45,6 +56,10 @@ export async function register(input: RegistrationInput): Promise<RegistrationRe
         role: input.role,
         social_handle: input.socialHandle?.trim() || null,
         telegram: input.telegram?.trim() || null,
+        // Stored as typed. `normalise_phone` is applied at COMPARISON time on
+        // both sides, so the column keeps whatever format the person uses —
+        // the same rule `updateProfile` follows on this column.
+        phone: input.phone?.trim() || null,
       },
     },
   })

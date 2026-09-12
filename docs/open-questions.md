@@ -383,13 +383,21 @@ registration; migration `20260907120000` adds the `after update` trigger that ma
 actually match, which is what `ADR-015` said would happen and what nothing implemented. A crew
 member added by phone alone can now reach their schedule, in two steps.
 
-What remains open is the first step: **registration still does not ask for a phone**, so nobody
-is told that the number is what connects them, and `users.phone` stays null until someone opens
-their own profile and volunteers it. Adding the field to `US-001`'s form is a product decision,
-not a build one.
+**Closed — 2026-09-07.** The owner asked for the field, and registration now collects an
+optional phone: `«Телефон — необовʼязково»` between the email and the password, where the profile
+puts it, validated against the same nine-digit floor `normalise_phone` uses. `users.phone` is
+therefore populated at the one moment the signup trigger looks, and a crew member added by phone
+alone is matched on signup with nothing else to do. `US-001` has no AC for this and wants
+amending in the discovery repo, as does `Auth.dc.html`, which does not draw the field.
+
+**What is still invented copy: nothing says what the number is for.** The label and placeholder
+are the confirmed strings the profile already uses, and there is no hint under the field — so a
+reader is asked for a phone with no reason given, and the one reason that exists (it is how a
+photographer's invitation finds your account) is exactly the sort of sentence nobody has written.
+Left blank rather than filled in by me.
 
 - **Raised by:** spike `S-5`
-- **Blocks:** nothing; `US-009` ships without it. Related to `#4` and `#31`.
+- **Blocks:** nothing. Related to `#4` and `#31`.
 
 ### 25. Copy for a crew shoot on the shoot list
 `US-009` needed a way to tell a shoot you were added to from one you created, on the same list.

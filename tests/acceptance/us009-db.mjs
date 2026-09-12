@@ -26,10 +26,10 @@ const tail = String(stamp).slice(-7)
 const ua = (prefix) => `0${prefix}${tail}`
 
 /** A signed-in client for a fresh account. */
-const account = async (tag, email = `us009-${tag}-${stamp}@example.com`, role = 'Візажист') => {
+const account = async (tag, email = `us009-${tag}-${stamp}@example.com`, role = 'Візажист', phone = null) => {
   const client = anon()
   const { data, error } = await client.auth.signUp({
-    email, password: 'testpass123', options: { data: { name: tag, role } },
+    email, password: 'testpass123', options: { data: { name: tag, role, ...(phone ? { phone } : {}) } },
   })
   if (error) throw error
   await client.auth.signInWithPassword({ email, password: 'testpass123' })
@@ -166,5 +166,25 @@ await twinB.client.from('users').update({ phone: ua('68') }).eq('id', twinB.id)
 await twinB.client.from('users').update({ phone: shared }).eq('id', twinB.id)
 ok('S-5 F-2 two accounts on one phone stay two candidates, so the row keeps no match',
    (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootE).single()).data.user_id === null)
+
+// ---------- a phone given AT registration ----------
+//
+// The form collects one since 2026-09-07, so `users.phone` is no longer null at
+// the moment the signup trigger looks and the match fires without the profile
+// being opened at all.
+const signupPhone = ua('50')
+const shootF = await shootFor(photoA, 'Клієнт Е')
+await photoA.client.from('crew_members')
+  .insert({ shoot_id: shootF, name: 'Леся', role: 'Стиліст', phone: signupPhone })
+// Typed the way a person would, not the way the photographer stored it —
+// `normalise_phone` is what makes the two the same number.
+const withPhone = await account(
+  'withphone', undefined, 'Стиліст',
+  `+380 50 ${tail.slice(0, 3)} ${tail.slice(3, 5)} ${tail.slice(5)}`
+)
+ok('a phone given at registration matches on signup, with no profile edit',
+   (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootF).single()).data.user_id === withPhone.id)
+ok('and that shoot is on their schedule immediately',
+   ((await withPhone.client.rpc('my_crew_shoots')).data ?? []).some((r) => r.shoot_id === shootF))
 
 process.exit(0)

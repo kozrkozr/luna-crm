@@ -385,6 +385,7 @@ function RegisterForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [phone, setPhone] = useState('')
   const [role, setRole] = useState<string | null>(null)
   const [customRole, setCustomRole] = useState('')
   const [instagram, setInstagram] = useState('')
@@ -394,6 +395,7 @@ function RegisterForm() {
     name?: string
     email?: string
     password?: string
+    phone?: string
     role?: string
     terms?: string
   }>({})
@@ -410,6 +412,10 @@ function RegisterForm() {
     else if (!EMAIL_PATTERN.test(email.trim())) next.email = uk.emailFormat
     if (!password) next.password = uk.passwordInvent
     else if (password.length < MIN_PASSWORD_LENGTH) next.password = withMinLength(uk.passwordTooShortTemplate)
+    // Optional, but a number that is present should look like one — the same
+    // 9-digit floor `normalise_phone` uses, and the same check the profile
+    // already makes on this column.
+    if (phone.trim() && phone.replace(/\D/g, '').length < 9) next.phone = uk.phoneFormatInvalid
     // AC-2 — registration is blocked without a role, and «Інша роль» is not a
     // role until it has been filled in.
     if (!role) next.role = uk.roleRequired
@@ -438,6 +444,7 @@ function RegisterForm() {
       role: resolvedRole,
       socialHandle: instagram,
       telegram,
+      phone,
     })
     setSubmitting(false)
 
@@ -487,6 +494,44 @@ function RegisterForm() {
           placeholder="your@mail.com"
         />
         <FieldError message={errors.email ?? null} />
+      </View>
+
+      <View className="gap-2">
+        {/*
+          **Optional, and the only field here that is not for its owner to read
+          back.** `users.phone` is the second crew-matching key
+          (`match_contact_to_user`, migration `20260827100000`): a photographer
+          who adds someone by phone alone has no other way to reach their
+          account, and `ADR-015` accepted that cost on the explicit condition
+          that the person could supply the number themselves.
+
+          They could not. Nothing on this screen collected it, so `users.phone`
+          was null at the one moment the signup trigger looks, and the match
+          fired on email or not at all (`docs/open-questions.md` #24).
+
+          Sits where the profile puts it — after the email, before the password
+          — so the two screens read in the same order. `Auth.dc.html` does not
+          draw it; owner's request, 2026-09-07.
+        */}
+        <Label htmlFor="phone">
+          {uk.phone}
+          <Text className="text-label text-muted-foreground font-normal">
+            {` ${uk.optionalSuffix}`}
+          </Text>
+        </Label>
+        <Input
+          id="phone"
+          value={phone}
+          onChangeText={(value) => {
+            setPhone(value)
+            setErrors((e) => ({ ...e, phone: undefined }))
+          }}
+          autoCapitalize="none"
+          autoComplete="tel"
+          keyboardType="phone-pad"
+          placeholder={uk.phonePlaceholder}
+        />
+        <FieldError message={errors.phone ?? null} />
       </View>
 
       <View className="gap-2">
