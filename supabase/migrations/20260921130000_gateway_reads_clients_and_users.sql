@@ -1,0 +1,43 @@
+-- The link gateway can read the two tables it has been selecting from since
+-- August. It could not, on any database built from these migrations.
+--
+-- ── What was broken ────────────────────────────────────────────────────────
+--
+-- `20260826180000` gave `service_role` SELECT on the four tables the gateway
+-- read at the time. Two more arrived afterwards and neither grant followed:
+--
+--   * `users` — `organizer()` has selected from it since 2026-08-31, so that a
+--     call sheet names the person who sent it.
+--   * `clients` — `ADR-018` (`20260829100000`) moved the client off `shoots`
+--     into its own table, and both payloads embed `clients(name, instagram)`.
+--
+-- New entities in `public` are not auto-exposed to the Data API roles (see
+-- `auto_expose_new_tables` in config.toml, and note the field is removed on
+-- 2026-10-30), so the grant has to be written. Without it PostgREST answers
+-- «permission denied for table clients», `crewPayload` sees no shoot row and
+-- returns `{ ok: false }` — which the link views render as «Це посилання більше
+-- не діє». Every crew link and every client link, on a fresh database.
+--
+-- It has been invisible on the hosted dev project, which predates that default
+-- and still auto-exposes. It would not have survived the first deploy to a new
+-- one, and it does not survive `supabase db reset` today.
+--
+-- ── Column-level, for the reason `20260826190000` gives ────────────────────
+--
+-- The gateway is the one component reachable by anyone holding a URL. Naming
+-- the columns means a bug in it — or a way of reaching it nobody intended —
+-- still cannot read what it was never meant to:
+--
+--   * **`users.email` is not here.** It is the login credential and the
+--     crew-matching key (`20260827100000`), and `organizer()` deliberately
+--     never sends it. This makes that a property of the grant rather than of
+--     the function's SELECT list.
+--   * `clients.notes` is not here either. `ADR-018` gives the photographer
+--     between-shoots notes about a client; no audience on a link is owed them,
+--     and `clientPayload` has never asked for them.
+--
+-- `id` is needed on both: the gateway filters `users` by it, and PostgREST
+-- resolves the `clients` embed through `shoots.client_id` → `clients.id`.
+grant select (id, name, instagram) on public.clients to service_role;
+grant select (id, name, role, phone, social_handle, telegram, avatar_emoji, avatar_tint)
+  on public.users to service_role;
