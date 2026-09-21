@@ -5,6 +5,10 @@
  * client here on purpose — `anon` is granted nothing on any table (the grants
  * migration), and the crew/client field split cannot be enforced in a browser
  * (ADR-013). The gateway answers, and this just carries the answer.
+ *
+ * `crewView.ts` is the signed-in half of the same conversation (`US-009`): same
+ * function, same payload, a session instead of a token. It lives next door
+ * rather than here precisely so this module keeps having no account in it.
  */
 /** A reference as the anonymous surface sees it: a usable URL, never a path. */
 export type LinkReference = {
@@ -228,7 +232,7 @@ export async function resolveLink(token: string): Promise<LinkPayload | null> {
  * seam. Building each branch separately means the client's `shoot` is
  * constructed without the field rather than trusting a spread to omit it.
  */
-function absolutise(payload: LinkPayload, base: string): LinkPayload {
+export function absolutise(payload: LinkPayload, base: string): LinkPayload {
   const origin = base.replace(/\/+$/, '')
   const join = (url: string | null) => (url && url.startsWith('/') ? `${origin}${url}` : url)
   const references = payload.references.map((reference) => ({

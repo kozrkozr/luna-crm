@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, View } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
-import { Text } from '../../../../src/components/ui/text'
-import { Card } from '../../../../src/components/ui/card'
-import { HandleRow } from '../../../../src/components/HandleRow'
-import { InstagramIcon } from '../../../../src/components/ui/instagram-icon'
-import { ImageViewer } from '../../../../src/components/ImageViewer'
-import { roleWithEmoji, uk } from '../../../../src/i18n/uk'
+import { Text } from '../../components/ui/text'
+import { Card } from '../../components/ui/card'
+import { HandleRow } from '../../components/HandleRow'
+import { InstagramIcon } from '../../components/ui/instagram-icon'
+import { ImageViewer } from '../../components/ImageViewer'
+import { roleWithEmoji } from '../../i18n/uk'
+import { useStrings } from '../../i18n/LanguageProvider'
 import {
   resolveLink,
   type LinkClientCrewMember,
   type LinkCrewMember,
-} from '../../../../src/features/links/gateway'
-import { Starfield } from '../../../../src/components/Starfield'
-import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
-import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
+} from './gateway'
+import { resolveCrewShoot } from './crewView'
+import { Starfield } from '../../components/Starfield'
+import { openExternalUrl } from '../../lib/openExternalUrl'
+import { handleLabel, handleUrl } from '../../lib/socialHandle'
 
 /**
  * One person's record, read through a link — the same URL for two audiences.
@@ -35,11 +36,18 @@ import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
  * no `note` property to reference, so `US-026` AC-1 is a compile error to break
  * rather than a rule to remember.
  *
- * The person is found in the payload the token already resolves to, never
+ * The person is found in the payload the reader already resolves to, never
  * fetched by id. A reader can therefore only see people on their own shoot: an
  * id from another shoot simply is not in the list. That covers `US-023` AC-2
  * and `US-026` AC-2 together — an invalid link resolves to nothing, so there is
  * no list to find anyone in.
+ *
+ * **Two entrances, same rule** (`US-009`, owner 2026-09-21). `token` is the
+ * anonymous link; `shootId` is a registered crew member reading a peer from
+ * their own schedule. Exactly one is set, and the payload each resolves to is
+ * the gateway's — so "only people on your own shoot" holds for the signed-in
+ * reader for exactly the reason it holds for the anonymous one, and `US-026`'s
+ * client branch stays reachable only through a token.
  */
 type Resolution =
   | { phase: 'resolving' }
@@ -47,18 +55,27 @@ type Resolution =
   | { phase: 'ready'; audience: 'crew'; member: LinkCrewMember }
   | { phase: 'ready'; audience: 'client'; member: LinkClientCrewMember }
 
-export default function CrewMemberDetailScreen() {
-  const { token, crewId } = useLocalSearchParams<{ token?: string; crewId?: string }>()
+export function CrewMemberView({
+  token,
+  shootId,
+  crewId,
+}: {
+  token?: string
+  shootId?: string
+  crewId?: string
+}) {
+  const t = useStrings()
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
   const [viewingImage, setViewingImage] = useState<string | null>(null)
 
   useEffect(() => {
     // S-2 F-2 — nothing is reported invalid until a resolution has been
     // ATTEMPTED, on every route of this surface.
-    if (token === undefined || crewId === undefined) return
+    if ((token === undefined && shootId === undefined) || crewId === undefined) return
     let cancelled = false
     void (async () => {
-      const payload = await resolveLink(token)
+      const payload =
+        token !== undefined ? await resolveLink(token) : await resolveCrewShoot(shootId!)
       if (cancelled) return
       if (!payload) {
         setResolution({ phase: 'invalid' })
@@ -78,7 +95,7 @@ export default function CrewMemberDetailScreen() {
     return () => {
       cancelled = true
     }
-  }, [token, crewId])
+  }, [token, shootId, crewId])
 
   if (resolution.phase === 'resolving') {
     return (
@@ -95,10 +112,10 @@ export default function CrewMemberDetailScreen() {
         <Starfield />
         <Text className="text-5xl">⚠️</Text>
         <Text className="text-title text-foreground text-center font-semibold">
-          {uk.linkInvalidTitle}
+          {t.linkInvalidTitle}
         </Text>
         <Text className="text-body-sm text-muted-foreground text-center" style={{ maxWidth: 280 }}>
-          {uk.linkInvalidSub}
+          {t.linkInvalidSub}
         </Text>
       </View>
     )
@@ -111,18 +128,28 @@ export default function CrewMemberDetailScreen() {
       <Starfield />
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View className="gap-3 p-4">
-          {/* One title for both audiences, as in the prototype: the client is not
-              told they are seeing a reduced version of the record. */}
-          <Text className="text-title text-foreground font-semibold">{uk.peerDetailsTitle}</Text>
+          {/*
+            One title for both audiences, as in the prototype: the client is not
+            told they are seeing a reduced version of the record.
+
+            **The link surface only.** In the app this screen is pushed onto a
+            navigator whose header already carries «Деталі учасника» — it is
+            what the back chevron sits in — so drawing it again put the same
+            words on screen twice. The link surface has no navigator and no way
+            back, which is why the heading has to live here for that reader.
+          */}
+          {token !== undefined ? (
+            <Text className="text-title text-foreground font-semibold">{t.peerDetailsTitle}</Text>
+          ) : null}
 
           {/* The creator's add-crew form, read back — US-023 AC-1's "same layout". */}
           {/* A Card supplies text-card-foreground itself — the explicit provider
               was the stopgap that kept this from going white-on-white when
               --foreground inverted (ADR-017). */}
           <Card variant="block" className="gap-1">
-              <Field label={uk.crewName} value={member.name} strong />
-              <Field label={uk.crewRole} value={roleWithEmoji(member.role)} />
-              <Field label={uk.crewContact} value={member.contact} />
+              <Field label={t.crewName} value={member.name} strong />
+              <Field label={t.crewRole} value={roleWithEmoji(member.role)} />
+              <Field label={t.crewContact} value={member.contact} />
               {/*
                 Telegram, on both audiences since 2026-09-05 (owner). The column
                 has existed since `20260831140000` and the add-crew form has
@@ -133,7 +160,7 @@ export default function CrewMemberDetailScreen() {
                 already knew how to build a `t.me` link for the contact screens.
               */}
               <Field
-                label={uk.telegramLabel}
+                label={t.telegramLabel}
                 value={handleLabel('telegram', member.telegram)}
                 url={handleUrl('telegram', member.telegram)}
               />
@@ -163,7 +190,7 @@ export default function CrewMemberDetailScreen() {
               {member.instagram ? (
                 <HandleRow
                   icon={InstagramIcon}
-                  label={uk.instagramLabel}
+                  label={t.instagramLabel}
                   value={handleLabel('instagram', member.instagram)}
                   url={handleUrl('instagram', member.instagram)}
                   className="-mx-3.5 mt-1 px-3.5"
@@ -174,13 +201,13 @@ export default function CrewMemberDetailScreen() {
                   difference, and it is an absence rather than a blank. */}
               {resolution.audience === 'crew' ? (
                 <>
-                  <Field label={uk.crewNotes} value={resolution.member.note} />
+                  <Field label={t.crewNotes} value={resolution.member.note} />
                   {resolution.member.noteImageUrl ? (
                     <Pressable
                       className="bg-muted mt-2 h-40 w-full overflow-hidden rounded-xl active:opacity-70"
                       onPress={() => setViewingImage(resolution.member.noteImageUrl)}
                       role="button"
-                      accessibilityLabel={uk.crewNotes}
+                      accessibilityLabel={t.crewNotes}
                     >
                       <Image
                         source={{ uri: resolution.member.noteImageUrl }}

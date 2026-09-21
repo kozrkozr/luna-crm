@@ -54,7 +54,10 @@ const cA = (await photoA.client.from('crew_members').insert({ shoot_id: shootA, 
 const cB = (await photoB.client.from('crew_members').insert({ shoot_id: shootB, name: 'Оксана', role: 'Візажист', email: crewEmail }).select('id').single()).data
 const tokenA = newToken()
 await photoA.client.from('access_links').insert({ token: tokenA, shoot_id: shootA, audience: 'crew', crew_member_id: cA.id })
-// shootB deliberately gets NO link, to exercise the inert row.
+// shootB deliberately gets NO link. Until 2026-09-21 that made its row inert —
+// the photographer's «копіювати посилання» tap was a precondition for opening
+// a shoot from your own schedule. It is not any more, and the assertions near
+// the end of this file are what says so.
 
 // AC-2, before there is an account: the link still works, and that is all they have.
 const B = await openBrowser({ port: 9566, width: 390, height: 1400 })
@@ -102,21 +105,31 @@ ok('AC-4 tapping a date filters to that commitment',
    body.replace(/\n/g, ' | ').slice(-120))
 await B.tapByText('Всі зйомки')
 
-// A row with a link opens the reader's own link view.
+// Tapping a row opens the shoot IN THE APP — `/(app)/crew/{shootId}`, which
+// resolves through the gateway on the reader's own session. Expo Router strips
+// the group, so the path on the web is `/crew/…`.
 const opened = await B.tap(`[...document.querySelectorAll('a[role=link]')].find(e=>e.innerText.includes('Студія Луна'))`)
-ok('a row with a link opens their own link view', opened && (await ev('location.pathname')).startsWith('/s/'),
+ok('a crew row opens the shoot inside the app', opened && (await ev('location.pathname')).startsWith('/crew/'),
    await ev('location.pathname'))
 body = await ev('document.body.innerText')
-ok('and that view is the crew one they already had', body.includes('Оксана') && body.includes('Візажист'),
+ok('and it is the crew view — the same one their link gives them',
+   body.includes('Оксана') && body.includes('Візажист'),
    body.replace(/\n/g, ' | ').slice(0, 110))
+ok('US-007 a crew member is still not shown the client',
+   !body.includes('Клієнт А'), body.replace(/\n/g, ' | ').slice(0, 110))
+ok('US-008 and they can answer, which needed a shared link before',
+   body.includes('Підтверджую'), body.replace(/\n/g, ' | ').slice(-110))
 
-// A row with no link yet is inert rather than broken.
+// The shoot NO link was ever created for opens just the same. This is the
+// case the whole change exists for.
 await B.navigate(`${APP}/`)
-const inert = await ev(`(()=>{
-  const r=[...document.querySelectorAll('a[role=link]')].find(e=>e.innerText.includes('Лофт на Подолі'));
-  return r ? 'linked' : 'inert';
-})()`)
-ok('a shoot with no link yet is inert, not a broken link', inert === 'inert', inert)
+const second = await B.tap(`[...document.querySelectorAll('a[role=link]')].find(e=>e.innerText.includes('Лофт на Подолі'))`)
+ok('a shoot the photographer never shared a link for opens too',
+   second && (await ev('location.pathname')).startsWith('/crew/'), await ev('location.pathname'))
+body = await ev('document.body.innerText')
+ok('and it resolves to that shoot, not to «посилання більше не діє»',
+   body.includes('Лофт на Подолі') && !body.includes('більше не діє'),
+   body.replace(/\n/g, ' | ').slice(0, 110))
 
 // ---------- a photographer's own screen is unchanged ----------
 await B.tapByText('Вийти')

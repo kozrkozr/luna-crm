@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
-import { Link, useLocalSearchParams } from 'expo-router'
+import { Link } from 'expo-router'
 import * as Clipboard from 'expo-clipboard'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import CalendarIcon from 'lucide-react-native/icons/calendar'
@@ -8,35 +8,37 @@ import Check from 'lucide-react-native/icons/check'
 import Copy from 'lucide-react-native/icons/copy'
 import Lock from 'lucide-react-native/icons/lock'
 import X from 'lucide-react-native/icons/x'
-import { Avatar } from '../../../src/components/Avatar'
-import { Badge } from '../../../src/components/ui/badge'
-import { Button } from '../../../src/components/ui/button'
-import { Card } from '../../../src/components/ui/card'
-import { HandleRow } from '../../../src/components/HandleRow'
-import { LinkifiedText } from '../../../src/components/LinkifiedText'
-import { Icon } from '../../../src/components/ui/icon'
-import { Sheet } from '../../../src/components/ui/sheet'
-import { Text } from '../../../src/components/ui/text'
-import { Toast } from '../../../src/components/Toast'
-import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
-import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
-import { handleLabel, handleUrl } from '../../../src/lib/socialHandle'
-import { isAvatarTint } from '../../../src/features/auth/avatar'
-import { ResponsePill } from '../../../src/components/ResponsePill'
-import { SectionLabel } from '../../../src/components/ShootFormFields'
-import { roleWithEmoji, uk } from '../../../src/i18n/uk'
-import { openExternalUrl } from '../../../src/lib/openExternalUrl'
+import { Avatar } from '../../components/Avatar'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
+import { Card } from '../../components/ui/card'
+import { HandleRow } from '../../components/HandleRow'
+import { LinkifiedText } from '../../components/LinkifiedText'
+import { Icon } from '../../components/ui/icon'
+import { Sheet } from '../../components/ui/sheet'
+import { Text } from '../../components/ui/text'
+import { Toast } from '../../components/Toast'
+import { LinkReferenceGrid } from '../../components/LinkReferenceGrid'
+import { InstagramIcon } from '../../components/ui/instagram-icon'
+import { handleLabel, handleUrl } from '../../lib/socialHandle'
+import { isAvatarTint } from '../auth/avatar'
+import { ResponsePill } from '../../components/ResponsePill'
+import { SectionLabel } from '../../components/ShootFormFields'
+import { roleWithEmoji } from '../../i18n/uk'
+import { useStrings } from '../../i18n/LanguageProvider'
+import type { Strings } from '../../i18n'
+import { openExternalUrl } from '../../lib/openExternalUrl'
 import {
   formatDayMonthWeekday,
   formatDuration,
   formatTimeRange,
-} from '../../../src/features/shoots/date'
-import { daysUntil, distanceLabel, pluralUk } from '../../../src/features/shoots/home'
+} from '../shoots/date'
+import { daysUntil, distanceLabel, pluralUk } from '../shoots/home'
 import {
   calendarEvent,
   googleCalendarUrl,
   icsDataUri,
-} from '../../../src/features/links/calendar'
+} from './calendar'
 import {
   resolveLink,
   respondToLink,
@@ -44,8 +46,9 @@ import {
   type CrewLinkPayload,
   type LinkOrganizer,
   type LinkPayload,
-} from '../../../src/features/links/gateway'
-import { Starfield } from '../../../src/components/Starfield'
+} from './gateway'
+import { resolveCrewShoot, respondAsCrew } from './crewView'
+import { Starfield } from '../../components/Starfield'
 
 type Resolution =
   | { phase: 'resolving' }
@@ -63,11 +66,30 @@ type Resolution =
  * screen renders what it was given and filters nothing (`ADR-013`, CLAUDE.md
  * rule 2).
  *
- * Ukrainian only, reading `uk` directly: link views sit outside the language
- * provider (`EP-05`, `US-014`).
+ * ── Two surfaces, one screen (`US-009`, owner 2026-09-21) ──────────────────
+ *
+ * It is reached two ways, and the props say which:
+ *
+ *   * **`token`** — `/s/{token}`, the anonymous link. The token is the whole
+ *     credential, there is no account, and this is the surface `ADR-012`
+ *     exports to static web.
+ *   * **`shootId`** — `/(app)/crew/{id}`, a registered crew member opening a
+ *     shoot from their own schedule. Their session is the credential, and no
+ *     link need ever have been shared with them.
+ *
+ * Exactly one is set. Everything below the resolution is identical, because the
+ * gateway builds the same `CrewLinkPayload` for both (`ADR-013`) — a second
+ * screen for the second entrance would be a second place for the audience split
+ * to drift.
+ *
+ * **Language follows the surface, and does so by itself.** `useStrings` falls
+ * back to Ukrainian with no provider mounted, and `s/` deliberately sits
+ * outside `LanguageProvider` (`EP-05`, `US-014`) — so a link view is Ukrainian
+ * by construction, with no switcher and nothing to remember, while the in-app
+ * view follows the account's choice (`US-015`). Neither surface passes a flag.
  */
-export default function LinkView() {
-  const { token } = useLocalSearchParams<{ token?: string }>()
+export function ShootLinkView({ token, shootId }: { token?: string; shootId?: string }) {
+  const t = useStrings()
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
   const [toast, setToast] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -76,16 +98,19 @@ export default function LinkView() {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
-    if (token === undefined) return
-    const payload = await resolveLink(token)
+    // S-2 F-2 — nothing is reported invalid until a resolution has been
+    // ATTEMPTED. Both params are undefined during prerender and on the first
+    // client paint, so that is a wait, not a refusal.
+    if (token === undefined && shootId === undefined) return
+    const payload =
+      token !== undefined ? await resolveLink(token) : await resolveCrewShoot(shootId!)
     setResolution(payload ? { phase: 'ready', payload } : { phase: 'invalid' })
-  }, [token])
+  }, [token, shootId])
 
   useEffect(() => {
-    // Undefined during prerender and on the first client paint; wait for it.
-    if (token === undefined) return
+    if (token === undefined && shootId === undefined) return
     void load()
-  }, [token, load])
+  }, [token, shootId, load])
 
   if (resolution.phase === 'resolving') {
     return (
@@ -101,10 +126,10 @@ export default function LinkView() {
       <View className="bg-background flex-1 items-center justify-center gap-2 p-8">
         <Starfield />
         <Text className="text-title-sm text-foreground text-center font-semibold">
-          {uk.linkInvalidTitle}
+          {t.linkInvalidTitle}
         </Text>
         <Text className="text-body-sm text-muted-foreground text-center leading-5">
-          {uk.linkInvalidSub}
+          {t.linkInvalidSub}
         </Text>
       </View>
     )
@@ -112,33 +137,51 @@ export default function LinkView() {
 
   const { payload } = resolution
   const isCrew = payload.audience === 'crew'
+  /** Which entrance this is. See the two blocks that turn on it, and why. */
+  const isLink = token !== undefined
+  /*
+    `US-023` — a peer's full record, on whichever surface the reader is on. The
+    two routes render the same `CrewMemberView` and differ only in how they
+    resolve, so the path is the one thing this screen has to decide.
+  */
+  const peerHref = (crewId: string) =>
+    token !== undefined
+      ? (`/s/${token}/crew/${crewId}` as const)
+      : (`/(app)/crew/${shootId}/member/${crewId}` as const)
   const shoot = payload.shoot
   const answered = isCrew && payload.viewer.response !== 'pending'
   const confirmed = isCrew && payload.viewer.response === 'confirmed'
 
   const answer = async (response: 'confirmed' | 'declined', why: string | null) => {
-    if (token === undefined) return
     setBusy(true)
-    const ok = await respondToLink(token, response, why)
+    /*
+      `US-008` through whichever door the reader came in. The rules are the
+      gateway's either way — a submitted answer is final, a removed crew member
+      writes nothing — so this chooses a credential, never a policy.
+    */
+    const ok =
+      token !== undefined
+        ? await respondToLink(token, response, why)
+        : await respondAsCrew(shootId!, response, why)
     setBusy(false)
     setDeclineOpen(false)
-    if (!ok) return setToast(uk.somethingWentWrong)
-    setToast(response === 'confirmed' ? uk.confirmedThanks : uk.declineSent)
+    if (!ok) return setToast(t.somethingWentWrong)
+    setToast(response === 'confirmed' ? t.confirmedThanks : t.declineSent)
     // Refetch rather than patching local state: the answer is the server's now,
     // and the status card should report what it actually holds.
     await load()
   }
 
-  const event = calendarEvent(payload, `${uk.shootFor} · ${shoot.locationAddress ?? ''}`.trim())
+  const event = calendarEvent(payload, `${t.shootFor} · ${shoot.locationAddress ?? ''}`.trim())
   const range = formatTimeRange(shoot.startTime, shoot.endTime)
   /*
     «3 години», not «3 год» — the artboard spells the unit out, and this screen
     is read by someone who does not use the app daily and has the width for it.
     The creator's screens keep `formatDuration`'s short forms.
   */
-  const duration = durationWords(shoot.startTime, shoot.endTime)
+  const duration = durationWords(shoot.startTime, shoot.endTime, t)
   const shootMeta = [
-    shoot.client ? uk.shootWithTemplate.replace('{name}', shoot.client.name) : null,
+    shoot.client ? t.shootWithTemplate.replace('{name}', shoot.client.name) : null,
     duration,
   ]
     .filter(Boolean)
@@ -148,19 +191,29 @@ export default function LinkView() {
   return (
     <View className="bg-background flex-1">
       <Starfield />
-      {/* The product mark, and the one thing this page says about itself: the
-          link is private. No expiry line — `ADR-014` has no expiry column, and
-          the design's «Діє до…» would be untrue on every link. */}
+      {/*
+        The product mark, and the one thing this page says about itself: the
+        link is private. No expiry line — `ADR-014` has no expiry column, and
+        the design's «Діє до…» would be untrue on every link.
+
+        **The link surface only** (`US-009`, 2026-09-21). In the app this bar
+        would sit under the navigator's own header, which is two headers; and
+        both things it says are untrue there — the reader is already inside the
+        product it names, and no link is involved in their being here. The same
+        reasoning retires the «не пересилайте» footer below.
+      */}
+      {isLink ? (
       <View className="bg-background border-border flex-row items-center gap-2.5 border-b px-4 py-3">
         <View className="bg-secondary h-[26px] w-[26px] items-center justify-center rounded-md">
           <Text className="text-caption text-foreground font-semibold">
-            {uk.appName.slice(0, 1)}
+            {t.appName.slice(0, 1)}
           </Text>
         </View>
-        <Text className="text-body text-foreground flex-1 font-semibold">{uk.appName}</Text>
+        <Text className="text-body text-foreground flex-1 font-semibold">{t.appName}</Text>
         <Icon as={Lock} size={12} strokeWidth={2} className="text-muted-foreground" />
-        <Text className="text-caption text-muted-foreground">{uk.privateLink}</Text>
+        <Text className="text-caption text-muted-foreground">{t.privateLink}</Text>
       </View>
+      ) : null}
 
       <ScrollView contentContainerStyle={{ paddingBottom: isCrew && !answered ? 168 : 40 }}>
         <View className="gap-5 p-4">
@@ -171,14 +224,14 @@ export default function LinkView() {
                 variant="muted"
                 label={
                   isCrew
-                    ? uk.yourRoleTemplate.replace('{role}', roleWithEmoji(payload.viewer.role))
-                    : uk.youAreTheClient
+                    ? t.yourRoleTemplate.replace('{role}', roleWithEmoji(payload.viewer.role))
+                    : t.youAreTheClient
                 }
               />
               <Text className="text-label text-muted-foreground shrink" numberOfLines={1}>
                 {isCrew && payload.organizer
-                  ? uk.inviteFromTemplate.replace('{name}', payload.organizer.name)
-                  : uk.yourShootDetails}
+                  ? t.inviteFromTemplate.replace('{name}', payload.organizer.name)
+                  : t.yourShootDetails}
               </Text>
             </View>
 
@@ -187,9 +240,9 @@ export default function LinkView() {
               <View className="p-4">
                 <View className="flex-row items-start justify-between gap-2.5">
                   <Text className="text-label text-muted-foreground flex-1 font-medium">
-                    {formatDayMonthWeekday(shoot.date, uk.monthsGenitive, uk.weekdaysFull)}
+                    {formatDayMonthWeekday(shoot.date, t.monthsGenitive, t.weekdaysFull)}
                   </Text>
-                  <Badge variant="solid" label={distanceLabel(days, uk)} />
+                  <Badge variant="solid" label={distanceLabel(days, t)} />
                 </View>
                 {/* `US-030` AC-6 — a shoot created before that story has no
                     range, and the date above is then the whole answer. */}
@@ -262,11 +315,11 @@ export default function LinkView() {
                     onPress={() => {
                       void (async () => {
                         await Clipboard.setStringAsync(shoot.locationAddress ?? '')
-                        setToast(uk.addressCopied)
+                        setToast(t.addressCopied)
                       })()
                     }}
                     role="button"
-                    accessibilityLabel={uk.copyAddress}
+                    accessibilityLabel={t.copyAddress}
                   >
                     <Icon as={Copy} size={17} strokeWidth={1.8} className="text-muted-foreground" />
                   </Pressable>
@@ -279,7 +332,7 @@ export default function LinkView() {
                   separate columns (redesign-log H-2), so it renders as written. */}
               {shoot.locationNote ? (
                 <View className="border-border gap-2 border-t p-4">
-                  <SectionLabel label={uk.howToGetIn} />
+                  <SectionLabel label={t.howToGetIn} />
                   {/* Tappable URLs since 2026-09-06. This surface is the reason
                       the feature exists: a reader here is in a phone browser
                       with no app around it, and a link they cannot tap is a
@@ -324,12 +377,12 @@ export default function LinkView() {
               </View>
               <View className="min-w-0 flex-1">
                 <Text className="text-body text-foreground font-semibold">
-                  {confirmed ? uk.youConfirmed : uk.youDeclined}
+                  {confirmed ? t.youConfirmed : t.youDeclined}
                 </Text>
                 <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={2}>
                   {confirmed
-                    ? uk.confirmedSub
-                    : [uk.declinedSub, isCrew ? payload.viewer.declineReason : null]
+                    ? t.confirmedSub
+                    : [t.declinedSub, isCrew ? payload.viewer.declineReason : null]
                         .filter(Boolean)
                         .join(' · ')}
                 </Text>
@@ -340,14 +393,14 @@ export default function LinkView() {
                 disabled={busy}
                 onPress={() => void answer('confirmed', null)}
               >
-                <Text className="text-label font-medium">{uk.changeAnswer}</Text>
+                <Text className="text-label font-medium">{t.changeAnswer}</Text>
               </Button>
             </View>
           ) : null}
 
           <Button variant="outline" size="cta" className="h-11 py-0" onPress={() => setCalendarOpen(true)}>
             <Icon as={CalendarIcon} size={15} strokeWidth={1.7} />
-            <Text className="text-body-sm font-medium">{uk.addToCalendar}</Text>
+            <Text className="text-body-sm font-medium">{t.addToCalendar}</Text>
           </Button>
 
           {/*
@@ -361,7 +414,7 @@ export default function LinkView() {
           */}
           {isCrew && shoot.client ? (
             <View className="gap-2">
-              <SectionLabel label={uk.clientSection} />
+              <SectionLabel label={t.clientSection} />
               <Card variant="flat" className="gap-0 p-0">
                 <View className="flex-row items-center gap-3 p-4">
                   <Avatar name={shoot.client.name} size={38} />
@@ -370,7 +423,7 @@ export default function LinkView() {
                       {shoot.client.name}
                     </Text>
                     <Text className="text-label text-muted-foreground mt-0.5">
-                      {uk.clientRole}
+                      {t.clientRole}
                     </Text>
                   </View>
                 </View>
@@ -381,7 +434,7 @@ export default function LinkView() {
                      which is the rule everywhere these rows appear. */
                   <HandleRow
                     icon={InstagramIcon}
-                    label={uk.instagramLabel}
+                    label={t.instagramLabel}
                     value={handleLabel('instagram', shoot.client.instagram)}
                     url={handleUrl('instagram', shoot.client.instagram)}
                     className="px-4"
@@ -395,7 +448,7 @@ export default function LinkView() {
               the crew, minus notes. */}
           <View className="gap-2">
             <View className="flex-row items-baseline justify-between px-0.5">
-              <SectionLabel label={uk.whoIsOnTheShoot} />
+              <SectionLabel label={t.whoIsOnTheShoot} />
               {/*
                 Per audience, as drawn: a crew member sees how many have
                 answered, a client sees only how many people there are — the
@@ -403,7 +456,7 @@ export default function LinkView() {
               */}
               <Text className="text-label text-muted-foreground">
                 {isCrew
-                  ? uk.crewCountConfirmed
+                  ? t.crewCountConfirmed
                       .replace('{total}', String(payload.crew.length))
                       .replace(
                         '{done}',
@@ -413,7 +466,7 @@ export default function LinkView() {
                           ).length
                         )
                       )
-                  : `${payload.crew.length} ${pluralUk(payload.crew.length, uk.peopleForms)}`}
+                  : `${payload.crew.length} ${pluralUk(payload.crew.length, t.peopleForms)}`}
               </Text>
             </View>
             {/*
@@ -469,7 +522,7 @@ export default function LinkView() {
                     variant="flat"
                     className={`gap-0 overflow-hidden p-0 ${isYou ? 'bg-muted' : ''}`}
                   >
-                    <Link href={`/s/${token}/crew/${member.id}`} asChild>
+                    <Link href={peerHref(member.id)} asChild>
                       <Pressable
                         className="active:bg-secondary min-h-16 flex-row items-center gap-3 px-4 py-3"
                         role="link"
@@ -484,7 +537,7 @@ export default function LinkView() {
                             >
                               {member.name}
                             </Text>
-                            {isYou ? <Badge variant="solid" label={uk.youBadge} /> : null}
+                            {isYou ? <Badge variant="solid" label={t.youBadge} /> : null}
                           </View>
                           {/* The role alone. The handle is its own row below,
                               as it is on the client's card — see the `HandleRow`
@@ -519,10 +572,10 @@ export default function LinkView() {
                             showPending={isYou}
                             label={
                               member.response === 'confirmed'
-                                ? uk.responseConfirmed
+                                ? t.responseConfirmed
                                 : member.response === 'declined'
-                                  ? uk.responseDeclined
-                                  : uk.yourTurn
+                                  ? t.responseDeclined
+                                  : t.yourTurn
                             }
                           />
                         ) : null}
@@ -541,7 +594,7 @@ export default function LinkView() {
                     {member.instagram ? (
                       <HandleRow
                         icon={InstagramIcon}
-                        label={uk.instagramLabel}
+                        label={t.instagramLabel}
                         value={handleLabel('instagram', member.instagram)}
                         url={handleUrl('instagram', member.instagram)}
                         className="px-4"
@@ -555,7 +608,7 @@ export default function LinkView() {
 
           {payload.references.length > 0 ? (
             <View className="gap-2">
-              <SectionLabel label={uk.references} />
+              <SectionLabel label={t.references} />
               <LinkReferenceGrid references={payload.references} />
             </View>
           ) : null}
@@ -581,7 +634,7 @@ export default function LinkView() {
                 client — `clientPayload` does not select the column — so what
                 went is the disclosure, not the rule.
               */}
-              <SectionLabel label={uk.organizerNotes} />
+              <SectionLabel label={t.organizerNotes} />
               <Card variant="flat">
                 <Text className="text-body-sm text-foreground/90 leading-6">
                   {payload.shoot.notes}
@@ -609,7 +662,7 @@ export default function LinkView() {
           */}
           {!isCrew && payload.shoot.clientNotes ? (
             <View className="gap-2">
-              <SectionLabel label={uk.organizerNotes} />
+              <SectionLabel label={t.organizerNotes} />
               <Card variant="flat">
                 <Text className="text-body-sm text-foreground/90 leading-6">
                   {payload.shoot.clientNotes}
@@ -622,12 +675,12 @@ export default function LinkView() {
               carries none, which is why this is inside the client branch. */}
           {!isCrew && (payload.rawFilesUrl || payload.finishedPhotosUrl) ? (
             <View className="gap-2">
-              <SectionLabel label={uk.filesAndLinks} />
+              <SectionLabel label={t.filesAndLinks} />
               <Card variant="flat" className="gap-0 p-0">
                 {(
                   [
-                    { title: uk.sourceFilesSection as string, url: payload.rawFilesUrl },
-                    { title: uk.finishedFilesSection as string, url: payload.finishedPhotosUrl },
+                    { title: t.sourceFilesSection as string, url: payload.rawFilesUrl },
+                    { title: t.finishedFilesSection as string, url: payload.finishedPhotosUrl },
                   ] as { title: string; url: string | null }[]
                 )
                   .filter((file): file is { title: string; url: string } => !!file.url)
@@ -651,7 +704,7 @@ export default function LinkView() {
                         className="h-9 shrink-0 px-3"
                         onPress={() => void openExternalUrl(file.url)}
                       >
-                        <Text className="text-label font-medium">{uk.openWord}</Text>
+                        <Text className="text-label font-medium">{t.openWord}</Text>
                       </Button>
                     </View>
                   ))}
@@ -659,14 +712,16 @@ export default function LinkView() {
             </View>
           ) : null}
 
-          {payload.organizer ? <OrganizerCard organizer={payload.organizer} /> : null}
+          {payload.organizer ? <OrganizerCard organizer={payload.organizer} t={t} /> : null}
 
           <View className="items-center gap-3 pt-2">
-            <Text className="text-caption text-muted-foreground/70 text-center leading-4">
-              {uk.privateLinkWarning}
-            </Text>
+            {isLink ? (
+              <Text className="text-caption text-muted-foreground/70 text-center leading-4">
+                {t.privateLinkWarning}
+              </Text>
+            ) : null}
             <Text className="text-caption text-muted-foreground border-border w-full border-t pt-3.5 text-center">
-              {uk.organisedIn}
+              {t.organisedIn}
             </Text>
           </View>
         </View>
@@ -676,14 +731,14 @@ export default function LinkView() {
       {isCrew && !answered ? (
         <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pb-8 pt-3">
           <Button variant="cta" size="cta" disabled={busy} onPress={() => void answer('confirmed', null)}>
-            <Text>{uk.confirmParticipation}</Text>
+            <Text>{t.confirmParticipation}</Text>
           </Button>
           <Pressable
             className="mt-1 min-h-11 items-center justify-center"
             onPress={() => setDeclineOpen(true)}
             role="button"
           >
-            <Text className="text-body-sm text-muted-foreground font-medium">{uk.cannotCome}</Text>
+            <Text className="text-body-sm text-muted-foreground font-medium">{t.cannotCome}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -691,7 +746,7 @@ export default function LinkView() {
       <Sheet open={calendarOpen} onClose={() => setCalendarOpen(false)}>
         <View className="gap-2 pb-2">
           <Text className="text-subtitle text-foreground mb-2 font-semibold">
-            {uk.addToCalendar}
+            {t.addToCalendar}
           </Text>
           <Button
             variant="outline"
@@ -702,7 +757,7 @@ export default function LinkView() {
               void openExternalUrl(googleCalendarUrl(event))
             }}
           >
-            <Text className="text-body font-medium">{uk.googleCalendar}</Text>
+            <Text className="text-body font-medium">{t.googleCalendar}</Text>
           </Button>
           <Button
             variant="outline"
@@ -713,18 +768,18 @@ export default function LinkView() {
               void openExternalUrl(icsDataUri(event))
             }}
           >
-            <Text className="text-body font-medium">{uk.appleOutlookIcs}</Text>
+            <Text className="text-body font-medium">{t.appleOutlookIcs}</Text>
           </Button>
         </View>
       </Sheet>
 
       <Sheet open={declineOpen} onClose={() => setDeclineOpen(false)}>
         <View className="gap-2 pb-2">
-          <Text className="text-title-sm text-foreground font-semibold">{uk.cannotComeTitle}</Text>
-          <Text className="text-body-sm text-muted-foreground leading-5">{uk.cannotComeBody}</Text>
+          <Text className="text-title-sm text-foreground font-semibold">{t.cannotComeTitle}</Text>
+          <Text className="text-body-sm text-muted-foreground leading-5">{t.cannotComeBody}</Text>
 
           <View className="mt-3 flex-row flex-wrap gap-1.5">
-            {uk.declineReasons.map((option) => {
+            {t.declineReasons.map((option) => {
               const active = reason === option
               return (
                 <Pressable
@@ -757,7 +812,7 @@ export default function LinkView() {
               disabled={busy}
               onPress={() => void answer('declined', reason)}
             >
-              <Text>{uk.sendDecline}</Text>
+              <Text>{t.sendDecline}</Text>
             </Button>
             <Button
               variant="outline"
@@ -765,7 +820,7 @@ export default function LinkView() {
               className="h-11 py-0"
               onPress={() => setDeclineOpen(false)}
             >
-              <Text className="text-body-sm font-medium">{uk.backWord}</Text>
+              <Text className="text-body-sm font-medium">{t.backWord}</Text>
             </Button>
           </View>
         </View>
@@ -801,7 +856,7 @@ export default function LinkView() {
  * The first thing from `users` to reach an anonymous audience (owner,
  * 2026-08-31). `email` is never among it — see the gateway's `organizer`.
  */
-function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
+function OrganizerCard({ organizer, t }: { organizer: LinkOrganizer; t: Strings }) {
   /*
     `handleUrl` from src/lib/socialHandle.ts since 2026-09-05. This built its own
     URL by stripping a leading `@` and concatenating, which produced
@@ -813,7 +868,7 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
 
   return (
     <View className="gap-2">
-      <SectionLabel label={uk.organizerSection} />
+      <SectionLabel label={t.organizerSection} />
       <Card variant="flat">
         <View className="flex-row items-center gap-3">
           {/*
@@ -861,7 +916,7 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
                 className="h-10 flex-1"
                 onPress={() => void openExternalUrl(`tel:${organizer.phone}`)}
               >
-                <Text className="text-body-sm font-medium">{uk.callOrganizer}</Text>
+                <Text className="text-body-sm font-medium">{t.callOrganizer}</Text>
               </Button>
             ) : null}
             {messageUrl ? (
@@ -870,7 +925,7 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
                 className="h-10 flex-1"
                 onPress={() => void openExternalUrl(messageUrl)}
               >
-                <Text className="text-body-sm font-medium">{uk.writeTo}</Text>
+                <Text className="text-body-sm font-medium">{t.writeTo}</Text>
               </Button>
             ) : null}
           </View>
@@ -888,7 +943,11 @@ function OrganizerCard({ organizer }: { organizer: LinkOrganizer }) {
  * there would close a cycle. `formatDuration` stays where it is and keeps
  * serving the creator's screens with «год» / «хв».
  */
-function durationWords(start: string | null, end: string | null): string | null {
+function durationWords(
+  start: string | null,
+  end: string | null,
+  t: Strings
+): string | null {
   if (!start || !end) return null
   const minutesOf = (value: string) => {
     const [h, m] = value.split(':').map(Number)
@@ -900,8 +959,8 @@ function durationWords(start: string | null, end: string | null): string | null 
   const hours = Math.floor(span / 60)
   const minutes = span % 60
   return [
-    hours ? `${hours} ${pluralUk(hours, uk.hourForms)}` : null,
-    minutes ? `${minutes} ${pluralUk(minutes, uk.minuteForms)}` : null,
+    hours ? `${hours} ${pluralUk(hours, t.hourForms)}` : null,
+    minutes ? `${minutes} ${pluralUk(minutes, t.minuteForms)}` : null,
   ]
     .filter(Boolean)
     .join(' ')

@@ -671,17 +671,101 @@ async function clientPayload(supabase: Supabase, shootId: string) {
   }
 }
 
+/**
+ * The crew member behind a SIGNED-IN request, or null.
+ *
+ * `US-009`'s second half (owner, 2026-09-21). The schedule has always listed
+ * the shoots a registered crew member is on; opening one required the
+ * photographer to have minted their link first, because the token was the only
+ * credential this function understood. A crew member the photographer never
+ * tapped «копіювати посилання» for could see the row and nothing behind it —
+ * and could never answer `US-008`'s invitation at all.
+ *
+ * So there are two ways in now, and only two:
+ *
+ *   * `?token=` — the anonymous one. The token is the whole credential.
+ *   * `?shoot=` — this one. The caller's JWT is the credential, and the
+ *     `crew_members` row keyed to their account is the authorisation.
+ *
+ * **The payload is the same `crewPayload` either way**, which is the point:
+ * `ADR-013` says the audience split is made here, so a second entrance must
+ * arrive at the same builder rather than at a second shape of the truth. What
+ * changes is only how the viewer is identified.
+ *
+ * `verify_jwt = false` (config.toml) — the anonymous surface would break under
+ * it — so the token is verified HERE rather than by the platform. `getUser`
+ * asks GoTrue, which is what makes a forged or expired one fail: the anon key
+ * is itself a JWT and reaches this function on every anonymous request, and it
+ * resolves to no user.
+ */
+async function crewViewer(
+  supabase: Supabase,
+  authorization: string | null,
+  shootId: string
+): Promise<MemberRow | null> {
+  const jwt = authorization?.replace(/^Bearer\s+/i, '').trim()
+  if (!jwt) return null
+
+  const { data: auth, error: authError } = await supabase.auth.getUser(jwt)
+  if (authError || !auth?.user) return null
+
+  // ADR-014 — the shoot's own liveness, exactly as the token path checks it.
+  // Deleting a shoot takes it off every schedule (US-019 AC-1, US-009).
+  const { data: shoot } = await supabase
+    .from('shoots')
+    .select('id')
+    .eq('id', shootId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!shoot) return null
+
+  /*
+    The caller's own crew row on that shoot. `user_id` is set by the matching
+    triggers (`20260827100000`, `20260907120000`) and by nothing else, so this
+    is the same authorisation `my_crew_shoots` uses to put the row on their
+    schedule in the first place — a shoot they are not on simply returns no row.
+
+    `removed_at is null` is CLAUDE.md rule 3 and `US-022`: removal is how access
+    is revoked, and it has to revoke this entrance as surely as it revokes a
+    link.
+
+    **`limit(1)` rather than `maybeSingle()`**, because nothing stops a
+    photographer adding the same person to one shoot twice — two rows, both
+    matched to the same account. `maybeSingle` treats that as an error and would
+    lock a legitimate crew member out of a shoot they are plainly on. The
+    earliest row wins, so the answer does not move between requests.
+  */
+  const { data: members } = await supabase
+    .from('crew_members')
+    .select('id, name, role, response, decline_reason')
+    .eq('shoot_id', shootId)
+    .eq('user_id', auth.user.id)
+    .is('removed_at', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+
+  return ((members ?? [])[0] as MemberRow | undefined) ?? null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return preflight()
 
   const url = new URL(req.url)
   let token = url.searchParams.get('token')
+  /*
+    The signed-in entrance (`US-009`). Mutually exclusive with `token` below:
+    a request naming both is answered by the token, which is the narrower
+    credential — it names one crew member, where this names an account.
+  */
+  let shootId = url.searchParams.get('shoot')
   let wanted: 'confirmed' | 'declined' | null = null
   let wantedReason: string | null = null
 
   if (req.method === 'POST') {
     const body = await req.json().catch(() => null)
     token = body?.token ?? token
+    shootId = body?.shoot ?? shootId
     // Only the two values the enum allows. Anything else is refused before it
     // reaches the database rather than relying on the enum to reject it.
     wanted = body?.response === 'confirmed' || body?.response === 'declined' ? body.response : null
@@ -698,7 +782,7 @@ Deno.serve(async (req) => {
         : null
   }
 
-  if (!token) return denied()
+  if (!token && !shootId) return denied()
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -707,6 +791,23 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     { auth: { persistSession: false } }
   )
+
+  /*
+    `US-009` — a registered crew member opening a shoot from their own schedule,
+    with no link involved.
+
+    It lands on the same two calls the crew branch below makes, and that is
+    deliberate: `respond` carries `US-008`'s rules in its WHERE clause (the
+    answer is final, the row must be live), so reaching it from here cannot
+    bypass them. The refusal is `denied()` as everywhere else — an account that
+    is not on this shoot learns nothing about whether the shoot exists.
+  */
+  if (!token) {
+    const viewer = await crewViewer(supabase, req.headers.get('authorization'), shootId!)
+    if (!viewer) return denied()
+    if (wanted) return await respond(supabase, viewer.id, wanted, wantedReason)
+    return json(await crewPayload(supabase, shootId!, viewer))
+  }
 
   const { data: link, error: linkError } = await supabase
     .from('access_links')

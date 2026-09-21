@@ -436,10 +436,19 @@ function visible(all: Row[], selectedDate: string | null, todayIso: string): Row
  * the date falls to the subtitle beside the role, which is the answer to "why
  * am I on this?".
  *
- * It opens the reader's own link view rather than the creator's shoot screen.
- * That is not a shortcut: a crew member cannot read the shoot row at all, and
- * the link is the access they already have (`US-007`). With no link created
- * yet, the row is inert rather than broken — nothing has been shared with them.
+ * It opens `/(app)/crew/{shootId}` — the crew view of the shoot, not the
+ * creator's screen. That is not a shortcut: a crew member cannot read the shoot
+ * row at all (`shoots_select_own`), so what they get is the payload the link
+ * gateway builds for their audience, which is the same one `US-007` gives them
+ * through a link.
+ *
+ * ── It was inert without a shared link, until 2026-09-21 ────────────────────
+ *
+ * The row used to open `/s/{token}` and carried no link at all when the
+ * photographer had never tapped «копіювати посилання» for that person — a
+ * commitment on your calendar that did nothing when tapped, and no way to
+ * answer `US-008` either. The photographer's tap is no longer a precondition:
+ * the reader's own session resolves the shoot, so every row on this list opens.
  */
 function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
   const body = (
@@ -475,9 +484,8 @@ function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
     </Card>
   )
 
-  if (!entry.token) return body
   return (
-    <Link href={`/s/${entry.token}`} asChild>
+    <Link href={`/(app)/crew/${entry.shootId}`} asChild>
       <Pressable onPress={tapped} className="active:opacity-70">
         {body}
       </Pressable>

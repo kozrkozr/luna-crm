@@ -17,14 +17,18 @@ export type CrewShoot = {
   role: string
   /** Their own answer, from `US-008`. */
   response: CrewResponse
-  /**
-   * Their link (`US-006`), or null if the photographer has not created one.
-   *
-   * It is what makes a row openable: a crew member cannot read the shoot row,
-   * so the only view of it they have is the one their link already gives them.
-   */
-  token: string | null
 }
+
+/*
+  **There is no `token` here any more** (2026-09-21, migration
+  `20260921120000`).
+
+  It used to carry the crew member's own access link, and the row only opened if
+  one existed — which it did only after the photographer had tapped «копіювати
+  посилання» for that person. The row now opens `/(app)/crew/{shootId}`, which
+  resolves through the gateway on the caller's session, so nothing has to have
+  been shared for a shoot on your own schedule to be readable.
+*/
 
 /**
  * `US-009` AC-1 — every shoot they are on, whoever created it.
@@ -52,13 +56,11 @@ export async function listCrewShoots(): Promise<CrewShoot[] | null> {
     location_address: string | null
     role: string
     response: string
-    token: string | null
   }>).map((row) => ({
     shootId: row.shoot_id,
     date: row.date,
     locationAddress: row.location_address,
     role: row.role,
     response: row.response as CrewResponse,
-    token: row.token,
   }))
 }
