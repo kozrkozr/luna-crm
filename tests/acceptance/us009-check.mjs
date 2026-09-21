@@ -27,10 +27,23 @@ const newToken = () => Buffer.from(crypto.getRandomValues(new Uint8Array(32))).t
 
 const photoA = await account('photoa')
 const photoB = await account('photob')
-const mkShoot = async (photo, client, date, address) =>
-  (await photo.client.from('shoots')
-    .insert({ creator_id: photo.id, client_name: client, client_contact: 'x@example.com', date, location_address: address })
+/**
+ * A shoot, and the client row it hangs off.
+ *
+ * `client_name` and `client_contact` were columns on `shoots` when this suite
+ * was written; `ADR-018` (migration 20260829100000) replaced them with a
+ * `clients` row and a `client_id`, which left every insert here failing on
+ * columns the schema no longer has. `us009-db.mjs`'s helper was repaired in
+ * `8a90c9e`; this one was missed, and the suite has not run since.
+ */
+const mkShoot = async (photo, client, date, address) => {
+  const clientId = (await photo.client.from('clients')
+    .insert({ creator_id: photo.id, name: client })
     .select('id').single()).data.id
+  return (await photo.client.from('shoots')
+    .insert({ creator_id: photo.id, client_id: clientId, date, location_address: address })
+    .select('id').single()).data.id
+}
 
 const shootA = await mkShoot(photoA, 'Клієнт А', '2026-12-10', 'Студія Луна, Київ')
 const shootB = await mkShoot(photoB, 'Клієнт Б', '2026-12-20', 'Лофт на Подолі')
