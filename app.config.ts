@@ -50,6 +50,32 @@ const config: ExpoConfig = {
         microphonePermission: false,
       },
     ],
+    /*
+     * The launch screen (2026-09-21). There was no splash configuration at all
+     * before this: `expo-splash-screen` was not installed and no `splash` key
+     * existed, so prebuild emitted a storyboard with a background and no
+     * image, and the app launched on a blank dark screen.
+     *
+     * **`#000000`, not `BACKGROUND` (#070708).** The artwork is a full-bleed
+     * square whose own ground is pure black, so on the theme's near-black it
+     * would show its edges as a visible rectangle. Matching the artwork hides
+     * the square completely; the 3% step to the app's first frame is
+     * imperceptible, and a seam would not be. If the artwork is ever replaced
+     * with one on transparency, this should become `BACKGROUND` instead.
+     *
+     * No `dark:` variant, because there is nothing for it to vary with: the
+     * app declares ONE theme (see `app/_layout.tsx`) and `userInterfaceStyle`
+     * above pins the native surfaces to dark.
+     */
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash-icon.png',
+        imageWidth: 220,
+        resizeMode: 'contain',
+        backgroundColor: '#000000',
+      },
+    ],
   ],
   ios: {
     supportsTablet: false,
