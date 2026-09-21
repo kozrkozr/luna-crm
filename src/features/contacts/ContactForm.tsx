@@ -196,13 +196,20 @@ export function ContactForm({
         so the title is centred on the screen. The artboard leaves the right
         slot empty and pins the save to the bottom — unlike the profile, whose
         artboard renders no save at all and so put one in the header.
+
+        **`w-24`, as `ShootForm`'s header has, and not `w-16`.** «Скасувати»
+        measures 71px at `text-body`; `w-16` less `px-1` left it 56 and
+        `numberOfLines={1}` duly rendered «Скасув…». The two forms were merged
+        into one arrangement on 2026-09-03 and this is the half that did not
+        get the width with it. The spacer opposite moves with it or the title
+        stops being centred — it exists only to balance this control.
       */}
       <View
         className="bg-background border-border flex-row items-center border-b px-3 pb-2.5"
         style={{ paddingTop: insets.top }}
       >
         <Pressable
-          className="active:bg-secondary min-h-11 w-16 shrink-0 justify-center rounded-lg px-1"
+          className="active:bg-secondary min-h-11 w-24 shrink-0 justify-center rounded-lg px-1"
           onPress={() => {
             tapped()
             askLeave()
@@ -216,7 +223,7 @@ export function ContactForm({
         <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
           {mode === 'create' ? t.newContactTitle : t.editContactTitle}
         </Text>
-        <View className="w-16 shrink-0" />
+        <View className="w-24 shrink-0" />
       </View>
 
       <FormScrollView
