@@ -724,7 +724,7 @@ const buildStage = () => {
 const exportCss = () => {
   const changed = Object.keys(state).filter((k) => state[k] !== DEFAULTS[k])
   const lines = [
-    `/* Luna CRM — тема з полотна, ${new Date().toISOString().slice(0, 10)}.`,
+    `/* Luna Shoots — тема з полотна, ${new Date().toISOString().slice(0, 10)}.`,
     changed.length
       ? ` * Змінено ${changed.length} з ${Object.keys(DEFAULTS).length}: ${changed.join(', ')}.`
       : ' * Нічого не змінено — це поточні значення з коду.',

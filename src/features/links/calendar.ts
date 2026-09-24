@@ -69,7 +69,7 @@ export function icsDataUri(event: CalendarEvent): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//LunaCRM//UA',
+    'PRODID:-//Luna Shoots//UA',
     'BEGIN:VEVENT',
     `UID:${event.start}-lunacrm`,
     `DTSTART${event.allDay ? ';VALUE=DATE' : ''}:${event.start}`,

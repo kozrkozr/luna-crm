@@ -1,4 +1,4 @@
-# Luna CRM — build repository
+# Luna Shoots — build repository
 
 A CRM where a solo photographer keeps one record per shoot — client info, references, crew,
 location, status — and shares it by link with crew and clients who have **no account and no app

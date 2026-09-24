@@ -210,12 +210,20 @@ export const uk = {
    * ADR-017's combined auth screen. Both strings are the design system's own,
    * from auth-screen.html — not translated here.
    *
-   * «Зйомки» is the app's name on this screen, which is NOT what app.config.ts
-   * calls it ('Luna CRM'). The mockup presents it as the product name beside a
-   * «З» logo mark; whether the product is renamed is the owner's call, so the
-   * screen says what the design says and this note records the discrepancy.
+   * **Resolved by the owner, 2026-09-24: the product is «Luna Shoots».** This
+   * key, `en.ts`'s copy of it, `organisedIn` and `app.config.ts` now all say
+   * the same thing — three spellings («Luna CRM», «LunaCRM», «Зйомки») had been
+   * live at once, logged unresolved in docs/redesign-log.md.
+   *
+   * The rename is not cosmetic: «Luna CRM» is taken on the App Store by an
+   * unrelated app in the same Business category (docs/release-appstore.md,
+   * step 4), so the listing needed a different name and the product followed it.
+   *
+   * The logo mark takes `appName.slice(0, 1)` — still «L», so the design is
+   * unaffected. **docs/product/ still says «Luna CRM» and is read-only**
+   * (CLAUDE.md rule 1); the discovery repo is what reconciles it.
    */
-  appName: 'LunaCRM',
+  appName: 'Luna Shoots',
   appTagline: 'Команда, локація, референси й підтвердження — в одному місці',
   // Accessibility labels for the password eye. Not from any mockup — the mockup
   // has aria-label="Показати пароль" and no hidden state, so the second is
@@ -872,7 +880,7 @@ export const uk = {
   organizerSection: 'Організатор',
   callOrganizer: 'Подзвонити',
   privateLinkWarning: 'Приватне посилання — не публікуйте його.',
-  organisedIn: 'Організовано в LunaCRM',
+  organisedIn: 'Організовано в Luna Shoots',
   confirmParticipation: 'Підтверджую участь',
   cannotCome: 'Не зможу приїхати',
   changeAnswer: 'Змінити',

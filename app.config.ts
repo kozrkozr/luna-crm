@@ -5,7 +5,7 @@ import type { ExpoConfig } from 'expo/config'
  * EXPO_PUBLIC_* directly, which is what Expo inlines at build time.
  */
 const config: ExpoConfig = {
-  name: 'Luna CRM',
+  name: 'Luna Shoots',
   slug: 'luna-crm',
   scheme: 'lunacrm',
   version: '0.1.0',

@@ -130,7 +130,7 @@ export const en: Strings = {
   clientRole: 'Client',
   // ADR-017. The auth screen reads `uk` directly — it sits outside the language
   // provider (EP-05) — so these exist for the Strings type, not for a reader.
-  appName: 'Shoots',
+  appName: 'Luna Shoots',
   appTagline: 'Crew, location, references and confirmations — in one place',
   showPassword: 'Show password',
   hidePassword: 'Hide password',
@@ -417,7 +417,7 @@ export const en: Strings = {
   organizerSection: 'Organiser',
   callOrganizer: 'Call',
   privateLinkWarning: 'A private link — please do not publish it.',
-  organisedIn: 'Organised in LunaCRM',
+  organisedIn: 'Organised in Luna Shoots',
   confirmParticipation: 'I will be there',
   cannotCome: "I can't make it",
   changeAnswer: 'Change',

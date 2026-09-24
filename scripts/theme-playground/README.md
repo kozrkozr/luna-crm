@@ -1,7 +1,7 @@
 # Theme playground
 
 Every screen in the app, rendered at once in one browser page, with the theme's
-colour tokens editable live — so a designer can re-skin Luna CRM without a
+colour tokens editable live — so a designer can re-skin Luna Shoots without a
 build, a checkout, or an editor. Locally, or as a URL you hand to someone.
 
 ```bash

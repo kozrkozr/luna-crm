@@ -1,4 +1,4 @@
-# Luna CRM
+# Luna Shoots
 
 A CRM where a solo photographer keeps one record per shoot and shares it by link with crew and
 clients who have **no account and no app installed**.
