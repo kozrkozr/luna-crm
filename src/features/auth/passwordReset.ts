@@ -17,7 +17,7 @@ import { supabase } from '../../lib/supabase/client'
 /**
  * Where the emailed link lands.
  *
- * `Linking.createURL` gives `lunacrm://reset` on a device and an
+ * `Linking.createURL` gives `lunashoots://reset` on a device and an
  * origin-relative URL on the web export, so one call covers both surfaces
  * without either being hardcoded.
  *

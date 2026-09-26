@@ -44,8 +44,23 @@ to the discovery repo as a story or an ADR **before** the code moves:
    login, register, profile, shoot editing — to a public URL. Fix is a publish filter, ~30
    minutes. The decision is whether to fix it or to bless it.
 3. **What the terms and the privacy policy say.** See Part 1. Content is legal, not technical.
-4. **The bundle identifier.** `dev.luna.crm` today. It is permanent from the first upload —
-   Apple will not let it be changed, and `dev.` reads like a placeholder.
+4. ~~**The bundle identifier.**~~ **Answered by the owner, 2026-09-24: `com.lunashoots.app`.**
+   Was `dev.luna.crm`, which reverse-resolves to a `luna.dev` nobody here owns, led with a
+   segment every reader parses as "development", and ended in a word the product is no longer
+   called. Permanent from the first upload, so it was settled before one.
+
+   Two identifiers moved with it, both cheap now and expensive later:
+
+   - `scheme: 'lunacrm'` → **`lunashoots`**. Once `lunashoots://reset` is in the prod redirect
+     allow-list and inside recovery emails that have already been sent, changing it breaks links
+     that are already out there.
+   - The support address behind «Потрібна допомога? Напишіть нам» (`AuthScreen.tsx`) was
+     `support@lunacrm.app`, a domain nobody registered — a tester tapping it wrote into the void.
+     Now `support@lunashoots.com`.
+
+   All three now derive from one domain, **`lunashoots.com`** — confirmed unregistered on
+   2026-09-24, and the same domain 1.5 needs anyway. **Buy it before anything else here is
+   real**; every one of these identifiers now assumes it.
 
 ---
 
@@ -96,7 +111,7 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
       `minimum_password_length = 8` and `passwordRules.ts` exports `MIN_PASSWORD_LENGTH = 8` —
       but **`config.toml` only configures local Supabase.** The hosted project defaults to 6 and
       must be changed by hand, or the app promises a rule the server does not keep.
-- [ ] Authentication → URL Configuration: add `lunacrm://reset` to the redirect allow-list, and
+- [ ] Authentication → URL Configuration: add `lunashoots://reset` to the redirect allow-list, and
       set `site_url` to the Pages host. **A missing entry fails at send time, not at open time**,
       which looks exactly like the email never being triggered.
 - [ ] Decide and set the email-confirmation toggle per Part 0 item 1.
@@ -130,7 +145,7 @@ password is a tester who is finished with the app.
 - [ ] Translate the Supabase email templates to Ukrainian. They are English by default, and
       `CLAUDE.md` rule 4 does not stop at the app's edge — a recovery email is user-facing copy.
 - [ ] **Test the recovery link on a real iPhone, from Mail and from Gmail.** The redirect is
-      `Linking.createURL('/reset')` → `lunacrm://reset`, a custom scheme. iOS mail clients
+      `Linking.createURL('/reset')` → `lunashoots://reset`, a custom scheme. iOS mail clients
       frequently refuse to make custom-scheme URLs tappable. If it does not work, the fix is
       Universal Links (associated domains + an `apple-app-site-association` file on the Pages
       host), which is a day of work, not an hour. **Find this out before the beta, not during.**
@@ -145,8 +160,15 @@ now the whole product.
 link most people will not tap. It also gives the reset email a sender domain (1.4) and gives the
 privacy policy a home (1.1).
 
-- [ ] Buy a domain. ~$10–15/year.
+**The domain is now load-bearing, not a nicety.** Part 0 item 4 settled the bundle identifier,
+the URL scheme and the support address, and all three derive from `lunashoots.com`. It was
+unregistered as of 2026-09-24.
+
+- [ ] **Buy `lunashoots.com`.** ~$10–15/year. Do it first — the longer it sits unclaimed, the
+      more that is built on a name someone else can take.
 - [ ] Point it at the Cloudflare Pages project.
+- [ ] Create `support@lunashoots.com` and make sure someone reads it — `AuthScreen.tsx` already
+      offers it to every user on the login and registration screens.
 - [ ] Update `EXPO_PUBLIC_LINK_BASE_URL` — then **rebuild both surfaces.** `EXPO_PUBLIC_*` is
       inlined at build time; changing `.env` changes nothing until the web export and the iOS app
       are both rebuilt.
@@ -162,8 +184,7 @@ privacy policy a home (1.1).
 - [ ] No export-compliance declaration. Add `ios.config.usesNonExemptEncryption: false`. The app
       uses HTTPS only, which is exempt; without the flag App Store Connect asks the same question
       on every upload and blocks the build until answered.
-- [ ] Bundle identifier, per Part 0 item 4 — decide before the first upload, because there is no
-      after.
+- [x] ~~Bundle identifier.~~ Settled 2026-09-24 — `com.lunashoots.app`. See Part 0 item 4.
 
 ### 1.7 Controls that do nothing
 

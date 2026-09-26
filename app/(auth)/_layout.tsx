@@ -23,7 +23,7 @@ export default function AuthLayout() {
     <Stack screenOptions={{ headerShown: false, ...navigationScreenOptions }}>
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
-      {/* Where the password-recovery email lands (`lunacrm://reset`). Headerless
+      {/* Where the password-recovery email lands (`lunashoots://reset`). Headerless
           like its siblings — it draws its own heading. */}
       <Stack.Screen name="reset" />
     </Stack>

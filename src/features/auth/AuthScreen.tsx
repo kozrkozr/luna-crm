@@ -150,7 +150,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
           {mode === 'login' || mode === 'register' ? (
             <Pressable
               className="mt-3.5 min-h-11 flex-row items-center justify-center"
-              onPress={() => void openExternalUrl('mailto:support@lunacrm.app')}
+              onPress={() => void openExternalUrl('mailto:support@lunashoots.com')}
               role="button"
             >
               <Text className="text-label text-muted-foreground">{`${uk.needHelp} `}</Text>

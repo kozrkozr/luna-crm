@@ -71,7 +71,7 @@ export function icsDataUri(event: CalendarEvent): string {
     'VERSION:2.0',
     'PRODID:-//Luna Shoots//UA',
     'BEGIN:VEVENT',
-    `UID:${event.start}-lunacrm`,
+    `UID:${event.start}-lunashoots`,
     `DTSTART${event.allDay ? ';VALUE=DATE' : ''}:${event.start}`,
     `DTEND${event.allDay ? ';VALUE=DATE' : ''}:${event.end}`,
     // Commas and semicolons are field separators in iCalendar and have to be

@@ -7,7 +7,7 @@ import type { ExpoConfig } from 'expo/config'
 const config: ExpoConfig = {
   name: 'Luna Shoots',
   slug: 'luna-crm',
-  scheme: 'lunacrm',
+  scheme: 'lunashoots',
   version: '0.1.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -79,7 +79,7 @@ const config: ExpoConfig = {
   ],
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'dev.luna.crm',
+    bundleIdentifier: 'com.lunashoots.app',
   },
   web: {
     bundler: 'metro',

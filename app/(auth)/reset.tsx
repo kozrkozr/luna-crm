@@ -14,7 +14,7 @@ import { establishRecoverySession, setNewPassword } from '../../src/features/aut
 import { Starfield } from '../../src/components/Starfield'
 
 /**
- * Where the recovery email lands — `lunacrm://reset` on a device, `/reset` on
+ * Where the recovery email lands — `lunashoots://reset` on a device, `/reset` on
  * the web export (`resetRedirectUrl`).
  *
  * `Auth.dc.html` draws the request and the confirmation but **not this screen**,
