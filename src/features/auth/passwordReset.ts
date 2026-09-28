@@ -1,4 +1,6 @@
+import Constants from 'expo-constants'
 import * as Linking from 'expo-linking'
+import { Platform } from 'react-native'
 import { supabase } from '../../lib/supabase/client'
 
 /**
@@ -17,17 +19,38 @@ import { supabase } from '../../lib/supabase/client'
 /**
  * Where the emailed link lands.
  *
- * `Linking.createURL` gives `lunashoots://reset` on a device and an
- * origin-relative URL on the web export, so one call covers both surfaces
- * without either being hardcoded.
+ * **`Linking.createURL('/reset')` was wrong on native and failed silently.**
+ * Measured against a real recovery email on 2026-09-28. Its assembly step is
+ * `` `${scheme}:/${hostUri}${path}` ``, and `hostUri` is not empty the way the
+ * old comment here assumed:
+ *
+ * - release build → `lunashoots:///reset` — three slashes, not two
+ * - dev build → `lunashoots:///192.168.x.x:8081/reset`, carrying Metro's address
+ *
+ * Neither matches an allow-list entry of `lunashoots://reset`, and **Supabase
+ * does not report a rejected `redirect_to`** — it quietly substitutes Site URL.
+ * The symptom is a recovery link that opens Safari on the site instead of the
+ * app, with nothing anywhere saying why.
+ *
+ * So native now builds the URL itself, and only the web keeps `createURL` —
+ * there it correctly yields `https://<origin>/reset`, which is what the web
+ * surface needs.
+ *
+ * The scheme is read from the Expo config rather than typed here, so
+ * `app.config.ts` stays the one place it is defined.
  *
  * **This URL must be allow-listed or Supabase refuses to send.** Locally that
  * is `additional_redirect_urls` in supabase/config.toml; on the hosted project
- * it is Authentication → URL Configuration. A missing entry fails at send time,
- * not at open time, which makes it look like the email was never triggered.
+ * it is Authentication → URL Configuration.
  */
 export function resetRedirectUrl(): string {
-  return Linking.createURL('/reset')
+  if (Platform.OS === 'web') return Linking.createURL('/reset')
+
+  const scheme = Constants.expoConfig?.scheme
+  const resolved = Array.isArray(scheme) ? scheme[0] : scheme
+  // Falling back to createURL keeps recovery working even in a build with no
+  // scheme, at the cost of needing the wildcard entry in the allow-list.
+  return resolved ? `${resolved}://reset` : Linking.createURL('/reset')
 }
 
 export type ResetRequestResult = { ok: true } | { ok: false }
@@ -85,6 +108,7 @@ export async function establishRecoverySession(params: {
       type: 'recovery',
       token_hash: params.tokenHash,
     })
+    if (error && __DEV__) console.warn('[recovery] verifyOtp failed:', error.code, error.message)
     return !error
   }
 
@@ -93,6 +117,7 @@ export async function establishRecoverySession(params: {
       access_token: params.accessToken,
       refresh_token: params.refreshToken,
     })
+    if (error && __DEV__) console.warn('[recovery] setSession failed:', error.code, error.message)
     return !error
   }
 
