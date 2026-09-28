@@ -73,8 +73,6 @@ export const en: Strings = {
   subscriptionSection: 'Subscription',
   planLabel: 'Plan',
   planFree: 'Free',
-  notifyShootReminders: 'Shoot reminders',
-  notifyNewConfirmations: 'New confirmations',
   settingsSection: 'Settings',
   appLanguage: 'App language',
   contactSupport: 'Contact support',

@@ -21,7 +21,6 @@ import { Icon } from '../../../src/components/ui/icon'
 import { InstagramIcon } from '../../../src/components/ui/instagram-icon'
 import { Input } from '../../../src/components/ui/input'
 import { Sheet } from '../../../src/components/ui/sheet'
-import { Switch } from '../../../src/components/ui/switch'
 import { Text } from '../../../src/components/ui/text'
 import { Avatar } from '../../../src/components/Avatar'
 import { bottomNavHeight } from '../../../src/components/BottomNav'
@@ -135,15 +134,6 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(true)
   const [toast, setToast] = useState<string | null>(null)
 
-  /*
-    STUB — «Сповіщення» (owner, 2026-09-02). Local state and nothing else:
-    there is no `expo-notifications`, no push-token table, no column to store a
-    preference in and nothing that would send either kind of message. It resets
-    on every launch, which is the honest behaviour for a control that changes
-    nothing; persisting it would imply a setting that does something.
-  */
-  const [notifyReminders, setNotifyReminders] = useState(true)
-  const [notifyConfirmations, setNotifyConfirmations] = useState(true)
 
   // Seeded once the profile arrives. Not on every render: the reader may
   // already be typing by the time a refetch lands.
@@ -771,23 +761,6 @@ export default function ProfileScreen() {
             <Text className="text-label text-muted-foreground px-0.5">{t.socialSeenByCrew}</Text>
           </View>
 
-          {/* ── Сповіщення ── STUB: see the state declaration above. */}
-          <View className="gap-2">
-            <SectionLabel label={t.notifications} />
-            <Card variant="flat" className="gap-0 p-0">
-              <ToggleRow
-                label={t.notifyShootReminders}
-                value={notifyReminders}
-                onChange={setNotifyReminders}
-              />
-              <ToggleRow
-                label={t.notifyNewConfirmations}
-                value={notifyConfirmations}
-                onChange={setNotifyConfirmations}
-                divided
-              />
-            </Card>
-          </View>
 
           {/* ── Налаштування ── */}
           <View className="gap-2">
@@ -957,36 +930,6 @@ export default function ProfileScreen() {
   )
 }
 
-/** One «Сповіщення» row: a label and a switch that currently persists nothing. */
-function ToggleRow({
-  label,
-  value,
-  onChange,
-  divided = false,
-}: {
-  label: string
-  value: boolean
-  onChange: (next: boolean) => void
-  divided?: boolean
-}) {
-  return (
-    <View
-      className={`min-h-14 flex-row items-center gap-3 py-2 pl-4 pr-3.5 ${
-        divided ? 'border-border border-t' : ''
-      }`}
-    >
-      <Text className="text-body-sm text-muted-foreground flex-1">{label}</Text>
-      <Switch
-        checked={value}
-        onCheckedChange={(next) => {
-          tickSelection()
-          onChange(next)
-        }}
-        accessibilityLabel={label}
-      />
-    </View>
-  )
-}
 
 /**
  * One row of the account card: an icon, a label on the left, the value editable

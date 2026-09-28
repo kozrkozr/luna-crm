@@ -80,8 +80,6 @@ export const uk = {
   planLabel: 'Тариф',
   /** The only plan there is. A product name, so it is not translated. */
   planFree: 'Free',
-  notifyShootReminders: 'Нагадування про зйомку',
-  notifyNewConfirmations: 'Нові підтвердження',
   settingsSection: 'Налаштування',
   appLanguage: 'Мова застосунку',
   contactSupport: 'Написати в підтримку',
