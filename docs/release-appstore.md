@@ -58,9 +58,12 @@ to the discovery repo as a story or an ADR **before** the code moves:
      `support@lunacrm.app`, a domain nobody registered — a tester tapping it wrote into the void.
      Now `support@lunashoots.com`.
 
-   All three now derive from one domain, **`lunashoots.com`** — confirmed unregistered on
-   2026-09-24, and the same domain 1.5 needs anyway. **Buy it before anything else here is
-   real**; every one of these identifiers now assumes it.
+   All three are *named* after `lunashoots.com` — unregistered as of 2026-09-24 — but only the
+   support address actually needs it to exist. **Apple never checks domain ownership**, so
+   `com.lunashoots.app` and `lunashoots://` work permanently whether or not the domain is ever
+   bought. Reverse-DNS is a convention for avoiding collisions, not a claim Apple verifies.
+
+   What genuinely needs a domain is in 1.5, and it is one thing.
 
 ---
 
@@ -160,15 +163,26 @@ now the whole product.
 link most people will not tap. It also gives the reset email a sender domain (1.4) and gives the
 privacy policy a home (1.1).
 
-**The domain is now load-bearing, not a nicety.** Part 0 item 4 settled the bundle identifier,
-the URL scheme and the support address, and all three derive from `lunashoots.com`. It was
-unregistered as of 2026-09-24.
+**One hard requirement, and it is not the one people assume.** The identifiers settled in Part 0
+item 4 do *not* need this domain — Apple never verifies domain ownership. What needs it:
 
-- [ ] **Buy `lunashoots.com`.** ~$10–15/year. Do it first — the longer it sits unclaimed, the
-      more that is built on a name someone else can take.
+| Wants a domain | Actually required? |
+|---|---|
+| **Sending password-reset email (1.4)** | **Yes.** Resend, Postmark and every alternative refuse to send from an address you cannot prove you control; a verified sending domain with SPF/DKIM is the price of leaving Supabase's rate-limited shared sender |
+| Support address | No — any mailbox works. The code currently names `support@lunashoots.com`, and that is the only reason this domain in particular |
+| Hosting the privacy policy and terms (1.1) | No — a `*.pages.dev` path is accepted by App Store Connect |
+| Support URL | No, same |
+| Bundle ID and URL scheme | **No** |
+| A link a stranger will actually tap | Judgement, not a blocker |
+
+So: **any domain you control satisfies the real requirement.** If one already exists, use it and
+change the support address in `AuthScreen.tsx` to match. `lunashoots.com` is worth the ~$12/year
+mainly because the product now carries that name and someone else can take it.
+
+- [ ] Get a domain — `lunashoots.com` unless one already exists.
 - [ ] Point it at the Cloudflare Pages project.
-- [ ] Create `support@lunashoots.com` and make sure someone reads it — `AuthScreen.tsx` already
-      offers it to every user on the login and registration screens.
+- [ ] Create the support mailbox and make sure a person reads it — `AuthScreen.tsx` already
+      offers that address to every user on the login and registration screens.
 - [ ] Update `EXPO_PUBLIC_LINK_BASE_URL` — then **rebuild both surfaces.** `EXPO_PUBLIC_*` is
       inlined at build time; changing `.env` changes nothing until the web export and the iOS app
       are both rebuilt.
