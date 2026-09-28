@@ -21,6 +21,7 @@ import { Icon } from '../../components/ui/icon'
 import { Text } from '../../components/ui/text'
 import { Toast } from '../../components/Toast'
 import { openExternalUrl } from '../../lib/openExternalUrl'
+import { privacyUrl, termsUrl } from '../../lib/legalUrls'
 import { ROLES_UK, roleWithEmoji, uk, type Role } from '../../i18n/uk'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
@@ -74,9 +75,13 @@ type ScreenMode = AuthMode | 'forgot' | 'sent'
  *   `config.toml`. The design says 8; no story specifies a minimum, so 6 is the
  *   only reviewed number.
  *
- * **A-4 is not resolved and got sharper.** The terms checkbox now BLOCKS
- * registration, as drawn — and «умовами використання» and «політикою
- * конфіденційності» still do not exist. It gates on agreeing to nothing.
+ * **A-4 is resolved, 2026-09-28.** The terms checkbox blocks registration as
+ * drawn, and both documents now exist and open: `public/terms/` and
+ * `public/privacy/`, served as static pages by the same Cloudflare Pages
+ * project as the link surface. Until then the checkbox gated on agreeing to
+ * two underlined phrases that led nowhere.
+ *
+ * They are plain HTML rather than screens on purpose — see `lib/legalUrls.ts`.
  *
  * Two additions with no story behind either: a free-text «Інша роль», so
  * `users.role` is no longer one of the glossary's five, and a Telegram handle
@@ -642,11 +647,31 @@ function RegisterForm() {
               <Icon as={Check} size={12} strokeWidth={3} className="text-primary-foreground" />
             ) : null}
           </View>
+          {/* The two phrases open the documents; tapping anywhere else in this
+              row still toggles the checkbox. They were styled as links and led
+              nowhere until 2026-09-28 — the checkbox gated registration on
+              agreeing to text nobody could read. */}
           <Text className="text-label text-muted-foreground flex-1 leading-5">
             {`${uk.termsPrefix} `}
-            <Text className="text-foreground underline">{uk.termsUse}</Text>
+            <Text
+              className="text-foreground underline"
+              onPress={() => {
+                const url = termsUrl()
+                if (url) void openExternalUrl(url)
+              }}
+            >
+              {uk.termsUse}
+            </Text>
             {` ${uk.termsAnd} `}
-            <Text className="text-foreground underline">{uk.termsPrivacy}</Text>
+            <Text
+              className="text-foreground underline"
+              onPress={() => {
+                const url = privacyUrl()
+                if (url) void openExternalUrl(url)
+              }}
+            >
+              {uk.termsPrivacy}
+            </Text>
           </Text>
         </Pressable>
         <FieldError message={errors.terms ?? null} />
