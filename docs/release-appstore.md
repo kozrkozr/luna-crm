@@ -117,7 +117,8 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
 - [ ] Authentication → URL Configuration: add `lunashoots://reset` to the redirect allow-list, and
       set `site_url` to the Pages host. **A missing entry fails at send time, not at open time**,
       which looks exactly like the email never being triggered.
-- [ ] Decide and set the email-confirmation toggle per Part 0 item 1.
+- [x] ~~Decide and set the email-confirmation toggle per Part 0 item 1.~~ Set 2026-09-28 — off on
+      prod. It was on by default: registration "succeeded" and landed on «Увійти».
 - [ ] Storage: the `shoot-media` bucket is created by migration and is private — confirm it
       came up private on prod, and set a file size limit if none is inherited.
 
