@@ -81,6 +81,14 @@ const config: ExpoConfig = {
     supportsTablet: false,
     bundleIdentifier: 'com.lunashoots.app',
   },
+  /*
+   * Android is not a target (CLAUDE.md: iOS first), but `expo prebuild`
+   * generates both platforms and refuses to run without this. Same identifier
+   * as iOS, which is the convention and costs nothing.
+   */
+  android: {
+    package: 'com.lunashoots.app',
+  },
   web: {
     bundler: 'metro',
     output: 'static',
