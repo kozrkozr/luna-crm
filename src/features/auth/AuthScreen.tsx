@@ -26,6 +26,7 @@ import { ROLES_UK, roleWithEmoji, uk, type Role } from '../../i18n/uk'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
+import { RESEND_COOLDOWN_SECONDS, resendConfirmation } from './emailConfirmation'
 import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
 import { Starfield } from '../../components/Starfield'
@@ -33,14 +34,15 @@ import { FormScrollView } from '../../components/ui/form-scroll-view'
 
 /**
  * `login` and `register` are the two the routes map onto; `forgot` and `sent`
- * are the recovery flow `Auth.dc.html` added (owner, 2026-08-31) and are reached
- * only from inside this screen.
+ * are the recovery flow `Auth.dc.html` added (owner, 2026-08-31), and
+ * `confirmSent` is `ADR-019`'s «Перевірте пошту» after registering. All three
+ * are reached only from inside this screen.
  */
 /** The one place this screen decides what an email looks like. */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export type AuthMode = 'login' | 'register'
-type ScreenMode = AuthMode | 'forgot' | 'sent'
+type ScreenMode = AuthMode | 'forgot' | 'sent' | 'confirmSent'
 
 /**
  * `US-013` (log in) and `US-001` (register) on one screen, switched by a
@@ -91,6 +93,8 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
   const [mode, setMode] = useState<ScreenMode>(initialMode)
   /** Carried from login into the recovery form, so it is not retyped. */
   const [recoveryEmail, setRecoveryEmail] = useState('')
+  /** The address the confirmation email went to — named on the screen (AC-1). */
+  const [confirmEmail, setConfirmEmail] = useState('')
 
   return (
     /*
@@ -134,7 +138,14 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
               }}
             />
           ) : null}
-          {mode === 'register' ? <RegisterForm /> : null}
+          {mode === 'register' ? (
+            <RegisterForm
+              onNeedsConfirmation={(email) => {
+                setConfirmEmail(email)
+                setMode('confirmSent')
+              }}
+            />
+          ) : null}
           {mode === 'forgot' ? (
             <ForgotForm
               email={recoveryEmail}
@@ -149,6 +160,10 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
               onBack={() => setMode('login')}
               onChangeAddress={() => setMode('forgot')}
             />
+          ) : null}
+
+          {mode === 'confirmSent' ? (
+            <ConfirmSent email={confirmEmail} onBack={() => setMode('login')} />
           ) : null}
 
           {/* «Потрібна допомога? Напишіть нам» — on the auth modes only. */}
@@ -298,24 +313,63 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  /** `US-001` AC-3 — the right password, on an address not yet confirmed. */
+  const [unconfirmed, setUnconfirmed] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   const submit = async () => {
     setError(null)
+    setUnconfirmed(false)
+    setResendError(null)
     setSubmitting(true)
     const result = await login(email, password)
     setSubmitting(false)
 
-    // AC-2 — rejected with a clear message, and no account is entered.
     if (!result.ok) {
+      if (result.reason === 'emailNotConfirmed') {
+        setUnconfirmed(true)
+        return
+      }
+      // US-013 AC-2 — rejected with a clear message, and no account is entered.
       setError(uk.wrongCreds)
       return
     }
     router.replace('/(app)/(tabs)')
   }
 
+  const resend = async () => {
+    setResendError(null)
+    setResending(true)
+    const sent = await resendConfirmation(email)
+    setResending(false)
+    // A failure here is almost always Supabase's interval between emails —
+    // the reader registered moments ago. No copy was approved for that case,
+    // so it gets the generic one rather than an invented explanation.
+    if (sent) setToast(uk.resentToast)
+    else setResendError(uk.somethingWentWrong)
+  }
+
   return (
     <View className="gap-2">
-      <ServerError message={error} />
+      <ServerError message={unconfirmed ? uk.emailNotConfirmed : error} />
+      {unconfirmed ? (
+        <>
+          <Button
+            variant="outline"
+            size="cta"
+            className="h-11 py-0"
+            disabled={resending}
+            onPress={() => void resend()}
+          >
+            <Text className="text-body-sm font-medium">{uk.resendConfirmation}</Text>
+          </Button>
+          {resendError ? (
+            <Text className="text-label text-destructive">{resendError}</Text>
+          ) : null}
+        </>
+      ) : null}
 
       {/*
         **«Email», not the design's «Email або телефон»** (owner, 2026-08-31).
@@ -379,12 +433,14 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
       >
         <Text className="text-body-sm text-muted-foreground">{uk.forgotPassword}</Text>
       </Pressable>
+
+      <Toast message={toast} onDone={() => setToast(null)} />
     </View>
   )
 }
 
 /** `US-001` — register an account and select a professional role. */
-function RegisterForm() {
+function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: string) => void }) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [name, setName] = useState('')
@@ -461,6 +517,12 @@ function RegisterForm() {
             ? uk.emailTaken
             : uk.registrationFailed
       )
+      return
+    }
+    // AC-1 — production confirms the email first (`ADR-019`); local Supabase
+    // does not, and answers with a session.
+    if (!result.confirmed) {
+      onNeedsConfirmation(email.trim())
       return
     }
     router.replace('/(app)/(tabs)')
@@ -981,6 +1043,72 @@ function ResetSent({
         role="button"
       >
         <Text className="text-label text-muted-foreground">{uk.changeAddress}</Text>
+      </Pressable>
+
+      <Toast message={toast} onDone={() => setToast(null)} />
+    </View>
+  )
+}
+
+/**
+ * «Перевірте пошту» after registering — `US-001` AC-1 as amended by `ADR-019`.
+ *
+ * Shaped like `ResetSent` and sharing its heading, toast and countdown, but not
+ * its layout: here sending again is the one thing to do, so it is the primary
+ * button, and going back is the quiet link (copy approved 2026-09-29).
+ *
+ * The countdown starts at once, because `signUp` has just sent the first email
+ * and Supabase would refuse a second one inside its interval.
+ */
+function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
+  const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN_SECONDS)
+  const [toast, setToast] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (secondsLeft <= 0) return
+    const timer = setTimeout(() => setSecondsLeft((current) => current - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [secondsLeft])
+
+  const resend = async () => {
+    setError(null)
+    setSecondsLeft(RESEND_COOLDOWN_SECONDS)
+    if (await resendConfirmation(email)) setToast(uk.resentToast)
+    else setError(uk.somethingWentWrong)
+  }
+
+  return (
+    <View className="items-center pt-12">
+      <View className="border-border-strong bg-secondary mb-5 h-14 w-14 items-center justify-center rounded-full">
+        <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
+      </View>
+
+      <Text className="text-title text-foreground font-semibold">{uk.checkYourMail}</Text>
+      <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
+        {uk.confirmSentTemplate.replace('{email}', email)}
+      </Text>
+
+      <Button
+        size="cta"
+        className="mt-6 w-full"
+        disabled={secondsLeft > 0}
+        onPress={() => void resend()}
+      >
+        <Text className="text-subtitle font-semibold">
+          {secondsLeft > 0
+            ? uk.resendInTemplate.replace('{seconds}', String(secondsLeft))
+            : uk.resendConfirmation}
+        </Text>
+      </Button>
+      {error ? <Text className="text-label text-destructive mt-2">{error}</Text> : null}
+
+      <Pressable
+        className="mt-1.5 min-h-11 items-center justify-center"
+        onPress={onBack}
+        role="button"
+      >
+        <Text className="text-label text-muted-foreground">{uk.returnToLogin}</Text>
       </Pressable>
 
       <Toast message={toast} onDone={() => setToast(null)} />

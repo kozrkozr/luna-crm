@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase/client'
 import type { Role } from '../../i18n/uk'
+import { confirmRedirectUrl } from './emailConfirmation'
 
 export type RegistrationInput = {
   name: string
@@ -29,11 +30,19 @@ export type RegistrationInput = {
 }
 
 export type RegistrationFailure = 'weakPassword' | 'emailTaken' | 'failed'
-export type RegistrationResult = { ok: true } | { ok: false; reason: RegistrationFailure }
+/**
+ * `confirmed: false` is `ADR-019`'s outcome: the account exists, the email has
+ * been sent, and there is no session until the link in it is opened.
+ */
+export type RegistrationResult =
+  | { ok: true; confirmed: boolean }
+  | { ok: false; reason: RegistrationFailure }
 
 /**
- * US-001 AC-1 — create the account with its role and return a live session, so
- * the caller can land on the (empty) shoot list.
+ * US-001 AC-1 — create the account with its role. With confirmation on
+ * (production, `ADR-019`) that sends the confirmation email and returns no
+ * session; with it off (local) the session is live at once and the caller can
+ * land on the (empty) shoot list.
  *
  * Profile fields travel as auth metadata; the on_auth_user_created trigger
  * writes public.users in the same transaction as the auth user, so there is no
@@ -47,10 +56,11 @@ export type RegistrationResult = { ok: true } | { ok: false; reason: Registratio
  * (docs/open-questions.md items 1 and 2).
  */
 export async function register(input: RegistrationInput): Promise<RegistrationResult> {
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: input.email.trim(),
     password: input.password,
     options: {
+      emailRedirectTo: confirmRedirectUrl(),
       data: {
         name: input.name.trim(),
         role: input.role,
@@ -64,7 +74,19 @@ export async function register(input: RegistrationInput): Promise<RegistrationRe
     },
   })
 
-  if (!error) return { ok: true }
+  if (!error) {
+    if (data.session) return { ok: true, confirmed: true }
+    /*
+      With confirmation on, Supabase does not report a taken address as an
+      error — it answers as if it had registered one, with a user carrying no
+      identities, so the response cannot be used to list accounts. The form has
+      always said «Акаунт з таким email вже існує», so the signal is read here
+      to keep saying it rather than sending someone to wait for an email that
+      will never come.
+    */
+    if (data.user?.identities?.length === 0) return { ok: false, reason: 'emailTaken' }
+    return { ok: true, confirmed: false }
+  }
 
   // Keep the underlying cause visible while developing: a generic message in
   // the UI must not also mean a generic message in the logs.

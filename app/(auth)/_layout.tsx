@@ -26,6 +26,9 @@ export default function AuthLayout() {
       {/* Where the password-recovery email lands (`lunashoots://reset`). Headerless
           like its siblings — it draws its own heading. */}
       <Stack.Screen name="reset" />
+      {/* Where the signup confirmation email lands (`lunashoots://confirm`,
+          ADR-019). Headerless for the same reason. */}
+      <Stack.Screen name="confirm" />
     </Stack>
   )
 }

@@ -249,6 +249,19 @@ export const uk = {
   resendInTemplate: 'Надіслати ще раз через {seconds} с',
   changeAddress: 'Змінити адресу',
   resentToast: 'Лист надіслано ще раз',
+
+  /* ── Signup confirmation, `ADR-019` / `US-001` AC-1, AC-3, AC-4. Approved by
+     the owner in chat, 2026-09-29, recorded in the source repo's
+     `02-product/reviews/r06-2026-09-29/notes.md`. The screen reuses
+     `checkYourMail`, `resentToast`, `returnToLogin` and `resendInTemplate`. ── */
+  /** «Ми надіслали лист на {email}. Відкрийте посилання в ньому, щоб підтвердити реєстрацію.» */
+  confirmSentTemplate:
+    'Ми надіслали лист на {email}. Відкрийте посилання в ньому, щоб підтвердити реєстрацію.',
+  resendConfirmation: 'Надіслати лист ще раз',
+  emailNotConfirmed:
+    'Пошту ще не підтверджено. Відкрийте посилання з листа або надішліть його ще раз.',
+  confirmLinkInvalid:
+    'Посилання для підтвердження недійсне або застаріло. Увійдіть, щоб надіслати нове.',
   /* The screen the emailed link opens. New copy — the design draws the request
      and the confirmation but not the form that actually sets the password. */
   newPasswordTitle: 'Новий пароль',

@@ -165,7 +165,7 @@ site_url = "http://127.0.0.1:3000"
 # it does not recognise**, and it fails at SEND time — which looks exactly like
 # the email never being triggered. The hosted project needs the same entry under
 # Authentication → URL Configuration; this file only covers local development.
-additional_redirect_urls = ["https://127.0.0.1:3000", "lunashoots://reset"]
+additional_redirect_urls = ["https://127.0.0.1:3000", "lunashoots://reset", "lunashoots://confirm"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -228,11 +228,17 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-# US-001 AC-1: "their account is created ... and they land on their (empty)
-# shoot list". A confirmation step before landing would contradict that AC, so
-# registration must yield a session immediately. Turning this on is a spec
-# change (a new AC or story), not a config tweak — and the CLOUD project needs
-# the same setting, under Authentication → Providers → Email in the dashboard.
+#
+# **ON in production, OFF here — deliberately different.** `ADR-019` (2026-09-29)
+# amended US-001 AC-1 to confirm the email before the shoot list, and the hosted
+# project has «Confirm email» on (Authentication → Providers → Email).
+#
+# It stays off locally because the acceptance suites sign up dozens of accounts
+# and expect a session back from `signUp`. The app handles both answers — a
+# session goes straight in, none shows «Перевірте пошту» — and the matching
+# rules key on `users.email_confirmed_at`, which an unconfirmed-by-config
+# account has set at insert. `us009-db` reaches the unconfirmed case through the
+# admin API.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
