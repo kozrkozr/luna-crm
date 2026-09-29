@@ -106,9 +106,10 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
 
 - [ ] New Supabase project, `luna-crm-prod`, Frankfurt.
 - [ ] **On the Pro plan, not Free.** Non-negotiable for real users — see 1.3.
-- [ ] `npx supabase link --project-ref <prod ref>` then `npx supabase db push` — 30 migrations.
-- [ ] `npx supabase functions deploy link-gateway`. Two of three user flows are this function;
-      without it every link is dead.
+- [x] ~~`npx supabase link --project-ref <prod ref>` then `npx supabase db push` — 30 migrations.~~
+      Checked 2026-09-29: prod has all 31, the last `20260928120000`.
+- [x] ~~`npx supabase functions deploy link-gateway`.~~ Two of three user flows are this function;
+      without it every link is dead. Checked 2026-09-29: `ACTIVE`, `verify_jwt: false`.
 - [x] ~~Verify RLS is actually on after the push. Dashboard → Database → Tables, every table.~~
       Checked 2026-09-29 with `supabase db query --linked`: RLS on for all eight `public` tables,
       none selectable by `anon`; the four `storage.objects` policies are `authenticated` only.
