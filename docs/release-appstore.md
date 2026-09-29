@@ -124,11 +124,11 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
       set `site_url` to the Pages host.~~ Done on prod 2026-09-29, `site_url` =
       `https://lunashoots.com`. **A missing entry fails at send time, not at open time**, which
       looks exactly like the email never being triggered.
-- [ ] Decide and set the email-confirmation toggle per Part 0 item 1. Set off 2026-09-28 — it was
-      on by default and registration "succeeded" into «Увійти». **Reopened 2026-09-29:** `ADR-019`
-      turns it back ON, now that the app handles it. Before switching it on: push migration
-      `20260929120000`, add `lunashoots://confirm` to the redirect allow-list, translate the
-      «Confirm signup» template, and ship a build carrying `(auth)/confirm`.
+- [x] ~~Decide and set the email-confirmation toggle per Part 0 item 1.~~ Set off 2026-09-28 — it
+      was on by default and registration "succeeded" into «Увійти». **On since 2026-09-29**
+      (`ADR-019`), after migration `20260929120000`, the `lunashoots://confirm` redirect, the
+      «Confirm signup» template and a build carrying `(auth)/confirm`. Tested on an iPhone: the
+      email arrives and its link opens the app.
 - [x] ~~Storage: the `shoot-media` bucket is created by migration and is private — confirm it
       came up private on prod, and set a file size limit if none is inherited.~~ Checked
       2026-09-29 — `shoot-media` and `avatars` both private on prod. Size limit left at the
