@@ -187,4 +187,70 @@ ok('a phone given at registration matches on signup, with no profile edit',
 ok('and that shoot is on their schedule immediately',
    ((await withPhone.client.rpc('my_crew_shoots')).data ?? []).some((r) => r.shoot_id === shootF))
 
+// ---------- ADR-019: only a confirmed account is matched (20260929120000) ----------
+//
+// The one place this suite uses the service role, and not as a shortcut: local
+// Supabase keeps `enable_confirmations = false`, so no user path here CAN
+// produce an unconfirmed account. The admin API stands in for production's
+// «Confirm email» — creating the account unconfirmed, then opening the link.
+const admin = createClient(process.env.SB_URL, process.env.SB_KEY, { auth: { persistSession: false } })
+const unconfirmed = async (tag, email, phone = null) => {
+  const { data, error } = await admin.auth.admin.createUser({
+    email, password: 'testpass123', email_confirm: false,
+    user_metadata: { name: tag, role: 'Візажист', ...(phone ? { phone } : {}) },
+  })
+  if (error) throw error
+  return data.user.id
+}
+
+const pendingEmail = `us009-pending-${stamp}@example.com`
+const shootG = await shootFor(photoA, 'Клієнт Є')
+await photoA.client.from('crew_members')
+  .insert({ shoot_id: shootG, name: 'Ірина', role: 'Візажист', email: pendingEmail })
+const pendingId = await unconfirmed('pending', pendingEmail)
+ok('ADR-019 an unconfirmed account does not claim a crew row by email',
+   (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootG).single()).data.user_id === null)
+
+const addedWhilePending = (await photoA.client.from('crew_members')
+  .insert({ shoot_id: shootG, name: 'Ірина', role: 'Гафер', email: pendingEmail }).select('user_id').single()).data
+ok('ADR-019 nor is it matched when added after it registered', addedWhilePending.user_id === null,
+   JSON.stringify(addedWhilePending))
+
+await admin.auth.admin.updateUserById(pendingId, { email_confirm: true })
+const confirmedRows = (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootG)).data
+ok('ADR-019 opening the confirmation link matches both rows',
+   confirmedRows.length === 2 && confirmedRows.every((r) => r.user_id === pendingId), JSON.stringify(confirmedRows))
+
+// An abandoned registration holding someone's phone must not be a second
+// candidate — S-5 F-2 would then refuse the real person's match.
+const heldPhone = ua('97')
+await unconfirmed('abandoned', `us009-abandoned-${stamp}@example.com`, heldPhone)
+const shootH = await shootFor(photoA, 'Клієнт Ж')
+await photoA.client.from('crew_members')
+  .insert({ shoot_id: shootH, name: 'Марко', role: 'Гафер', phone: heldPhone })
+const realHolder = await account('realholder', undefined, 'Гафер', heldPhone)
+ok('ADR-019 an unconfirmed account holding the same phone does not block a real match',
+   (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootH).single()).data.user_id === realHolder.id)
+
+// ---------- the profile row cannot be edited into a match ----------
+//
+// `authenticated` held UPDATE on the whole of `users` until 20260929120000, so
+// an account could PATCH its own `email` to someone else's and let the rematch
+// trigger hand it their crew rows — confirmation or not.
+const victimEmail = `us009-victim-${stamp}@example.com`
+const shootI = await shootFor(photoA, 'Клієнт З')
+await photoA.client.from('crew_members')
+  .insert({ shoot_id: shootI, name: 'Жертва', role: 'Стиліст', email: victimEmail })
+const thief = await account('thief')
+const emailPatch = await thief.client.from('users').update({ email: victimEmail }).eq('id', thief.id)
+ok('an account cannot rewrite its own email in users', emailPatch.error?.code === '42501',
+   JSON.stringify(emailPatch.error))
+ok('so the crew row stays unmatched',
+   (await photoA.client.from('crew_members').select('user_id').eq('shoot_id', shootI).single()).data.user_id === null)
+const confirmPatch = await thief.client.from('users').update({ email_confirmed_at: null }).eq('id', thief.id)
+ok('nor mark its own email confirmed or unconfirmed', confirmPatch.error?.code === '42501',
+   JSON.stringify(confirmPatch.error))
+ok('the profile fields it does own still save',
+   !(await thief.client.from('users').update({ name: 'Злодій', phone: ua('99') }).eq('id', thief.id)).error)
+
 process.exit(0)
