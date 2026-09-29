@@ -16,7 +16,7 @@ modelled as settled, not re-decided — each is marked **[answered]** with its s
 |---|---|
 | `id` | |
 | `name` | |
-| `email` | **required** — the login credential (`ADR-015`) |
+| `email` | **required** — the login credential (`ADR-015`). A crew-match key **only once confirmed** (`ADR-019`) |
 | `phone` | optional profile field. Both it and `email` are match keys for `CrewMember.user_id` — **[answered]** item 8/10. A person added as crew by phone alone must supply that phone here before the match can fire (`ADR-015`) |
 | `role` | professional role from the glossary's confirmed list (`US-001`) |
 | `social_handle` | optional, added in review r02 (`US-001`, `US-016`) |

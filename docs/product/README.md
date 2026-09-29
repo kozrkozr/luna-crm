@@ -5,14 +5,28 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-08-26 *(re-frozen twice; first freeze 2026-08-25)*
+- **Frozen:** 2026-09-29 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `8df5a6d` — *docs(review r05): add US-027 — share the client's link*.
+- **Source commit:** `c33cfed` — *docs(ADR-019): confirm the email before it can claim crew rows*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-09-29 re-freeze (review `r06`, and `8627fea` before it)
+**`ADR-019` amends `US-001` AC-1: registration now confirms the email** before the reader lands
+on the shoot list. AC-3 (logging in unconfirmed) and AC-4 (an invalid link) are new.
+`data-model.md` says an email matches crew only once confirmed; the phone key is unchanged, so
+`docs/open-questions.md` #31 in this repo is half closed, not closed. The copy for the new
+screens is in the source repo's `02-product/reviews/r06-2026-09-29/notes.md` — it was approved
+in chat and is not in the criteria.
+
+**This freeze also brings in `8627fea`, which was never frozen.** `ADR-017` (the dark-frame
+design system), `ADR-018` (the client as a persisted entity), `EP-06`, `US-028`–`US-035`, and
+the redesign wave in `backlog-order.md` were written in the source repo on 2026-08-28 and built
+here against the source directly. They are in this folder for the first time now; the build
+history that cites them predates their arrival here.
 
 ## What moved in the fifth 2026-08-26 re-freeze (review `r05`)
 **`US-027` is a new story in EP-04 — share the client's link.** The build reached `US-010` and
@@ -118,12 +132,12 @@ That commit is the visible record that the specification moved, and why.
 | `HANDOFF.md` | Start here — DoD status, known gaps, contradictions, reading order |
 | `backlog-order.md` | **What to build, in order.** Spikes first, then foundation, then EP-01→EP-05 |
 | `prd.md`, `scope.md` | Requirements `R-01`–`R-24`, and what is deliberately out |
-| `epics/` | 5 epics, 25 live stories with Given/When/Then acceptance criteria |
+| `epics/` | 6 epics, 33 live stories with Given/When/Then acceptance criteria |
 | `architecture.md` | Components, data flow, service costs by stage |
 | `data-model.md` | 5 entities and their relationships |
 | `risks.md` | Technical risks, spikes, assumed effort per epic. **R-1 and R-2 retired; R-6 retired earlier** |
 | `open-questions.md` | 4 open, all safe to start without |
-| `decisions/` | `ADR-001`–`ADR-016`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
+| `decisions/` | `ADR-001`–`ADR-019`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
 | `glossary.md` | Ukrainian↔English. **English is canonical for code and entity names** |
 | `personas.md`, `flows.md`, `ux-notes.md` | Who this is for, and the screens |
 | `prototype/index.html` | The reviewed prototype — open in a browser |
