@@ -119,8 +119,10 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
       which looks exactly like the email never being triggered.
 - [x] ~~Decide and set the email-confirmation toggle per Part 0 item 1.~~ Set 2026-09-28 — off on
       prod. It was on by default: registration "succeeded" and landed on «Увійти».
-- [ ] Storage: the `shoot-media` bucket is created by migration and is private — confirm it
-      came up private on prod, and set a file size limit if none is inherited.
+- [x] ~~Storage: the `shoot-media` bucket is created by migration and is private — confirm it
+      came up private on prod, and set a file size limit if none is inherited.~~ Checked
+      2026-09-29 — `shoot-media` and `avatars` both private on prod. Size limit left at the
+      hosted default of 50 MB, the same as local `config.toml`.
 
 ### 1.3 Supabase Free pauses after 7 days — and that breaks real users
 
