@@ -104,8 +104,9 @@ To do:
 There is one hosted Supabase project, and `deploy-dev.md` built it as a throwaway with email
 confirmation off and "nothing in it is precious". Real testers do not get that project.
 
-- [ ] New Supabase project, `luna-crm-prod`, Frankfurt.
-- [ ] **On the Pro plan, not Free.** Non-negotiable for real users — see 1.3.
+- [x] ~~New Supabase project, `luna-crm-prod`, Frankfurt.~~ Created 2026-09-28 as
+      `luna-shoots-prod` (`hjijvyensphkwyystgyq`), `eu-central-1`, in its own organization.
+- [x] ~~**On the Pro plan, not Free.**~~ Non-negotiable for real users — see 1.3. On Pro.
 - [x] ~~`npx supabase link --project-ref <prod ref>` then `npx supabase db push` — 30 migrations.~~
       Checked 2026-09-29: prod has all 31, the last `20260928120000`.
 - [x] ~~`npx supabase functions deploy link-gateway`.~~ Two of three user flows are this function;
@@ -142,7 +143,8 @@ no app, and no way to tell a paused database from a broken product.
 Free tier also has no backup worth the name. There are 30 migrations' worth of real shoots about
 to land in this thing.
 
-- [ ] Supabase Pro, $25/month. This is where "development costs $0" ends, and it should end here.
+- [x] ~~Supabase Pro, $25/month.~~ This is where "development costs $0" ends, and it should end
+      here. Prod is on Pro as of 2026-09-29.
 
 ### 1.4 Password-reset email: the default sender will not carry a beta
 
