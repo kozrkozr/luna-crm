@@ -8,7 +8,9 @@ const config: ExpoConfig = {
   name: 'Luna Shoots',
   slug: 'luna-crm',
   scheme: 'lunashoots',
-  version: '0.1.0',
+  // What a person sees on the store page. `ios.buildNumber` is what App Store
+  // Connect checks for uniqueness.
+  version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   /*
@@ -80,6 +82,17 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.lunashoots.app',
+    /*
+     * Increment on EVERY upload, including one of the same `version`: App Store
+     * Connect rejects a duplicate build number outright
+     * (docs/release-appstore.md 1.6).
+     */
+    buildNumber: '1',
+    config: {
+      // HTTPS only, which is exempt. Without this App Store Connect asks the
+      // export-compliance question on every upload and holds the build.
+      usesNonExemptEncryption: false,
+    },
   },
   /*
    * Android is not a target (CLAUDE.md: iOS first), but `expo prebuild`

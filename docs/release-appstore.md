@@ -205,11 +205,11 @@ mainly because the product now carries that name and someone else can take it.
 
 `app.config.ts` today:
 
-- [ ] `version: '0.1.0'` → `'1.0.0'`. Apple does not reject `0.1.0`, but it is the version a
+- [x] ~~`version: '0.1.0'` → `'1.0.0'`.~~ Apple does not reject `0.1.0`, but it is the version a
       human sees on the store page.
-- [ ] No `ios.buildNumber`. Add `buildNumber: '1'` and **increment it on every single upload** —
+- [x] ~~No `ios.buildNumber`. Add `buildNumber: '1'`~~ and **increment it on every single upload** —
       App Store Connect rejects a duplicate build number outright, which is a slow way to learn.
-- [ ] No export-compliance declaration. Add `ios.config.usesNonExemptEncryption: false`. The app
+- [x] ~~No export-compliance declaration. Add `ios.config.usesNonExemptEncryption: false`.~~ The app
       uses HTTPS only, which is exempt; without the flag App Store Connect asks the same question
       on every upload and blocks the build until answered.
 - [x] ~~Bundle identifier.~~ Settled 2026-09-24 — `com.lunashoots.app`. See Part 0 item 4.
