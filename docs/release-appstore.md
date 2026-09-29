@@ -34,11 +34,12 @@ owner's to make.
 `CLAUDE.md` rule 1. These are not implementation details, they are product questions, and they go
 to the discovery repo as a story or an ADR **before** the code moves:
 
-1. **Email confirmation on or off in production.** It is off by deliberate decision — `US-001`
+1. **Email confirmation on or off in production.** ~~It is off by deliberate decision — `US-001`
    AC-1 says registration lands on the shoot list, and a confirmation step contradicts that.
    Consequence in production is `open-questions.md` #31: an account that types an email it does
    not own inherits that person's crew rows across every photographer. For a closed beta of known
-   testers this is a shrug. For the App Store it is a decision with a name on it.
+   testers this is a shrug. For the App Store it is a decision with a name on it.~~
+   **Decided 2026-09-29 — on (`ADR-019`, `US-001` AC-1 amended).** #31's phone half stays open.
 2. **Whether the photographer's web app ships.** `open-questions.md` #26, deferred with
    "revisit before v1 ships". Today `wrangler pages deploy dist` publishes all 54 routes —
    login, register, profile, shoot editing — to a public URL. Fix is a publish filter, ~30
@@ -123,8 +124,11 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
       set `site_url` to the Pages host.~~ Done on prod 2026-09-29, `site_url` =
       `https://lunashoots.com`. **A missing entry fails at send time, not at open time**, which
       looks exactly like the email never being triggered.
-- [x] ~~Decide and set the email-confirmation toggle per Part 0 item 1.~~ Set 2026-09-28 — off on
-      prod. It was on by default: registration "succeeded" and landed on «Увійти».
+- [ ] Decide and set the email-confirmation toggle per Part 0 item 1. Set off 2026-09-28 — it was
+      on by default and registration "succeeded" into «Увійти». **Reopened 2026-09-29:** `ADR-019`
+      turns it back ON, now that the app handles it. Before switching it on: push migration
+      `20260929120000`, add `lunashoots://confirm` to the redirect allow-list, translate the
+      «Confirm signup» template, and ship a build carrying `(auth)/confirm`.
 - [x] ~~Storage: the `shoot-media` bucket is created by migration and is private — confirm it
       came up private on prod, and set a file size limit if none is inherited.~~ Checked
       2026-09-29 — `shoot-media` and `avatars` both private on prod. Size limit left at the

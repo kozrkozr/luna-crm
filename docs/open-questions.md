@@ -502,6 +502,12 @@ one. Either way this is arithmetic standing in for a validation rule that does n
 
 ### 31. The crew-matching keys are self-declared, and matching crosses accounts
 
+**Half closed, 2026-09-29 — `ADR-019`.** Production now confirms the email at registration, and
+migration `20260929120000` makes an account a matching candidate only once confirmed; it also
+revoked `authenticated`'s table-wide UPDATE on `users`, which let an account rewrite its own
+`email` into someone else's crew rows regardless. **The phone half below is still open** — a
+confirmed account can still claim rows by typing a number it does not own.
+
 `match_contact_to_user` (`20260827100000`) links a `CrewMember` row to a `User` by email or
 phone, and `my_crew_shoots()` then shows that account every shoot it is on **across every
 photographer**. Neither key is verified: `enable_confirmations = false` is a deliberate `US-001`
