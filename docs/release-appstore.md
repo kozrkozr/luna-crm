@@ -109,7 +109,9 @@ confirmation off and "nothing in it is precious". Real testers do not get that p
 - [ ] `npx supabase link --project-ref <prod ref>` then `npx supabase db push` — 30 migrations.
 - [ ] `npx supabase functions deploy link-gateway`. Two of three user flows are this function;
       without it every link is dead.
-- [ ] Verify RLS is actually on after the push. Dashboard → Database → Tables, every table.
+- [x] ~~Verify RLS is actually on after the push. Dashboard → Database → Tables, every table.~~
+      Checked 2026-09-29 with `supabase db query --linked`: RLS on for all eight `public` tables,
+      none selectable by `anon`; the four `storage.objects` policies are `authenticated` only.
 - [x] ~~Set the password minimum in the dashboard.~~ Set to 8 on prod, 2026-09-29.
       `supabase/config.toml` says `minimum_password_length = 8` and `passwordRules.ts` exports
       `MIN_PASSWORD_LENGTH = 8` — but **`config.toml` only configures local Supabase.** The
