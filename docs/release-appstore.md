@@ -152,16 +152,20 @@ to land in this thing.
 to a handful of messages per hour, and routinely spam-foldered. A tester who cannot reset a
 password is a tester who is finished with the app.
 
-- [ ] Custom SMTP on the prod project. Resend or Postmark; Resend's free tier (3k/month) is more
-      than a beta needs.
-- [ ] A sending domain, verified (SPF/DKIM). This wants the custom domain from 1.5.
-- [ ] Translate the Supabase email templates to Ukrainian. They are English by default, and
+- [x] ~~Custom SMTP on the prod project. Resend or Postmark; Resend's free tier (3k/month) is more
+      than a beta needs.~~ Resend, 2026-09-29.
+- [x] ~~A sending domain, verified (SPF/DKIM). This wants the custom domain from 1.5.~~
+      `lunashoots.com` — `resend._domainkey` and `send.` SPF records are live.
+- [x] ~~Translate the Supabase email templates to Ukrainian.~~ They are English by default, and
       `CLAUDE.md` rule 4 does not stop at the app's edge — a recovery email is user-facing copy.
-- [ ] **Test the recovery link on a real iPhone, from Mail and from Gmail.** The redirect is
+      Done 2026-09-29; the recovery email arrives in Ukrainian.
+- [x] ~~**Test the recovery link on a real iPhone, from Mail and from Gmail.**~~ The redirect is
       `Linking.createURL('/reset')` → `lunashoots://reset`, a custom scheme. iOS mail clients
       frequently refuse to make custom-scheme URLs tappable. If it does not work, the fix is
       Universal Links (associated domains + an `apple-app-site-association` file on the Pages
       host), which is a day of work, not an hour. **Find this out before the beta, not during.**
+      Passed 2026-09-29 — from both Mail and Gmail the link opens the app; Universal Links are
+      not needed.
 
 ### 1.5 A custom domain
 
