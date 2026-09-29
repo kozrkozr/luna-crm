@@ -260,7 +260,11 @@ If Organization: **apply for the D-U-N-S number first and separately**, before e
 free, Apple has a request form for it, and it takes roughly 5–14 business days on its own. It is
 the single longest pole in this entire document.
 
-- [ ] Decide. Write the decision down somewhere.
+- [x] ~~Decide. Write the decision down somewhere.~~ **Individual** (owner, 2026-09-29). The
+      business is a ФОП — a registered sole trader, not a legal entity — which Apple enrols as an
+      individual; the terms and privacy policy already name a sole trader. The store page shows
+      the owner's legal name as seller. Moving to Organization later means a new account and an
+      app transfer.
 
 ### Step 2 — The Apple Account that will own everything
 
