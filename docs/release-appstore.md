@@ -268,10 +268,12 @@ the single longest pole in this entire document.
 
 ### Step 2 — The Apple Account that will own everything
 
-- [ ] Use a **dedicated Apple Account for the business**, not a personal one already carrying
+- [x] ~~Use a **dedicated Apple Account for the business**, not a personal one already carrying
       iCloud photos and an iPhone backup. This account becomes the Account Holder and is
-      awkward to change afterwards.
-- [ ] Turn on **two-factor authentication** on it. Enrolment is refused without it.
+      awkward to change afterwards.~~ Created 2026-09-30 — through Apple Music on the web, after
+      account.apple.com, the Mac App Store and the iPhone all refused to send a verification code
+      to two Ukrainian numbers («Зараз неможливо надіслати коди перевірки…»).
+- [x] ~~Turn on **two-factor authentication** on it. Enrolment is refused without it.~~ On.
 - [ ] Put the credentials and the 2FA recovery in a password manager. Losing this account means
       losing the app.
 
