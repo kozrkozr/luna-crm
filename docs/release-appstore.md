@@ -279,12 +279,14 @@ the single longest pole in this entire document.
 
 ### Step 3 — Enrol in the Apple Developer Program
 
-- [ ] Easiest route: the **Apple Developer app on an iPhone**, signed in with that account →
+- [x] ~~Easiest route: the **Apple Developer app on an iPhone**, signed in with that account →
       Enroll. Identity verification runs through the phone and is smoother than the web form.
-      The web route is <https://developer.apple.com/programs/enroll/>.
-- [ ] Have a **government-issued ID** ready to photograph. Apple asks for one from most
-      individual applicants.
-- [ ] Pay $99 USD. **Have a second card ready** — Ukrainian cards are declined by Apple often
+      The web route is <https://developer.apple.com/programs/enroll/>.~~ Done through the app,
+      2026-09-30, as Individual / Sole Proprietor.
+- [x] ~~Have a **government-issued ID** ready to photograph. Apple asks for one from most
+      individual applicants.~~ Not asked for, 2026-09-30. The expired international passport would
+      not have done; the Ukrainian driving licence carries the name in Latin and was the fallback.
+- [x] ~~Pay $99 USD.~~ Paid 2026-09-30. **Have a second card ready** — Ukrainian cards are declined by Apple often
       enough that it is worth planning for rather than discovering at 11pm.
 - [ ] Wait for the "Welcome to the Apple Developer Program" email. 1–3 days for individuals.
 
