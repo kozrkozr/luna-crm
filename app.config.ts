@@ -91,6 +91,13 @@ const config: ExpoConfig = {
      */
     bundleIdentifier: 'com.lunashoots.ios',
     /*
+     * The PAID team (Apple Developer Program, Individual, 2026-09-30). Pinned
+     * so prebuild writes it into the Xcode project and automatic signing can
+     * never fall back to the free personal team (`488YTLFQJ3`) — which is how
+     * `com.lunashoots.app` was lost.
+     */
+    appleTeamId: 'Z2XN964VS5',
+    /*
      * Increment on EVERY upload, including one of the same `version`: App Store
      * Connect rejects a duplicate build number outright
      * (docs/release-appstore.md 1.6).
