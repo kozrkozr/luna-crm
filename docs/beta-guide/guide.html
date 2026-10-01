@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<title>Luna Shoots — як встановити бета-версію</title>
+<style>
+  :root {
+    --bg: #070708; --fg: #FAFAFB; --muted: #A4A4A7; --card: #121214; --accent-surface: #18191A;
+    --border: #18191A; --border-strong: #3D3D40; --primary: #DCE9FE; --primary-fg: #080E19;
+    --link: #6FA2FF; --info-bg: #0D1E44; --info-border: #4972C0;
+    --warn: #EDBF76; --warn-bg: #2C1800; --warn-border: #BD8638; --destructive: #EF7276;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; padding: 16mm 16mm 14mm; position: relative;
+    page-break-after: always; overflow: hidden; display: flex; flex-direction: column; }
+  .page:last-child { page-break-after: auto; }
+  .stars { position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, rgba(250,250,251,.35) 50%, transparent 51%),
+      radial-gradient(1px 1px at 78% 9%, rgba(250,250,251,.25) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 88% 34%, rgba(220,233,254,.35) 50%, transparent 51%),
+      radial-gradient(1px 1px at 33% 72%, rgba(250,250,251,.2) 50%, transparent 51%),
+      radial-gradient(1px 1px at 64% 58%, rgba(250,250,251,.18) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 6% 88%, rgba(220,233,254,.3) 50%, transparent 51%),
+      radial-gradient(1px 1px at 92% 82%, rgba(250,250,251,.22) 50%, transparent 51%),
+      radial-gradient(1px 1px at 48% 6%, rgba(250,250,251,.2) 50%, transparent 51%); }
+  .content { position: relative; flex: 1; display: flex; flex-direction: column; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between;
+    color: var(--muted); font-size: 9.5pt; margin-bottom: 9mm; }
+  .brand { display: flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 600; }
+  .brand img { width: 22px; height: 22px; border-radius: 6px; }
+
+  h1 { font-size: 30pt; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 4mm; font-weight: 800; }
+  h2 { font-size: 17pt; letter-spacing: -0.01em; margin: 0 0 3mm; font-weight: 700; }
+  h3 { font-size: 12.5pt; margin: 0 0 1.5mm; font-weight: 700; }
+  p { margin: 0 0 2.5mm; font-size: 10.5pt; line-height: 1.55; color: var(--fg); }
+  .lead { font-size: 12.5pt; line-height: 1.5; color: var(--muted); max-width: 150mm; }
+  .muted { color: var(--muted); }
+  .small { font-size: 9.5pt; }
+  b, strong { font-weight: 600; }
+
+  .hero { display: flex; flex-direction: column; align-items: flex-start; margin-top: 10mm; }
+  .hero img { width: 92px; height: 92px; border-radius: 22px; margin-bottom: 8mm;
+    box-shadow: 0 0 0 1px var(--border-strong), 0 18px 60px rgba(111,162,255,.18); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
+    background: var(--info-bg); border: 1px solid var(--info-border); color: var(--link);
+    font-size: 9pt; font-weight: 600; margin-bottom: 5mm; }
+
+  .card { background: var(--card); border: 1px solid var(--border-strong); border-radius: 14px;
+    padding: 5mm 5.5mm; margin-bottom: 4mm; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .check { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 2.5mm; font-size: 10.5pt; line-height: 1.5; }
+  .check:last-child { margin-bottom: 0; }
+  .tick { flex: 0 0 18px; height: 18px; border-radius: 6px; background: var(--primary); color: var(--primary-fg);
+    font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+
+  .roadmap { display: flex; gap: 3mm; margin-top: 6mm; }
+  .roadmap .stop { flex: 1; background: var(--card); border: 1px solid var(--border-strong);
+    border-radius: 12px; padding: 4mm; }
+  .roadmap .n { color: var(--link); font-weight: 700; font-size: 9pt; margin-bottom: 1.5mm; }
+  .roadmap .t { font-size: 10pt; font-weight: 600; line-height: 1.35; }
+
+  .step { display: flex; gap: 5mm; margin-bottom: 5mm; }
+  .num { flex: 0 0 34px; height: 34px; border-radius: 10px; background: var(--primary); color: var(--primary-fg);
+    font-weight: 800; font-size: 14pt; display: flex; align-items: center; justify-content: center; }
+  .step-body { flex: 1; }
+
+  .btn { display: inline-block; padding: 3px 10px; border-radius: 8px; background: var(--link); color: #fff;
+    font-weight: 600; font-size: 9.5pt; white-space: nowrap; }
+  .btn.light { background: var(--primary); color: var(--primary-fg); }
+  .btn.ghost { background: var(--accent-surface); color: var(--fg); border: 1px solid var(--border-strong); }
+  .en { color: var(--muted); font-size: 9pt; }
+
+  .note { border-radius: 12px; padding: 3.5mm 4.5mm; font-size: 10pt; line-height: 1.5; margin: 2mm 0 0; }
+  .note.info { background: var(--info-bg); border: 1px solid var(--info-border); }
+  .note.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); }
+  .note .tag { font-weight: 700; margin-right: 4px; }
+  .note.info .tag { color: var(--link); }
+  .note.warn .tag { color: var(--warn); }
+
+  /* A sketch of a phone screen, so a reader knows what to look for. */
+  .phone { width: 52mm; border-radius: 22px; border: 1.5px solid var(--border-strong); background: #000;
+    padding: 9px; flex: 0 0 auto; }
+  .screen { border-radius: 15px; background: #0B0B0C; padding: 10px 10px 12px; min-height: 52mm; }
+  .notch { width: 34%; height: 6px; border-radius: 6px; background: #1d1d1f; margin: 0 auto 10px; }
+  .app-row { display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 10px; padding: 7px; }
+  .app-row img, .ico { width: 30px; height: 30px; border-radius: 8px; flex: 0 0 30px; }
+  .tf-ico { background: linear-gradient(160deg, #2f7cf6, #1a4fd0); display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 13px; }
+  .app-row .meta { flex: 1; font-size: 8.5pt; line-height: 1.25; }
+  .app-row .meta .s { color: var(--muted); font-size: 7.5pt; }
+  .mini-btn { font-size: 7pt; white-space: nowrap; font-weight: 700; color: #fff; background: var(--link); border-radius: 999px; padding: 3px 9px; }
+  .mini-btn.grey { background: #2a2a2d; color: var(--link); }
+  .screen .cap { color: var(--muted); font-size: 7.5pt; text-align: center; margin-top: 8px; line-height: 1.35; }
+  .home { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; padding: 4px 4px 0; }
+  .home .h { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 6.5pt; color: var(--muted); }
+  .home .h .sq { width: 30px; height: 30px; border-radius: 8px; background: #1c1c1e; }
+  .home .h img { width: 30px; height: 30px; border-radius: 8px; }
+  .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #F5A524; margin-right: 2px; vertical-align: 1px; }
+
+  .with-phone { display: flex; gap: 7mm; align-items: flex-start; }
+
+  .linkbox { background: var(--card); border: 1px dashed var(--info-border); border-radius: 14px;
+    padding: 5mm; display: flex; gap: 6mm; align-items: center; }
+  .linkbox .url { font-family: "SF Mono", Menlo, monospace; color: var(--link); font-size: 10.5pt; word-break: break-all; }
+  .linkbox img.qr { width: 30mm; height: 30mm; border-radius: 8px; background: #fff; padding: 2mm; }
+
+  table.faq { width: 100%; border-collapse: separate; border-spacing: 0 2mm; margin-top: -1mm; }
+  .faq td { vertical-align: top; font-size: 9.5pt; line-height: 1.45; }
+  .faq td.q { width: 38%; font-weight: 600; padding: 2.6mm 4mm; background: var(--card); border: 1px solid var(--border-strong);
+    border-right: none; border-radius: 12px 0 0 12px; }
+  .faq td.a { padding: 2.6mm 4mm; background: var(--card); border: 1px solid var(--border-strong); border-left: 1px solid var(--border);
+    border-radius: 0 12px 12px 0; color: var(--fg); }
+
+  .footer { margin-top: auto; display: flex; justify-content: space-between; color: var(--muted); font-size: 8.5pt;
+    padding-top: 4mm; border-top: 1px solid var(--border); }
+  a { color: var(--link); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────────── page 1 ───────────────────────────── -->
+<section class="page">
+  <div class="stars"></div>
+  <div class="content">
+    <div class="topbar">
+      <div class="brand"><img src="{{ICON}}" alt="">Luna Shoots</div>
+      <div>Гайд для бета-тестерів</div>
+    </div>
+
+    <div class="hero">
+      <img src="{{ICON}}" alt="Luna Shoots">
+      <div class="pill">● Бета-версія · iPhone</div>
+      <h1>Як встановити<br>Luna Shoots</h1>
+      <p class="lead">Дякуємо, що допомагаєте нам! Застосунок ще не в App Store — бета-версію
+        встановлюють через безкоштовний застосунок Apple, який називається <b style="color:var(--fg)">TestFlight</b>.
+        Це займе близько 5 хвилин, і нічого технічного робити не доведеться.</p>
+    </div>
+
+    <h2 style="margin-top:8mm">Що знадобиться</h2>
+    <div class="card">
+      <div class="check"><div class="tick">✓</div><div><b>iPhone з iOS 16.4 або новішою.</b>
+        <span class="muted">Перевірити: Параметри → Загальні → Про пристрій → Версія iOS.</span></div></div>
+      <div class="check"><div class="tick">✓</div><div><b>Ваш Apple ID</b> — той самий, з яким ви завантажуєте застосунки з App Store.
+        <span class="muted">Нічого нового створювати не потрібно.</span></div></div>
+      <div class="check"><div class="tick">✓</div><div><b>Посилання-запрошення</b> — ми надішлемо його вам
+        <span class="muted">(у Telegram, у листі або повідомленні).</span></div></div>
+      <div class="check"><div class="tick">✓</div><div><b>Інтернет</b> — Wi-Fi або мобільний.</div></div>
+    </div>
+
+    <div class="roadmap">
+      <div class="stop"><div class="n">КРОК 1</div><div class="t">Встановити TestFlight</div></div>
+      <div class="stop"><div class="n">КРОК 2</div><div class="t">Відкрити посилання-запрошення</div></div>
+      <div class="stop"><div class="n">КРОК 3</div><div class="t">Встановити Luna Shoots</div></div>
+      <div class="stop"><div class="n">КРОК 4</div><div class="t">Зареєструватися в застосунку</div></div>
+    </div>
+
+    <div class="note info" style="margin-top:6mm"><span class="tag">Важливо:</span>
+      усе робіть <b>на самому iPhone</b>. Якщо відкрити посилання на комп'ютері, побачите лише
+      сторінку з інструкцією — встановити звідти не вийде.</div>
+
+    <div class="footer"><div>Luna Shoots · бета</div><div>1 / 4</div></div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── page 2 ───────────────────────────── -->
+<section class="page">
+  <div class="stars"></div>
+  <div class="content">
+    <div class="topbar">
+      <div class="brand"><img src="{{ICON}}" alt="">Luna Shoots</div>
+      <div>Встановлення</div>
+    </div>
+
+    <div class="with-phone" style="margin-bottom:6mm">
+      <div class="step" style="margin:0; flex:1">
+        <div class="num">1</div>
+        <div class="step-body">
+          <h3>Встановіть TestFlight з App Store</h3>
+          <p>Відкрийте на iPhone застосунок <b>App Store</b> (синя іконка з літерою «A»).</p>
+          <p>Унизу натисніть <b>Пошук</b> і введіть <b>TestFlight</b>. Потрібен застосунок
+            від <b>Apple</b> — з синьою іконкою пропелера.</p>
+          <p>Натисніть <span class="btn">Отримати</span> <span class="en">(Get)</span>, потім підтвердіть
+            Face ID, Touch ID або паролем Apple ID — так само, як для будь-якого безкоштовного застосунку.</p>
+          <div class="note info"><span class="tag">Порада:</span> якщо TestFlight уже встановлено —
+            просто переходьте до кроку 2.</div>
+        </div>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="app-row">
+          <div class="ico tf-ico">✈</div>
+          <div class="meta">TestFlight<div class="s">Apple</div></div>
+          <div class="mini-btn grey">Отримати</div>
+        </div>
+        <div class="cap">Так виглядає TestFlight у пошуку App Store</div>
+      </div></div>
+    </div>
+
+    <div class="with-phone" style="margin-bottom:6mm">
+      <div class="step" style="margin:0; flex:1">
+        <div class="num">2</div>
+        <div class="step-body">
+          <h3>Відкрийте посилання-запрошення</h3>
+          <p>Натисніть на посилання, яке ми вам надіслали, <b>на цьому ж iPhone</b>.
+            Воно починається з <b style="color:var(--link)">testflight.apple.com/join/…</b></p>
+          <p>Відкриється сторінка в Safari, а потім — сам TestFlight із запрошенням до Luna Shoots.</p>
+          <p>Натисніть <span class="btn">Прийняти</span> <span class="en">(Accept)</span>.</p>
+          <div class="note warn"><span class="tag">Якщо відкрилася лише сторінка в браузері</span> — натисніть на ній
+            кнопку <b>«View in TestFlight»</b> / <b>«Переглянути в TestFlight»</b>. Якщо TestFlight
+            ще не встановлено — поверніться до кроку 1.</div>
+        </div>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div style="text-align:center; padding-top:4px">
+          <img src="{{ICON}}" style="width:44px;height:44px;border-radius:11px" alt="">
+          <div style="font-size:9pt;font-weight:700;margin-top:6px">Luna Shoots</div>
+          <div style="font-size:7.5pt;color:var(--muted);margin:3px 0 10px">Вас запрошено тестувати</div>
+          <div class="mini-btn" style="display:inline-block;padding:5px 22px">Прийняти</div>
+        </div>
+        <div class="cap">Екран запрошення в TestFlight</div>
+      </div></div>
+    </div>
+
+    <div class="with-phone">
+      <div class="step" style="margin:0; flex:1">
+        <div class="num">3</div>
+        <div class="step-body">
+          <h3>Встановіть Luna Shoots</h3>
+          <p>У тому ж вікні TestFlight натисніть <span class="btn">Встановити</span> <span class="en">(Install)</span>.
+            Застосунок завантажиться за хвилину.</p>
+          <p>Коли з'явиться кнопка <span class="btn">Відкрити</span> <span class="en">(Open)</span> — готово.
+            Іконка Luna Shoots тепер на головному екрані.</p>
+          <div class="note info"><span class="tag">Помаранчева крапка</span> біля назви під іконкою —
+            це нормально. Так iPhone позначає бета-версії з TestFlight.</div>
+        </div>
+      </div>
+      <div class="phone"><div class="screen">
+        <div class="notch"></div>
+        <div class="home">
+          <div class="h"><div class="sq"></div>Фото</div>
+          <div class="h"><div class="sq"></div>Пошта</div>
+          <div class="h"><div class="sq"></div>Карти</div>
+          <div class="h"><img src="{{ICON}}" alt=""><span><span class="dot"></span>Luna</span></div>
+        </div>
+        <div class="cap" style="margin-top:12px">Іконка на головному екрані</div>
+      </div></div>
+    </div>
+
+    <div class="footer"><div>Luna Shoots · бета</div><div>2 / 4</div></div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── page 3 ───────────────────────────── -->
+<section class="page">
+  <div class="stars"></div>
+  <div class="content">
+    <div class="topbar">
+      <div class="brand"><img src="{{ICON}}" alt="">Luna Shoots</div>
+      <div>Перший запуск</div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <div class="step-body">
+        <h3>Зареєструйтеся в Luna Shoots</h3>
+        <p>Відкрийте застосунок і оберіть вкладку <b>«Реєстрація»</b>. Вкажіть ім'я, email, пароль
+          (щонайменше 8 символів) і свою роль — наприклад, «Фотограф». Поставте позначку «Погоджуюсь з умовами використання…»
+          і натисніть <span class="btn light">Зареєструватися</span>.</p>
+        <p>Застосунок покаже екран <b>«Перевірте пошту»</b>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <div class="step-body">
+        <h3>Підтвердіть email</h3>
+        <p>Відкрийте пошту <b>на цьому ж iPhone</b> — прийде лист <b>«Підтвердіть реєстрацію в Luna Shoots»</b>.
+          Натисніть у ньому <span class="btn light">Підтвердити пошту</span>.</p>
+        <p>Відкриється Luna Shoots, і ви одразу потрапите у свій (поки порожній) список зйомок. Усе готово!</p>
+        <div class="note warn"><span class="tag">Лист не прийшов?</span> Зачекайте хвилину й перевірте папки
+          «Спам» і «Промоакції». На екрані «Перевірте пошту» є кнопка <b>«Надіслати лист ще раз»</b>
+          (вона стає активною через 60 секунд).</div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:4mm">Що далі</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Оновлення</h3>
+        <p class="small">Коли ми випускаємо нову бета-версію, TestFlight надішле сповіщення.
+          Відкрийте TestFlight і натисніть <b>«Оновити»</b> <span class="en">(Update)</span>. Ваші дані нікуди не зникнуть —
+          вони зберігаються в акаунті, а не на телефоні.</p>
+      </div>
+      <div class="card">
+        <h3>Термін дії</h3>
+        <p class="small">Кожна бета-версія працює <b>90 днів</b>. До того часу ми випустимо нову —
+          достатньо оновити її в TestFlight.</p>
+      </div>
+      <div class="card">
+        <h3>Як повідомити про проблему</h3>
+        <p class="small">Побачили помилку? Зробіть знімок екрана (бічна кнопка + гучність угору),
+          натисніть на мініатюру внизу → <b>«Поділитися»</b> → <b>«Поділитися з бета-тестуванням»</b> <span class="en">(Share Beta Feedback)</span>
+          і коротко опишіть, що сталося. Ми отримаємо знімок і ваш коментар.</p>
+      </div>
+      <div class="card">
+        <h3>Якщо застосунок закрився сам</h3>
+        <p class="small">iPhone може запропонувати надіслати звіт про збій. Будь ласка, погодьтеся
+          й додайте кілька слів про те, що ви робили, — це дуже допомагає нам знайти причину.</p>
+      </div>
+    </div>
+
+    <div class="note info"><span class="tag">Це справжній застосунок.</span> Зйомки, контакти й фото, які ви
+      додасте, зберігаються по-справжньому. Посилання для команди та клієнтів теж працюють —
+      їх можна надсилати реальним людям.</div>
+
+    <div class="footer"><div>Luna Shoots · бета</div><div>3 / 4</div></div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── page 4 ───────────────────────────── -->
+<section class="page">
+  <div class="stars"></div>
+  <div class="content">
+    <div class="topbar">
+      <div class="brand"><img src="{{ICON}}" alt="">Luna Shoots</div>
+      <div>Якщо щось пішло не так</div>
+    </div>
+
+    <h2>Часті питання</h2>
+    <table class="faq">
+      <tr><td class="q">Натискаю посилання — нічого не відбувається</td>
+        <td class="a">Скопіюйте посилання й вставте його в адресний рядок <b>Safari</b> на iPhone.
+          Вбудовані браузери деяких месенджерів не вміють відкривати TestFlight.</td></tr>
+      <tr><td class="q">«Ця бета-версія не приймає нових тестувальників» / «This beta is full»</td>
+        <td class="a">Місця в бета-тесті закінчилися або запрошення ще не активне. Напишіть нам —
+          ми надішлемо нове посилання.</td></tr>
+      <tr><td class="q">Пише, що потрібна новіша версія iOS</td>
+        <td class="a">Оновіть iPhone: Параметри → Загальні → Оновлення ПЗ. Потрібна iOS 16.4 або новіша.</td></tr>
+      <tr><td class="q">TestFlight просить увійти</td>
+        <td class="a">Увійдіть тим самим Apple ID, що й в App Store. Окремий акаунт не потрібен.</td></tr>
+      <tr><td class="q">«Пошту ще не підтверджено» під час входу</td>
+        <td class="a">Відкрийте лист «Підтвердіть реєстрацію в Luna Shoots» і натисніть посилання. Якщо листа
+          немає — натисніть <b>«Надіслати лист ще раз»</b> прямо під повідомленням.</td></tr>
+      <tr><td class="q">Посилання в листі відкрило сайт, а не застосунок</td>
+        <td class="a">Переконайтеся, що Luna Shoots уже встановлено (крок 3), і відкрийте лист саме на iPhone.</td></tr>
+      <tr><td class="q">Забули пароль</td>
+        <td class="a">На екрані входу натисніть <b>«Забули пароль?»</b> — прийде лист із посиланням для нового пароля.</td></tr>
+      <tr><td class="q">Застосунок зник або не відкривається</td>
+        <td class="a">Відкрийте TestFlight — можливо, вийшла нова версія або минули 90 днів. Натисніть
+          «Встановити» / «Оновити».</td></tr>
+    </table>
+
+    <div class="linkbox" style="margin-top:3mm">
+      {{QR}}
+      <div>
+        <h3>Ваше посилання-запрошення</h3>
+        {{LINK}}
+        <p class="small muted" style="margin-top:2mm">{{LINK_HINT}}</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:4mm">
+      <h3>Потрібна допомога?</h3>
+      <p class="small" style="margin:0">Напишіть нам на <a href="mailto:support@lunashoots.com">support@lunashoots.com</a>
+        — додайте знімок екрана й модель iPhone. Відповімо якнайшвидше. Дякуємо, що тестуєте Luna Shoots!</p>
+    </div>
+
+    <div class="footer"><div>Luna Shoots · бета · <a href="https://lunashoots.com/privacy/">Політика конфіденційності</a></div><div>4 / 4</div></div>
+  </div>
+</section>
+
+</body>
+</html>

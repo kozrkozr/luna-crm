@@ -1,0 +1,34 @@
+import base64, io, os, subprocess, sys, tempfile, time
+here = os.path.dirname(os.path.abspath(__file__))
+link = sys.argv[1] if len(sys.argv) > 1 else ''
+out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(here, 'guide.pdf')
+icon = 'data:image/png;base64,' + base64.b64encode(open(os.path.join(here, 'icon.png'), 'rb').read()).decode()
+html = open(os.path.join(here, 'guide.html')).read().replace('{{ICON}}', icon)
+if link:
+    import qrcode
+    buf = io.BytesIO(); qrcode.make(link, border=1).save(buf, format='PNG')
+    qr = '<img class="qr" src="data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode() + '" alt="QR">'
+    html = html.replace('{{QR}}', qr).replace('{{LINK}}', '<div class="url">' + link + '</div>').replace('{{LINK_HINT}}',
+        'Відкрийте його на iPhone — або наведіть камеру iPhone на QR-код, якщо цей PDF відкрито на іншому екрані.')
+else:
+    html = html.replace('{{QR}}', '').replace('{{LINK}}', '<p style="margin:0">Ми надішлемо його вам окремим повідомленням.</p>').replace('{{LINK_HINT}}',
+        'Воно виглядає так: testflight.apple.com/join/…  Відкривайте його на iPhone.')
+src = os.path.join(here, 'rendered.html'); open(src, 'w').write(html)
+profile = tempfile.mkdtemp(prefix='guide-chrome-')  # its own profile: never the user's running Chrome
+chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+if os.path.exists(out): os.remove(out)
+proc = subprocess.Popen([chrome, '--headless=new', '--disable-gpu', '--no-first-run', f'--user-data-dir={profile}',
+    '--no-pdf-header-footer', f'--print-to-pdf={out}', 'file://' + src],
+    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+# Headless Chrome writes the PDF and then does not always exit on its own.
+deadline = time.time() + 90
+last = -1
+while time.time() < deadline:
+    size = os.path.getsize(out) if os.path.exists(out) else -1
+    if size > 0 and size == last: break
+    last = size; time.sleep(1.5)
+proc.terminate()
+try: proc.wait(10)
+except subprocess.TimeoutExpired: proc.kill()
+if not os.path.exists(out): sys.exit('no PDF produced')
+print(out)
