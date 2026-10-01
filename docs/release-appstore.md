@@ -46,6 +46,13 @@ to the discovery repo as a story or an ADR **before** the code moves:
    minutes. The decision is whether to fix it or to bless it.
 3. **What the terms and the privacy policy say.** See Part 1. Content is legal, not technical.
 4. ~~**The bundle identifier.**~~ **Answered by the owner, 2026-09-24: `com.lunashoots.app`.**
+   **Changed 2026-10-01 to `com.lunashoots.ios`** — before any upload. Registering `.app` under
+   the paid team failed: «An App ID with Identifier 'com.lunashoots.app' is not available».
+   The owner's free personal team (`488YTLFQJ3`) already held it, registered by Xcode's
+   automatic signing during a `npm run ios` device build, and a free team cannot delete an App
+   ID. Asking Apple to release it was the alternative; it would have held the beta for days.
+   **Local device builds must be signed with the paid team from now on**, or Xcode registers
+   the identifier under the personal team again.
    Was `dev.luna.crm`, which reverse-resolves to a `luna.dev` nobody here owns, led with a
    segment every reader parses as "development", and ended in a word the product is no longer
    called. Permanent from the first upload, so it was settled before one.
@@ -216,7 +223,8 @@ mainly because the product now carries that name and someone else can take it.
 - [x] ~~No export-compliance declaration. Add `ios.config.usesNonExemptEncryption: false`.~~ The app
       uses HTTPS only, which is exempt; without the flag App Store Connect asks the same question
       on every upload and blocks the build until answered.
-- [x] ~~Bundle identifier.~~ Settled 2026-09-24 — `com.lunashoots.app`. See Part 0 item 4.
+- [x] ~~Bundle identifier.~~ Settled 2026-09-24 — `com.lunashoots.app`, moved 2026-10-01 to
+      `com.lunashoots.ios`. See Part 0 item 4.
 
 ### 1.7 Controls that do nothing
 

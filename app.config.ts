@@ -81,7 +81,15 @@ const config: ExpoConfig = {
   ],
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'com.lunashoots.app',
+    /*
+     * `.ios`, not `.app` (owner, 2026-10-01). `com.lunashoots.app` was taken
+     * before the first upload — by the owner's own free personal team, which
+     * Xcode's automatic signing registered it under during a device build. A
+     * free team cannot delete an App ID, so the paid team could not have it.
+     * Build locally with the PAID team selected, or Xcode registers whatever
+     * this says under the personal one again.
+     */
+    bundleIdentifier: 'com.lunashoots.ios',
     /*
      * Increment on EVERY upload, including one of the same `version`: App Store
      * Connect rejects a duplicate build number outright
@@ -96,8 +104,9 @@ const config: ExpoConfig = {
   },
   /*
    * Android is not a target (CLAUDE.md: iOS first), but `expo prebuild`
-   * generates both platforms and refuses to run without this. Same identifier
-   * as iOS, which is the convention and costs nothing.
+   * generates both platforms and refuses to run without this. It was the iOS
+   * identifier until iOS had to move to `.ios`; nothing claims it on Android,
+   * so it stays rather than churn for a platform that is not built.
    */
   android: {
     package: 'com.lunashoots.app',
