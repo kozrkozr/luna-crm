@@ -367,10 +367,11 @@ before this one.
 
 The step people skip, and then a build sits in TestFlight refusing to go anywhere.
 
-- [ ] Accept the **Apple Developer Program License Agreement** (App Store Connect prompts on
-      first sign-in).
-- [ ] App Store Connect → Business → **accept the Free Apps agreement.** A free app still needs
-      this, and external TestFlight will not start without it.
+- [x] ~~Accept the **Apple Developer Program License Agreement** (App Store Connect prompts on
+      first sign-in).~~ Accepted at enrolment, 2026-09-30.
+- [x] ~~App Store Connect → Business → **accept the Free Apps agreement.** A free app still needs
+      this, and external TestFlight will not start without it.~~ Active, all countries,
+      2026-09-30 → 2027-10-01 — in force from enrolment, nothing to accept separately.
 - [ ] Paid apps — **only if Luna will ever charge money**: this opens bank details, a tax
       questionnaire and a W-8BEN as a non-US entity. It is a genuinely slow process and there is
       no reason to start it for a free beta. Skip until there is a price.
