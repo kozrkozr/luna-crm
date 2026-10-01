@@ -304,10 +304,11 @@ Nothing below this line can start before that email arrives.
 
 Do this the hour the account is live, before anything else.
 
-- [ ] App Store Connect → Apps → **+** → New App. Platform iOS, primary language **Ukrainian**,
-      bundle ID, and an SKU (any internal string, e.g. `luna-crm-001`).
-- [ ] **App names are unique across the entire App Store**, and creating the app record is what
-      reserves one.
+- [x] ~~App Store Connect → Apps → **+** → New App. Platform iOS, primary language **Ukrainian**,
+      bundle ID, and an SKU (any internal string, e.g. `luna-crm-001`).~~ Created 2026-10-01 as
+      **Luna Shoots**, `com.lunashoots.ios`, Ukrainian.
+- [x] ~~**App names are unique across the entire App Store**, and creating the app record is what
+      reserves one.~~ «Luna Shoots» accepted — reserved.
 
 **«Luna CRM» is already taken.** Checked 2026-09-23 against the iTunes Search API:
 
@@ -356,10 +357,10 @@ before this one.
 
 ### Step 5 — Register the bundle identifier
 
-- [ ] Certificates, Identifiers & Profiles → Identifiers → **+** → App IDs → App.
-- [ ] Enter the identifier from `app.config.ts`. **Permanent from the first upload** — see Part 0
-      item 4, and settle `dev.luna.crm` before typing it here.
-- [ ] Capabilities: **enable nothing.** No push (the toggles are stubs), no Sign in with Apple
+- [x] ~~Certificates, Identifiers & Profiles → Identifiers → **+** → App IDs → App.~~
+- [x] ~~Enter the identifier from `app.config.ts`. **Permanent from the first upload** — see Part 0
+      item 4, and settle `dev.luna.crm` before typing it here.~~ `com.lunashoots.ios`, 2026-10-01.
+- [x] Capabilities: **enable nothing.** No push (the toggles are stubs), no Sign in with Apple
       (`ADR-015` is email + password), no Associated Domains — unless 1.4 forces Universal Links
       for the password-reset email, in which case that one gets enabled later.
 
