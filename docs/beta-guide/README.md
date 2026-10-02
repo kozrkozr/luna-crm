@@ -9,8 +9,11 @@ python3 -m venv .venv && .venv/bin/pip install "qrcode[pil]"
 .venv/bin/python docs/beta-guide/build.py "https://testflight.apple.com/join/XXXXXXXX" ~/Desktop/Luna-Shoots-beta-guide.pdf
 ```
 
-One page since 2026-10-02 (owner: "just the steps"): four steps and one line about Safari — no
-phone sketches, notes or FAQ. The link argument is accepted but the template does not use it.
+One page of eight steps, each with a real screenshot from `screens/` (owner's, iPhone in English,
+2026-10-02) — `{{SHOT:n}}` in the template embeds `screens/n.jpg`. Step 2, opening the link, has
+no screenshot and is drawn instead. Button names are given as on the screenshots, with the
+Ukrainian label in brackets for testers whose iPhone is in Ukrainian.
+
 Rendering uses headless Chrome with its **own temporary profile** — never the running
 browser — and stops it once the PDF is written, because headless Chrome does not always exit.
 

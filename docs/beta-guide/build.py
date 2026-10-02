@@ -4,6 +4,11 @@ link = sys.argv[1] if len(sys.argv) > 1 else ''
 out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(here, 'guide.pdf')
 icon = 'data:image/png;base64,' + base64.b64encode(open(os.path.join(here, 'icon.png'), 'rb').read()).decode()
 html = open(os.path.join(here, 'guide.html')).read().replace('{{ICON}}', icon)
+import re
+def shot(m):
+    path = os.path.join(here, 'screens', m.group(1) + '.jpg')
+    return 'data:image/jpeg;base64,' + base64.b64encode(open(path, 'rb').read()).decode()
+html = re.sub(r'\{\{SHOT:(\d+)\}\}', shot, html)
 if link:
     import qrcode
     buf = io.BytesIO(); qrcode.make(link, border=1).save(buf, format='PNG')
