@@ -48,16 +48,21 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4mm; padding: 4mm; text-align: center; }
   .chain-unused { width: 16mm; height: 16mm; border-radius: 50%; background: var(--link); color: #fff;
     display: flex; align-items: center; justify-content: center; font-size: 22pt; font-weight: 700; }
-  .bubble { background: #1c1c1e; border-radius: 12px; padding: 2.5mm 3mm; font-size: 8pt; line-height: 1.35;
+  .bubble { background: #1c1c1e; border-radius: 10px; padding: 2mm 2.5mm; font-size: 7.5pt; line-height: 1.35;
     color: var(--link); word-break: normal; white-space: nowrap; text-decoration: underline; }
   .linkshot .cap { font-size: 9pt; color: var(--fg); font-weight: 600; line-height: 1.35; }
   .tap { background: var(--link); color: #fff; font-weight: 700; font-size: 10pt; border-radius: 999px;
     padding: 2.5mm 5mm; white-space: nowrap; text-decoration: none; }
-  .shotwrap { position: relative; }
-  .tap.overlay { position: absolute; left: 50%; top: 2.2mm; transform: translateX(-50%);
-    box-shadow: 0 6px 20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.15); font-size: 8pt; padding: 2mm 3mm; }
-  .qr { width: 26mm; height: 26mm; background: #fff; border-radius: 8px; padding: 1.5mm; }
-  .linkshot .cap { font-weight: 500; color: var(--muted); font-size: 8.5pt; }
+  /* Steps 1 and 2: the button sits ABOVE the visual, identical in both. The visual shrinks by the
+     button's height so the pair occupies exactly the box a screenshot does in steps 3–8, and the
+     row stays aligned at top and bottom. */
+  .visual { width: 100%; aspect-ratio: 590 / 1280; display: flex; flex-direction: column; gap: 2mm; }
+  .tap.block { display: block; flex: 0 0 auto; width: 100%; text-align: center; font-size: 9pt;
+    padding: 2.4mm 0; border-radius: 999px; }
+  .shot.fit { flex: 1 1 0; min-height: 0; width: auto; max-width: 100%; align-self: center; }
+  .linkshot.fit { flex: 1 1 0; min-height: 0; width: auto; max-width: 100%; align-self: center; aspect-ratio: 590 / 1280; }
+  .qr { width: 24mm; height: 24mm; background: #fff; border-radius: 8px; padding: 1.5mm; }
+  .linkshot .cap { font-weight: 500; color: var(--muted); font-size: 8pt; }
 
   .footer { margin-top: auto; display: flex; justify-content: space-between; color: var(--muted); font-size: 8.5pt;
     padding-top: 3mm; border-top: 1px solid var(--border); }
@@ -79,18 +84,20 @@
     <div class="grid">
       <div class="card">
         <div class="head"><div class="num">1</div><div class="txt">Встановіть <b>TestFlight</b> з App Store</div></div>
-        <div class="shotwrap">
-          <img class="shot" src="{{SHOT:1}}" alt="">
-          <a class="tap overlay" href="https://apps.apple.com/app/testflight/id899247664">Відкрити в App Store</a>
+        <div class="visual">
+          <a class="tap block" href="https://apps.apple.com/app/testflight/id899247664">Відкрити в App Store</a>
+          <img class="shot fit" src="{{SHOT:1}}" alt="">
         </div>
       </div>
       <div class="card">
         <div class="head"><div class="num">2</div><div class="txt">Відкрийте посилання <b>на iPhone</b></div></div>
-        <div class="linkshot">
-          <a class="tap" href="{{LINK_URL}}">Натисніть тут</a>
-          <a class="bubble" href="{{LINK_URL}}">{{LINK_TEXT}}</a>
-          <img class="qr" src="{{QR_SRC}}" alt="QR">
-          <div class="cap">або наведіть камеру<br>iPhone на QR-код</div>
+        <div class="visual">
+          <a class="tap block" href="{{LINK_URL}}">Відкрити посилання</a>
+          <div class="linkshot fit">
+            <a class="bubble" href="{{LINK_URL}}">{{LINK_TEXT}}</a>
+            <img class="qr" src="{{QR_SRC}}" alt="QR">
+            <div class="cap">або наведіть камеру<br>на <span style="white-space:nowrap">QR-код</span></div>
+          </div>
         </div>
       </div>
       <div class="card">
