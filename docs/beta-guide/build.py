@@ -9,15 +9,13 @@ def shot(m):
     path = os.path.join(here, 'screens', m.group(1) + '.jpg')
     return 'data:image/jpeg;base64,' + base64.b64encode(open(path, 'rb').read()).decode()
 html = re.sub(r'\{\{SHOT:(\d+)\}\}', shot, html)
-if link:
-    import qrcode
-    buf = io.BytesIO(); qrcode.make(link, border=1).save(buf, format='PNG')
-    qr = '<img class="qr" src="data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode() + '" alt="QR">'
-    html = html.replace('{{QR}}', qr).replace('{{LINK}}', '<div class="url">' + link + '</div>').replace('{{LINK_HINT}}',
-        'Відкрийте його на iPhone — або наведіть камеру iPhone на QR-код, якщо цей PDF відкрито на іншому екрані.')
-else:
-    html = html.replace('{{QR}}', '').replace('{{LINK}}', '<p style="margin:0">Ми надішлемо його вам окремим повідомленням.</p>').replace('{{LINK_HINT}}',
-        'Воно виглядає так: testflight.apple.com/join/…  Відкривайте його на iPhone.')
+if not link:
+    sys.exit('usage: build.py <testflight public link> [out.pdf] — the guide carries the link and its QR code')
+import qrcode
+buf = io.BytesIO(); qrcode.make(link, border=1).save(buf, format='PNG')
+html = (html.replace('{{QR_SRC}}', 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode())
+            .replace('{{LINK_URL}}', link)
+            .replace('{{LINK_TEXT}}', link.replace('https://', '').replace('/join/', '<br>/join/')))
 src = os.path.join(here, 'rendered.html'); open(src, 'w').write(html)
 profile = tempfile.mkdtemp(prefix='guide-chrome-')  # its own profile: never the user's running Chrome
 chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'

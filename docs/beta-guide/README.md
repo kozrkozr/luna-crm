@@ -6,12 +6,12 @@ the **public link** route (External Testing), owner's choice 2026-10-01.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install "qrcode[pil]"
-.venv/bin/python docs/beta-guide/build.py "https://testflight.apple.com/join/XXXXXXXX" ~/Desktop/Luna-Shoots-beta-guide.pdf
+.venv/bin/python docs/beta-guide/build.py "https://testflight.apple.com/join/UjRss4qV" ~/Desktop/Luna-Shoots-beta-guide.pdf
 ```
 
 One page of eight steps, each with a real screenshot from `screens/` (owner's, iPhone in English,
 2026-10-02) — `{{SHOT:n}}` in the template embeds `screens/n.jpg`. Step 2, opening the link, has
-no screenshot and is drawn instead. Button names are given as on the screenshots, with the
+no screenshot: it carries the link itself, tappable, and its QR code. The link is required. Button names are given as on the screenshots, with the
 Ukrainian label in brackets for testers whose iPhone is in Ukrainian.
 
 Rendering uses headless Chrome with its **own temporary profile** — never the running

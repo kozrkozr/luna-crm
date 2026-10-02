@@ -30,7 +30,7 @@
   h1 { font-size: 23pt; line-height: 1.1; letter-spacing: -0.02em; margin: 0; font-weight: 800; }
   .sub { color: var(--muted); font-size: 11pt; margin-top: 1.5mm; }
 
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm 4mm; margin-top: 2mm; }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6mm 4mm; margin-top: 2mm; }
   .card { background: var(--card); border: 1px solid var(--border-strong); border-radius: 14px;
     padding: 3mm; display: flex; flex-direction: column; }
   .head { display: flex; gap: 2.5mm; align-items: flex-start; height: 17mm; margin-bottom: 2mm; }
@@ -46,11 +46,15 @@
   .linkshot { width: 100%; aspect-ratio: 590 / 1280; border-radius: 10px; border: 1px dashed var(--info-border);
     background: radial-gradient(120% 60% at 50% 35%, #0D1E44 0%, #070708 70%);
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4mm; padding: 4mm; text-align: center; }
-  .chain { width: 16mm; height: 16mm; border-radius: 50%; background: var(--link); color: #fff;
+  .chain-unused { width: 16mm; height: 16mm; border-radius: 50%; background: var(--link); color: #fff;
     display: flex; align-items: center; justify-content: center; font-size: 22pt; font-weight: 700; }
   .bubble { background: #1c1c1e; border-radius: 12px; padding: 2.5mm 3mm; font-size: 8pt; line-height: 1.35;
-    color: var(--link); word-break: break-all; text-decoration: underline; }
+    color: var(--link); word-break: normal; white-space: nowrap; text-decoration: underline; }
   .linkshot .cap { font-size: 9pt; color: var(--fg); font-weight: 600; line-height: 1.35; }
+  .tap { background: var(--link); color: #fff; font-weight: 700; font-size: 10pt; border-radius: 999px;
+    padding: 2.5mm 5mm; white-space: nowrap; text-decoration: none; }
+  .qr { width: 26mm; height: 26mm; background: #fff; border-radius: 8px; padding: 1.5mm; }
+  .linkshot .cap { font-weight: 500; color: var(--muted); font-size: 8.5pt; }
 
   .footer { margin-top: auto; display: flex; justify-content: space-between; color: var(--muted); font-size: 8.5pt;
     padding-top: 3mm; border-top: 1px solid var(--border); }
@@ -75,11 +79,12 @@
         <img class="shot" src="{{SHOT:1}}" alt="">
       </div>
       <div class="card">
-        <div class="head"><div class="num">2</div><div class="txt">Натисніть на наше посилання</div></div>
+        <div class="head"><div class="num">2</div><div class="txt">Відкрийте посилання <b>на iPhone</b></div></div>
         <div class="linkshot">
-          <div class="chain">↗</div>
-          <div class="bubble">testflight.apple.com/join/…</div>
-          <div class="cap">Відкрийте посилання<br>на цьому iPhone</div>
+          <a class="tap" href="{{LINK_URL}}">Натисніть тут</a>
+          <a class="bubble" href="{{LINK_URL}}">{{LINK_TEXT}}</a>
+          <img class="qr" src="{{QR_SRC}}" alt="QR">
+          <div class="cap">або наведіть камеру<br>iPhone на QR-код</div>
         </div>
       </div>
       <div class="card">
