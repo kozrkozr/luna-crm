@@ -3,7 +3,8 @@
 - **Date:** 2026-08-22
 - **Status:** accepted — amended 2026-08-23 by `ADR-008-*.md`, which adds a
   placeholder/link-only file section to the Client view; real file hosting is still deferred
-  exactly as decided below
+  exactly as decided below. **Superseded in part 2026-10-03 by `ADR-020-*.md`** — file
+  delivery is no longer deferred; the sequencing itself stands as history
 - **Phase:** 01-discovery
 - **Deciders:** owner
 

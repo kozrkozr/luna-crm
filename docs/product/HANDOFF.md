@@ -10,8 +10,9 @@
 ## What this is
 A CRM where a solo photographer holds one record per shoot — client info, references, crew,
 location, status — and shares it by link with crew who have no account and no app installed.
-v1 is the crew/call-sheet half plus a read-only Client view; real file hosting for raw and
-finished photos is deferred (`decisions/ADR-005-*.md`, amended by `ADR-008-*.md`).
+v1 is the crew/call-sheet half plus a read-only Client view. Real file hosting for raw and
+finished photos was deferred (`decisions/ADR-005-*.md`, `ADR-008-*.md`) until 2026-10-03, when
+`ADR-020` brought it in — on Backblaze B2, as `EP-07`.
 
 ## Read in this order
 1. [`01-discovery/vision.md`](01-discovery/vision.md) — the problem, then
@@ -67,7 +68,7 @@ each before the epic it de-risks.
 - **ADR-001** — "shoot creator" (per-shoot ownership) is a different concept from the "shoot manager" profession.
 - **ADR-002** — v1 serves photographers who organize their own shoots; not the wider industry.
 - **ADR-003** — crew are entered manually per shoot. There is no crew directory and no global person table.
-- **ADR-005** (amended by **ADR-008**) — no real file hosting. Raw/finished photos are a placeholder or a pasted external link.
+- **ADR-005** (amended by **ADR-008**), both superseded by **ADR-020** — raw files and finished photos are hosted on Backblaze B2, deleted 30 days after a shoot's first upload, 200 GB per account. The pasted link stays beside them. Small images (`US-003`, `US-005`, `US-018`) stay in Supabase Storage.
 - **ADR-006**, superseded in part by **ADR-009** — the client does not react to references at all, and never proposed them.
 - **ADR-010**, superseded by **ADR-016** — React Native stays; the UI layer is React Native
   Reusables, not Tamagui (changed 2026-08-26, six screens into the build).

@@ -35,7 +35,8 @@ Only registered users have a language preference — link views are Ukrainian-on
 | `location_address` | set on edit, never at creation (`US-002`, `US-018`) |
 | `location_note` | free text |
 | `location_attachment` | one image **or** one video (`US-018` AC-2) |
-| `raw_files_url`, `finished_photos_url` | nullable pasted external links; null renders the "in development" placeholder (`US-024`, `US-025`; `ADR-008`) |
+| `raw_files_url`, `finished_photos_url` | nullable pasted external links. Kept beside hosted files as an alternative (`US-024`, `US-025`; `ADR-020`) |
+| `files_delete_at` | **new, `ADR-020`** — set once, at the first `ShootFile` upload, to that moment + 30 days; never moved by later uploads. Null while the shoot has no hosted files (`US-036` AC-2) |
 | `deleted_at` | soft delete — see Link validity |
 
 ### Reference
@@ -104,9 +105,26 @@ link no longer works] (`03-design/prototype/index.html`). Soft delete is chosen 
 *keeps*: a removed crew member's confirm/decline response (`US-008`) and the record that they were
 ever on the shoot at all.
 
+### ShootFile — *added 2026-10-03, `ADR-020`*
+One hosted file: raw files or finished photos (glossary: файл зйомки).
+
+| Field | Notes |
+|---|---|
+| `id`, `shoot_id` → Shoot | creator-only writes, RLS via the shoot (`US-036` AC-6) |
+| `kind` | `raw` \| `finished` |
+| `object_key` | the object's key in Backblaze B2 — not in Supabase Storage |
+| `size_bytes` | summed per account against the 200 GB quota (`US-036` AC-3) |
+| `name`, `created_at` | |
+
+Deleted by the scheduled job at `Shoot.files_delete_at` (`US-037` AC-3) or by the creator
+(`US-038`) — a **hard** delete of the object and the row: unlike `CrewMember`, nothing here is
+history worth keeping, and the point is to free the quota. Only the client payload carries them
+(`US-024`/`US-025` AC-7).
+
 ## What is deliberately absent
 - **No reaction entity** — `ADR-009` removed it (`US-011` retired).
-- **No stored files for raw/finished photos** — only nullable URL fields (`ADR-008`).
+- ~~**No stored files for raw/finished photos**~~ — reversed 2026-10-03 by `ADR-020`; see
+  ShootFile below.
 - **No global crew/person table** — `ADR-003`.
 - **No availability entity.** `US-009`'s cross-shoot schedule is a query, not a table: the
   `CrewMember` rows where `user_id` = me. Nothing to store, which is why the *storage* side of

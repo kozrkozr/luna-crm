@@ -1,7 +1,7 @@
 # ADR-008 — Placeholder/link-only file sections in the Client view, not file hosting
 
 - **Date:** 2026-08-23
-- **Status:** accepted
+- **Status:** superseded 2026-10-03 by `ADR-020-*.md` — raw files and finished photos are hosted
 - **Phase:** 02-product (amendment, from a 03-design prototype review)
 - **Deciders:** owner
 

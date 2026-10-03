@@ -51,7 +51,9 @@ registered user's profile gained a social-media field (R-01, R-14).*
   instead of asking the photographer directly, mid-shoot or otherwise.
 
 ## Non-goals
-- **Actual file hosting/upload** for raw files or finished photos — still deferred
+- ~~**Actual file hosting/upload** for raw files or finished photos~~ — **undeferred 2026-10-03**
+  by `decisions/ADR-020-*.md` (`EP-07`; proposed `R-27`). The text below is the 2026-08-23
+  position, kept as history: still deferred
   (`decisions/ADR-005-*.md`). What's new in v1 is a placeholder section, or a pasted external
   link (e.g. to a file-sharing service), on the Client view — not file storage
   (`decisions/ADR-008-*.md`).
@@ -76,8 +78,8 @@ See `scope.md` for the full in/out/deferred breakdown with reasons. Summary:
 - Searchable crew directory/marketplace; broader beauty-industry support; Russian UI; full
   production scheduling.
 ### Deferred
-- Actual file hosting for raw/finished photos (only a placeholder/link is in v1 — see
-  `decisions/ADR-008-*.md`). Client confirming attendance (only "view info" and viewing crew
+- ~~Actual file hosting for raw/finished photos~~ — undeferred 2026-10-03
+  (`decisions/ADR-020-*.md`). Client confirming attendance (only "view info" and viewing crew
   details minus notes were confirmed for v1 — see Users).
 
 ### Removed after trial
@@ -139,7 +141,9 @@ resurfacing here.
   channel identified so far (`00-intake/s02-2026-08-22/transcript.md`, lines 125–131, 236–264).
 - Target price: fixed monthly subscription, $5/month without file-sharing
   (owner's answer in chat, 2026-08-22) — the file-sharing-included $10 tier does not apply to
-  v1, since file delivery is deferred.
+  v1, since file delivery is deferred. **2026-10-03:** file delivery is undeferred
+  (`ADR-020`); the price is open again — 200 GB for $10 is a working assumption, and no payment
+  is built yet.
 - Client and crew permission boundaries are resolved (see Requirements) — no longer a
   dependency blocking 03-design.
 
