@@ -23,6 +23,7 @@ proposed it and it awaits confirmation. Every `provisional` row must be raised a
 | менеджер зйомок | shoot manager | An optional professional role, chosen at registration, for someone whose main job is coordinating shoots rather than shooting/styling/lighting them (`00-intake/s02`, lines 115–120) | confirmed |
 | зйомочна площадка | shoot set | The people and space involved in producing a shoot, used when generalising beyond photography alone (`00-intake/s01`, line 161) | confirmed |
 | каталог команди | crew directory | A searchable list of crew members with visible availability; deferred past v1 (`00-intake/s02`, line 345; `decisions/ADR-003-*.md`) | confirmed |
+| файл зйомки | shoot file | One file the shoot creator uploaded to a shoot — raw files or finished photos — hosted by the product; `ShootFile` in code (`decisions/ADR-020-*.md`) | confirmed — owner, chat 2026-10-03 |
 | файлообмінник | file-sharing service | A generic third-party service used today to send large files to clients or crew, outside the app (`00-intake/s02`, lines 199, 201) | confirmed |
 | рейт | rate | A photographer's or crew member's day rate/pricing tier (`00-intake/s02`, line 157) | confirmed |
 | автор зйомки | shoot creator | Whoever created a specific shoot and holds edit rights over it — a per-shoot relationship, distinct from the "shoot manager" profession (`decisions/ADR-001-*.md`) | confirmed |

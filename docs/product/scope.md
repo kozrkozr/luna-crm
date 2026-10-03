@@ -15,7 +15,7 @@
 - Self-registered crew see their own availability sync across shoots — R-08. Deferred-marketplace groundwork without building the marketplace itself (`decisions/ADR-003-*.md`).
 - Shoot list **and** calendar, both on the same screen, for the shoot creator — R-09. Confirmed as both, not just a list, in the prototype review.
 - Ukrainian-default, English-switchable UI — R-10 (`00-intake/s02-2026-08-22/transcript.md`, lines 396–416).
-- A Client can view read-only shoot info via link, view a crew member's details minus notes, and see a raw-files/finished-photos section (placeholder or a pasted external link — not file hosting) — R-11, R-22, R-23, R-24. Confirming attendance was not confirmed and stays out of v1 (see Deferred); reacting to references was tried and removed (see Removed after trial); proposing references was considered and declined (`decisions/ADR-006-*.md`).
+- A Client can view read-only shoot info via link, view a crew member's details minus notes, and view and download hosted raw files and finished photos, beside an optional pasted external link (`decisions/ADR-020-*.md`, 2026-10-03; was a placeholder or link only) — R-11, R-22, R-23, R-24. Confirming attendance was not confirmed and stays out of v1 (see Deferred); reacting to references was tried and removed (see Removed after trial); proposing references was considered and declined (`decisions/ADR-006-*.md`).
 
 ## Out of scope
 - **Searchable crew directory / marketplace.** No registered crew to search at launch; deferred until self-registration produces a meaningful pool (`decisions/ADR-003-*.md`).
@@ -24,7 +24,8 @@
 - **Full production scheduling (stripboards, multi-day planning).** That is StudioBinder's territory, heavier than this product targets (`01-discovery/competitors.md`).
 
 ## Deferred
-- **Actual file hosting for raw files or finished photos.** v1 only shows a placeholder or a
+- ~~**Actual file hosting for raw files or finished photos.**~~ **Undeferred 2026-10-03** by
+  `decisions/ADR-020-*.md` — `EP-07`, and `US-024`/`US-025` rewritten. Kept as history: v1 only shows a placeholder or a
   pasted external link on the Client view (R-22, R-23) — no upload, no storage
   (`decisions/ADR-008-*.md`, which amends the original deferral in `decisions/ADR-005-*.md`).
   Owner's own sequencing call: «команда/кол-шит, з файлами пізніше розберемось вдруг що»

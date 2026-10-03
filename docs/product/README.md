@@ -5,14 +5,32 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-09-29 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26)*
+- **Frozen:** 2026-10-03 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `c33cfed` — *docs(ADR-019): confirm the email before it can claim crew rows*.
+- **Source commit:** `d8b2820` — *docs(ADR-020): bring scope and the handoff in line with file hosting*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-10-03 re-freeze (`ADR-020`)
+**Raw files and finished photos are hosted now.** `ADR-020` supersedes `ADR-008` and `ADR-005`
+in part: files go to **Backblaze B2** (EU Central), not Supabase Storage, are deleted **30 days
+after the first upload to a shoot**, and count against **200 GB per account**. The creator gets
+a push warning 3 days before. No payment is built; the price is undecided.
+
+- **`EP-07` is new** — `US-036` (upload), `US-037` (deletion date), `US-038` (early delete),
+  `US-039` (push warning). Spike **`S-6`** (a multi-GB upload from the iPhone to B2) comes first
+  in `backlog-order.md`.
+- **`US-024` and `US-025` are rewritten**: the client views and downloads the files; the pasted
+  link stays beside them; **only the client payload carries files** — not the crew's.
+- `data-model.md` gains `Shoot.files_delete_at` and the `ShootFile` entity (glossary:
+  файл зйомки). `architecture.md` gains a file-hosting section, `risks.md` R-5 a note.
+- **`ADR-014` is unchanged** — the shoot link never expires; only the files do.
+- **Small images stay in Supabase Storage** (`US-003`, `US-005`, `US-018`), behind the same
+  storage interface so they can move to B2 later.
+- `EP-07.md` lists the questions still open — answer them before `US-036`'s schema.
 
 ## What moved in the 2026-09-29 re-freeze (review `r06`, and `8627fea` before it)
 **`ADR-019` amends `US-001` AC-1: registration now confirms the email** before the reader lands
@@ -132,12 +150,12 @@ That commit is the visible record that the specification moved, and why.
 | `HANDOFF.md` | Start here — DoD status, known gaps, contradictions, reading order |
 | `backlog-order.md` | **What to build, in order.** Spikes first, then foundation, then EP-01→EP-05 |
 | `prd.md`, `scope.md` | Requirements `R-01`–`R-24`, and what is deliberately out |
-| `epics/` | 6 epics, 33 live stories with Given/When/Then acceptance criteria |
+| `epics/` | 7 epics, 37 live stories with Given/When/Then acceptance criteria |
 | `architecture.md` | Components, data flow, service costs by stage |
 | `data-model.md` | 5 entities and their relationships |
 | `risks.md` | Technical risks, spikes, assumed effort per epic. **R-1 and R-2 retired; R-6 retired earlier** |
 | `open-questions.md` | 4 open, all safe to start without |
-| `decisions/` | `ADR-001`–`ADR-019`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
+| `decisions/` | `ADR-001`–`ADR-020`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
 | `glossary.md` | Ukrainian↔English. **English is canonical for code and entity names** |
 | `personas.md`, `flows.md`, `ux-notes.md` | Who this is for, and the screens |
 | `prototype/index.html` | The reviewed prototype — open in a browser |

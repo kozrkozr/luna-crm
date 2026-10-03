@@ -93,6 +93,11 @@ re-requesting the payload on media error or issuing a session-length TTL, but it
 shoot morning rather than in testing. Folded into **S-4**.
 
 ### R-5 — v1 does host files; it is just not called that *(low, but plan for it)*
+**Superseded in part 2026-10-03 by `ADR-020`:** raw files and finished photos are now hosted too
+— on Backblaze B2, not Supabase Storage — so v1 has two storage layers. The new risks are large
+uploads from a phone, a scheduled hard delete that must never touch the wrong shoot, and push
+notifications the app has never had (`EP-07`). The paragraph below stands for Supabase Storage.
+
 `ADR-005`/`ADR-008` say "no file hosting", and that is true *only* of raw files and finished
 photos. Meanwhile `US-003` uploads gallery images, `US-005` uploads a note image, and `US-018`
 uploads an image **or a video**. v1 needs a real Storage bucket, upload handling, and signed

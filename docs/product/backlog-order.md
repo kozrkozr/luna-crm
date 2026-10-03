@@ -73,6 +73,19 @@ faithful *palette* on an unfaithful *screen* — and item 4 is the one gate in t
 expensive to repeat. `US-030` is small and specified, so it buys a truthful pilot cheaply. Its
 AC-3 stays unbuilt either way (`open-questions.md` item 14).
 
+## EP-07 File hosting — *added 2026-10-03, `ADR-020`*
+
+| Order | Work | Story | Why here |
+|---|---|---|---|
+| 1 | **Spike S-6** — a multi-GB file from the iOS app to B2 by presigned multipart upload, on a mobile network, then downloaded by a logged-out phone browser | none | The one thing that can invalidate `ADR-020`'s "upload from iOS" — cheap only before anything sits on top of it |
+| 2 | Upload | `US-036` | Everything else needs files to exist |
+| 3 | Client sees and downloads | `US-024` → `US-025` | Rewritten for hosted files; reuses the gateway |
+| 4 | Deletion date, early delete | `US-037` → `US-038` | `US-037` brings the scheduled job |
+| 5 | Push warning | `US-039` | Last: it brings push notifications, a new dependency, for one message |
+
+`EP-07`'s open questions (10, listed in `EP-07.md`) — #1, #2 and #5 bear on `US-036`'s schema
+and should be answered before step 2.
+
 ## Notes on the order
 - **EP-03 before EP-04 is the one non-obvious call.** Both are link views; EP-03 builds the
   gateway, audience shaping, and the revoked-link state, and EP-04 is then mostly a second
