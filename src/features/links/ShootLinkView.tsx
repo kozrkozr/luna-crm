@@ -19,6 +19,7 @@ import { Sheet } from '../../components/ui/sheet'
 import { Text } from '../../components/ui/text'
 import { Toast } from '../../components/Toast'
 import { LinkReferenceGrid } from '../../components/LinkReferenceGrid'
+import { useMediaReload } from './useMediaReload'
 import { InstagramIcon } from '../../components/ui/instagram-icon'
 import { handleLabel, handleUrl } from '../../lib/socialHandle'
 import { isAvatarTint } from '../auth/avatar'
@@ -106,6 +107,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
       token !== undefined ? await resolveLink(token) : await resolveCrewShoot(shootId!)
     setResolution(payload ? { phase: 'ready', payload } : { phase: 'invalid' })
   }, [token, shootId])
+  const onMediaError = useMediaReload(load)
 
   useEffect(() => {
     if (token === undefined && shootId === undefined) return
@@ -609,7 +611,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
           {payload.references.length > 0 ? (
             <View className="gap-2">
               <SectionLabel label={t.references} />
-              <LinkReferenceGrid references={payload.references} />
+              <LinkReferenceGrid references={payload.references} onMediaError={onMediaError} />
             </View>
           ) : null}
 

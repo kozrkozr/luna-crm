@@ -105,6 +105,7 @@ export async function openBrowser({ port = 9800, width = 390, height = 1400 } = 
   let id = 0
   const pending = new Map()
   const consoleErrors = []
+  const listeners = []
   let loaded = false
 
   ws.on('message', (raw) => {
@@ -115,6 +116,7 @@ export async function openBrowser({ port = 9800, width = 390, height = 1400 } = 
       return
     }
     if (message.method === 'Page.loadEventFired') loaded = true
+    for (const listener of listeners) listener(message)
     if (
       message.method === 'Runtime.consoleAPICalled' &&
       ['error', 'warning'].includes(message.params.type)
@@ -308,6 +310,8 @@ export async function openBrowser({ port = 9800, width = 390, height = 1400 } = 
   return {
     send, ev, waitFor, waitForText, navigate, navigateRaw, settle, text,
     setInput, tap, tapByText, tapInDialog, login, consoleErrors, close,
+    /** Subscribe to every CDP event (e.g. `Network.*`, `Fetch.requestPaused`). */
+    onEvent: (listener) => listeners.push(listener),
   }
 }
 
