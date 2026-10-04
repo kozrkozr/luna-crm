@@ -4,8 +4,36 @@
   photographer's app in a desktop browser; iOS upload deferred), `docs/product/epics/EP-07-file-hosting/`,
   `US-024`/`US-025` in `EP-04`
 - **Date:** 2026-10-03, revised 2026-10-04 for `ADR-021`
-- **Status:** draft — for review before spike S-6
+- **Status:** **paused 2026-10-04** — see the next section
 - **Effort figures are assumptions**, not measurements.
+
+## ⏸ Paused 2026-10-04 — resume here
+Paused by the owner to ship tester fixes and an App Store release first. Nothing of EP-07 is
+built yet. To resume:
+
+1. **Bring this branch up to date** — rebase `docs/refreeze-adr-020` on `main`. If `main`
+   re-froze `docs/product` meanwhile, resolve `docs/product/README.md` by hand: keep both
+   "What moved" sections, newest first, and the newest source commit.
+2. **Check `fix/us-010-media-reload`** (`fix(US-010)`, `fix(US-021)`) — merged into `main` before
+   the release, or still open?
+3. **Ask the owner** for what blocks the next step:
+   - a Backblaze account and two B2 buckets in EU Central (`dev`, `prod`), a key for each — blocks
+     spike S-6;
+   - the file types (proposed in Phase 0: raw = any file; finished = JPEG, PNG, HEIC, TIFF, WebP;
+     video?);
+   - the product decisions the design needs: where the quota shows; previews or a list for the
+     client; copy for the after-date block and the delete confirmation; a section with no files
+     and no link; whole folders; a push pre-prompt or not.
+4. **Then:** spike S-6 (Phase 1) → foundation → `US-040` → `US-036` … (Phase 3).
+
+Agreed approach (owner, 2026-10-04): build on the existing components, logic kept apart from
+presentation; the owner's design is applied afterwards; Ilona sees it only once designed.
+The design list (screens and states) was given in chat on 2026-10-04 and is mirrored in
+"Screens that need design" below.
+
+**Spec state:** discovery repo at `4877af2` (`ADR-020`, `ADR-021`, `EP-07`, `US-036`–`US-040`),
+frozen into `docs/product` on this branch. `ADR-021` open question 1 (whole folders) is still
+open.
 
 ## Where the code is today
 What this plan builds on (surveyed 2026-10-03):
