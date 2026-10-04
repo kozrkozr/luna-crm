@@ -1,13 +1,57 @@
+/// <reference types="node" />
+// This file runs in Node (Expo CLI), never in the app, and reads `.env.prod` below. The
+// reference makes Node's types visible to the whole typecheck, not only here; `tsc` passes with it.
 import type { ExpoConfig } from 'expo/config'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 /**
  * Supabase config is NOT threaded through `extra` — the client reads
  * EXPO_PUBLIC_* directly, which is what Expo inlines at build time.
  */
+
+/*
+ * App variants (2026-10-04). `production` is the App Store / TestFlight app;
+ * `development` is a separate app — its own bundle id, name and URL scheme — so
+ * a dev build installs BESIDE the TestFlight beta instead of replacing it.
+ *
+ * Unset means development, on purpose: a forgotten variable yields an app that
+ * cannot overwrite the beta and cannot be uploaded (App Store Connect knows no
+ * `.dev` bundle id). Set it through `scripts/variant.mjs`, which also loads the
+ * matching `.env.<target>` — see the `ios*` and `deploy:web*` scripts.
+ */
+const VARIANT = process.env.APP_VARIANT === 'production' ? 'production' : 'development'
+const IS_PROD = VARIANT === 'production'
+
+/*
+ * A production build must be built against production. `.env.prod` is the
+ * reference; where it does not exist (a fresh clone, CI) there is nothing to
+ * compare with and the check stands aside.
+ */
+if (IS_PROD) {
+  const prodFile = join(__dirname, '.env.prod')
+  const expected = existsSync(prodFile)
+    ? readFileSync(prodFile, 'utf8').match(/^EXPO_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim()
+    : undefined
+  const actual = process.env.EXPO_PUBLIC_SUPABASE_URL
+  if (expected && actual !== expected) {
+    throw new Error(
+      `APP_VARIANT=production but EXPO_PUBLIC_SUPABASE_URL is ${actual ?? '(unset)'}, ` +
+        `not ${expected} from .env.prod. Build through scripts/variant.mjs prod.`
+    )
+  }
+}
+
 const config: ExpoConfig = {
-  name: 'Luna Shoots',
+  name: IS_PROD ? 'Luna Shoots' : 'Luna Dev',
   slug: 'luna-crm',
-  scheme: 'lunashoots',
+  /*
+   * Distinct per variant: two installed apps claiming one scheme leaves iOS to
+   * pick either. The auth emails land on `<scheme>://reset|confirm`
+   * (src/features/auth/authLink.ts), so the dev Supabase project must
+   * allow-list `lunashoots-dev://reset` and `lunashoots-dev://confirm`.
+   */
+  scheme: IS_PROD ? 'lunashoots' : 'lunashoots-dev',
   // What a person sees on the store page. `ios.buildNumber` is what App Store
   // Connect checks for uniqueness.
   version: '1.0.0',
@@ -33,6 +77,10 @@ const config: ExpoConfig = {
      * because the error names libraries that have nothing to do with the cause.
      */
     './plugins/withPrebuiltArtifactMarker',
+    // Bakes APP_VARIANT and EXPO_PUBLIC_* into ios/.xcode.env, so an Xcode
+    // archive bundles against the variant it was prebuilt for — not whatever
+    // `.env` says on the day.
+    './plugins/withVariantEnv',
     [
       'expo-image-picker',
       {
@@ -89,7 +137,7 @@ const config: ExpoConfig = {
      * Build locally with the PAID team selected, or Xcode registers whatever
      * this says under the personal one again.
      */
-    bundleIdentifier: 'com.lunashoots.ios',
+    bundleIdentifier: IS_PROD ? 'com.lunashoots.ios' : 'com.lunashoots.ios.dev',
     /*
      * The PAID team (Apple Developer Program, Individual, 2026-09-30). Pinned
      * so prebuild writes it into the Xcode project and automatic signing can

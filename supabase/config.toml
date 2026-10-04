@@ -165,7 +165,8 @@ site_url = "http://127.0.0.1:3000"
 # it does not recognise**, and it fails at SEND time — which looks exactly like
 # the email never being triggered. The hosted project needs the same entry under
 # Authentication → URL Configuration; this file only covers local development.
-additional_redirect_urls = ["https://127.0.0.1:3000", "lunashoots://reset", "lunashoots://confirm"]
+# `lunashoots-dev://` is the Luna Dev app (APP_VARIANT=development, app.config.ts).
+additional_redirect_urls = ["https://127.0.0.1:3000", "lunashoots://reset", "lunashoots://confirm", "lunashoots-dev://reset", "lunashoots-dev://confirm"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.

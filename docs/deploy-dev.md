@@ -225,7 +225,11 @@ that `S-2` F-2 exists to protect. Tell me and I will make the change.
 npm run ios
 ```
 
-This compiles the current `.env` into the app. Your phone now talks to hosted Supabase over the
+Since 2026-10-04 this builds **Luna Dev** (`com.lunashoots.ios.dev`) against `.env.dev`, whatever
+`.env` says — it installs beside the TestFlight app instead of replacing it. See
+`docs/environments.md`.
+
+*Before 2026-10-04:* this compiled the current `.env` into the app. Your phone now talks to hosted Supabase over the
 internet rather than your LAN — so it works on mobile data, away from the flat, which local
 never did.
 

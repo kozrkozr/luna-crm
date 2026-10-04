@@ -421,16 +421,22 @@ eas build -p ios --profile production
 eas submit -p ios
 ```
 
-**With Xcode:** `npx expo prebuild`, open `ios/LunaShoots.xcworkspace`, select "Any iOS Device",
-Product → Archive, then Distribute App → App Store Connect.
+**With Xcode:** `npm run prebuild:prod`, open `ios/LunaShoots.xcworkspace`, select "Any iOS
+Device", Product → Archive, then Distribute App → App Store Connect.
+
+`prebuild:prod` (2026-10-04) regenerates `ios/` as the production app — `com.lunashoots.ios`,
+«Luna Shoots» — and bakes `.env.prod`'s values into `ios/.xcode.env`, so the archive talks to
+production **whatever `.env` says**. A plain `npx expo prebuild` now produces **Luna Dev**, which
+App Store Connect will not accept. See `docs/environments.md`.
 
 Measured on this Mac, 2026-09-21: a clean Release build of this project takes **5 minutes**. The
 cloud adds queue time; the upload and Apple's processing add 20–60 minutes before the build
 appears in TestFlight.
 
-**Whichever route: `EXPO_PUBLIC_*` is baked in at build time.** The `.env` on disk when the
-archive is made decides which backend every tester talks to for the life of that build. Check it
-before building, not after.
+**Whichever route: `EXPO_PUBLIC_*` is baked in at build time.** Through `prebuild:prod` the
+backend comes from `.env.prod`, not from `.env`. With EAS, the `production` profile must set
+`APP_VARIANT=production` and `.env.prod`'s values itself — EAS does not run
+`scripts/variant.mjs`, and without `APP_VARIANT` it would build Luna Dev.
 
 **Increment `ios.buildNumber` before every upload.** App Store Connect rejects a duplicate
 outright, after the upload has finished.

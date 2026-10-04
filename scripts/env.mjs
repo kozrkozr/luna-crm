@@ -109,9 +109,12 @@ function verify() {
     process.exit(1)
   }
 
-  const expected = refOf(read(ENV))
+  // Run through scripts/variant.mjs, the build's environment carries the URL and
+  // `.env` is not what the export was built from.
+  const fromEnv = process.env.EXPO_PUBLIC_SUPABASE_URL
+  const expected = fromEnv ? refOf(`EXPO_PUBLIC_SUPABASE_URL=${fromEnv}`) : refOf(read(ENV))
   if (!expected) {
-    console.error('Could not read EXPO_PUBLIC_SUPABASE_URL from .env')
+    console.error('Could not read EXPO_PUBLIC_SUPABASE_URL from the environment or .env')
     process.exit(1)
   }
 
