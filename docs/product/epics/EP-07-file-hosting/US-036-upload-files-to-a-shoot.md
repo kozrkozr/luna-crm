@@ -7,13 +7,14 @@
 
 ## Story
 As a **shoot creator**,
-I want **to upload raw files and finished photos to the shoot from the app**,
+I want **to upload raw files and finished photos to the shoot from the app in my computer's browser**,
 so that **the client gets them from their shoot link instead of a file-sharing service**.
 
 ## Context
 `decisions/ADR-020-*.md`. Files go to Backblaze B2, not Supabase Storage. Each uploaded file is
-a `ShootFile` (glossary: файл зйомки) of kind raw files or finished photos. Upload is from the
-iOS app only; a computer upload is a separate ADR.
+a `ShootFile` (glossary: файл зйомки) of kind raw files or finished photos. **Upload is from the
+photographer's app in a desktop browser** (`ADR-021`, `US-040`); upload from the iOS app is
+deferred.
 
 The first upload to a shoot fixes the date its files are deleted: 30 days later (`ADR-020`,
 decision 3). Files added later do not move it.
@@ -49,10 +50,10 @@ decision 3). Files added later do not move it.
 - **When** files are uploaded to that section
 - **Then** the link is kept, and both show — hosted files and the link (owner, chat 2026-10-03)
 
-### AC-6 — Pick from Photos or Files
-- **Given** the creator starts an upload
-- **When** they choose where to pick from
-- **Then** both the photo library and the Files app are offered (owner, chat 2026-10-03)
+### AC-6 — *moved to the deferred iOS upload* (`ADR-021`)
+On 2026-10-03 the owner chose both the photo library and the Files app as sources on iOS. That
+stands for when iOS upload is undeferred; in the browser, files are chosen from the computer —
+a file picker and drag-and-drop, both (owner, 2026-10-04; design to come).
 
 ### AC-7 — No upload once the deletion date has passed
 - **Given** a shoot whose deletion date has passed
@@ -65,16 +66,17 @@ decision 3). Files added later do not move it.
 - **Then** it is refused
 
 ## Out of scope
-- Upload from a computer — separate ADR (`ADR-020`, decision 7).
+- Upload from the iOS app — deferred (`ADR-021`).
 - Payment for the quota (`ADR-020`, decision 6).
 
 ## Dependencies
-US-002 — a shoot must exist.
+US-002 — a shoot must exist. US-040 — the app in a desktop browser.
 
 ## Open questions
-1. Which file types can be picked? (Source answered: both — AC-6.)
+1. Which file types can be picked? Proposed in the build repo's plan (2026-10-03); awaiting the owner.
 2. ~~After every file is deleted, does a new upload start a fresh 30 days?~~ **No** (owner, chat
    2026-10-03) — the date set by the first upload stands. After that date, uploads are blocked
    (AC-7). The copy for that block is not decided.
 3. Does the creator see how much of the 200 GB is used, and where?
 4. What happens to an upload interrupted by the network — resumed, or started again?
+5. Can a whole folder be picked or dropped at once? (`ADR-021`)

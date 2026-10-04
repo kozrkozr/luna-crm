@@ -152,10 +152,17 @@ Raw files and finished photos do **not** go to Supabase Storage: its $0.09/GB eg
 reason. They go to a private Backblaze B2 bucket (EU Central), through B2's S3-compatible API and
 behind a small storage interface so the provider can later become Cloudflare R2.
 
-- **Upload:** the app asks an Edge Function for a presigned upload URL — which first checks the
+- **Upload:** the app — in a desktop browser since `ADR-021` — asks an Edge Function for a presigned upload URL — which first checks the
   account's 200 GB quota (`US-036` AC-3) — and uploads straight to B2. Files of tens of GB need
   multipart upload.
 - **Read:** the link gateway (`ADR-013`) adds presigned B2 URLs to the **client** payload only.
 - **Delete:** a daily `pg_cron` job calls an Edge Function that deletes the objects and rows of
   every shoot past `files_delete_at`, and sends the 3-day push warnings (`US-037`, `US-039`).
 - **Push:** new — APNs through Expo push notifications; device tokens stored per user.
+
+## The photographer's app on the web — *added 2026-10-04, `ADR-021`*
+The creator's routes, already part of `expo export -p web`, are now a supported surface: the whole
+photographer's app in any modern desktop browser, served by Cloudflare Pages beside the link
+views. File uploads start here (`US-036`): the browser slices each file (`File.slice`) and `PUT`s
+the parts to presigned B2 multipart URLs — the same Edge Function as in the section above. The
+iOS app does not upload files for now.
