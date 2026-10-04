@@ -136,25 +136,45 @@ Each story: migration → Edge Function → app → acceptance suite → commit 
 **Total, assumed:** ~5 weeks including the spike and `US-040`.
 
 ## Screens that need design
-Asked of the owner on 2026-10-03.
+The list given to the owner on 2026-10-04. Built first on existing components; the owner's
+design is applied afterwards.
 
-**Creator, web app** (`ADR-021`: the phone layout, centred on a desktop screen)
-1. **Shoot detail → Files section** (`MaterialsTab`): raw files and finished photos as two
-   sections with the uploaded files, the upload button, «Файли доступні до {дата}», the pasted
-   link beside the files. States: empty; uploading; uploaded; deleted; upload blocked after the
-   date.
-2. **Choosing files**: the upload button and **drag-and-drop** — the drop zone and its states
-   (owner supplies the design, 2026-10-04).
-3. **Upload in progress**: several files, per-file and total progress, a failed or interrupted
-   upload, cancel.
-4. **Quota**: how much of the 200 GB is used — where it lives (shoot? profile?), and the
-   quota-full state.
-5. **Delete**: one file and all files, and the confirmation.
+### Changes to existing screens
+1. **Shoot → Materials tab → Files section** (creator, web). Per section (raw files, finished
+   photos): uploaded files (name, size), upload button, drop zone, «Файли доступні до {дата}»,
+   the pasted link beside the files, delete one / delete all. States: empty; link only; files;
+   files + link; uploading; deleted (date passed); upload blocked after the date; quota full.
+2. **Shoot → file counter** in the header/summary — counts hosted files too, not only links.
+3. **Client link view → Files card** (mobile browser): finished photos (previews or a list —
+   decision 2), raw files as a list with per-file download, «Завантажити все», the date, the link
+   beside. States: files; files + link; after deletion — the link, or «Файли видалено. Зверніться
+   до фотографа, якщо вони ще потрібні.»; no files and no link.
+4. **Web frame** — the phone layout centred on a desktop screen: what surrounds the column.
 
-**Creator, iOS app**
-6. **Push permission ask**, if it gets its own screen before the system prompt (#7).
+### New screens and components
+Creator, web:
+5. **Drop zone** and its drag-over state.
+6. **Upload progress panel** — several files, per-file and total progress, cancel, failure and
+   retry, "interrupted — resume" (depends on S-6).
+7. **Quota indicator** — «Використано X з 200 ГБ»; nearly full; full.
+8. **Quota full message** — «Сховище заповнене (200 ГБ). Видаліть файли інших зйомок, щоб
+   завантажити нові.»
+9. **Upload blocked after the deletion date** — copy not chosen.
+10. **Delete confirmation** — one file / all files; copy not chosen.
 
-**Client, web link view** (mobile browser, logged out)
-7. **Files section**: finished photos (previews? a full-screen viewer?) and raw files (a list),
-   download one / download all, the date, the link beside them, the deleted placeholder.
-8. **Download all in progress** — if S-6 shows the browser needs one.
+Client, mobile browser:
+11. **Full-screen viewer** for a finished photo (the references' `ImageViewer` as a base).
+12. **A file row that cannot be previewed** (raw, TIFF) — type icon, name, size, download.
+13. **"Download all" progress** — if S-6 shows the browser downloads one file at a time.
+
+Creator, iOS:
+14. **Push pre-prompt** before the system permission dialog — only if wanted.
+
+### Decisions the design depends on
+1. Where the quota shows — the shoot, the profile, or both?
+2. What "view" means for the client — previews for finished photos and a list for raw, or a list
+   for everything?
+3. Copy for items 9 and 10.
+4. A section with no files and no link — what the client sees (item 3, last state).
+5. Whole folders — can one be picked or dropped?
+6. Push — a pre-prompt (item 14), or the system dialog only?
