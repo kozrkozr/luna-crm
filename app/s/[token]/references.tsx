@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { Text } from '../../../src/components/ui/text'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
 import { uk } from '../../../src/i18n/uk'
 import { resolveLink, type LinkReference } from '../../../src/features/links/gateway'
+import { useMediaReload } from '../../../src/features/links/useMediaReload'
 import { Starfield } from '../../../src/components/Starfield'
 
 /**
@@ -25,21 +26,21 @@ export default function LinkAllReferencesScreen() {
   const { token } = useLocalSearchParams<{ token?: string }>()
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
 
+  const load = useCallback(async () => {
+    if (token === undefined) return
+    const payload = await resolveLink(token)
+    // Either audience. US-010 AC-1 gives the client the same "see all" link
+    // the crew has, and both payloads carry `references` — the difference
+    // between the two audiences is crew notes, which are not here.
+    setResolution(payload ? { phase: 'ready', references: payload.references } : { phase: 'invalid' })
+  }, [token])
+  // risks.md R-4 — an expired signed URL re-requests the payload.
+  const onMediaError = useMediaReload(load)
+
   useEffect(() => {
     if (token === undefined) return
-    let cancelled = false
-    void (async () => {
-      const payload = await resolveLink(token)
-      if (cancelled) return
-      // Either audience. US-010 AC-1 gives the client the same "see all" link
-      // the crew has, and both payloads carry `references` — the difference
-      // between the two audiences is crew notes, which are not here.
-      setResolution(payload ? { phase: 'ready', references: payload.references } : { phase: 'invalid' })
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [token])
+    void load()
+  }, [token, load])
 
   if (resolution.phase === 'resolving') {
     return (
@@ -71,7 +72,7 @@ export default function LinkAllReferencesScreen() {
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View className="gap-3 p-4">
           <Text className="text-title text-foreground font-semibold">{uk.allReferencesTitle}</Text>
-          <LinkReferenceGrid references={resolution.references} />
+          <LinkReferenceGrid references={resolution.references} onMediaError={onMediaError} />
         </View>
       </ScrollView>
     </View>
