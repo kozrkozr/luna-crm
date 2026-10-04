@@ -77,11 +77,12 @@ AC-3 stays unbuilt either way (`open-questions.md` item 14).
 
 | Order | Work | Story | Why here |
 |---|---|---|---|
-| 1 | **Spike S-6** — a multi-GB file from the iOS app to B2 by presigned multipart upload, on a mobile network, then downloaded by a logged-out phone browser | none | The one thing that can invalidate `ADR-020`'s "upload from iOS" — cheap only before anything sits on top of it |
-| 2 | Upload | `US-036` | Everything else needs files to exist |
-| 3 | Client sees and downloads | `US-024` → `US-025` | Rewritten for hosted files; reuses the gateway |
-| 4 | Deletion date, early delete | `US-037` → `US-038` | `US-037` brings the scheduled job |
-| 5 | Push warning | `US-039` | Last: it brings push notifications, a new dependency, for one message |
+| 1 | **Spike S-6** — a multi-GB file from a desktop browser to B2 by presigned multipart upload (CORS, a closed tab, a sleeping laptop, resuming), then downloaded by a logged-out phone browser. *Retargeted 2026-10-04 from iOS by `ADR-021`* | none | The one thing that can invalidate the upload path — cheap only before anything sits on top of it |
+| 2 | The photographer's app in a desktop browser | `US-040` | `ADR-021`: uploads happen there, so it comes before them |
+| 3 | Upload | `US-036` | Everything else needs files to exist |
+| 4 | Client sees and downloads | `US-024` → `US-025` | Rewritten for hosted files; reuses the gateway |
+| 5 | Deletion date, early delete | `US-037` → `US-038` | `US-037` brings the scheduled job |
+| 6 | Push warning | `US-039` | Last: it brings push notifications, a new dependency, for one message |
 
 `EP-07`'s open questions (10, listed in `EP-07.md`) — #1, #2 and #5 bear on `US-036`'s schema
 and should be answered before step 2.

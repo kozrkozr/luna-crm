@@ -1,7 +1,8 @@
 # ADR-020 — Host raw files and finished photos on Backblaze B2, 30 days per shoot, 200 GB per account
 
 - **Date:** 2026-10-03
-- **Status:** accepted
+- **Status:** accepted — decision 7 amended 2026-10-04 by `ADR-021`: files upload from the
+  photographer's app in a desktop browser; iOS upload is deferred
 - **Supersedes in part:** `ADR-005` — file delivery is no longer deferred
 - **Supersedes:** `ADR-008` — the placeholder/pasted-link sections give way to hosted files
 - **Does not change:** `ADR-011` (Supabase stays the backend; its Storage keeps the small images
@@ -63,7 +64,7 @@ Three facts shaped the decision:
    blocked until the creator deletes something. **No per-file size limit.**
 6. **Price:** not decided. For now the 200 GB quota applies to every account, with no payment.
    200 GB for $10/month is the working assumption, with a larger tier for heavy raw users later.
-7. **Upload source:** this ADR covers uploading from the iOS app. Uploading raw files from a
+7. **Upload source:** *(amended by `ADR-021` — the browser, not iOS)* this ADR covers uploading from the iOS app. Uploading raw files from a
    computer (a web app for the photographer) is a separate ADR — 30–40 GB per shoot is not
    realistic from a phone.
 

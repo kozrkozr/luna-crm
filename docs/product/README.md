@@ -5,14 +5,29 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-10-03 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29)*
+- **Frozen:** 2026-10-04 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29 and 2026-10-03)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `d8b2820` — *docs(ADR-020): bring scope and the handoff in line with file hosting*.
+- **Source commit:** `4877af2` — *docs(ADR-021): the photographer's app in a desktop browser, uploads from there*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-10-04 re-freeze (`ADR-021`)
+**The photographer's app is supported in a desktop browser, and files upload from there** — not
+from the iOS app, which is deferred for uploads. `ADR-021` amends `ADR-020` decision 7 and
+extends `ADR-012`: Cloudflare Pages serves the creator's app at **`app.lunashoots.com`**, beside
+the link surface on `lunashoots.com`. This repo's `docs/open-questions.md` #26 is answered —
+publishing the creator's routes is now intended.
+
+- **`US-040` is new** (in `EP-07`): every creator story in any modern desktop browser; the phone
+  layout, centred; one auth email link that opens the iOS app on a phone and the web app on a
+  computer.
+- **`US-036`** uploads from the browser — a file picker and drag-and-drop. Its AC-6 (Photos and
+  Files on iOS) is parked with the deferred iOS upload.
+- `backlog-order.md`: spike **`S-6`** now tests a browser upload; **`US-040` comes before
+  `US-036`**.
 
 ## What moved in the 2026-10-03 re-freeze (`ADR-020`)
 **Raw files and finished photos are hosted now.** `ADR-020` supersedes `ADR-008` and `ADR-005`
@@ -150,12 +165,12 @@ That commit is the visible record that the specification moved, and why.
 | `HANDOFF.md` | Start here — DoD status, known gaps, contradictions, reading order |
 | `backlog-order.md` | **What to build, in order.** Spikes first, then foundation, then EP-01→EP-05 |
 | `prd.md`, `scope.md` | Requirements `R-01`–`R-24`, and what is deliberately out |
-| `epics/` | 7 epics, 37 live stories with Given/When/Then acceptance criteria |
+| `epics/` | 7 epics, 38 live stories with Given/When/Then acceptance criteria |
 | `architecture.md` | Components, data flow, service costs by stage |
 | `data-model.md` | 5 entities and their relationships |
 | `risks.md` | Technical risks, spikes, assumed effort per epic. **R-1 and R-2 retired; R-6 retired earlier** |
 | `open-questions.md` | 4 open, all safe to start without |
-| `decisions/` | `ADR-001`–`ADR-020`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
+| `decisions/` | `ADR-001`–`ADR-021`. Do not silently overturn any of them. `ADR-010` is superseded by `ADR-016` |
 | `glossary.md` | Ukrainian↔English. **English is canonical for code and entity names** |
 | `personas.md`, `flows.md`, `ux-notes.md` | Who this is for, and the screens |
 | `prototype/index.html` | The reviewed prototype — open in a browser |
