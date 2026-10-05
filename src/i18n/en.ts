@@ -593,9 +593,7 @@ export const en: Strings = {
   statsUnpaid: 'Awaiting payment',
   statsHours: 'Hours on shoots',
 
-  /* ── US-041 — shoot reminders (AC-12). Approved by the owner, 2026-10-05,
-     except `reminderAt`, the body's «о» — a one-word translation the table
-     did not list. ── */
+  /* ── US-041 — shoot reminders (AC-12). Approved by the owner, 2026-10-05. ── */
   notificationsRow: 'Notifications',
   notificationsTitle: 'Notifications',
   reminderDigestToggle: 'Evening summary',
@@ -606,8 +604,26 @@ export const en: Strings = {
   reminderBeforeOptions: ['1 hour before', '2 hours before', '3 hours before'],
   notificationsBlocked: 'Notifications are turned off in iOS settings',
   notificationsEnable: 'Turn on',
-  reminderDigestTitleOne: 'Shoot tomorrow',
-  reminderDigestTitleMany: '{count} tomorrow',
+  reminderDigestTitles1: [
+    'Easy day tomorrow 😌 Just one shoot.',
+    'One shoot and you can breathe out 😮‍💨',
+    'A calm day tomorrow, just one shoot 😌',
+  ],
+  reminderDigestTitles2: [
+    "Tomorrow's going to be busy 😮‍💨",
+    'Two shoots — time to warm up 📸',
+    'Okay, no slacking tomorrow 🔥',
+  ],
+  reminderDigestTitles3to5: [
+    "No downtime tomorrow. Let's go 🔥",
+    'Wow, hard work tomorrow 🔥',
+    'Packed schedule. Hang in there 🫠',
+  ],
+  reminderDigestTitles6plus: [
+    "That's it, tomorrow is survival mode 🫠🔥",
+    'The schedule is literally screaming "HANG IN THERE" 🫠',
+    'Hardcore day ahead 🫠',
+  ],
   reminderBeforeTitle: 'Shoot in {hours}',
   reminderHourForms: ['hour', 'hours', 'hours'],
   reminderMore: 'and {count} more',

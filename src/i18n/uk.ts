@@ -1317,9 +1317,30 @@ export const uk = {
   notificationsBlocked: 'Сповіщення вимкнені в налаштуваннях iOS',
   notificationsEnable: 'Увімкнути',
   // The notifications themselves (AC-3, AC-4).
-  reminderDigestTitleOne: 'Завтра зйомка',
-  /** `{count}` is «3 зйомки» / «5 зйомок» — number and noun together. */
-  reminderDigestTitleMany: 'Завтра {count}',
+  /*
+   * The digest's title — one of three, picked at random, by how many shoots
+   * there are tomorrow (US-041 AC-3, rewritten by the owner 2026-10-05).
+   */
+  reminderDigestTitles1: [
+    'Завтра лайтово 😌 Одна зйомка.',
+    'Один shoot і можна видихнути 😮‍💨',
+    'Завтра спокійно, всього одна зйомка 😌',
+  ],
+  reminderDigestTitles2: [
+    'Завтра буде щільненько 😮‍💨',
+    'Дві зйомки — розігріваємось 📸',
+    'Окей, завтра вже без лінощів 🔥',
+  ],
+  reminderDigestTitles3to5: [
+    'Завтра без зайвих пауз. Поїхали 🔥',
+    'Wow, завтра хард ворк 🔥',
+    'Графік щільненький. Тримайся 🫠',
+  ],
+  reminderDigestTitles6plus: [
+    'Ну все, завтра режим «вижити» 🫠🔥',
+    'Графік просто кричить «ТРИМАЙСЯ» 🫠',
+    'Хардкор намічається 🫠',
+  ],
   /** `{hours}` is «2 години» — the accusative after «через», hence its own forms. */
   reminderBeforeTitle: 'Зйомка через {hours}',
   reminderHourForms: ['годину', 'години', 'годин'],

@@ -36,6 +36,7 @@ export const MAX_PENDING = 64
 /** AC-3 — how many shoots the digest names before «і ще N». */
 const DIGEST_LISTED = 3
 
+/** Between the parts of the «за N годин» body. */
 const SEPARATOR = ' · '
 
 export function planReminders(
@@ -43,7 +44,8 @@ export function planReminders(
   settings: ReminderSettings,
   now: Date,
   t: Strings,
-  language: Language
+  language: Language,
+  random: () => number = Math.random
 ): PlannedReminder[] {
   // AC-7 — finished shoots get nothing. Deleted ones never arrive here:
   // `listShoots` reads through the RLS policy that filters `deleted_at`
@@ -65,8 +67,8 @@ export function planReminders(
       planned.push({
         id: `digest-${date}`,
         at,
-        title: digestTitle(onDate.length, t, language),
-        body: digestBody(onDate, t, language),
+        title: digestTitle(onDate.length, t, random),
+        body: digestBody(onDate, t),
         data: { kind: 'digest', date },
       })
     }
@@ -95,41 +97,43 @@ export function planReminders(
   return planned.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_PENDING)
 }
 
-/** «Завтра зйомка» for one; «Завтра 3 зйомки» / «Завтра 5 зйомок» for several. */
-function digestTitle(count: number, t: Strings, language: Language): string {
-  if (count === 1) return t.reminderDigestTitleOne
-  return t.reminderDigestTitleMany.replace(
-    '{count}',
-    `${count} ${plural(count, t.shootCountForms, language)}`
-  )
+/**
+ * One of three titles for the size of tomorrow (AC-3): 1, 2, 3–5 or 6+ shoots.
+ * Random each time the plan is built — a re-sync may swap the variant before
+ * it is shown, which nobody can see.
+ */
+function digestTitle(count: number, t: Strings, random: () => number): string {
+  const titles =
+    count === 1
+      ? t.reminderDigestTitles1
+      : count === 2
+        ? t.reminderDigestTitles2
+        : count <= 5
+          ? t.reminderDigestTitles3to5
+          : t.reminderDigestTitles6plus
+  return titles[Math.floor(random() * titles.length) % titles.length]
 }
 
 /**
- * One shoot: «Олена · 10:00 – 13:00 · Студія KULT».
- * Several: «10:00 Олена · 14:00 Марія · 18:00 Ірина · і ще 2».
- *
- * An empty client or location is dropped together with its separator (owner,
- * 2026-10-05) — `filter(Boolean)` before the join is what does that.
+ * One shoot per line, by start time — «• 10:00 – 14:00 Papaya» — then «і ще 2»
+ * past the third. No location (owner, 2026-10-05). A shoot from before
+ * `US-030` has no range and is listed by client alone; the timeless ones go
+ * last, having nothing to sort by.
  */
-function digestBody(onDate: readonly Shoot[], t: Strings, language: Language): string {
-  if (onDate.length === 1) {
-    const shoot = onDate[0]
-    return [shoot.clientName.trim(), formatTimeRange(shoot.startTime, shoot.endTime), place(shoot)]
-      .filter(Boolean)
-      .join(SEPARATOR)
-  }
-  // By start time; the timeless pre-`US-030` shoots go last, since they have
-  // nothing to sort by.
+function digestBody(onDate: readonly Shoot[], t: Strings): string {
   const ordered = [...onDate].sort((a, b) =>
     (a.startTime ?? '99:99').localeCompare(b.startTime ?? '99:99')
   )
-  const named = ordered
+  const lines = ordered
     .slice(0, DIGEST_LISTED)
-    .map((shoot) => [shoot.startTime, shoot.clientName.trim()].filter(Boolean).join(' '))
-    .filter(Boolean)
+    .map((shoot) =>
+      `• ${[formatTimeRange(shoot.startTime, shoot.endTime), shoot.clientName.trim()]
+        .filter(Boolean)
+        .join(' ')}`
+    )
   const rest = ordered.length - DIGEST_LISTED
-  if (rest > 0) named.push(t.reminderMore.replace('{count}', String(rest)))
-  return named.join(SEPARATOR)
+  if (rest > 0) lines.push(t.reminderMore.replace('{count}', String(rest)))
+  return lines.join('\n')
 }
 
 /** «Олена, о 10:00 · Студія KULT». */
