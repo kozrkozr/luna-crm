@@ -51,15 +51,15 @@ Two reminders, deliberately different in kind:
 
   ```
   • 10:00 – 14:00 Papaya
-  • 15:00 – 18:00 Олена
-  • 19:00 – 21:00 Марія
-  і ще 2
+  • 15:00 – 18:00 Олена · і ще 3
   ```
 
 - The en-dash keeps its spaces, as everywhere else in the app (`US-030` AC-4).
 - **No location** in the digest.
 - A shoot without times (`US-030` AC-6) is listed by client alone: «• Papaya».
-- At most **3** shoots are listed; the rest are counted on a last line: «і ще 2».
+- At most **2** shoots are listed; the rest are counted at the end of the second line:
+  «· і ще 3». *(Was 3, on a line of its own — changed 2026-10-05: a collapsed notification on
+  iOS 26 shows the title and two lines, so a third line was never seen.)*
 
 ### AC-4 — The «за N годин» reminder
 - **Given** the reminder on, and a shoot with a start time

@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-05 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03 and 2026-10-04)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `8112bc6` — *docs(US-041): new evening digest copy, by number of shoots tomorrow*.
+- **Source commit:** `0312f14` — *docs(US-041): list two shoots in the digest, the rest counted on the second line*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
@@ -18,7 +18,8 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 **The evening digest's copy is new**, after the owner tested the first build: three titles per
 group of tomorrow's shoots (1, 2, 3–5, 6+), picked at random; the body one shoot per line
 («• 10:00 – 14:00 Papaya»), without the location; English for each. The «за N годин» reminder
-is unchanged.
+is unchanged. A third pass the same day lists **two** shoots, not three, with «· і ще N» at the
+end of the second line — a collapsed iOS 26 notification shows only the title and two lines.
 
 ## What moved in the 2026-10-05 re-freeze (`US-041`)
 **`EP-08` is new — shoot reminders, from beta feedback.** `US-041` gives the creator an evening
