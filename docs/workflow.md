@@ -62,7 +62,9 @@ npx supabase functions deploy link-gateway # only if the gateway changed
 npm run deploy:web:dev                     # the link views, Pages `dev` branch
 npm run ios                                # Luna Dev on the USB phone, against dev
 ```
-`npm run ios` is a Debug build: it needs Metro (`npm run start`) running on the Mac. Then send
+`npm run ios` is a Debug build: it needs Metro (`npm run start`) running on the Mac. Its Xcode
+project is `ios/LunaDev.xcworkspace`; close Xcode before switching between Luna Dev and Luna
+Shoots (`environments.md`). Then send
 yourself a crew or client link and open it from Messages, on mobile data.
 
 ### 7. Merge

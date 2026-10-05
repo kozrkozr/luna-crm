@@ -37,6 +37,10 @@ forgotten variable gives an app that can neither overwrite the beta nor be uploa
 bundle id, the scheme and the baked env all live there. Switching costs one `prebuild` (with
 `pod install`).
 
+**The Xcode project is named after the app:** `ios/LunaDev.xcworkspace` for Luna Dev,
+`ios/LunaShoots.xcworkspace` for Luna Shoots. Close Xcode before switching — otherwise it reports
+that the open workspace "has disappeared". Harmless: close that window and open the new one.
+
 ## How the backend is pinned
 - `scripts/variant.mjs <target>` loads `.env.<target>` into the command's environment. Variables
   already in the environment win over `.env`, so `.env` is not read for these values.
