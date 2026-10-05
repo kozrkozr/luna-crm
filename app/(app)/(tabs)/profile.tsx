@@ -783,6 +783,29 @@ export default function ProfileScreen() {
                 <LanguageSwitcher />
               </View>
 
+              {/* US-041 AC-9 — «Сповіщення», between the language and support,
+                  drawn like the support row (owner, 2026-10-05). The canvas's
+                  own «Сповіщення» section in `Edit Profile.dc.html` is not
+                  built: the owner kept this screen as it is. */}
+              <Pressable
+                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+                onPress={() => {
+                  tapped()
+                  router.push('/(app)/notifications')
+                }}
+                role="button"
+              >
+                <Text className="text-body-sm text-muted-foreground flex-1">
+                  {t.notificationsRow}
+                </Text>
+                <Icon
+                  as={ChevronRight}
+                  size={15}
+                  strokeWidth={2}
+                  className="text-muted-foreground shrink-0"
+                />
+              </Pressable>
+
               {/* STUB — no support address exists anywhere in the repo, so this
                   opens nothing. Drawn complete regardless (owner, 2026-09-02). */}
               <View className="border-border min-h-14 flex-row items-center gap-3 border-t px-4">

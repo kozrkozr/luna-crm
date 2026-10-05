@@ -2,6 +2,7 @@ import { Stack } from 'expo-router'
 import { LanguageProvider, useStrings } from '../../src/i18n/LanguageProvider'
 import { RequireSession } from '../../src/features/auth/RequireSession'
 import { navigationScreenOptions } from '../../src/theme/palette'
+import { RemindersHost } from '../../src/features/reminders/RemindersHost'
 
 /**
  * The creator's surface. Everything here requires a session (EP-01), enforced
@@ -22,6 +23,10 @@ export default function AppLayout() {
       */}
       <LanguageProvider>
         <AppStack />
+        {/* US-041 — inside the provider, because reminders are worded in the
+            account's language (AC-12), and inside the session, because they are
+            planned from the creator's shoots. */}
+        <RemindersHost />
       </LanguageProvider>
     </RequireSession>
   )
@@ -111,6 +116,9 @@ function AppStack() {
           title. It is pushed from the profile TAB, so it covers the bottom bar,
           which is right: it is a form with one way out. */}
       <Stack.Screen name="password" options={{ headerShown: false }} />
+      {/* US-041's «Сповіщення» — pushed from the profile tab like `password`,
+          with its own «‹ Профіль» header from `Notifications.dc.html`. */}
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
       {/*
         The shoot's two screens draw their own headers (2026-08-30), which makes
         three routes in this navigator that do — `index` was the first.
