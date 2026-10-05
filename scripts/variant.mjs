@@ -16,7 +16,7 @@
  * With no command, it only prebuilds.
  */
 import { spawnSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -65,6 +65,23 @@ if (prebuild) {
   if (force || !matches) {
     console.log(force ? '  regenerating ios/ (--clean)' : '  ios/ was built for another variant — regenerating')
     run('npx', ['expo', 'prebuild', '-p', 'ios', '--clean'])
+  }
+}
+
+/*
+ * A workspace with no project beside it is left over from the other variant —
+ * Xcode writes it back if it had it open when ios/ was regenerated. Expo CLI
+ * would pick it and fail on a scheme it does not contain.
+ */
+const iosDir = join(ROOT, 'ios')
+if (existsSync(iosDir)) {
+  for (const entry of readdirSync(iosDir)) {
+    if (!entry.endsWith('.xcworkspace')) continue
+    const name = entry.slice(0, -'.xcworkspace'.length)
+    if (!existsSync(join(iosDir, `${name}.xcodeproj`))) {
+      console.log(`  removing stale ios/${entry} (no ${name}.xcodeproj)`)
+      rmSync(join(iosDir, entry), { recursive: true, force: true })
+    }
   }
 }
 
