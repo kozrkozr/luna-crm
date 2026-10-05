@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase/client'
 import { isValidReferenceLink } from '../references/api'
 import { shootStatus } from './status'
-import { syncReminders } from '../reminders/sync'
+import { shootsChanged } from './changes'
 
 /**
  * `US-020`'s two values. **Derived, never stored** since 2026-09-04 — see
@@ -234,7 +234,7 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
 
   if (error || !data) return { ok: false }
   // US-041 — a new shoot gets its reminders now, not at the next launch.
-  void syncReminders()
+  shootsChanged()
   return { ok: true, id: data.id }
 }
 
@@ -356,7 +356,7 @@ export async function deleteShoot(id: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('soft_delete_shoot', { shoot_id: id })
   const ok = !error && data === true
   // US-041 AC-7 — a deleted shoot's reminders go with it.
-  if (ok) void syncReminders()
+  if (ok) shootsChanged()
   return ok
 }
 
@@ -405,7 +405,7 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
     .eq('id', id)
 
   // US-041 AC-8 — reminders follow a changed date or time.
-  if (!error) void syncReminders()
+  if (!error) shootsChanged()
   return !error
 }
 

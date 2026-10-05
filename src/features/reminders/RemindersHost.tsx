@@ -3,6 +3,7 @@ import { AppState, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import * as Notifications from 'expo-notifications'
 import { useLanguage } from '../../i18n/LanguageProvider'
+import { onShootsChanged } from '../shoots/changes'
 import type { ReminderData } from './plan'
 import { setReminderLanguage, syncReminders } from './sync'
 
@@ -26,9 +27,10 @@ if (Platform.OS !== 'web') {
  * `US-041`'s side effects, mounted once inside the signed-in group (it needs a
  * session to read shoots and the language to word them). Renders nothing.
  *
- * - **Sync** on mount, on a language change (AC-12), and every time the app
- *   comes back to the foreground — the moment a change made elsewhere, or a
- *   permission granted in iOS settings, can be picked up.
+ * - **Sync** on mount, on a language change (AC-12), after every shoot save
+ *   or delete (AC-8), and every time the app comes back to the foreground —
+ *   the moment a change made elsewhere, or a permission granted in iOS
+ *   settings, can be picked up.
  * - **Taps** (AC-11): a «за N годин» reminder opens its shoot; the evening
  *   digest opens the calendar with tomorrow selected.
  */
@@ -49,6 +51,9 @@ export function RemindersHost() {
     })
     return () => subscription.remove()
   }, [])
+
+  // AC-8 — a create, edit or delete re-plans at once, not at the next launch.
+  useEffect(() => onShootsChanged(() => void syncReminders()), [])
 
   useEffect(() => {
     if (!response) return
