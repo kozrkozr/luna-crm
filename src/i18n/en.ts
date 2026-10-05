@@ -593,4 +593,23 @@ export const en: Strings = {
   statsUnpaid: 'Awaiting payment',
   statsHours: 'Hours on shoots',
 
+  /* ── US-041 — shoot reminders (AC-12). Approved by the owner, 2026-10-05,
+     except `reminderAt`, the body's «о» — a one-word translation the table
+     did not list. ── */
+  notificationsRow: 'Notifications',
+  notificationsTitle: 'Notifications',
+  reminderDigestToggle: 'Evening summary',
+  reminderDigestCaption: "Tomorrow's shoots, the evening before",
+  reminderTimeLabel: 'Time',
+  reminderBeforeToggle: 'Before a shoot',
+  reminderBeforeCaption: 'A reminder before each shoot starts',
+  reminderBeforeOptions: ['1 hour before', '2 hours before', '3 hours before'],
+  notificationsBlocked: 'Notifications are turned off in iOS settings',
+  notificationsEnable: 'Turn on',
+  reminderDigestTitleOne: 'Shoot tomorrow',
+  reminderDigestTitleMany: '{count} tomorrow',
+  reminderBeforeTitle: 'Shoot in {hours}',
+  reminderHourForms: ['hour', 'hours', 'hours'],
+  reminderMore: 'and {count} more',
+  reminderAt: 'at {time}',
 }

@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
-import { Link, Stack, useFocusEffect, useRouter } from 'expo-router'
+import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
 import { Button } from '../../../src/components/ui/button'
 import { Icon } from '../../../src/components/ui/icon'
@@ -159,6 +159,23 @@ export default function ShootListScreen() {
   */
   const [mode, setMode] = useState<CalendarMode>('month')
   const [focus, setFocus] = useState<Date>(() => new Date())
+
+  /*
+    US-041 AC-11 — the evening digest opens this screen with tomorrow selected,
+    as `?date=YYYY-MM-DD`. Applied once and then cleared, so tapping the next
+    digest for the same day applies it again instead of matching a stale value.
+    The month follows the date, or a digest on the 31st would select a day on a
+    grid that is not showing it.
+  */
+  const params = useLocalSearchParams<{ date?: string }>()
+  useEffect(() => {
+    const date = params.date
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return
+    const [year, month, day] = date.split('-').map(Number)
+    setSelectedDate(date)
+    setFocus(new Date(year, month - 1, day))
+    router.setParams({ date: undefined })
+  }, [params.date, router])
 
   const all = state.status === 'loaded' ? rows(state.shoots, state.crewShoots) : []
   const inPeriod = all.filter((row) => withinPeriod(row.date, mode, focus))

@@ -1,10 +1,13 @@
 import '../src/theme/global.css'
 
+import { useEffect } from 'react'
 import { PortalHost } from '@rn-primitives/portal'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BACKGROUND } from '../src/theme/palette'
+import { requestReminderPermission } from '../src/features/reminders/permission'
+import { syncReminders } from '../src/features/reminders/sync'
 
 /**
  * Root shell for both surfaces.
@@ -49,6 +52,20 @@ import { BACKGROUND } from '../src/theme/palette'
  * up until the day something else stops depending on it.
  */
 export default function RootLayout() {
+  /*
+    US-041 AC-1 — notification permission is asked at first launch, before any
+    login. iOS shows its prompt only while the answer is undetermined, so this
+    runs on every launch and asks once. A no-op on web, where the link surface
+    is served from this same layout.
+
+    Synced once answered: a creator already signed in (every beta tester, on
+    the update that brings this) has had a sync run before the prompt was
+    answered, and that one found no permission. Without a session it is a no-op.
+  */
+  useEffect(() => {
+    void requestReminderPermission().then(() => syncReminders())
+  }, [])
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />

@@ -1303,6 +1303,28 @@ export const uk = {
   statsAverage: 'Середній чек',
   statsUnpaid: 'Очікує оплати',
   statsHours: 'Годин на зйомках',
+
+  /* ── US-041 — shoot reminders. Copy approved by the owner, chat 2026-10-05. ── */
+  notificationsRow: 'Сповіщення',
+  notificationsTitle: 'Сповіщення',
+  reminderDigestToggle: 'Вечірнє зведення',
+  reminderDigestCaption: 'Список завтрашніх зйомок напередодні ввечері',
+  reminderTimeLabel: 'Час',
+  reminderBeforeToggle: 'Перед зйомкою',
+  reminderBeforeCaption: 'Нагадування перед початком кожної зйомки',
+  /** In `BEFORE_HOURS_OPTIONS` order: 1, 2, 3. */
+  reminderBeforeOptions: ['За 1 годину', 'За 2 години', 'За 3 години'],
+  notificationsBlocked: 'Сповіщення вимкнені в налаштуваннях iOS',
+  notificationsEnable: 'Увімкнути',
+  // The notifications themselves (AC-3, AC-4).
+  reminderDigestTitleOne: 'Завтра зйомка',
+  /** `{count}` is «3 зйомки» / «5 зйомок» — number and noun together. */
+  reminderDigestTitleMany: 'Завтра {count}',
+  /** `{hours}` is «2 години» — the accusative after «через», hence its own forms. */
+  reminderBeforeTitle: 'Зйомка через {hours}',
+  reminderHourForms: ['годину', 'години', 'годин'],
+  reminderMore: 'і ще {count}',
+  reminderAt: 'о {time}',
 } as const
 
 export type CopyKey = keyof typeof uk

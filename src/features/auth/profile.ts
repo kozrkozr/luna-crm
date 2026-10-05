@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase/client'
+import { clearReminders } from '../reminders/sync'
 
 const BUCKET = 'avatars'
 const SIGNED_URL_TTL_SECONDS = 3600
@@ -198,6 +199,8 @@ export async function changePassword(
  */
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut()
+  // US-041 — the next person to sign in on this phone gets none of these.
+  await clearReminders()
 }
 
 /**
@@ -217,5 +220,6 @@ export async function deleteOwnAccount(): Promise<boolean> {
   // The session now points at a row that no longer exists; sign out so nothing
   // retries with it.
   await supabase.auth.signOut()
+  await clearReminders()
   return true
 }
