@@ -33,8 +33,11 @@ export type ReminderData =
  */
 export const MAX_PENDING = 64
 
-/** AC-3 — how many shoots the digest names before «і ще N». */
-const DIGEST_LISTED = 3
+/**
+ * AC-3 — how many shoots the digest names before «і ще N». Two, because a
+ * collapsed notification on iOS 26 shows the title and two lines of body.
+ */
+const DIGEST_LISTED = 2
 
 /** Between the parts of the «за N годин» body. */
 const SEPARATOR = ' · '
@@ -115,8 +118,8 @@ function digestTitle(count: number, t: Strings, random: () => number): string {
 }
 
 /**
- * One shoot per line, by start time — «• 10:00 – 14:00 Papaya» — then «і ще 2»
- * past the third. No location (owner, 2026-10-05). A shoot from before
+ * One shoot per line, by start time — «• 10:00 – 14:00 Papaya» — and past the
+ * second, the rest counted at the end of the last line: «· і ще 3». No location (owner, 2026-10-05). A shoot from before
  * `US-030` has no range and is listed by client alone; the timeless ones go
  * last, having nothing to sort by.
  */
@@ -132,7 +135,9 @@ function digestBody(onDate: readonly Shoot[], t: Strings): string {
         .join(' ')}`
     )
   const rest = ordered.length - DIGEST_LISTED
-  if (rest > 0) lines.push(t.reminderMore.replace('{count}', String(rest)))
+  if (rest > 0) {
+    lines[lines.length - 1] += `${SEPARATOR}${t.reminderMore.replace('{count}', String(rest))}`
+  }
   return lines.join('\n')
 }
 
