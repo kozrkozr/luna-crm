@@ -32,21 +32,40 @@ Two reminders, deliberately different in kind:
 - **Then** both reminders are on: the evening digest at **20:00**, and «за N годин» with **N = 2**
 
 ### AC-3 — The evening digest
+*Rewritten 2026-10-05 after the owner tested the first build — the copy below replaces «Завтра
+зйомка» / «Завтра 3 зйомки» and the one-line body.*
+
 - **Given** the digest on, and one or more shoots tomorrow
 - **When** the digest hour arrives
-- **Then** one notification is shown for all of them:
-  - one shoot — **«Завтра зйомка»** · «{клієнт} · 10:00 – 13:00 · {локація}»
-  - several — **«Завтра 3 зйомки»** · «10:00 Олена · 14:00 Марія · 18:00 Ірина»
-- An empty «{клієнт}» or «{локація}» is dropped from the text together with its separator.
-- At most **3** shoots are listed; the rest are counted: «10:00 Олена · 14:00 Марія · 18:00 Ірина
-  · і ще 2».
-- The title follows Ukrainian plural forms: «Завтра 2 зйомки», «Завтра 5 зйомок».
+- **Then** one notification is shown for all of them. Its title is **one of three, picked at
+  random**, by how many shoots there are tomorrow:
+
+| Shoots | Titles |
+|---|---|
+| 1 | «Завтра лайтово 😌 Одна зйомка.» · «Один shoot і можна видихнути 😮‍💨» · «Завтра спокійно, всього одна зйомка 😌» |
+| 2 | «Завтра буде щільненько 😮‍💨» · «Дві зйомки — розігріваємось 📸» · «Окей, завтра вже без лінощів 🔥» |
+| 3–5 | «Завтра без зайвих пауз. Поїхали 🔥» · «Wow, завтра хард ворк 🔥» · «Графік щільненький. Тримайся 🫠» |
+| 6+ | «Ну все, завтра режим «вижити» 🫠🔥» · «Графік просто кричить «ТРИМАЙСЯ» 🫠» · «Хардкор намічається 🫠» |
+
+- The body lists the shoots one per line, by start time, as «• {початок} – {кінець} {клієнт}»:
+
+  ```
+  • 10:00 – 14:00 Papaya
+  • 15:00 – 18:00 Олена
+  • 19:00 – 21:00 Марія
+  і ще 2
+  ```
+
+- The en-dash keeps its spaces, as everywhere else in the app (`US-030` AC-4).
+- **No location** in the digest.
+- A shoot without times (`US-030` AC-6) is listed by client alone: «• Papaya».
+- At most **3** shoots are listed; the rest are counted on a last line: «і ще 2».
 
 ### AC-4 — The «за N годин» reminder
 - **Given** the reminder on, and a shoot with a start time
 - **When** N hours remain before it starts
 - **Then** a notification is shown: **«Зйомка через 2 години»** · «{клієнт}, о 10:00 · {локація}»
-- An empty «{клієнт}» or «{локація}» is dropped, as in AC-3.
+- An empty «{клієнт}» or «{локація}» is dropped from the text together with its separator.
 
 ### AC-5 — Shoots without a start time
 - **Given** a shoot created before `US-030` (no start time)
@@ -108,14 +127,25 @@ Copy (owner, chat 2026-10-05):
 
 ### AC-12 — Notification language
 - **Given** a creator who switched the app to English (`US-014`, `US-015`)
-- **Then** the notifications are in English:
+- **Then** the notifications are in English (owner, 2026-10-05):
 
-| UK | EN |
-|---|---|
-| Завтра зйомка | Shoot tomorrow |
-| Завтра 3 зйомки | 3 shoots tomorrow |
-| Зйомка через 2 години | Shoot in 2 hours |
-| і ще 2 | and 2 more |
+| Shoots | UK | EN |
+|---|---|---|
+| 1 | Завтра лайтово 😌 Одна зйомка. | Easy day tomorrow 😌 Just one shoot. |
+| 1 | Один shoot і можна видихнути 😮‍💨 | One shoot and you can breathe out 😮‍💨 |
+| 1 | Завтра спокійно, всього одна зйомка 😌 | A calm day tomorrow, just one shoot 😌 |
+| 2 | Завтра буде щільненько 😮‍💨 | Tomorrow's going to be busy 😮‍💨 |
+| 2 | Дві зйомки — розігріваємось 📸 | Two shoots — time to warm up 📸 |
+| 2 | Окей, завтра вже без лінощів 🔥 | Okay, no slacking tomorrow 🔥 |
+| 3–5 | Завтра без зайвих пауз. Поїхали 🔥 | No downtime tomorrow. Let's go 🔥 |
+| 3–5 | Wow, завтра хард ворк 🔥 | Wow, hard work tomorrow 🔥 |
+| 3–5 | Графік щільненький. Тримайся 🫠 | Packed schedule. Hang in there 🫠 |
+| 6+ | Ну все, завтра режим «вижити» 🫠🔥 | That's it, tomorrow is survival mode 🫠🔥 |
+| 6+ | Графік просто кричить «ТРИМАЙСЯ» 🫠 | The schedule is literally screaming "HANG IN THERE" 🫠 |
+| 6+ | Хардкор намічається 🫠 | Hardcore day ahead 🫠 |
+| — | і ще 2 | and 2 more |
+| — | Зйомка через 2 години | Shoot in 2 hours |
+| — | {клієнт}, о 10:00 | {client}, at 10:00 |
 
 ## Out of scope
 - Reminding crew or clients; a push for crew responses; per-shoot settings — see `EP-08`.
