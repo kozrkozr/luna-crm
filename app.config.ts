@@ -81,6 +81,10 @@ const config: ExpoConfig = {
     // archive bundles against the variant it was prebuilt for — not whatever
     // `.env` says on the day.
     './plugins/withVariantEnv',
+    // US-041's reminders are local notifications; strips the push
+    // entitlement expo-notifications adds, which the wildcard dev profile
+    // cannot sign. See the plugin before removing it.
+    './plugins/withoutPushEntitlement',
     [
       'expo-image-picker',
       {
