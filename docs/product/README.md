@@ -5,14 +5,27 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-10-04 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29 and 2026-10-03)*
+- **Frozen:** 2026-10-05 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03 and 2026-10-04)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `4877af2` — *docs(ADR-021): the photographer's app in a desktop browser, uploads from there*.
+- **Source commit:** `12851ce` — *docs(US-041): place the settings row and allow minutes in the digest time*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-10-05 re-freeze (`US-041`)
+**`EP-08` is new — shoot reminders, from beta feedback.** `US-041` gives the creator an evening
+digest of tomorrow's shoots (20:00 by default) and a reminder 1, 2 or 3 hours before each one
+(2 by default), with a notification settings screen reached from «Налаштування» in the profile.
+Creator only; no push for crew responses. It reverses the "reminders" line in `US-030`'s Out of
+scope, and is the separate notifications story `US-035` deferred to.
+
+- **`backlog-order.md` does not place `EP-08`.** The owner asked for it next, ahead of the paused
+  `EP-07` (2026-10-05).
+- **This freeze lands on `main` together with the `ADR-020` and `ADR-021` re-freezes**, which
+  until now lived only on branch `docs/refreeze-adr-020`. `EP-07` stays paused — its spec being
+  here does not start it.
 
 ## What moved in the 2026-10-04 re-freeze (`ADR-021`)
 **The photographer's app is supported in a desktop browser, and files upload from there** — not
@@ -165,7 +178,7 @@ That commit is the visible record that the specification moved, and why.
 | `HANDOFF.md` | Start here — DoD status, known gaps, contradictions, reading order |
 | `backlog-order.md` | **What to build, in order.** Spikes first, then foundation, then EP-01→EP-05 |
 | `prd.md`, `scope.md` | Requirements `R-01`–`R-24`, and what is deliberately out |
-| `epics/` | 7 epics, 38 live stories with Given/When/Then acceptance criteria |
+| `epics/` | 8 epics, 39 live stories with Given/When/Then acceptance criteria |
 | `architecture.md` | Components, data flow, service costs by stage |
 | `data-model.md` | 5 entities and their relationships |
 | `risks.md` | Technical risks, spikes, assumed effort per epic. **R-1 and R-2 retired; R-6 retired earlier** |
