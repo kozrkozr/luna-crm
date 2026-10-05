@@ -16,10 +16,15 @@ target. `nvm use 22`.
 
 ```bash
 npm install
-cp .env.example .env          # fill in from your Supabase project settings
-npx expo run:ios --device     # first build; needs Xcode + CocoaPods
-npm start                     # thereafter — JS changes hot-reload
+cp .env.example .env.local    # fill in for local Supabase; .env.dev / .env.prod likewise
+npx supabase start
+npm run ios:local             # first build, Luna Dev in the simulator; needs Xcode + CocoaPods
+npm run start:local           # thereafter — JS changes hot-reload
 ```
+
+**How to work, step by step — development and release: [`docs/workflow.md`](docs/workflow.md).**
+Which command talks to which backend, and the two apps (Luna Dev / Luna Shoots):
+[`docs/environments.md`](docs/environments.md).
 
 ### Running the link surface
 
