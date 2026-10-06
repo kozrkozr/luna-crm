@@ -7,12 +7,18 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-06 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04 and 2026-10-05)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `1aaaba1` — *docs(US-042): confirm the remaining English copy*.
+- **Source commit:** `76fc675` — *docs(US-043): add references on the new-shoot form*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the second 2026-10-06 re-freeze (`US-043`)
+**References can be added on the «Нова зйомка» form.** `US-043` (in `EP-02`) puts the «Матеріали»
+tab's references block on the form, one to one, as a fourth optional section after the two notes.
+The references are held on the form and saved after the shoot is created; a failed one is
+ignored. Not on the edit form. `US-002`'s Out of scope no longer excludes references.
 
 ## What moved in the 2026-10-06 re-freeze (`US-042`)
 **A shoot can carry an optional delivery deadline**, from beta feedback. `US-042` (in `EP-02`)

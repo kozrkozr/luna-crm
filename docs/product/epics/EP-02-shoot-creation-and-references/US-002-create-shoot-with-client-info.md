@@ -33,7 +33,8 @@ stay minimal, and location gets its own richer section (address + notes) when ed
 ## Out of scope
 - Location — moved to `US-018` (edit a shoot).
 - Editing or deleting a shoot after creation — separate stories (`US-018`, `US-019`).
-- Attaching references, crew, or files — separate stories (US-003, US-005).
+- Attaching crew or files — separate stories (US-005). References *can* be attached on this form
+  since 2026-10-06 — `US-043`.
 
 ## Dependencies
 US-001 — the creator must be a registered user.
