@@ -423,7 +423,9 @@ const TONE: Record<DeadlineTone, { card: string; chip: string; ink: string; bar:
     card: 'border-border',
     chip: 'bg-secondary border-border',
     ink: 'text-muted-foreground',
-    bar: 'bg-muted-foreground',
+    // «Обробка» is amber even with days to spare, as «Передано» is green (owner,
+    // 2026-10-06) — the bar says where the files are; only overdue turns it red.
+    bar: 'bg-warn',
   },
   warn: {
     card: 'border-warn-border',
