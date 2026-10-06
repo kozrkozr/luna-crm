@@ -18,6 +18,7 @@ import { failed, tapped } from '../../../src/lib/haptics'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
 import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
 import { StatusPill } from '../../../src/components/StatusPill'
+import { CalendarDeadline } from '../../../src/components/DeliveryDeadline'
 import { Card } from '../../../src/components/ui/card'
 import {
   ShootCalendar,
@@ -740,6 +741,9 @@ function AgendaRow({
                 longer has two cases to pass.
               */}
               {crew.length > 0 ? <AvatarStack names={crew} /> : null}
+
+              {/* `US-042` AC-10 — finished shoots with a deadline only. */}
+              <CalendarDeadline shoot={shoot} />
             </View>
           </View>
         </View>

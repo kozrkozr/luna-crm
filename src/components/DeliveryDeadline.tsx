@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import CalendarIcon from 'lucide-react-native/icons/calendar'
 import Check from 'lucide-react-native/icons/check'
+import FileIcon from 'lucide-react-native/icons/file'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Plus from 'lucide-react-native/icons/plus'
 import Trash from 'lucide-react-native/icons/trash-2'
@@ -188,27 +189,8 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
 
       {/* AC-5 — «Знято · Обробка · Передано». */}
       <View className="gap-1.5 px-3.5 pb-[13px] pt-3">
-        <View className="flex-row gap-[3px]">
-          {t.deadlineSteps.map((label, index) => (
-            <View
-              key={label}
-              className={`h-1 flex-1 rounded-sm ${index <= step ? style.bar : 'bg-border'}`}
-            />
-          ))}
-        </View>
-        <View className="flex-row gap-[3px]">
-          {t.deadlineSteps.map((label, index) => (
-            <Text
-              key={label}
-              numberOfLines={1}
-              className={`text-caption flex-1 ${
-                index === step ? 'text-foreground font-semibold' : 'text-muted-foreground'
-              }`}
-            >
-              {label}
-            </Text>
-          ))}
-        </View>
+        <StepSegments step={step} tone={tone} />
+        <StepNames step={step} t={t} size="text-caption" />
       </View>
 
       {canMarkDelivered(shoot) ? (
@@ -308,10 +290,7 @@ function DeadlineEditor({
       <Text className="text-label text-muted-foreground mt-1.5">
         {after <= 0
           ? t.deadlineOnShootDay
-          : t.deadlineAfterShootTemplate.replace(
-              '{days}',
-              `${after} ${plural(after, t.dayForms)}`
-            )}
+          : t.deadlineAfterShootTemplate.replace('{days}', `${after} ${plural(after, t.dayForms)}`)}
       </Text>
 
       <View className="mt-3 flex-row items-center gap-2">
@@ -343,6 +322,94 @@ function DeadlineEditor({
           </Pressable>
         ) : null}
       </View>
+    </View>
+  )
+}
+
+/**
+ * `US-042` AC-10 — the deadline at the foot of a finished shoot's card in the
+ * calendar, as `Calendar.dc.html`'s «Кроки з іконкою» draws it: a file icon,
+ * the steps, and a label on the right.
+ *
+ * Null for a shoot that is not finished or has no deadline — the caller can
+ * render it unconditionally.
+ *
+ * The label is deliberately not the «Матеріали» chip: a date rather than «Через
+ * N днів», and «Прострочено» without the count (owner, 2026-10-06).
+ */
+export function CalendarDeadline({ shoot }: { shoot: Shoot }) {
+  const t = useStrings()
+  const due = shoot.deliveryDue
+  if (!due || shoot.status !== 'finished') return null
+
+  const { chip, tone } = deadlineChip(due, shoot.deliveredAt !== null)
+  const step = deadlineStep(shoot)
+  const date = formatDayMonth(due, t.monthsGenitive)
+  const label =
+    chip.kind === 'delivered'
+      ? date
+      : chip.kind === 'overdue'
+        ? t.deadlineOverdue
+        : chip.kind === 'today'
+          ? t.todayWord
+          : chip.kind === 'tomorrow'
+            ? t.tomorrowWord
+            : t.deadlineByTemplate.replace('{date}', date)
+
+  return (
+    <View className="border-border mt-[11px] border-t pt-2.5">
+      <View className="flex-row items-center gap-2.5">
+        <Icon as={FileIcon} size={15} strokeWidth={1.8} className="text-muted-foreground" />
+        <View className="min-w-0 flex-1">
+          <StepSegments step={step} tone={tone} />
+        </View>
+        <Text className={`text-caption shrink-0 font-medium ${TONE[tone].ink}`}>{label}</Text>
+      </View>
+      {/* Under the bar, past the icon — the artboard's `padding-left:25px`. */}
+      <View className="mt-[5px] pl-[25px]">
+        <StepNames step={step} t={t} size="text-micro" />
+      </View>
+    </View>
+  )
+}
+
+/** AC-5's three segments, filled up to `step` in the tone's colour. */
+function StepSegments({ step, tone }: { step: number; tone: DeadlineTone }) {
+  return (
+    <View className="flex-row gap-[3px]">
+      {[0, 1, 2].map((index) => (
+        <View
+          key={index}
+          className={`h-1 flex-1 rounded-sm ${index <= step ? TONE[tone].bar : 'bg-border'}`}
+        />
+      ))}
+    </View>
+  )
+}
+
+/** AC-5's step names, the current one in bold. */
+function StepNames({
+  step,
+  t,
+  size,
+}: {
+  step: number
+  t: Strings
+  size: 'text-caption' | 'text-micro'
+}) {
+  return (
+    <View className="flex-row gap-[3px]">
+      {t.deadlineSteps.map((label, index) => (
+        <Text
+          key={label}
+          numberOfLines={1}
+          className={`${size} flex-1 ${
+            index === step ? 'text-foreground font-semibold' : 'text-muted-foreground'
+          }`}
+        >
+          {label}
+        </Text>
+      ))}
     </View>
   )
 }

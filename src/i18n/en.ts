@@ -633,6 +633,8 @@ export const en: Strings = {
   deadlineByTemplate: 'by {date}',
   deadlineInTemplate: 'In {days}',
   deadlineOverdueTemplate: 'Overdue by {days}',
+  // AC-10 — proposed, not yet confirmed (US-042 open question 2).
+  deadlineOverdue: 'Overdue',
   deadlineDelivered: 'Delivered',
   deadlineSteps: ['Shot', 'Editing', 'Delivered'],
   deadlineMarkDelivered: 'Mark as delivered to client',

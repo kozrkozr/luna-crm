@@ -1355,6 +1355,8 @@ export const uk = {
   /** `{days}` is «10 днів», through `dayForms`. */
   deadlineInTemplate: 'Через {days}',
   deadlineOverdueTemplate: 'Прострочено на {days}',
+  /** AC-10 — the calendar card's label, without the count. */
+  deadlineOverdue: 'Прострочено',
   deadlineDelivered: 'Передано',
   /** AC-5, in order. */
   deadlineSteps: ['Знято', 'Обробка', 'Передано'],
