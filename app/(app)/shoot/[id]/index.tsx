@@ -43,6 +43,7 @@ import { ResponsePill } from '../../../../src/components/ResponsePill'
 import { ShootDetailHeader, type DetailTab } from '../../../../src/components/ShootDetailHeader'
 import { StatusPill } from '../../../../src/components/StatusPill'
 import { Toast } from '../../../../src/components/Toast'
+import { DeliveryDeadline, type DeadlinePatch } from '../../../../src/components/DeliveryDeadline'
 import {
   formatDayMonth,
   formatDayMonthWeekday,
@@ -415,6 +416,14 @@ export default function ShootDetailScreen() {
                 )
               }
               onCopied={showToast}
+              onToast={showToast}
+              onDeadlineChanged={(patch) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? { ...current, shoot: { ...current.shoot, ...patch } }
+                    : current
+                )
+              }
               onLinkSaved={(field, url) =>
                 setState((current) =>
                   current.status === 'loaded'
@@ -1473,6 +1482,8 @@ function MaterialsTab({
   onAdded,
   onRemoved,
   onCopied,
+  onToast,
+  onDeadlineChanged,
   onLinkSaved,
 }: {
   shoot: Shoot
@@ -1480,6 +1491,10 @@ function MaterialsTab({
   onAdded: (reference: Reference) => void
   onRemoved: (id: string) => void
   onCopied: (message: string) => void
+  /** The screen's toast, with an optional undo — `US-042`'s needs one. */
+  onToast: (message: string, undo?: () => void) => void
+  /** `US-042` — the deadline or the delivered mark was written. */
+  onDeadlineChanged: (patch: DeadlinePatch) => void
   /** One of the two file links was written — see `updateShootLink`. */
   onLinkSaved: (field: ShootLinkField, url: string | null) => void
 }) {
@@ -1712,6 +1727,8 @@ function MaterialsTab({
             {`${setLinks} ${pluralUk(setLinks, t.linkForms)}`}
           </Text>
         </View>
+        {/* `US-042` — above the two links, where the artboard puts it. */}
+        <DeliveryDeadline shoot={shoot} onChanged={onDeadlineChanged} onToast={onToast} />
         <Card variant="flat" className="gap-0 p-0">
           {files.map((file, index) => (
             <FileRow

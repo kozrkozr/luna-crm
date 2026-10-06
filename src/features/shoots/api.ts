@@ -101,6 +101,17 @@ export type Shoot = {
    */
   price: number | null
   prepayment: number | null
+  /**
+   * `US-042` — the day the finished files are owed by, ISO `YYYY-MM-DD`. Null
+   * means no deadline. Never before `date`, and moved with it by the same
+   * number of days — both enforced by the database
+   * (`20261006120000_shoot_delivery_deadline.sql`), not by this type.
+   *
+   * Creator-only: the gateway names its columns and names neither of these.
+   */
+  deliveryDue: string | null
+  /** `US-042` AC-6 — when the files were marked as delivered. Null until then. */
+  deliveredAt: string | null
 }
 
 /**
@@ -150,7 +161,7 @@ export type UpdateShootInput = {
  * subject to the same RLS as a direct read of `clients`.
  */
 const SHOOT_COLUMNS =
-  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, client_notes, raw_files_url, finished_photos_url, price, prepayment'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, client_notes, raw_files_url, finished_photos_url, price, prepayment, delivery_due, delivered_at'
 
 export type CreateShootInput = {
   /**
@@ -292,6 +303,8 @@ type ShootRow = {
   finished_photos_url: string | null
   price: number | null
   prepayment: number | null
+  delivery_due: string | null
+  delivered_at: string | null
 }
 
 type EmbeddedClient = {
@@ -333,6 +346,8 @@ function toShoot(row: ShootRow): Shoot {
     finishedPhotosUrl: row.finished_photos_url,
     price: row.price,
     prepayment: row.prepayment,
+    deliveryDue: row.delivery_due,
+    deliveredAt: row.delivered_at,
   }
 }
 
@@ -465,4 +480,53 @@ export function normaliseFilesLink(value: string | null): string | null {
   const trimmed = value?.trim()
   if (!trimmed) return null
   return isValidReferenceLink(trimmed) ? trimmed : null
+}
+
+/**
+ * `US-042` — set, change or remove the delivery deadline.
+ *
+ * One pair of columns and nothing else, for the reason `updateShootLink` gives:
+ * the card on «Матеріали» edits this in place, and `updateShoot` would re-send
+ * the whole form from a screen that never loaded it.
+ *
+ * Removing the deadline clears the delivered mark with it (AC-7), and the
+ * database would refuse a mark without a deadline anyway. An undo passes the
+ * mark back explicitly, which is the only way to restore both together.
+ */
+export async function setDeliveryDeadline(
+  id: string,
+  due: string | null,
+  /**
+   * Left out, a changed date keeps the mark: «Передано» is about the files, not
+   * about which day they were due. Only the removal's undo passes it.
+   */
+  deliveredAt?: string | null
+): Promise<boolean> {
+  const patch =
+    due === null
+      ? { delivery_due: null, delivered_at: null }
+      : deliveredAt === undefined
+        ? { delivery_due: due }
+        : { delivery_due: due, delivered_at: deliveredAt }
+  const { error } = await supabase.from('shoots').update(patch).eq('id', id)
+
+  return !error
+}
+
+/**
+ * `US-042` AC-6 — mark the files as delivered, or (the toast's undo) take the
+ * mark back. Returns the timestamp written, or `undefined` when the write
+ * failed — null being a legitimate value for the undo.
+ */
+export async function setDelivered(
+  id: string,
+  delivered: boolean
+): Promise<string | null | undefined> {
+  const deliveredAt = delivered ? new Date().toISOString() : null
+  const { error } = await supabase
+    .from('shoots')
+    .update({ delivered_at: deliveredAt })
+    .eq('id', id)
+
+  return error ? undefined : deliveredAt
 }

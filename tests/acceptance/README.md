@@ -32,11 +32,11 @@ Re-run `npm run export:web` after any change to the link views: `serve:link` ser
 dev server, and a stale export is the single most common cause of a suite failing on code that is
 actually correct.
 
-Seven suites need no browser at all:
+Eight suites need no browser at all:
 
 | Suite | Needs |
 |---|---|
-| `softdelete-fn` `us003-check` `us005-media` `us009-db` `us018-media` | Supabase only |
+| `softdelete-fn` `us003-check` `us005-media` `us009-db` `us018-media` `us042-db` | Supabase only |
 | `us006-gateway` `us009-app` | Supabase + `functions serve link-gateway` |
 
 Everything else needs all four.

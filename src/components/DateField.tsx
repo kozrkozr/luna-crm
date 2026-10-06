@@ -29,6 +29,11 @@ type Props = {
    * on creation (US-002), where the field simply starts empty.
    */
   onClear?: () => void
+  /**
+   * The earliest selectable day — `US-042` AC-3's "no date before the shoot's".
+   * The wheel refuses to settle before it, so nothing earlier can be chosen.
+   */
+  minimumDate?: Date
 }
 
 /**
@@ -49,7 +54,15 @@ type Props = {
  * not typeable, since a text field invites locale ambiguity — is 05.09 September
  * or May? — for no gain on a device with a native picker.
  */
-export function DateField({ id, value, onChange, placeholder, onClear, mode = 'date' }: Props) {
+export function DateField({
+  id,
+  value,
+  onChange,
+  placeholder,
+  onClear,
+  minimumDate,
+  mode = 'date',
+}: Props) {
   const t = useStrings()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Date>(value ?? new Date())
@@ -163,6 +176,7 @@ export function DateField({ id, value, onChange, placeholder, onClear, mode = 'd
                 mode={mode}
                 display="spinner"
                 themeVariant="dark"
+                minimumDate={minimumDate}
                 style={{ flex: 1, height: PICKER_HEIGHT }}
                 /*
                   `onValueChange`, not the deprecated `onChange` — 9.1.0 warns on

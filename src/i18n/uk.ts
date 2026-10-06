@@ -1346,6 +1346,30 @@ export const uk = {
   reminderHourForms: ['годину', 'години', 'годин'],
   reminderMore: 'і ще {count}',
   reminderAt: 'о {time}',
+  /* ── US-042 — delivery deadline. Copy from `Shoot Detail v3.dc.html`. ── */
+  deadlineAdd: 'Додати дедлайн здачі',
+  deadlineAddCaption: "Необов'язково · з'явиться в календарі після зйомки",
+  deadlineLabel: 'Дедлайн здачі',
+  /** «до 16 вересня» — `{date}` is `formatDayMonth`. */
+  deadlineByTemplate: 'до {date}',
+  /** `{days}` is «10 днів», through `dayForms`. */
+  deadlineInTemplate: 'Через {days}',
+  deadlineOverdueTemplate: 'Прострочено на {days}',
+  deadlineDelivered: 'Передано',
+  /** AC-5, in order. */
+  deadlineSteps: ['Знято', 'Обробка', 'Передано'],
+  deadlineMarkDelivered: 'Позначити як передано клієнту',
+  deadlineEditorTitle: 'Дедлайн здачі файлів',
+  deadlineEditorCaption:
+    "Відлік від дня зйомки. Дата з'явиться на картці завершеної зйомки в календарі.",
+  deadlinePickDate: 'Або оберіть дату',
+  deadlineAfterShootTemplate: '{days} після зйомки',
+  deadlineOnShootDay: 'У день зйомки',
+  deadlineSavedTemplate: 'Дедлайн здачі — {date}',
+  deadlineRemoved: 'Дедлайн видалено',
+  deadlineMarkedDelivered: 'Позначено як передано клієнту',
+  deadlineEditA11y: 'Змінити дедлайн',
+  deadlineRemoveA11y: 'Видалити дедлайн',
 } as const
 
 export type CopyKey = keyof typeof uk
