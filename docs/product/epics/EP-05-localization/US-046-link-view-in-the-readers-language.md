@@ -25,7 +25,12 @@ in Warsaw would otherwise send a Polish client a Ukrainian page.
 ### AC-2 — The switcher
 - **Then** the page shows a **UA / EN** switcher; choosing the other language redraws the page in
   it at once
-- **Design: not drawn yet** — its place and look are open (question 1).
+- **Where:** in the page's top bar, on the right, **in place of «Приватне посилання»** — the bar
+  keeps the logo and the product name on the left (owner, 2026-10-06). «Приватне посилання» is not
+  lost: the warning at the foot of the page says it. Two segments, «UA» and «EN», the current one
+  marked.
+- The bar — with the switcher — is on **every** link page (AC-4), including the ones that had no
+  bar before: a crew member's page, all references, and the broken-link page.
 
 ### AC-3 — Remembered in the browser
 - **Given** a reader who chose a language with the switcher
@@ -47,4 +52,4 @@ in Warsaw would otherwise send a Polish client a Ukrainian page.
 `US-044`, `US-010`, `US-023`, `US-026`.
 
 ## Open questions
-1. Where the UA / EN switcher sits on the page, and how it looks — needs a design.
+None — the switcher's place was chosen by the owner, chat 2026-10-06.
