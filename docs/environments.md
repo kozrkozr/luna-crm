@@ -8,7 +8,7 @@ the `.env` file on disk.
 | Target | Env file | App on the phone | Supabase | Link surface |
 |---|---|---|---|---|
 | `local` | `.env.local` | **Luna Dev** | local (`supabase start`) | `serve:link`, LAN |
-| `dev` | `.env.dev` | **Luna Dev** | dev project | Pages `dev` branch |
+| `dev` | `.env.dev` | **Luna Dev** | dev project | Pages `dev` branch → `dev.lunashoots.com` |
 | `prod` | `.env.prod` | **Luna Shoots** | prod project | Pages `main` → `lunashoots.com` |
 
 **Two apps, side by side.** `APP_VARIANT` (set by `scripts/variant.mjs`) picks the variant in
@@ -40,6 +40,24 @@ bundle id, the scheme and the baked env all live there. Switching costs one `pre
 **The Xcode project is named after the app:** `ios/LunaDev.xcworkspace` for Luna Dev,
 `ios/LunaShoots.xcworkspace` for Luna Shoots. Close Xcode before switching — otherwise it reports
 that the open workspace "has disappeared". Harmless: close that window and open the new one.
+
+## The dev link surface: `dev.lunashoots.com` (2026-10-06)
+Dev links used to point at `https://dev.luna-crm-107.pages.dev`, and **never opened**, for two
+reasons found together:
+- **Nothing had ever been deployed to the `dev` branch.** Every Pages deployment was Production
+  from `main`, so the `dev.` alias answered Cloudflare's own 404. `npm run deploy:web:dev` creates
+  it; check with `npx wrangler pages deployment list --project-name=luna-crm` (a `Preview` row on
+  branch `dev`).
+- **Some networks do not resolve `*.pages.dev` at all** — the owner's home router answers
+  NXDOMAIN, and the phone failed on mobile data too. `lunashoots.com` resolves everywhere.
+
+So the dev surface has its own subdomain, set up in Cloudflare by the owner:
+1. Pages → `luna-crm` → Custom domains → `dev.lunashoots.com` → Activate.
+2. DNS → `lunashoots.com` → the `dev` CNAME's target changed from `luna-crm-107.pages.dev` to
+   **`dev.luna-crm-107.pages.dev`**, **Proxied** — unproxied, Cloudflare serves production.
+
+`.env.dev` holds `EXPO_PUBLIC_LINK_BASE_URL=https://dev.lunashoots.com`. The host is baked into
+the export **and** into Luna Dev, so a change needs `deploy:web:dev` and `npm run ios` both.
 
 ## How the backend is pinned
 - `scripts/variant.mjs <target>` loads `.env.<target>` into the command's environment. Variables
