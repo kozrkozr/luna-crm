@@ -55,6 +55,16 @@ import {
   prepaymentChip,
 } from './money'
 import { Starfield } from '../../components/Starfield'
+import type { ImagePickerAsset } from 'expo-image-picker'
+import { ReferencesEditor } from '../../components/ReferencesEditor'
+import {
+  addImageReference,
+  addLinkReference,
+  imageAssetProblem,
+  isValidReferenceLink,
+  type AddReferenceResult,
+  type Reference,
+} from '../references/api'
 
 /**
  * `US-002` — create a shoot, rebuilt against `client-match-flow.html`
@@ -96,7 +106,20 @@ const SECTIONS = [
   { key: 'pay', label: 'paymentSection', remove: 'removePaymentLabel' },
   { key: 'notes', label: 'teamNotesSection', remove: 'removeTeamNotesLabel' },
   { key: 'clientNotes', label: 'clientNotesSection', remove: 'removeClientNotesLabel' },
+  /* `US-043` — the fourth, and the only one the edit form never offers (AC-8). */
+  { key: 'refs', label: 'references', remove: 'removeReferencesLabel' },
 ] as const
+
+/**
+ * `US-043` — a reference added on the new-shoot form, held until the shoot
+ * exists. `reference` is what the grid draws: an image's `urlOrPath` is the
+ * picked file's own URI until it is uploaded. `asset` is what gets uploaded,
+ * null for a link.
+ */
+type DraftReference = { reference: Reference; asset: ImagePickerAsset | null }
+
+/** The grid's picture for a draft image: the local file, not a signed URL. */
+const localImage = async (reference: Reference) => reference.urlOrPath
 
 type SectionKey = (typeof SECTIONS)[number]['key']
 
@@ -142,6 +165,8 @@ function fingerprint(values: {
   clientNotes: string
   price: string
   prepayment: string
+  /** `US-043` AC-3 — the drafts' ids, so adding or removing one is a change. */
+  references: string
 }): string {
   return [
     values.typedName.trim(),
@@ -158,6 +183,7 @@ function fingerprint(values: {
     values.clientNotes.trim(),
     values.price.trim(),
     values.prepayment.trim(),
+    values.references,
   ].join('\u0000')
 }
 
@@ -187,6 +213,7 @@ const EMPTY_FINGERPRINT = fingerprint({
   clientNotes: '',
   price: '',
   prepayment: '',
+  references: '',
 })
 
 function openSections(
@@ -197,6 +224,7 @@ function openSections(
     pay: filled.pay || added.pay,
     notes: filled.notes || added.notes,
     clientNotes: filled.clientNotes || added.clientNotes,
+    refs: filled.refs || added.refs,
   }
 }
 
@@ -241,6 +269,11 @@ export function ShootForm(props: ShootFormMode) {
   */
   const [price, setPrice] = useState('')
   const [prepayment, setPrepayment] = useState('')
+  /** `US-043` — references added here, saved after the shoot is created. */
+  const [drafts, setDrafts] = useState<DraftReference[]>([])
+  const draftSeq = useRef(0)
+  /** `US-043` AC-6 — the shoot exists and its references are uploading. */
+  const [savingReferences, setSavingReferences] = useState(false)
   /** Every shoot, for the location chips and the overlap warning. */
   const [existing, setExisting] = useState<Shoot[]>([])
 
@@ -254,6 +287,7 @@ export function ShootForm(props: ShootFormMode) {
     pay: false,
     notes: false,
     clientNotes: false,
+    refs: false,
   })
   /** The section a × is asking about, or null. See `removeSection`. */
   const [removing, setRemoving] = useState<SectionKey | null>(null)
@@ -362,6 +396,7 @@ export function ShootForm(props: ShootFormMode) {
             clientNotes: shoot.clientNotes ?? '',
             price: shoot.price === null ? '' : formatAmount(shoot.price),
             prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment),
+            references: '',
           })
         )
         setLoading(false)
@@ -519,12 +554,30 @@ export function ShootForm(props: ShootFormMode) {
     }
 
     const result = await createShoot(fields)
-    setSubmitting(false)
 
     if (!result.ok) {
+      setSubmitting(false)
       setFormError(t.shootCreateFailed)
       return
     }
+
+    /*
+      `US-043` AC-6 — the references, now that there is a shoot to hang them on.
+      One at a time and in the order they were added, for the reasons the
+      «Матеріали» gallery gives (`ReferencesEditor`): the list is ordered by
+      `created_at`, and a dozen parallel uploads on a phone is how one fails.
+
+      AC-7 — a failure is ignored (owner, 2026-10-06). The shoot opens with
+      whatever was saved; the rest can be added on «Матеріали».
+    */
+    if (drafts.length > 0) {
+      setSavingReferences(true)
+      for (const { reference, asset } of drafts) {
+        if (asset) await addImageReference(result.id, asset, reference.category)
+        else await addLinkReference(result.id, reference.urlOrPath, reference.category)
+      }
+    }
+    setSubmitting(false)
 
     succeeded()
     /*
@@ -586,6 +639,7 @@ export function ShootForm(props: ShootFormMode) {
     clientNotes,
     price,
     prepayment,
+    references: drafts.map((draft) => draft.reference.id).join(','),
   })
   const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
     dirty: current !== snapshot,
@@ -602,9 +656,12 @@ export function ShootForm(props: ShootFormMode) {
     pay: price.trim() !== '' || prepayment.trim() !== '',
     notes: notes.trim() !== '',
     clientNotes: clientNotes.trim() !== '',
+    refs: drafts.length > 0,
   }
   const open = openSections(filled, added)
-  const closed = SECTIONS.filter((section) => !open[section.key])
+  // `US-043` AC-8 — the edit form keeps references on «Матеріали» alone.
+  const offered = SECTIONS.filter((section) => !isEdit || section.key !== 'refs')
+  const closed = offered.filter((section) => !open[section.key])
 
   /** Empty the section and close it. Both halves, always — see `openSections`. */
   const clearSection = (key: SectionKey) => {
@@ -613,10 +670,33 @@ export function ShootForm(props: ShootFormMode) {
       setPrepayment('')
     } else if (key === 'notes') {
       setNotes('')
+    } else if (key === 'refs') {
+      setDrafts([])
     } else {
       setClientNotes('')
     }
     setAdded((current) => ({ ...current, [key]: false }))
+  }
+
+  /**
+   * `US-043` — hold a reference on the form. Checked the way «Матеріали» checks
+   * one (`US-003` AC-2), so a rejection reads the same, but nothing is written:
+   * the result is the draft, and `submit` saves it once the shoot exists.
+   */
+  const hold = (reference: Omit<Reference, 'id'>, asset: ImagePickerAsset | null) => {
+    draftSeq.current += 1
+    const draft = { reference: { ...reference, id: `draft-${draftSeq.current}` }, asset }
+    setDrafts((current) => [...current, draft])
+    return { ok: true as const, reference: draft.reference }
+  }
+  const holdImage = (asset: ImagePickerAsset, category: string | null): AddReferenceResult => {
+    const problem = imageAssetProblem(asset)
+    if (problem) return { ok: false, reason: problem }
+    return hold({ kind: 'image', urlOrPath: asset.uri, category }, asset)
+  }
+  const holdLink = (link: string, category: string | null): AddReferenceResult => {
+    if (!isValidReferenceLink(link)) return { ok: false, reason: 'invalidLink' }
+    return hold({ kind: 'link', urlOrPath: link.trim(), category }, null)
   }
 
   /**
@@ -972,7 +1052,36 @@ export function ShootForm(props: ShootFormMode) {
             </View>
           ) : null}
 
-          {/* Whatever is closed, offered back. Renders nothing when all three
+          {/*
+            ── Референси ── `US-043`: the «Матеріали» tab's block, one to one —
+            the same component — holding what is added until «Створити зйомку».
+            Last on the form, and never on the edit form (AC-8).
+          */}
+          {open.refs && !isEdit ? (
+            <View className="gap-2.5">
+              <OptionalSectionHeader
+                label={t.references}
+                removeLabel={t.removeReferencesLabel}
+                onRemove={() => removeSection('refs')}
+              />
+              <ReferencesEditor
+                references={drafts.map((draft) => draft.reference)}
+                addImage={async (asset, category) => holdImage(asset, category)}
+                addLink={async (link, category) => holdLink(link, category)}
+                onAdded={() => {}}
+                // AC-4 — nothing is saved yet, so it goes at once and cannot fail.
+                remove={async (reference) => {
+                  setDrafts((current) => current.filter((d) => d.reference.id !== reference.id))
+                  return true
+                }}
+                onRemoved={() => {}}
+                confirmRemove={false}
+                resolveImage={localImage}
+              />
+            </View>
+          ) : null}
+
+          {/* Whatever is closed, offered back. Renders nothing when all four
               are open. */}
           <AddSectionPills
             sections={closed.map((section) => ({
@@ -998,7 +1107,13 @@ export function ShootForm(props: ShootFormMode) {
           onPress={() => void submit()}
         >
           <Text className={valid ? undefined : 'text-muted-foreground'}>
-            {valid ? (isEdit ? t.saveChanges : t.createShootCta) : t.fillClientAndTime}
+            {savingReferences
+              ? t.savingReferences
+              : valid
+                ? isEdit
+                  ? t.saveChanges
+                  : t.createShootCta
+                : t.fillClientAndTime}
           </Text>
         </Button>
       </View>

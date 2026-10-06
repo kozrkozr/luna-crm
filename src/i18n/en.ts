@@ -252,6 +252,9 @@ export const en: Strings = {
   removePaymentLabel: 'Remove payment',
   removeTeamNotesLabel: 'Remove notes',
   removeClientNotesLabel: 'Remove notes for the client',
+  // US-043 — proposed, not yet confirmed (story open question 1).
+  removeReferencesLabel: 'Remove references',
+  savingReferences: 'Saving references…',
   confirmRemoveSection: 'Remove «{section}»? What you entered will be cleared.',
   removeAction: 'Remove',
   createShootCta: 'Create shoot',

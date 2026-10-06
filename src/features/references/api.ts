@@ -141,6 +141,15 @@ export async function addLinkReference(
 }
 
 /**
+ * `US-003` AC-2's unsupported-file-type check on its own, for a caller that
+ * holds an image before it can upload it — the new-shoot form (`US-043`).
+ * Null when the image is acceptable.
+ */
+export function imageAssetProblem(asset: ImagePicker.ImagePickerAsset): AddReferenceFailure | null {
+  return SUPPORTED_IMAGE_TYPES.includes(asset.mimeType?.toLowerCase() ?? '') ? null : 'unsupportedType'
+}
+
+/**
  * `US-003` AC-1, the gallery half: upload the picked image to the private
  * bucket, then record its path.
  *
@@ -158,7 +167,8 @@ export async function addImageReference(
   const mimeType = asset.mimeType?.toLowerCase() ?? ''
 
   // AC-2 — the unsupported-file-type half, checked before anything is uploaded.
-  if (!SUPPORTED_IMAGE_TYPES.includes(mimeType)) return { ok: false, reason: 'unsupportedType' }
+  const problem = imageAssetProblem(asset)
+  if (problem) return { ok: false, reason: problem }
 
   let body: ArrayBuffer
   try {

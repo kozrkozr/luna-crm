@@ -457,6 +457,10 @@ export const uk = {
   removePaymentLabel: 'Прибрати оплату',
   removeTeamNotesLabel: 'Прибрати нотатки',
   removeClientNotesLabel: 'Прибрати нотатки для клієнта',
+  /** `US-043` — the references section's × on the new-shoot form. */
+  removeReferencesLabel: 'Прибрати референси',
+  /** `US-043` AC-6 — the CTA while a new shoot's references upload. */
+  savingReferences: 'Зберігаємо референси…',
   /**
    * The confirmation before a × clears a section that holds something (owner,
    * 2026-09-05 — the artboards clear it outright, with no step in between).

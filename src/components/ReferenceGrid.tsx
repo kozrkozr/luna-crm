@@ -21,6 +21,9 @@ import { signedReferenceUrl, type Reference } from '../features/references/api'
  */
 export const REFERENCE_DISPLAY_LIMIT = 4
 
+/** The default picture for an image tile. Module-level, so its identity is stable. */
+const signedImage = (reference: Reference) => signedReferenceUrl(reference.urlOrPath)
+
 /**
  * The references of a shoot, rendered the same way everywhere they appear.
  *
@@ -38,6 +41,7 @@ export function ReferenceGrid({
   references,
   trailing,
   onRemove,
+  resolveImage = signedImage,
 }: {
   references: Reference[]
   /**
@@ -60,6 +64,12 @@ export function ReferenceGrid({
    * reports the tap; it does not decide what a removal costs.
    */
   onRemove?: (reference: Reference) => void
+  /**
+   * Where an image tile gets its picture. A signed Storage URL by default; the
+   * new-shoot form's references are not uploaded yet, so it hands back the
+   * picked file's own URI instead (`US-043`).
+   */
+  resolveImage?: (reference: Reference) => Promise<string | null>
 }) {
   const [viewing, setViewing] = useState<string | null>(null)
 
@@ -84,6 +94,7 @@ export function ReferenceGrid({
               reference={reference}
               onOpenImage={setViewing}
               onRemove={onRemove}
+              resolveImage={resolveImage}
             />
           </View>
         ))}
@@ -106,10 +117,12 @@ function ReferenceThumb({
   reference,
   onOpenImage,
   onRemove,
+  resolveImage,
 }: {
   reference: Reference
   onOpenImage: (uri: string) => void
   onRemove?: (reference: Reference) => void
+  resolveImage: (reference: Reference) => Promise<string | null>
 }) {
   const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
@@ -119,13 +132,13 @@ function ReferenceThumb({
       if (reference.kind !== 'image') return
       let active = true
       void (async () => {
-        const signed = await signedReferenceUrl(reference.urlOrPath)
-        if (active) setUri(signed)
+        const resolved = await resolveImage(reference)
+        if (active) setUri(resolved)
       })()
       return () => {
         active = false
       }
-    }, [reference.kind, reference.urlOrPath])
+    }, [reference, resolveImage])
   )
 
   const tile =
