@@ -33,6 +33,13 @@ prompt (`US-041`) is iOS's own text and already follows the phone.
   Ukrainian still sees the prompt in English. iOS gives the app no way to change that; it is
   accepted (owner, 2026-10-06).
 
+### AC-2a — A phone in Russian
+- **Given** a phone whose language is Russian
+- **Then** the prompt is in **English** — while the app's own text is Ukrainian (`US-045` AC-1)
+- iOS chooses from the languages the build declares, and Russian is not one of them and will not
+  be (`EP-05`; build repo `CLAUDE.md` rule 4). Declaring Russian with the Ukrainian text would make
+  the App Store list Russian among the app's languages. Accepted (owner, 2026-10-06).
+
 ### AC-3 — The app declares both languages
 - The build declares Ukrainian and English as its languages, so that iOS Settings offers a
   per-app language for Luna, and the App Store lists both.
