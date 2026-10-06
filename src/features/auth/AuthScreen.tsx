@@ -22,7 +22,7 @@ import { Text } from '../../components/ui/text'
 import { Toast } from '../../components/Toast'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { privacyUrl, termsUrl } from '../../lib/legalUrls'
-import { uk } from '../../i18n/uk'
+import { useStrings } from '../../i18n/LanguageProvider'
 import { OTHER_ROLE, ROLE_KEYS, roleWithEmoji } from '../../i18n/vocabulary'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
@@ -91,6 +91,7 @@ type ScreenMode = AuthMode | 'forgot' | 'sent' | 'confirmSent'
  * (`users.telegram`, migration `20260831100000`).
  */
 export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
+  const t = useStrings()
   const [mode, setMode] = useState<ScreenMode>(initialMode)
   /** Carried from login into the recovery form, so it is not retyped. */
   const [recoveryEmail, setRecoveryEmail] = useState('')
@@ -118,12 +119,12 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
               <Intro />
               <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
                 <SegmentTab
-                  label={uk.loginBtn}
+                  label={t.loginBtn}
                   active={mode === 'login'}
                   onPress={() => setMode('login')}
                 />
                 <SegmentTab
-                  label={uk.registerTitle}
+                  label={t.registerTitle}
                   active={mode === 'register'}
                   onPress={() => setMode('register')}
                 />
@@ -174,8 +175,8 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
               onPress={() => void openExternalUrl('mailto:support@lunashoots.com')}
               role="button"
             >
-              <Text className="text-label text-muted-foreground">{`${uk.needHelp} `}</Text>
-              <Text className="text-label text-foreground">{uk.writeToUs}</Text>
+              <Text className="text-label text-muted-foreground">{`${t.needHelp} `}</Text>
+              <Text className="text-label text-foreground">{t.writeToUs}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -192,6 +193,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
  * (see the note on `appName` in the dictionary).
  */
 function Intro() {
+  const t = useStrings()
   return (
     <View className="items-center px-2.5 pb-6 pt-8">
       <View className="bg-secondary mb-4 h-14 w-14 items-center justify-center rounded-2xl">
@@ -203,15 +205,15 @@ function Intro() {
           className="text-foreground font-bold"
           style={{ fontSize: 24, lineHeight: 24 }}
         >
-          {uk.appName.slice(0, 1)}
+          {t.appName.slice(0, 1)}
         </Text>
       </View>
-      <Text className="text-numeric-xl text-foreground font-bold">{uk.appName}</Text>
+      <Text className="text-numeric-xl text-foreground font-bold">{t.appName}</Text>
       <Text
         className="text-label text-muted-foreground mt-1.5 px-5 text-center"
         style={{ lineHeight: 18 }}
       >
-        {uk.appTagline}
+        {t.appTagline}
       </Text>
     </View>
   )
@@ -273,6 +275,7 @@ function PasswordField({
   autoComplete: 'current-password' | 'new-password'
   placeholder?: string
 }) {
+  const t = useStrings()
   const [visible, setVisible] = useState(false)
   return (
     <View className="relative justify-center">
@@ -297,10 +300,10 @@ function PasswordField({
         onPress={() => setVisible((current) => !current)}
         hitSlop={6}
         role="button"
-        accessibilityLabel={visible ? uk.hidePassword : uk.showPassword}
+        accessibilityLabel={visible ? t.hidePassword : t.showPassword}
       >
         <Text className="text-label text-muted-foreground font-medium">
-          {visible ? uk.hidePasswordShort : uk.showPasswordShort}
+          {visible ? t.hidePasswordShort : t.showPasswordShort}
         </Text>
       </Pressable>
     </View>
@@ -309,6 +312,7 @@ function PasswordField({
 
 /** `US-013` — log in to an existing account. */
 function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
+  const t = useStrings()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -334,7 +338,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
         return
       }
       // US-013 AC-2 — rejected with a clear message, and no account is entered.
-      setError(uk.wrongCreds)
+      setError(t.wrongCreds)
       return
     }
     router.replace('/(app)/(tabs)')
@@ -348,13 +352,13 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
     // A failure here is almost always Supabase's interval between emails —
     // the reader registered moments ago. No copy was approved for that case,
     // so it gets the generic one rather than an invented explanation.
-    if (sent) setToast(uk.resentToast)
-    else setResendError(uk.somethingWentWrong)
+    if (sent) setToast(t.resentToast)
+    else setResendError(t.somethingWentWrong)
   }
 
   return (
     <View className="gap-2">
-      <ServerError message={unconfirmed ? uk.emailNotConfirmed : error} />
+      <ServerError message={unconfirmed ? t.emailNotConfirmed : error} />
       {unconfirmed ? (
         <>
           <Button
@@ -364,7 +368,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
             disabled={resending}
             onPress={() => void resend()}
           >
-            <Text className="text-body-sm font-medium">{uk.resendConfirmation}</Text>
+            <Text className="text-body-sm font-medium">{t.resendConfirmation}</Text>
           </Button>
           {resendError ? (
             <Text className="text-label text-destructive">{resendError}</Text>
@@ -382,7 +386,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
         This closes redesign-log **A-1**, open since the first auth pass — by
         fixing the label rather than the ADR.
       */}
-      <Label htmlFor="email">{uk.email}</Label>
+      <Label htmlFor="email">{t.email}</Label>
       <Input
         id="email"
         value={email}
@@ -393,13 +397,13 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
         placeholder="your@mail.com"
       />
 
-      <Label htmlFor="password">{uk.password}</Label>
+      <Label htmlFor="password">{t.password}</Label>
       <PasswordField
         id="password"
         value={password}
         onChangeText={setPassword}
         autoComplete="current-password"
-        placeholder={uk.password}
+        placeholder={t.password}
       />
 
       {error ? <Text className="text-body-sm text-destructive">{error}</Text> : null}
@@ -418,7 +422,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
         onPress={submit}
       >
         <Text className="text-subtitle font-semibold">
-          {submitting ? uk.signingIn : uk.loginBtn}
+          {submitting ? t.signingIn : t.loginBtn}
         </Text>
       </Button>
 
@@ -432,7 +436,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
         onPress={() => onForgot(email)}
         role="button"
       >
-        <Text className="text-body-sm text-muted-foreground">{uk.forgotPassword}</Text>
+        <Text className="text-body-sm text-muted-foreground">{t.forgotPassword}</Text>
       </Pressable>
 
       <Toast message={toast} onDone={() => setToast(null)} />
@@ -442,6 +446,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
 
 /** `US-001` — register an account and select a professional role. */
 function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: string) => void }) {
+  const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [name, setName] = useState('')
@@ -469,19 +474,19 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
 
   const submit = async () => {
     const next: typeof errors = {}
-    if (!name.trim()) next.name = uk.nameRequired
-    if (!email.trim()) next.email = uk.emailRequired
-    else if (!EMAIL_PATTERN.test(email.trim())) next.email = uk.emailFormat
-    if (!password) next.password = uk.passwordInvent
-    else if (password.length < MIN_PASSWORD_LENGTH) next.password = withMinLength(uk.passwordTooShortTemplate)
+    if (!name.trim()) next.name = t.nameRequired
+    if (!email.trim()) next.email = t.emailRequired
+    else if (!EMAIL_PATTERN.test(email.trim())) next.email = t.emailFormat
+    if (!password) next.password = t.passwordInvent
+    else if (password.length < MIN_PASSWORD_LENGTH) next.password = withMinLength(t.passwordTooShortTemplate)
     // Optional, but a number that is present should look like one — the same
     // 9-digit floor `normalise_phone` uses, and the same check the profile
     // already makes on this column.
-    if (phone.trim() && phone.replace(/\D/g, '').length < 9) next.phone = uk.phoneFormatInvalid
+    if (phone.trim() && phone.replace(/\D/g, '').length < 9) next.phone = t.phoneFormatInvalid
     // AC-2 — registration is blocked without a role, and «Інша роль» is not a
     // role until it has been filled in.
-    if (!role) next.role = uk.roleRequired
-    else if (role === OTHER_ROLE && !customRole.trim()) next.role = uk.otherRoleRequired
+    if (!role) next.role = t.roleRequired
+    else if (role === OTHER_ROLE && !customRole.trim()) next.role = t.otherRoleRequired
     /*
       The terms box BLOCKS now (owner, 2026-08-31), where it gated nothing.
       **Both documents it names still do not exist** — redesign-log A-4 — so
@@ -489,7 +494,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
       That is the design as drawn and the owner's call; it is the one change on
       this screen that makes the product harder to use rather than easier.
     */
-    if (!termsAccepted) next.terms = uk.termsRequired
+    if (!termsAccepted) next.terms = t.termsRequired
 
     setErrors(next)
     if (Object.keys(next).length > 0) {
@@ -513,10 +518,10 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
     if (!result.ok) {
       setFormError(
         result.reason === 'weakPassword'
-          ? withMinLength(uk.passwordTooShortTemplate)
+          ? withMinLength(t.passwordTooShortTemplate)
           : result.reason === 'emailTaken'
-            ? uk.emailTaken
-            : uk.registrationFailed
+            ? t.emailTaken
+            : t.registrationFailed
       )
       return
     }
@@ -532,7 +537,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
   return (
     <View className="gap-3.5" style={{ paddingBottom: insets.bottom }}>
       <View className="gap-2">
-        <Label htmlFor="name">{uk.name}</Label>
+        <Label htmlFor="name">{t.name}</Label>
         <Input
           id="name"
           value={name}
@@ -541,14 +546,14 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             setErrors((e) => ({ ...e, name: undefined }))
           }}
           autoCapitalize="words"
-          placeholder={uk.namePlaceholder}
+          placeholder={t.namePlaceholder}
         />
         <FieldError message={errors.name ?? null} />
       </View>
 
       <View className="gap-2">
         {/* «Email», not «Email або телефон» — see the note on the login form. */}
-        <Label htmlFor="email">{uk.email}</Label>
+        <Label htmlFor="email">{t.email}</Label>
         <Input
           id="email"
           value={email}
@@ -582,9 +587,9 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
           draw it; owner's request, 2026-09-07.
         */}
         <Label htmlFor="phone">
-          {uk.phone}
+          {t.phone}
           <Text className="text-label text-muted-foreground font-normal">
-            {` ${uk.optionalSuffix}`}
+            {` ${t.optionalSuffix}`}
           </Text>
         </Label>
         <Input
@@ -597,13 +602,13 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
           autoCapitalize="none"
           autoComplete="tel"
           keyboardType="phone-pad"
-          placeholder={uk.phonePlaceholder}
+          placeholder={t.phonePlaceholder}
         />
         <FieldError message={errors.phone ?? null} />
       </View>
 
       <View className="gap-2">
-        <Label htmlFor="password">{uk.password}</Label>
+        <Label htmlFor="password">{t.password}</Label>
         {/*
           **The placeholder says 6, and so does the check** (owner, 2026-08-31).
           `Auth.dc.html` says «Мінімум 8 символів» and validates at 8;
@@ -622,7 +627,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             setErrors((e) => ({ ...e, password: undefined }))
           }}
           autoComplete="new-password"
-          placeholder={withMinLength(uk.passwordHintTemplate)}
+          placeholder={withMinLength(t.passwordHintTemplate)}
         />
         <PasswordStrength password={password} />
         <FieldError message={errors.password ?? null} />
@@ -652,34 +657,34 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
 
       <View className="gap-2.5">
         <Text className="text-body-sm text-foreground font-medium">
-          {uk.social}
+          {t.social}
           <Text className="text-label text-muted-foreground font-normal">
-            {` ${uk.optionalSuffix}`}
+            {` ${t.optionalSuffix}`}
           </Text>
         </Text>
         <View className="gap-2">
-          <Text className="text-label text-muted-foreground">{uk.instagramLabel}</Text>
+          <Text className="text-label text-muted-foreground">{t.instagramLabel}</Text>
           <Input
             value={instagram}
             onChangeText={setInstagram}
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder={uk.crewInstagramPlaceholder}
+            placeholder={t.crewInstagramPlaceholder}
           />
         </View>
         {/* Telegram is new — `users.telegram`, migration 20260831100000. No
             story defines it; the design draws it. */}
         <View className="gap-2">
-          <Text className="text-label text-muted-foreground">{uk.telegramLabel}</Text>
+          <Text className="text-label text-muted-foreground">{t.telegramLabel}</Text>
           <Input
             value={telegram}
             onChangeText={setTelegram}
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder={uk.telegramPlaceholder}
+            placeholder={t.telegramPlaceholder}
           />
         </View>
-        <Text className="text-label text-muted-foreground">{uk.socialHint}</Text>
+        <Text className="text-label text-muted-foreground">{t.socialHint}</Text>
       </View>
 
       <View className="gap-1">
@@ -715,7 +720,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
               nowhere until 2026-09-28 — the checkbox gated registration on
               agreeing to text nobody could read. */}
           <Text className="text-label text-muted-foreground flex-1 leading-5">
-            {`${uk.termsPrefix} `}
+            {`${t.termsPrefix} `}
             <Text
               className="text-foreground underline"
               onPress={() => {
@@ -723,9 +728,9 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
                 if (url) void openExternalUrl(url)
               }}
             >
-              {uk.termsUse}
+              {t.termsUse}
             </Text>
-            {` ${uk.termsAnd} `}
+            {` ${t.termsAnd} `}
             <Text
               className="text-foreground underline"
               onPress={() => {
@@ -733,7 +738,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
                 if (url) void openExternalUrl(url)
               }}
             >
-              {uk.termsPrivacy}
+              {t.termsPrivacy}
             </Text>
           </Text>
         </Pressable>
@@ -744,7 +749,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
 
       <Button size="cta" className="mt-1" disabled={submitting} onPress={() => void submit()}>
         <Text className="text-subtitle font-semibold">
-          {submitting ? uk.creatingAccount : uk.registerBtn}
+          {submitting ? t.creatingAccount : t.registerBtn}
         </Text>
       </Button>
     </View>
@@ -803,6 +808,7 @@ function ServerError({ message }: { message: string | null }) {
  * The rule is the design's own: length, mixed case, and a digit or symbol.
  */
 function PasswordStrength({ password }: { password: string }) {
+  const t = useStrings()
   if (!password) return null
 
   let score = 0
@@ -810,7 +816,7 @@ function PasswordStrength({ password }: { password: string }) {
   if (/[A-ZА-ЯЇІЄҐ]/.test(password) && /[a-zа-яїієґ]/.test(password)) score++
   if (/\d/.test(password) || /[^\w\s]/.test(password)) score++
 
-  const label = score <= 1 ? uk.strengthWeak : score === 2 ? uk.strengthNormal : uk.strengthStrong
+  const label = score <= 1 ? t.strengthWeak : score === 2 ? t.strengthNormal : t.strengthStrong
 
   return (
     <View className="mt-2 flex-row items-center gap-2.5">
@@ -843,11 +849,12 @@ function RoleChips({
   onCustomChange: (value: string) => void
   error: string | null
 }) {
+  const t = useStrings()
   const isOther = value === OTHER_ROLE
 
   return (
     <View className="gap-2">
-      <Text className="text-body-sm text-foreground font-medium">{uk.role}</Text>
+      <Text className="text-body-sm text-foreground font-medium">{t.role}</Text>
       <View className="flex-row flex-wrap gap-1.5">
         {[...ROLE_KEYS, OTHER_ROLE].map((option) => {
           const active = value === option
@@ -873,7 +880,7 @@ function RoleChips({
                   active ? 'text-primary-foreground' : 'text-foreground/85'
                 }`}
               >
-                {roleWithEmoji(option, uk)}
+                {roleWithEmoji(option, t)}
               </Text>
             </Pressable>
           )
@@ -890,7 +897,7 @@ function RoleChips({
         <Input
           value={custom}
           onChangeText={onCustomChange}
-          placeholder={uk.otherRolePlaceholder}
+          placeholder={t.otherRolePlaceholder}
           autoCapitalize="sentences"
         />
       ) : null}
@@ -916,13 +923,14 @@ function ForgotForm({
   onBack: () => void
   onSent: () => void
 }) {
+  const t = useStrings()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const submit = async () => {
     const trimmed = email.trim()
-    if (!trimmed) return setError(uk.emailRequired)
-    if (!EMAIL_PATTERN.test(trimmed)) return setError(uk.emailFormat)
+    if (!trimmed) return setError(t.emailRequired)
+    if (!EMAIL_PATTERN.test(trimmed)) return setError(t.emailFormat)
 
     setError(null)
     setSubmitting(true)
@@ -945,16 +953,16 @@ function ForgotForm({
         role="button"
       >
         <Icon as={ChevronLeft} size={16} strokeWidth={2} className="text-muted-foreground" />
-        <Text className="text-body-sm text-muted-foreground font-medium">{uk.backToLogin}</Text>
+        <Text className="text-body-sm text-muted-foreground font-medium">{t.backToLogin}</Text>
       </Pressable>
 
-      <Text className="text-title text-foreground font-semibold">{uk.resetTitle}</Text>
+      <Text className="text-title text-foreground font-semibold">{t.resetTitle}</Text>
       <Text className="text-body-sm text-muted-foreground mt-2 leading-5">
-        {uk.resetIntro}
+        {t.resetIntro}
       </Text>
 
       <View className="mt-5 gap-2">
-        <Label htmlFor="reset-email">{uk.email}</Label>
+        <Label htmlFor="reset-email">{t.email}</Label>
         <Input
           id="reset-email"
           value={email}
@@ -971,7 +979,7 @@ function ForgotForm({
 
         <Button size="cta" className="mt-3" disabled={submitting} onPress={() => void submit()}>
           <Text className="text-subtitle font-semibold">
-            {submitting ? uk.sendingResetLink : uk.sendResetLink}
+            {submitting ? t.sendingResetLink : t.sendResetLink}
           </Text>
         </Button>
       </View>
@@ -996,6 +1004,7 @@ function ResetSent({
   onBack: () => void
   onChangeAddress: () => void
 }) {
+  const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(30)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -1011,13 +1020,13 @@ function ResetSent({
         <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
       </View>
 
-      <Text className="text-title text-foreground font-semibold">{uk.checkYourMail}</Text>
+      <Text className="text-title text-foreground font-semibold">{t.checkYourMail}</Text>
       <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
-        {uk.resetSentTemplate.replace('{email}', email.trim())}
+        {t.resetSentTemplate.replace('{email}', email.trim())}
       </Text>
 
       <Button size="cta" className="mt-6 w-full" onPress={onBack}>
-        <Text className="text-subtitle font-semibold">{uk.returnToLogin}</Text>
+        <Text className="text-subtitle font-semibold">{t.returnToLogin}</Text>
       </Button>
 
       <Button
@@ -1028,13 +1037,13 @@ function ResetSent({
         onPress={() => {
           void requestPasswordReset(email)
           setSecondsLeft(30)
-          setToast(uk.resentToast)
+          setToast(t.resentToast)
         }}
       >
         <Text className="text-body-sm font-medium">
           {secondsLeft > 0
-            ? uk.resendInTemplate.replace('{seconds}', String(secondsLeft))
-            : uk.resendLink}
+            ? t.resendInTemplate.replace('{seconds}', String(secondsLeft))
+            : t.resendLink}
         </Text>
       </Button>
 
@@ -1043,7 +1052,7 @@ function ResetSent({
         onPress={onChangeAddress}
         role="button"
       >
-        <Text className="text-label text-muted-foreground">{uk.changeAddress}</Text>
+        <Text className="text-label text-muted-foreground">{t.changeAddress}</Text>
       </Pressable>
 
       <Toast message={toast} onDone={() => setToast(null)} />
@@ -1062,6 +1071,7 @@ function ResetSent({
  * and Supabase would refuse a second one inside its interval.
  */
 function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
+  const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN_SECONDS)
   const [toast, setToast] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -1075,8 +1085,8 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
   const resend = async () => {
     setError(null)
     setSecondsLeft(RESEND_COOLDOWN_SECONDS)
-    if (await resendConfirmation(email)) setToast(uk.resentToast)
-    else setError(uk.somethingWentWrong)
+    if (await resendConfirmation(email)) setToast(t.resentToast)
+    else setError(t.somethingWentWrong)
   }
 
   return (
@@ -1085,9 +1095,9 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
         <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
       </View>
 
-      <Text className="text-title text-foreground font-semibold">{uk.checkYourMail}</Text>
+      <Text className="text-title text-foreground font-semibold">{t.checkYourMail}</Text>
       <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
-        {uk.confirmSentTemplate.replace('{email}', email)}
+        {t.confirmSentTemplate.replace('{email}', email)}
       </Text>
 
       <Button
@@ -1098,8 +1108,8 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
       >
         <Text className="text-subtitle font-semibold">
           {secondsLeft > 0
-            ? uk.resendInTemplate.replace('{seconds}', String(secondsLeft))
-            : uk.resendConfirmation}
+            ? t.resendInTemplate.replace('{seconds}', String(secondsLeft))
+            : t.resendConfirmation}
         </Text>
       </Button>
       {error ? <Text className="text-label text-destructive mt-2">{error}</Text> : null}
@@ -1109,7 +1119,7 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
         onPress={onBack}
         role="button"
       >
-        <Text className="text-label text-muted-foreground">{uk.returnToLogin}</Text>
+        <Text className="text-label text-muted-foreground">{t.returnToLogin}</Text>
       </Pressable>
 
       <Toast message={toast} onDone={() => setToast(null)} />

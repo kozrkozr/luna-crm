@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '../lib/supabase/client'
 import { uk } from './uk'
 import { DEFAULT_LANGUAGE, stringsFor, type Language, type Strings } from './index'
+import { phoneLanguage } from './device'
 
 type LanguageValue = {
   language: Language
@@ -17,26 +18,36 @@ type LanguageValue = {
 const LanguageContext = createContext<LanguageValue | null>(null)
 
 /**
+ * `US-045` AC-2 — the signed-out screens' language: the phone's, with nothing
+ * to switch and nowhere to save it. Separate from `LanguageContext` so that
+ * `useLanguageSwitch` stays null there and no switcher can appear.
+ */
+const PhoneLanguageContext = createContext<Language | null>(null)
+
+/**
  * `US-014` — resolves the UI language for a registered account.
  *
  * Mounted around the `(app)` group only, which is the whole scoping mechanism
  * for `EP-05`:
  *
  *   - **`(app)`** — inside the provider, so the account's preference applies.
- *   - **`(auth)`** — outside it. There is no account yet to have a preference,
- *     and `prd.md` R-10 scopes this to registered accounts.
+ *   - **`(auth)`** — inside `PhoneLanguageProvider` instead: no account yet, so
+ *     the phone's language and no switcher (`US-045` AC-2).
  *   - **`s/`** — outside it. Link views are Ukrainian-only with no switcher
  *     (`EP-05` Out of scope, owner's answer 2026-08-22). Not "the switcher is
  *     hidden there": there is no language to resolve, so a crew member's or a
  *     client's page cannot render in English however it is reached.
  *
- * Starts at Ukrainian and stays there unless the row says otherwise, so the
- * first paint is never a wrong-language flash. The column defaults to `uk`
- * (initial schema, `US-014`), which means a new account is Ukrainian without
- * anything being written — AC-1's "no saved language preference".
+ * **Starts at the phone's language** (`US-045`), then takes the account's once
+ * the row arrives (AC-4). A new account was given the phone's language at
+ * registration (AC-3), so for it the two agree and nothing changes on screen.
+ * An account from before `US-045` keeps its own — Ukrainian unless it was
+ * switched (AC-5) — and on a phone set to another language its first frame can
+ * show that language for the length of one query. Accepted rather than holding
+ * the whole app behind the read.
  */
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE)
+  const [language, setLanguageState] = useState<Language>(phoneLanguage)
 
   useEffect(() => {
     let active = true
@@ -104,6 +115,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 }
 
 /**
+ * `US-045` AC-2 — the phone's language for the signed-out screens. Read once,
+ * when they mount: a language changed in iOS settings restarts the app anyway.
+ */
+export function PhoneLanguageProvider({ children }: { children: ReactNode }) {
+  const [language] = useState<Language>(phoneLanguage)
+  return <PhoneLanguageContext.Provider value={language}>{children}</PhoneLanguageContext.Provider>
+}
+
+/**
  * The strings for the current surface.
  *
  * Falls back to Ukrainian with **no provider mounted**, which is what makes a
@@ -112,12 +132,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
  * the creator's references screen, without knowing which one it is in.
  */
 export function useStrings(): Strings {
-  return useContext(LanguageContext)?.strings ?? uk
+  const account = useContext(LanguageContext)
+  const phone = useContext(PhoneLanguageContext)
+  return account?.strings ?? (phone ? stringsFor(phone) : uk)
 }
 
 /** The resolved language itself, for the places that need the code and not the copy. */
 export function useLanguage(): Language {
-  return useContext(LanguageContext)?.language ?? DEFAULT_LANGUAGE
+  const account = useContext(LanguageContext)
+  const phone = useContext(PhoneLanguageContext)
+  return account?.language ?? phone ?? DEFAULT_LANGUAGE
 }
 
 /**

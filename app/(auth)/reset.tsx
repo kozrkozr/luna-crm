@@ -6,7 +6,7 @@ import { FormScrollView } from '../../src/components/ui/form-scroll-view'
 import { Input } from '../../src/components/ui/input'
 import { Label } from '../../src/components/ui/label'
 import { Text } from '../../src/components/ui/text'
-import { uk } from '../../src/i18n/uk'
+import { useStrings } from '../../src/i18n/LanguageProvider'
 import { failed, succeeded } from '../../src/lib/haptics'
 import { MIN_PASSWORD_LENGTH, withMinLength } from '../../src/features/auth/passwordRules'
 import { setNewPassword } from '../../src/features/auth/passwordReset'
@@ -25,6 +25,7 @@ import { Starfield } from '../../src/components/Starfield'
  * `useLinkSession`, shared with the signup confirmation (`(auth)/confirm`).
  */
 export default function ResetPasswordScreen() {
+  const t = useStrings()
   const router = useRouter()
   const ready = useLinkSession('recovery')
   const [password, setPassword] = useState('')
@@ -34,7 +35,7 @@ export default function ResetPasswordScreen() {
   const submit = async () => {
     if (password.length < MIN_PASSWORD_LENGTH) {
       failed()
-      return setError(withMinLength(uk.passwordTooShortTemplate))
+      return setError(withMinLength(t.passwordTooShortTemplate))
     }
 
     setError(null)
@@ -46,10 +47,10 @@ export default function ResetPasswordScreen() {
       failed()
       return setError(
         result.reason === 'linkInvalid'
-          ? uk.resetLinkInvalid
+          ? t.resetLinkInvalid
           : result.reason === 'weakPassword'
-            ? withMinLength(uk.passwordTooShortTemplate)
-            : uk.somethingWentWrong
+            ? withMinLength(t.passwordTooShortTemplate)
+            : t.somethingWentWrong
       )
     }
 
@@ -76,23 +77,23 @@ export default function ResetPasswordScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <View className="gap-2 p-4 pt-8">
-          <Text className="text-title text-foreground font-semibold">{uk.newPasswordTitle}</Text>
+          <Text className="text-title text-foreground font-semibold">{t.newPasswordTitle}</Text>
 
           {ready === 'invalid' ? (
             <>
               {/* An expired or already-used link. «Try again» would be advice that
                   cannot succeed, so the only way out offered is a new request. */}
               <Text className="text-body-sm text-destructive mt-2 leading-5">
-                {uk.resetLinkInvalid}
+                {t.resetLinkInvalid}
               </Text>
               <Button size="cta" className="mt-5" onPress={() => router.replace('/(auth)/login')}>
-                <Text className="text-subtitle font-semibold">{uk.returnToLogin}</Text>
+                <Text className="text-subtitle font-semibold">{t.returnToLogin}</Text>
               </Button>
             </>
           ) : (
             <>
               <View className="mt-4 gap-2">
-                <Label htmlFor="new-password">{uk.newPassword}</Label>
+                <Label htmlFor="new-password">{t.newPassword}</Label>
                 <Input
                   id="new-password"
                   value={password}
@@ -103,7 +104,7 @@ export default function ResetPasswordScreen() {
                   secureTextEntry
                   autoCapitalize="none"
                   autoComplete="new-password"
-                  placeholder={withMinLength(uk.passwordHintTemplate)}
+                  placeholder={withMinLength(t.passwordHintTemplate)}
                 />
                 {error ? <Text className="text-label text-destructive">{error}</Text> : null}
               </View>
@@ -114,7 +115,7 @@ export default function ResetPasswordScreen() {
                 disabled={submitting}
                 onPress={() => void submit()}
               >
-                <Text className="text-subtitle font-semibold">{uk.savePassword}</Text>
+                <Text className="text-subtitle font-semibold">{t.savePassword}</Text>
               </Button>
             </>
           )}

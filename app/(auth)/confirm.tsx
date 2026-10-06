@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { Text } from '../../src/components/ui/text'
-import { uk } from '../../src/i18n/uk'
+import { useStrings } from '../../src/i18n/LanguageProvider'
 import { useLinkSession } from '../../src/features/auth/authLink'
 import { Starfield } from '../../src/components/Starfield'
 
@@ -18,6 +18,7 @@ import { Starfield } from '../../src/components/Starfield'
  * Reading the link is `useLinkSession`, shared with `(auth)/reset`.
  */
 export default function ConfirmEmailScreen() {
+  const t = useStrings()
   const router = useRouter()
   const state = useLinkSession('email')
 
@@ -38,9 +39,9 @@ export default function ConfirmEmailScreen() {
     <View className="bg-background flex-1">
       <Starfield />
       <View className="gap-2 p-4 pt-16">
-        <Text className="text-body-sm text-destructive leading-5">{uk.confirmLinkInvalid}</Text>
+        <Text className="text-body-sm text-destructive leading-5">{t.confirmLinkInvalid}</Text>
         <Button size="cta" className="mt-5" onPress={() => router.replace('/(auth)/login')}>
-          <Text className="text-subtitle font-semibold">{uk.returnToLogin}</Text>
+          <Text className="text-subtitle font-semibold">{t.returnToLogin}</Text>
         </Button>
       </View>
     </View>

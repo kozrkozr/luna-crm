@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase/client'
 import { confirmRedirectUrl } from './emailConfirmation'
+import { phoneLanguage } from '../../i18n/device'
 
 export type RegistrationInput = {
   name: string
@@ -69,6 +70,12 @@ export async function register(input: RegistrationInput): Promise<RegistrationRe
         // both sides, so the column keeps whatever format the person uses —
         // the same rule `updateProfile` follows on this column.
         phone: input.phone?.trim() || null,
+        /*
+          `US-045` AC-3 — the account starts in the phone's language. The
+          `handle_new_user` trigger copies it to `users.language`; it stays in
+          the auth metadata as well, where `US-048`'s email templates read it.
+        */
+        language: phoneLanguage(),
       },
     },
   })

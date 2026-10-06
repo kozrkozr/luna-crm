@@ -29,14 +29,13 @@ export type Strings = {
 }
 
 /**
- * `US-014` AC-1 — Ukrainian unless an account says otherwise.
+ * The language of a surface with nothing else to go on — a link view (until
+ * `US-046`), and anything rendered with no provider mounted.
  *
- * AC-2 is the sharper half: the device locale must NOT override this. So
- * nothing here reads `expo-localization`, `navigator.language` or
- * `Intl.DateTimeFormat().resolvedOptions()`, and nothing should be added that
- * does. A photographer on a phone set to German gets Ukrainian, which is the
- * stated requirement and also the only sane default for a product whose other
- * two audiences are Ukrainian-only.
+ * It used to be every account's default too (`US-014` AC-1), and the device
+ * locale was deliberately ignored (AC-2). `US-045` (`ADR-022`) reversed that for
+ * the app: a new install and a new account follow the phone — see
+ * `./device.ts`. Accounts from before keep the language they have.
  */
 export const DEFAULT_LANGUAGE: Language = 'uk'
 
