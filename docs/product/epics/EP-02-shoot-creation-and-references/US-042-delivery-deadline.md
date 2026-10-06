@@ -102,10 +102,27 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 - **Given** a deleted shoot (`US-019`)
 - **Then** its deadline is shown nowhere (`ADR-014`)
 
-### AC-10 — The calendar *(design pending)*
-- The finished shoot's card in the calendar shows the deadline, as AC-2 and AC-3's captions
-  promise. **Not specified yet**: the owner will bring the design later in this story. Build AC-1
-  to AC-9 first.
+### AC-10 — The calendar card
+*Specified 2026-10-06 from `Calendar.dc.html`, `filesView` «Кроки з іконкою» (owner).*
+
+- **Given** a **finished** shoot with a deadline, on its card in the calendar's list
+- **Then** the card ends with a block under a divider: a file icon, the three steps of AC-5 —
+  computed exactly as on «Матеріали» — with their names underneath, and a label on the right:
+
+| State | Label | Tone |
+|---|---|---|
+| delivered | the deadline's date, «15 вересня» | success |
+| overdue | «Прострочено» | danger |
+| due today · tomorrow | «Сьогодні» · «Завтра» | warning |
+| 2 days left | «до 21 вересня» | warning |
+| 3 or more | «до 21 вересня» | neutral |
+
+- The label is **not** the «Матеріали» chip: a date rather than «Через N днів», and «Прострочено»
+  without the count — as drawn (owner, 2026-10-06).
+- A shoot that is not finished shows no block, with a deadline or without one.
+- Finished shoots sit behind «Показати минулі» unless they ended today; the block appears wherever
+  the card does, and that is accepted (owner, 2026-10-06).
+- Only the creator's own shoots — a crew member's schedule rows (`US-009`) carry no deadline.
 
 ### AC-11 — Language
 - **Given** a creator who switched the app to English (`US-014`, `US-015`)
@@ -127,6 +144,7 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 | 7 днів після зйомки · У день зйомки | 7 days after the shoot · On the shoot day |
 | Готово · Скасувати | Done · Cancel |
 | Дедлайн видалено | Deadline removed |
+| Прострочено *(calendar label)* | Overdue *(not yet confirmed)* |
 | Позначено як передано клієнту | Marked as delivered to client |
 
 ## Out of scope
@@ -141,4 +159,4 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 1. English for the editor's caption («Відлік від дня зйомки…»), the save toast («Дедлайн здачі —
    16 вересня») and the edit and delete buttons' accessibility labels («Змінити дедлайн»,
    «Видалити дедлайн») — not yet confirmed.
-2. AC-10 — the calendar card's design.
+2. English for the calendar card's «Прострочено» — «Overdue» proposed, not yet confirmed.
