@@ -34,6 +34,22 @@ under «Світло» is missing from the «Light» filter; a link view (`US-04
 - **Given** «Інша роль» and a role typed by hand
 - **Then** the typed text is stored and shown **as typed**, in every language
 
+### AC-2a — The roles in English
+Until now a role was Ukrainian in both languages; there were no English names. They are
+(owner, 2026-10-06):
+
+| UK | EN |
+|---|---|
+| Фотограф | Photographer |
+| Відеограф | Videographer |
+| Стиліст | Stylist |
+| Hair стиліст | Hair stylist |
+| Візажист | Make-up artist |
+| Гафер | Gaffer |
+| Модель | Model |
+| Асистент | Assistant |
+| Продюсер | Producer |
+
 ### AC-3 — Existing rows
 - **Given** categories and roles already stored as Ukrainian or English text
 - **Then** a migration rewrites every one that matches a label in either language to its key;
