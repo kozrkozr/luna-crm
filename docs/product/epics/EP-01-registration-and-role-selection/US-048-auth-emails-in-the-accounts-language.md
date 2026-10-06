@@ -63,8 +63,9 @@ exists in both languages when one does.
   profile (`US-015`), so the next email follows the change.
 
 ### AC-4 — The subject
-- The subject is in the same language as the body, **if** the template's condition works in the
-  subject line; otherwise the subject carries both languages. Verified on the dev project first.
+- The subject is in the same language as the body — the template's condition works in the subject
+  line too. **Verified on the dev project, 2026-10-06** (owner: an English account received «Reset
+  your Luna Shoots password»).
 
 ### AC-5 — Both projects
 - The templates are set on the dev and the prod Supabase projects.
