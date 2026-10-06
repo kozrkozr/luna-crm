@@ -14,7 +14,7 @@ import type { Strings } from '../i18n'
 import { failed, succeeded, tapped } from '../lib/haptics'
 import { setDelivered, setDeliveryDeadline, type Shoot } from '../features/shoots/api'
 import { formatDayMonth, toIsoDate } from '../features/shoots/date'
-import { pluralUk } from '../features/shoots/home'
+import { plural } from '../features/shoots/home'
 import {
   DEADLINE_DEFAULT_DAYS,
   DEADLINE_QUICK_DAYS,
@@ -307,7 +307,7 @@ function DeadlineEditor({
           ? t.deadlineOnShootDay
           : t.deadlineAfterShootTemplate.replace(
               '{days}',
-              `${after} ${pluralUk(after, t.dayForms)}`
+              `${after} ${plural(after, t.dayForms)}`
             )}
       </Text>
 
@@ -376,7 +376,7 @@ const TONE: Record<DeadlineTone, { card: string; chip: string; ink: string; bar:
 }
 
 function chipLabel(chip: DeadlineChip, t: Strings): string {
-  const days = (n: number) => `${n} ${pluralUk(n, t.dayForms)}`
+  const days = (n: number) => `${n} ${plural(n, t.dayForms)}`
   switch (chip.kind) {
     case 'delivered':
       return t.deadlineDelivered

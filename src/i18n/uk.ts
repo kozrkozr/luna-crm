@@ -353,7 +353,7 @@ export const uk = {
    *
    * Was the fixed phrase «зйомки за день», which read wrong from five upward
    * («5 зйомки за день»). The noun now comes from `shootCountForms` through
-   * `pluralUk` and this is only the tail.
+   * `plural` and this is only the tail.
    */
   perDay: 'за день',
   untilShort: 'до',
@@ -563,7 +563,7 @@ export const uk = {
    * crew list and never a note (ADR-013, CLAUDE.md rule 2).
    *
    * `participantForms` is grammar, not new copy — «учасник» is already in
-   * `addCrewTitle`. Three Ukrainian plural forms, in the order `pluralUk` wants.
+   * `addCrewTitle`. Three Ukrainian plural forms, in the order `plural` wants.
    */
   clientSeesCrew: 'Бачить команду, без нотаток',
   /*

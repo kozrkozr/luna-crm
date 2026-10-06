@@ -67,7 +67,7 @@ async function run(): Promise<void> {
     // reminder because of one dropped request.
     if (!shoots) return
 
-    const plan = planReminders(shoots, settings, new Date(), stringsFor(language), language)
+    const plan = planReminders(shoots, settings, new Date(), stringsFor(language))
 
     await Notifications.cancelAllScheduledNotificationsAsync()
     for (const reminder of plan) {

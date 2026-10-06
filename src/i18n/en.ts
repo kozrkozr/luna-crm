@@ -261,9 +261,8 @@ export const en: Strings = {
   seeAll: 'All',
   openDetails: 'Details',
   inDaysPrefix: 'in',
-  // English has two forms; the middle one is unused, and the shape has to match
-  // the Ukrainian tuple for the Strings type.
-  dayForms: ['day', 'days', 'days'],
+  /** `[one, other]` — two forms are what tells `plural` this is English. */
+  dayForms: ['day', 'days'],
   todayWord: 'Today',
   tomorrowWord: 'Tomorrow',
   crewConfirmedTemplate: 'crew: {done} of {total} confirmed',
@@ -286,7 +285,7 @@ export const en: Strings = {
   yesSamePerson: 'Yes, same person',
   noNewClient: 'No, a new client',
   creatingNewProfile: 'All right — creating a new profile',
-  shootCountForms: ['shoot', 'shoots', 'shoots'],
+  shootCountForms: ['shoot', 'shoots'],
   clientRequired: 'Choose a client',
   clientSearchTitle: 'Choose a client',
   useTypedNameTemplate: 'New client: {name}',
@@ -301,11 +300,10 @@ export const en: Strings = {
   sourceFilesSection: 'Source files',
   finishedFilesSection: 'Finished files',
   locationPhotoLabel: 'Location photo',
-  /** Two English forms, repeated to fill the three slots pluralUk indexes. */
-  participantForms: ['participant', 'participants', 'participants'],
+  participantForms: ['participant', 'participants'],
   /* Link-view copy. That surface is Ukrainian-only (EP-05), so these exist to
      satisfy the `Strings` type rather than to be read. */
-  peopleForms: ['person', 'people', 'people'],
+  peopleForms: ['person', 'people'],
   crewCountConfirmed: '{total} · {done} confirmed',
   yourTurn: 'Your turn',
   referenceCategories: ['Light', 'Poses', 'Style'],
@@ -512,8 +510,8 @@ export const en: Strings = {
   cancelShoot: 'Cancel shoot',
   startsInPrefix: 'Starts in',
   hoursShort: 'h',
-  hourForms: ['hour', 'hours', 'hours'],
-  minuteForms: ['minute', 'minutes', 'minutes'],
+  hourForms: ['hour', 'hours'],
+  minuteForms: ['minute', 'minutes'],
   minutesShort: 'min',
   clientShootLabel: 'Client shoot',
   timeLabel: 'Time',
@@ -524,8 +522,7 @@ export const en: Strings = {
   accessDetailsLabel: 'Details',
   allFilter: 'All',
   photosWord: 'photos',
-  /** Two English forms, repeated to fill the three slots pluralUk indexes. */
-  linkForms: ['link', 'links', 'links'],
+  linkForms: ['link', 'links'],
   addReferenceOrFile: 'Add a reference or file',
   addReferenceSheetTitle: 'Add a reference — «{category}»',
   addReferenceSheetTitleAll: 'Add a reference',
@@ -625,7 +622,7 @@ export const en: Strings = {
     'Hardcore day ahead 🫠',
   ],
   reminderBeforeTitle: 'Shoot in {hours}',
-  reminderHourForms: ['hour', 'hours', 'hours'],
+  reminderHourForms: ['hour', 'hours'],
   reminderMore: 'and {count} more',
   reminderAt: 'at {time}',
   // US-042 — owner, 2026-10-06. The caption, the save toast and the two

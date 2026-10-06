@@ -1,4 +1,4 @@
-import { pluralUk } from '../shoots/home'
+import { plural } from '../shoots/home'
 
 /**
  * «2 год» · «вчора» — how long ago a notification arrived.
@@ -41,5 +41,5 @@ export function relativeTime(
 
   if (days === 0) return `${Math.floor(minutes / 60)} ${units.hours}`
   if (days === 1) return units.yesterday
-  return `${days} ${pluralUk(days, units.dayForms)}`
+  return `${days} ${plural(days, units.dayForms)}`
 }

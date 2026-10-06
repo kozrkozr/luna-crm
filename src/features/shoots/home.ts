@@ -60,18 +60,25 @@ export function daysUntil(isoDate: string, today: Date = new Date()): number {
 }
 
 /**
- * The Ukrainian plural form for a count: `[one, few, many]`.
+ * The plural form for a count, by the language the forms are in — told apart by
+ * how many there are, so no caller has to pass the language along.
  *
- * 1 день · 2–4 дні · 5–20 днів, and then it repeats by last digit — except the
- * teens, which all take the "many" form. The 11-to-14 exception is the part
- * that gets forgotten: «21 день» is right and so is «11 днів», which a rule
- * written only on the last digit gets backwards.
+ * **Three forms are Ukrainian**, `[one, few, many]`: 1 день · 2–4 дні · 5–20
+ * днів, and then it repeats by last digit — except the teens, which all take
+ * the "many" form. The 11-to-14 exception is the part that gets forgotten:
+ * «21 день» is right and so is «11 днів», which a rule written only on the last
+ * digit gets backwards.
+ *
+ * **Two forms are English**, `[one, other]`: one for exactly 1, the other for
+ * everything else. The English tuples used to repeat their plural to fill three
+ * slots, and the Ukrainian rule then read «21 day» and «2 day» off them.
  *
  * `Intl.PluralRules` would do this, and the design system's §9 warns not to
  * trust it here: Hermes ships a cut-down Intl and the rules for `uk` may be
  * absent, which fails silently by falling back to English's two forms.
  */
-export function pluralUk(count: number, forms: readonly string[]): string {
+export function plural(count: number, forms: readonly string[]): string {
+  if (forms.length === 2) return Math.abs(count) === 1 ? forms[0] : forms[1]
   const n = Math.abs(count) % 100
   const lastDigit = n % 10
   if (n > 10 && n < 20) return forms[2]
@@ -93,7 +100,7 @@ export function distanceLabel(
 ): string {
   if (days <= 0) return strings.todayWord
   if (days === 1) return strings.tomorrowWord
-  return `${strings.inDaysPrefix} ${days} ${pluralUk(days, strings.dayForms)}`
+  return `${strings.inDaysPrefix} ${days} ${plural(days, strings.dayForms)}`
 }
 
 /**
@@ -120,7 +127,7 @@ export function distanceLabel(
  * always appended `startsIn % 60`, so a shoot exactly two hours away read
  * «2 год 0 хв». Nothing chose that; it fell out of the template.
  *
- * Here rather than in `date.ts` because it needs `pluralUk`, which lives in this
+ * Here rather than in `date.ts` because it needs `plural`, which lives in this
  * file — and `date.ts` imports nothing at all, while this file imports it.
  * Reversing that to move one function would make a cycle out of a tidy edge.
  */
@@ -134,7 +141,7 @@ export function countdownLabel(
     const days = Math.floor(minutes / MINUTES_IN_DAY)
     const hours = Math.floor((minutes % MINUTES_IN_DAY) / 60)
     return [
-      `${days} ${pluralUk(days, strings.dayForms)}`,
+      `${days} ${plural(days, strings.dayForms)}`,
       hours ? `${hours} ${strings.hoursShort}` : null,
     ]
       .filter(Boolean)

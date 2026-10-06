@@ -7,7 +7,7 @@ import { Text } from './ui/text'
 import { Avatar } from './Avatar'
 import { elevation } from '../theme/elevation'
 import { useStrings } from '../i18n/LanguageProvider'
-import { pluralUk } from '../features/shoots/home'
+import { plural } from '../features/shoots/home'
 import { selected } from '../lib/haptics'
 import { searchClientsByName, type Client } from '../features/clients/api'
 
@@ -211,5 +211,5 @@ export function ClientField({
 
 /** «3 зйомки» — the count with its Ukrainian plural form. */
 export function shootCountLabel(count: number, t: { shootCountForms: readonly string[] }): string {
-  return `${count} ${pluralUk(count, t.shootCountForms)}`
+  return `${count} ${plural(count, t.shootCountForms)}`
 }

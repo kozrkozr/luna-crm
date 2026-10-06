@@ -34,7 +34,7 @@ import {
   formatDuration,
   formatTimeRange,
 } from '../shoots/date'
-import { daysUntil, distanceLabel, pluralUk } from '../shoots/home'
+import { daysUntil, distanceLabel, plural } from '../shoots/home'
 import {
   calendarEvent,
   googleCalendarUrl,
@@ -468,7 +468,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
                           ).length
                         )
                       )
-                  : `${payload.crew.length} ${pluralUk(payload.crew.length, t.peopleForms)}`}
+                  : `${payload.crew.length} ${plural(payload.crew.length, t.peopleForms)}`}
               </Text>
             </View>
             {/*
@@ -961,8 +961,8 @@ function durationWords(
   const hours = Math.floor(span / 60)
   const minutes = span % 60
   return [
-    hours ? `${hours} ${pluralUk(hours, t.hourForms)}` : null,
-    minutes ? `${minutes} ${pluralUk(minutes, t.minuteForms)}` : null,
+    hours ? `${hours} ${plural(hours, t.hourForms)}` : null,
+    minutes ? `${minutes} ${plural(minutes, t.minuteForms)}` : null,
   ]
     .filter(Boolean)
     .join(' ')

@@ -9,7 +9,7 @@ import { Text } from '../../../src/components/ui/text'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
 import { roleWithEmoji } from '../../../src/i18n/uk'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
-import { pluralUk } from '../../../src/features/shoots/home'
+import { plural } from '../../../src/features/shoots/home'
 import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { listCrewShoots, type CrewShoot } from '../../../src/features/shoots/crewSchedule'
 import { listCrewNamesForShoots } from '../../../src/features/crew/api'
@@ -198,7 +198,7 @@ export default function ShootListScreen() {
         <CalendarHeader
           meta={`${mode === 'month' ? t.months[focus.getMonth()] : t.calModeWeek} · ${
             inPeriod.length
-          } ${pluralUk(inPeriod.length, t.shootCountForms)}`}
+          } ${plural(inPeriod.length, t.shootCountForms)}`}
         />
 
         {/*
@@ -560,10 +560,10 @@ function Agenda({
               }`}
             </Text>
             {group.rows.length > 1 ? (
-              /* `pluralUk`, not the old fixed «зйомки за день» — that read wrong
+              /* `plural`, not the old fixed «зйомки за день» — that read wrong
                  from five upward («5 зйомки за день»). */
               <Text className="text-label text-muted-foreground/70">
-                {`· ${group.rows.length} ${pluralUk(group.rows.length, t.shootCountForms)} ${t.perDay}`}
+                {`· ${group.rows.length} ${plural(group.rows.length, t.shootCountForms)} ${t.perDay}`}
               </Text>
             ) : null}
           </View>

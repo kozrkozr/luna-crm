@@ -1,7 +1,7 @@
-import type { Language, Strings } from '../../i18n'
+import type { Strings } from '../../i18n'
 import type { Shoot } from '../shoots/api'
 import { toIsoDate, formatTimeRange } from '../shoots/date'
-import { pluralUk } from '../shoots/home'
+import { plural } from '../shoots/home'
 import type { ReminderSettings } from './settings'
 
 /**
@@ -47,7 +47,6 @@ export function planReminders(
   settings: ReminderSettings,
   now: Date,
   t: Strings,
-  language: Language,
   random: () => number = Math.random
 ): PlannedReminder[] {
   // AC-7 — finished shoots get nothing. Deleted ones never arrive here:
@@ -89,7 +88,7 @@ export function planReminders(
         at,
         title: t.reminderBeforeTitle.replace(
           '{hours}',
-          `${settings.beforeHours} ${plural(settings.beforeHours, t.reminderHourForms, language)}`
+          `${settings.beforeHours} ${plural(settings.beforeHours, t.reminderHourForms)}`
         ),
         body: beforeBody(shoot, t),
         data: { kind: 'before', shootId: shoot.id },
@@ -153,14 +152,6 @@ function place(shoot: Shoot): string | null {
   return shoot.locationName?.trim() || shoot.locationAddress?.trim() || null
 }
 
-/**
- * Ukrainian's three forms through `pluralUk`; English has two, and `pluralUk`'s
- * last-digit rule would give «21 shoot».
- */
-function plural(count: number, forms: readonly string[], language: Language): string {
-  if (language === 'uk') return pluralUk(count, forms)
-  return count === 1 ? forms[0] : forms[1]
-}
 
 /** Local wall-clock — the same assumption `../shoots/status.ts` makes. */
 function atLocal(isoDate: string, time: string): Date {

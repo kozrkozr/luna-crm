@@ -51,7 +51,7 @@ import {
   formatTimeRange,
   minutesUntilStart,
 } from '../../../../src/features/shoots/date'
-import { countdownLabel, pluralUk } from '../../../../src/features/shoots/home'
+import { countdownLabel, plural } from '../../../../src/features/shoots/home'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { roleWithEmoji } from '../../../../src/i18n/uk'
 import { LinkifiedText } from '../../../../src/components/LinkifiedText'
@@ -1724,7 +1724,7 @@ function MaterialsTab({
         <View className="flex-row items-baseline justify-between">
           <SectionLabel label={t.editFilesTitle} />
           <Text className="text-label text-muted-foreground">
-            {`${setLinks} ${pluralUk(setLinks, t.linkForms)}`}
+            {`${setLinks} ${plural(setLinks, t.linkForms)}`}
           </Text>
         </View>
         {/* `US-042` — above the two links, where the artboard puts it. */}
@@ -1772,7 +1772,7 @@ function MaterialsTab({
         <View className="flex-row items-baseline justify-between">
           <SectionLabel label={t.references} />
           <Text className="text-label text-muted-foreground">
-            {`${photos} ${t.photosWord} · ${links} ${pluralUk(links, t.linkForms)}`}
+            {`${photos} ${t.photosWord} · ${links} ${plural(links, t.linkForms)}`}
           </Text>
         </View>
 

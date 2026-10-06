@@ -18,7 +18,7 @@ import { TabHeader } from '../../../src/components/TabHeader'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
 import type { Strings } from '../../../src/i18n'
 import { listShoots, type Shoot } from '../../../src/features/shoots/api'
-import { pluralUk } from '../../../src/features/shoots/home'
+import { plural } from '../../../src/features/shoots/home'
 import { CURRENCY, formatAmount, formatMoney } from '../../../src/features/shoots/money'
 import { statistics, type StatsPeriod, type Statistics } from '../../../src/features/shoots/stats'
 
@@ -124,7 +124,7 @@ export default function StatisticsScreen() {
                 tint="bg-chart-5"
                 stripe="bg-info-border"
                 figure={String(stats.shoots)}
-                unit={pluralUk(stats.shoots, t.shootCountForms)}
+                unit={plural(stats.shoots, t.shootCountForms)}
                 unitClassName="text-body text-muted-foreground"
                 figureClassName="text-info"
                 line={line}
