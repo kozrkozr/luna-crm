@@ -76,8 +76,8 @@ the form and saved together with it.
 | UK | EN |
 |---|---|
 | Референси *(pill, section heading)* | References |
-| Прибрати референси *(the × accessibility label)* | Remove references *(not yet confirmed)* |
-| Зберігаємо референси… | Saving references… *(not yet confirmed)* |
+| Прибрати референси *(the × accessibility label)* | Remove references |
+| Зберігаємо референси… | Saving references… |
 
 ## Out of scope
 - References on the edit form — AC-8.
@@ -88,4 +88,4 @@ the form and saved together with it.
 `US-002`, `US-003`, `US-032`.
 
 ## Open questions
-1. English for «Прибрати референси» and «Зберігаємо референси…» — proposed, not yet confirmed.
+None — the English copy was confirmed by the owner, chat 2026-10-06.
