@@ -4,6 +4,8 @@
 - **Subproject:** 001-luna-crm
 - **Status:** draft
 - **Size:** S
+- **Amended by `US-045` (`ADR-022`, 2026-10-06):** a new install and a new account follow the
+  phone's language; AC-1 and AC-2 below hold only for accounts registered before it.
 
 ## Story
 As a **shoot creator**,
