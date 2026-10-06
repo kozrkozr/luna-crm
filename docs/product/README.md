@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-06 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04 and 2026-10-05)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `f1a75f2` — *docs(US-044): name the nine roles in English*.
+- **Source commit:** `6b23ae4` — *docs(US-050): name the app Luna Shoots in the photo prompt*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
@@ -29,6 +29,8 @@ are local, so:
 - **`US-047`** — one currency per account: UAH, USD, EUR, PLN, CZK; existing accounts UAH.
 - **`US-048`** — auth emails in the account's language, by a condition in the Supabase template.
 - **`US-049`** — the privacy policy and terms in English; a phone placeholder without `+380`.
+- **`US-050`** — split from `US-045` later the same day: iOS's own prompts in both languages
+  (the photo-library one), chosen by iOS from the phone; the build declares both languages.
 
 ## What moved in the second 2026-10-06 re-freeze (`US-043`)
 **References can be added on the «Нова зйомка» form.** `US-043` (in `EP-02`) puts the «Матеріали»
