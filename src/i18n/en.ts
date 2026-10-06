@@ -252,7 +252,7 @@ export const en: Strings = {
   removePaymentLabel: 'Remove payment',
   removeTeamNotesLabel: 'Remove notes',
   removeClientNotesLabel: 'Remove notes for the client',
-  // US-043 — proposed, not yet confirmed (story open question 1).
+  // US-043 — owner, 2026-10-06.
   removeReferencesLabel: 'Remove references',
   savingReferences: 'Saving references…',
   confirmRemoveSection: 'Remove «{section}»? What you entered will be cleared.',
