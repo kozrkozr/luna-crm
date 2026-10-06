@@ -33,10 +33,9 @@ const PhoneLanguageContext = createContext<Language | null>(null)
  *   - **`(app)`** — inside the provider, so the account's preference applies.
  *   - **`(auth)`** — inside `PhoneLanguageProvider` instead: no account yet, so
  *     the phone's language and no switcher (`US-045` AC-2).
- *   - **`s/`** — outside it. Link views are Ukrainian-only with no switcher
- *     (`EP-05` Out of scope, owner's answer 2026-08-22). Not "the switcher is
- *     hidden there": there is no language to resolve, so a crew member's or a
- *     client's page cannot render in English however it is reached.
+ *   - **`s/`** — inside `LinkLanguageProvider` instead: the reader's browser
+ *     language, and a UA / EN switch kept in the browser (`US-046`). It used to
+ *     be Ukrainian-only by construction (`EP-05`, reversed by `ADR-022`).
  *
  * **Starts at the phone's language** (`US-045`), then takes the account's once
  * the row arrives (AC-4). A new account was given the phone's language at
@@ -121,6 +120,67 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function PhoneLanguageProvider({ children }: { children: ReactNode }) {
   const [language] = useState<Language>(phoneLanguage)
   return <PhoneLanguageContext.Provider value={language}>{children}</PhoneLanguageContext.Provider>
+}
+
+/** `US-046` AC-3 — where a link reader's choice is kept, in their browser. */
+const LINK_LANGUAGE_KEY = 'luna.linkLanguage'
+
+function storedLinkLanguage(): Language | null {
+  try {
+    const value = globalThis.localStorage?.getItem(LINK_LANGUAGE_KEY)
+    return value === 'uk' || value === 'en' ? value : null
+  } catch {
+    // Storage blocked (a private window, a strict browser): no memory, and the
+    // browser's language still decides.
+    return null
+  }
+}
+
+function storeLinkLanguage(language: Language) {
+  try {
+    globalThis.localStorage?.setItem(LINK_LANGUAGE_KEY, language)
+  } catch {
+    // As above — the switch still works for this page, it is just not kept.
+  }
+}
+
+/**
+ * `US-046` — the language of a crew or client link page.
+ *
+ * The reader has no account, so it is their **browser's** language by
+ * `US-045`'s rule (AC-1), unless they chose one with the switcher before — that
+ * choice is kept in this browser and wins, on every Luna link (AC-3).
+ *
+ * The same `LanguageContext` the app uses, so `useStrings` and
+ * `useLanguageSwitch` work here unchanged: the switch writes to the browser
+ * where the app's writes to the account.
+ *
+ * **Ukrainian on the first render, the real language right after.** The link
+ * surface is a static export (`ADR-012`): the first render happens at build
+ * time, where there is no browser to ask. Settling it in an effect keeps that
+ * render and the reader's first one identical, and every page shows only a
+ * spinner until the gateway answers, so the change is never seen.
+ */
+export function LinkLanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguageState] = useState<Language>(DEFAULT_LANGUAGE)
+
+  useEffect(() => {
+    setLanguageState(storedLinkLanguage() ?? phoneLanguage())
+  }, [])
+
+  const change = async (next: Language): Promise<boolean> => {
+    setLanguageState(next)
+    storeLinkLanguage(next)
+    return true
+  }
+
+  return (
+    <LanguageContext.Provider
+      value={{ language, strings: stringsFor(language), setLanguage: change }}
+    >
+      {children}
+    </LanguageContext.Provider>
+  )
 }
 
 /**

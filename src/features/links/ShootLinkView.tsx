@@ -6,7 +6,6 @@ import * as Clipboard from 'expo-clipboard'
 import CalendarIcon from 'lucide-react-native/icons/calendar'
 import Check from 'lucide-react-native/icons/check'
 import Copy from 'lucide-react-native/icons/copy'
-import Lock from 'lucide-react-native/icons/lock'
 import X from 'lucide-react-native/icons/x'
 import { Avatar } from '../../components/Avatar'
 import { Badge } from '../../components/ui/badge'
@@ -194,28 +193,10 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
     <View className="bg-background flex-1">
       <Starfield />
       {/*
-        The product mark, and the one thing this page says about itself: the
-        link is private. No expiry line — `ADR-014` has no expiry column, and
-        the design's «Діє до…» would be untrue on every link.
-
-        **The link surface only** (`US-009`, 2026-09-21). In the app this bar
-        would sit under the navigator's own header, which is two headers; and
-        both things it says are untrue there — the reader is already inside the
-        product it names, and no link is involved in their being here. The same
-        reasoning retires the «не пересилайте» footer below.
+        The bar with the product mark used to be here; it is `LinkBar` now, in
+        `app/s/_layout.tsx`, so every link page has it with the UA / EN switch
+        (`US-046`). The in-app entrance never had one — see that layout.
       */}
-      {isLink ? (
-      <View className="bg-background border-border flex-row items-center gap-2.5 border-b px-4 py-3">
-        <View className="bg-secondary h-[26px] w-[26px] items-center justify-center rounded-md">
-          <Text className="text-caption text-foreground font-semibold">
-            {t.appName.slice(0, 1)}
-          </Text>
-        </View>
-        <Text className="text-body text-foreground flex-1 font-semibold">{t.appName}</Text>
-        <Icon as={Lock} size={12} strokeWidth={2} className="text-muted-foreground" />
-        <Text className="text-caption text-muted-foreground">{t.privateLink}</Text>
-      </View>
-      ) : null}
 
       <ScrollView contentContainerStyle={{ paddingBottom: isCrew && !answered ? 168 : 40 }}>
         <View className="gap-5 p-4">

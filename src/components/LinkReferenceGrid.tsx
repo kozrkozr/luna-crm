@@ -5,7 +5,7 @@ import { ImageViewer } from './ImageViewer'
 import { Card } from './ui/card'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 import { categoryKeyOf, categoryLabel } from '../i18n/vocabulary'
 import { openExternalUrl } from '../lib/openExternalUrl'
 import type { LinkReference } from '../features/links/gateway'
@@ -31,6 +31,7 @@ export function LinkReferenceGrid({
   references: LinkReference[]
   onMediaError?: () => void
 }) {
+  const t = useStrings()
   const [viewing, setViewing] = useState<string | null>(null)
 
   if (references.length === 0) return null
@@ -80,10 +81,10 @@ export function LinkReferenceGrid({
             {group.category ? (
               <View className="flex-row items-baseline justify-between">
                 <Text className="text-body-sm text-foreground font-medium">
-                  {categoryLabel(group.category, uk)}
+                  {categoryLabel(group.category, t)}
                 </Text>
                 <Text className="text-label text-muted-foreground">
-                  {`${group.items.length} ${uk.photosWord}`}
+                  {`${group.items.length} ${t.photosWord}`}
                 </Text>
               </View>
             ) : null}
@@ -97,7 +98,7 @@ export function LinkReferenceGrid({
                     onPress={() => reference.url && setViewing(reference.url)}
                     role="button"
                     accessibilityLabel={
-                      reference.category ? categoryLabel(reference.category, uk) : uk.references
+                      reference.category ? categoryLabel(reference.category, t) : t.references
                     }
                   >
                     {reference.url ? (

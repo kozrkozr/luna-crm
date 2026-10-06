@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { Text } from '../../../src/components/ui/text'
 import { LinkReferenceGrid } from '../../../src/components/LinkReferenceGrid'
-import { uk } from '../../../src/i18n/uk'
+import { useStrings } from '../../../src/i18n/LanguageProvider'
 import { resolveLink, type LinkReference } from '../../../src/features/links/gateway'
 import { useMediaReload } from '../../../src/features/links/useMediaReload'
 import { Starfield } from '../../../src/components/Starfield'
@@ -23,6 +23,7 @@ type Resolution =
   | { phase: 'ready'; references: LinkReference[] }
 
 export default function LinkAllReferencesScreen() {
+  const t = useStrings()
   const { token } = useLocalSearchParams<{ token?: string }>()
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
 
@@ -57,10 +58,10 @@ export default function LinkAllReferencesScreen() {
         <Starfield />
         <Text className="text-5xl">⚠️</Text>
         <Text className="text-title text-foreground text-center font-semibold">
-          {uk.linkInvalidTitle}
+          {t.linkInvalidTitle}
         </Text>
         <Text className="text-body-sm text-muted-foreground text-center" style={{ maxWidth: 280 }}>
-          {uk.linkInvalidSub}
+          {t.linkInvalidSub}
         </Text>
       </View>
     )
@@ -71,7 +72,7 @@ export default function LinkAllReferencesScreen() {
       <Starfield />
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View className="gap-3 p-4">
-          <Text className="text-title text-foreground font-semibold">{uk.allReferencesTitle}</Text>
+          <Text className="text-title text-foreground font-semibold">{t.allReferencesTitle}</Text>
           <LinkReferenceGrid references={resolution.references} onMediaError={onMediaError} />
         </View>
       </ScrollView>

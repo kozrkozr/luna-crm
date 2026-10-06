@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import { Text } from './ui/text'
 import { Button } from './ui/button'
-import { uk } from '../i18n/uk'
+import { useStrings } from '../i18n/LanguageProvider'
 import { SectionHeader } from './SectionHeader'
 import { openExternalUrl } from '../lib/openExternalUrl'
 
@@ -23,6 +23,7 @@ import { openExternalUrl } from '../lib/openExternalUrl'
  * one" even by mistake.
  */
 export function FileSection({ label, url }: { label: string; url: string | null }) {
+  const t = useStrings()
   return (
     <View>
       <SectionHeader label={label} />
@@ -37,7 +38,7 @@ export function FileSection({ label, url }: { label: string; url: string | null 
         /* §5.14's ComingSoonTile: a dashed placeholder on the frame, which is
            what «В розробці» has always been. */
         <View className="border-1.5 border-border items-center rounded-xl border border-dashed px-3.5 py-3">
-          <Text className="text-label text-muted-foreground">{uk.inDevelopment}</Text>
+          <Text className="text-label text-muted-foreground">{t.inDevelopment}</Text>
         </View>
       )}
     </View>
