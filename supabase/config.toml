@@ -260,6 +260,20 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# US-048 — the three auth emails, both languages in each; see supabase/templates/README.md.
+# Local stack only: the hosted projects take these by hand in the dashboard.
+[auth.email.template.confirmation]
+subject = "{{ if eq .Data.language \"en\" }}Confirm your registration in Luna Shoots{{ else }}Підтвердіть реєстрацію в Luna Shoots{{ end }}"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "{{ if eq .Data.language \"en\" }}Reset your Luna Shoots password{{ else }}Відновлення пароля в Luna Shoots{{ end }}"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "{{ if eq .Data.language \"en\" }}Confirm your new address in Luna Shoots{{ else }}Підтвердіть нову адресу в Luna Shoots{{ end }}"
+content_path = "./supabase/templates/email_change.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

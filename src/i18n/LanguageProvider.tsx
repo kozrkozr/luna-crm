@@ -58,7 +58,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (!active || !data) return
       // Checked rather than cast: an unexpected value falls back to Ukrainian
       // instead of resolving to an empty dictionary.
-      if (data.language === 'uk' || data.language === 'en') setLanguageState(data.language)
+      if (data.language === 'uk' || data.language === 'en') {
+        setLanguageState(data.language)
+        void syncEmailLanguage(data.language)
+      }
     })()
 
     return () => {
@@ -101,6 +104,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLanguageState(previous)
       return false
     }
+    // `US-048` AC-3 — the next auth email follows the change.
+    void syncEmailLanguage(next)
     return true
   }
 
@@ -120,6 +125,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function PhoneLanguageProvider({ children }: { children: ReactNode }) {
   const [language] = useState<Language>(phoneLanguage)
   return <PhoneLanguageContext.Provider value={language}>{children}</PhoneLanguageContext.Provider>
+}
+
+/**
+ * `US-048` — the account's language, copied into its auth metadata, which is
+ * the only thing the Supabase email templates can read (`.Data.language`).
+ *
+ * Written on every change and checked on every launch. Registration writes it
+ * too (`register.ts`), but an account from before `US-048` has none — and one
+ * that had switched to English would otherwise go on getting Ukrainian email
+ * until it switched again. The check makes the first launch after this release
+ * fix that, and is a no-op on every launch after.
+ *
+ * Best effort: a failure here leaves the app correct and only the next email
+ * in the old language, so nothing is reported.
+ */
+async function syncEmailLanguage(language: Language) {
+  const { data } = await supabase.auth.getUser()
+  if (!data.user || data.user.user_metadata?.language === language) return
+  await supabase.auth.updateUser({ data: { language } })
 }
 
 /** `US-046` AC-3 — where a link reader's choice is kept, in their browser. */

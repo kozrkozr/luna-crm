@@ -1,0 +1,13 @@
+<div style="max-width:480px;margin:0 auto;padding:24px">
+{{ if eq .Data.language "en" }}
+  <h2 style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:20px;font-weight:600;color:#111;margin:0 0 16px">New password</h2>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#333;margin:0 0 20px">To set a new password for Luna Shoots, open the link:</p>
+  <p style="margin:0"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none">Set a new password</a></p>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#888;margin:24px 0 0">If you didn't ask to change your password, just ignore this email — your password stays the same.</p>
+{{ else }}
+  <h2 style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:20px;font-weight:600;color:#111;margin:0 0 16px">Новий пароль</h2>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#333;margin:0 0 20px">Щоб задати новий пароль для Luna Shoots, відкрийте посилання:</p>
+  <p style="margin:0"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none">Задати новий пароль</a></p>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#888;margin:24px 0 0">Якщо ви не просили змінити пароль, просто проігноруйте цей лист — пароль залишиться тим самим.</p>
+{{ end }}
+</div>

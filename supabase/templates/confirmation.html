@@ -1,0 +1,13 @@
+<div style="max-width:480px;margin:0 auto;padding:24px">
+{{ if eq .Data.language "en" }}
+  <h2 style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:20px;font-weight:600;color:#111;margin:0 0 16px">Confirm your registration</h2>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#333;margin:0 0 20px">To finish registering in Luna Shoots, open the link:</p>
+  <p style="margin:0"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none">Confirm email</a></p>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#888;margin:24px 0 0">If you didn't register, just ignore this email.</p>
+{{ else }}
+  <h2 style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:20px;font-weight:600;color:#111;margin:0 0 16px">Підтвердіть реєстрацію</h2>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;color:#333;margin:0 0 20px">Щоб завершити реєстрацію в Luna Shoots, відкрийте посилання:</p>
+  <p style="margin:0"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none">Підтвердити пошту</a></p>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#888;margin:24px 0 0">Якщо ви не реєструвались, просто проігноруйте цей лист.</p>
+{{ end }}
+</div>
