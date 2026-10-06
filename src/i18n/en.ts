@@ -625,26 +625,24 @@ export const en: Strings = {
   reminderHourForms: ['hour', 'hours'],
   reminderMore: 'and {count} more',
   reminderAt: 'at {time}',
-  // US-042 — owner, 2026-10-06. The caption, the save toast and the two
-  // accessibility labels are NOT confirmed yet (US-042 open question 1).
+  // US-042 — owner, 2026-10-06.
   deadlineAdd: 'Add delivery deadline',
   deadlineAddCaption: 'Optional · appears in the calendar after the shoot',
   deadlineLabel: 'Delivery deadline',
   deadlineByTemplate: 'by {date}',
   deadlineInTemplate: 'In {days}',
   deadlineOverdueTemplate: 'Overdue by {days}',
-  // AC-10 — proposed, not yet confirmed (US-042 open question 2).
   deadlineOverdue: 'Overdue',
   deadlineDelivered: 'Delivered',
   deadlineSteps: ['Shot', 'Editing', 'Delivered'],
   deadlineMarkDelivered: 'Mark as delivered to client',
   deadlineEditorTitle: 'Delivery deadline for files',
   deadlineEditorCaption:
-    "Counted from the shoot day. The date will appear on the finished shoot's card in the calendar.",
+    "Counted from the shoot day. It shows on the finished shoot's card in the calendar.",
   deadlinePickDate: 'Or pick a date',
   deadlineAfterShootTemplate: '{days} after the shoot',
   deadlineOnShootDay: 'On the shoot day',
-  deadlineSavedTemplate: 'Delivery deadline — {date}',
+  deadlineSavedTemplate: 'Deadline set: {date}',
   deadlineRemoved: 'Deadline removed',
   deadlineMarkedDelivered: 'Marked as delivered to client',
   deadlineEditA11y: 'Change deadline',
