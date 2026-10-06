@@ -29,9 +29,15 @@ form, the shoot's «Оплата» card and «Статистика».
 - **Then** its currency is UAH
 
 ### AC-4 — Changing it
-- **Given** the profile
-- **Then** a «Валюта» row shows the account's currency and lets the creator pick another from
-  AC-1's list
+- **Given** the profile's «Налаштування» section
+- **Then** a «Валюта» row sits right under «Мова застосунку», showing the current currency on the
+  right («₴ UAH») and a chevron, drawn like the «Сповіщення» row
+- **When** the creator taps it
+- **Then** a separate «Валюта» screen opens (as «Сповіщення» does): the five currencies as rows —
+  symbol, name, code — the current one ticked, and under the list «Суми не перераховуються —
+  змінюється лише символ.»
+- **When** they tap another currency
+- **Then** it is saved at once and ticked; there is no save button (owner, 2026-10-06)
 - **When** they change it
 - **Then** every amount already entered keeps its number and takes the new symbol — no conversion
   (12 000 ₴ becomes 12 000 zł)
@@ -40,6 +46,17 @@ form, the shoot's «Оплата» card and «Статистика».
 - Every amount the app displays or takes: the price and prepayment fields, the «Оплата» card,
   every figure in «Статистика». Amounts stay whole numbers.
 - Link views show no money (unchanged).
+
+### AC-5a — Copy (owner, 2026-10-06)
+| Where | UK | EN |
+|---|---|---|
+| Profile row and screen title | Валюта | Currency |
+| UAH | Гривня | Ukrainian hryvnia |
+| USD | Долар США | US dollar |
+| EUR | Євро | Euro |
+| PLN | Польський злотий | Polish złoty |
+| CZK | Чеська крона | Czech koruna |
+| Under the list | Суми не перераховуються — змінюється лише символ. | Amounts are not converted — only the symbol changes. |
 
 ### AC-6 — How an amount is written
 | Currency | Written |
@@ -59,4 +76,4 @@ form, the shoot's «Оплата» card and «Статистика».
 `US-016`, `US-045`.
 
 ## Open questions
-1. Copy for the «Валюта» row and how each currency is named in the list, in both languages.
+None — the screen and its copy were confirmed by the owner, chat 2026-10-06.
