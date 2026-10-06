@@ -36,6 +36,8 @@ import {
   roleWithEmoji,
 } from '../../../src/i18n/vocabulary'
 import { useLanguage, useStrings } from '../../../src/i18n/LanguageProvider'
+import { useCurrency } from '../../../src/features/account/currency'
+import { currencySymbol } from '../../../src/features/shoots/money'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { failed, selected as tickSelection, succeeded, tapped } from '../../../src/lib/haptics'
 import { useProfile } from '../../../src/features/auth/useProfile'
@@ -107,6 +109,7 @@ type Draft = {
 export default function ProfileScreen() {
   const t = useStrings()
   const language = useLanguage()
+  const currency = useCurrency()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const state = useProfile()
@@ -789,6 +792,28 @@ export default function ProfileScreen() {
                 </View>
                 <LanguageSwitcher />
               </View>
+
+              {/* `US-047` AC-4 — «Валюта», right under the language, drawn
+                  like «Сповіщення» with the current currency on the right. */}
+              <Pressable
+                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+                onPress={() => {
+                  tapped()
+                  router.push('/(app)/currency')
+                }}
+                role="button"
+              >
+                <Text className="text-body-sm text-muted-foreground flex-1">{t.currencyTitle}</Text>
+                <Text className="text-body-sm text-muted-foreground">
+                  {`${currencySymbol(currency)} ${currency}`}
+                </Text>
+                <Icon
+                  as={ChevronRight}
+                  size={15}
+                  strokeWidth={2}
+                  className="text-muted-foreground shrink-0"
+                />
+              </Pressable>
 
               {/* US-041 AC-9 — «Сповіщення», between the language and support,
                   drawn like the support row (owner, 2026-10-05). The canvas's

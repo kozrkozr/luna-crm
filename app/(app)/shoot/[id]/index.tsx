@@ -32,6 +32,7 @@ import { ImageViewer } from '../../../../src/components/ImageViewer'
 import { type SheetPerson } from '../../../../src/components/PersonSheet'
 import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
 import { formatMoney, payment } from '../../../../src/features/shoots/money'
+import { useCurrency } from '../../../../src/features/account/currency'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { ReferencesEditor } from '../../../../src/components/ReferencesEditor'
@@ -932,6 +933,7 @@ function ContactRow({
  * the creator can reach this screen at all.
  */
 function PaymentCard({ shoot }: { shoot: Shoot }) {
+  const currency = useCurrency()
   const t = useStrings()
   const pay = payment(shoot)
 
@@ -966,7 +968,7 @@ function PaymentCard({ shoot }: { shoot: Shoot }) {
           className="text-foreground font-semibold"
           style={{ fontSize: 26, lineHeight: 30, letterSpacing: -0.5 }}
         >
-          {formatMoney(pay.price)}
+          {formatMoney(pay.price, currency)}
         </Text>
         <Text className="text-body-sm text-muted-foreground">{t.fullPrice}</Text>
       </View>
@@ -981,7 +983,7 @@ function PaymentCard({ shoot }: { shoot: Shoot }) {
               pay.prepayment === 0 ? 'text-muted-foreground' : 'text-foreground'
             }`}
           >
-            {pay.prepayment === 0 ? t.prepaymentNoneValue : formatMoney(pay.prepayment)}
+            {pay.prepayment === 0 ? t.prepaymentNoneValue : formatMoney(pay.prepayment, currency)}
           </Text>
         </View>
         <View className="border-border flex-1 border-l px-4 py-3">
@@ -996,7 +998,7 @@ function PaymentCard({ shoot }: { shoot: Shoot }) {
               pay.badge === 'paid' ? 'text-success' : 'text-warn'
             }`}
           >
-            {formatMoney(pay.balance)}
+            {formatMoney(pay.balance, currency)}
           </Text>
         </View>
       </View>

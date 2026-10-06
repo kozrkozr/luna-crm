@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router'
 import { LanguageProvider, useStrings } from '../../src/i18n/LanguageProvider'
+import { CurrencyProvider } from '../../src/features/account/currency'
 import { RequireSession } from '../../src/features/auth/RequireSession'
 import { navigationScreenOptions } from '../../src/theme/palette'
 import { RemindersHost } from '../../src/features/reminders/RemindersHost'
@@ -22,7 +23,10 @@ export default function AppLayout() {
         user's row: there is nothing to resolve until there is a session.
       */}
       <LanguageProvider>
-        <AppStack />
+        {/* `US-047` — the account's currency, beside its language. */}
+        <CurrencyProvider>
+          <AppStack />
+        </CurrencyProvider>
         {/* US-041 — inside the provider, because reminders are worded in the
             account's language (AC-12), and inside the session, because they are
             planned from the creator's shoots. */}
@@ -119,6 +123,8 @@ function AppStack() {
       {/* US-041's «Сповіщення» — pushed from the profile tab like `password`,
           with its own «‹ Профіль» header from `Notifications.dc.html`. */}
       <Stack.Screen name="notifications" options={{ headerShown: false }} />
+      {/* US-047's «Валюта» — pushed from the profile like «Сповіщення». */}
+      <Stack.Screen name="currency" options={{ headerShown: false }} />
       {/*
         The shoot's two screens draw their own headers (2026-08-30), which makes
         three routes in this navigator that do — `index` was the first.

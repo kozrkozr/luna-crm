@@ -48,7 +48,9 @@ import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import { RoleChip } from '../../components/RoleChip'
 import {
   PREPAYMENT_STEPS,
-  CURRENCY,
+  currencySymbol,
+  symbolLeads,
+  type Currency,
   formatAmount,
   parseAmount,
   payment,
@@ -57,6 +59,7 @@ import {
 import { Starfield } from '../../components/Starfield'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { ReferencesEditor } from '../../components/ReferencesEditor'
+import { useCurrency } from '../account/currency'
 import {
   addImageReference,
   addLinkReference,
@@ -230,6 +233,8 @@ function openSections(
 
 export function ShootForm(props: ShootFormMode) {
   const t = useStrings()
+  /** `US-047` — prices are typed and grouped in the account's currency. */
+  const currency = useCurrency()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const isEdit = props.mode === 'edit'
@@ -373,8 +378,8 @@ export function ShootForm(props: ShootFormMode) {
         setClientNotes(shoot.clientNotes ?? '')
         // Null renders as an EMPTY field, not «0» — the form must not look like
         // somebody priced this shoot at nothing when nobody priced it at all.
-        setPrice(shoot.price === null ? '' : formatAmount(shoot.price))
-        setPrepayment(shoot.prepayment === null ? '' : formatAmount(shoot.prepayment))
+        setPrice(shoot.price === null ? '' : formatAmount(shoot.price, currency))
+        setPrepayment(shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency))
         /*
           The baseline «Скасувати» compares against. Built from the same values
           just set, not read back out of state — these setters have not applied
@@ -394,8 +399,8 @@ export function ShootForm(props: ShootFormMode) {
             locationDetails: shoot.locationNote ?? '',
             notes: shoot.notes ?? '',
             clientNotes: shoot.clientNotes ?? '',
-            price: shoot.price === null ? '' : formatAmount(shoot.price),
-            prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment),
+            price: shoot.price === null ? '' : formatAmount(shoot.price, currency),
+            prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency),
             references: '',
           })
         )
@@ -933,11 +938,12 @@ export function ShootForm(props: ShootFormMode) {
 
               <View className="flex-row gap-2.5">
                 <AmountField
+                  currency={currency}
                   label={t.priceLabel}
                   value={price}
                   onChangeText={(text) => {
                     const next = parseAmount(text)
-                    setPrice(next === null ? '' : formatAmount(next))
+                    setPrice(next === null ? '' : formatAmount(next, currency))
                     /*
                       Typing the price DOWN drags the prepayment with it, which is
                       the artboard's own `onPrice`. Without it the form would sit
@@ -945,17 +951,18 @@ export function ShootForm(props: ShootFormMode) {
                       downwards, blaming the field they did not touch.
                     */
                     if (next !== null && prepaymentValue !== null && prepaymentValue > next) {
-                      setPrepayment(formatAmount(next))
+                      setPrepayment(formatAmount(next, currency))
                     }
                   }}
                 />
                 <AmountField
+                  currency={currency}
                   label={t.prepaymentLabel}
                   value={prepayment}
                   invalid={pay.invalid}
                   onChangeText={(text) => {
                     const next = parseAmount(text)
-                    setPrepayment(next === null ? '' : formatAmount(next))
+                    setPrepayment(next === null ? '' : formatAmount(next, currency))
                   }}
                 />
               </View>
@@ -969,7 +976,7 @@ export function ShootForm(props: ShootFormMode) {
                       label={step === 0 ? t.prepaymentNone : `${step}${t.percentSuffix}`}
                       active={chip.active}
                       onPress={() =>
-                        setPrepayment(chip.value === null ? '' : formatAmount(chip.value))
+                        setPrepayment(chip.value === null ? '' : formatAmount(chip.value, currency))
                       }
                     />
                   )
@@ -1184,7 +1191,8 @@ export function ShootForm(props: ShootFormMode) {
 
 /** A field label carrying the design's «— необовʼязково» in a lighter tone. */
 /**
- * One money field: a label, a numeric input, and a ₴ pinned inside its right edge.
+ * One money field: a label, a numeric input, and the account's currency symbol
+ * pinned inside it — on the right, or on the left for «$» (`US-047` AC-6).
  *
  * `New Shoot.dc.html` draws the symbol as an absolutely positioned child with
  * `pointer-events:none` over an input padded 30px on the right. Same here — it
@@ -1196,17 +1204,21 @@ export function ShootForm(props: ShootFormMode) {
  * decimal key, which matches a column that holds whole hryvnia.
  */
 function AmountField({
+  currency,
   label,
   value,
   onChangeText,
   invalid = false,
 }: {
+  /** `US-047` — whose symbol is pinned, and on which side (AC-6). */
+  currency: Currency
   label: string
   value: string
   onChangeText: (text: string) => void
   invalid?: boolean
 }) {
   const t = useStrings()
+  const leads = symbolLeads(currency)
   return (
     <View className="min-w-0 flex-1 gap-[7px]">
       <Text className="text-body-sm text-foreground font-medium">{label}</Text>
@@ -1216,10 +1228,15 @@ function AmountField({
           onChangeText={onChangeText}
           placeholder={t.amountPlaceholder}
           keyboardType="number-pad"
-          className={`pr-[30px] ${invalid ? 'border-destructive' : ''}`}
+          // Room for the symbol on its own side — «zł» and «Kč» are two
+          // letters wide, so 30pt is kept for every currency.
+          className={`${leads ? 'pl-[30px]' : 'pr-[30px]'} ${invalid ? 'border-destructive' : ''}`}
         />
-        <Text className="text-body text-muted-foreground absolute right-3" pointerEvents="none">
-          {CURRENCY}
+        <Text
+          className={`text-body text-muted-foreground absolute ${leads ? 'left-3' : 'right-3'}`}
+          pointerEvents="none"
+        >
+          {currencySymbol(currency)}
         </Text>
       </View>
     </View>

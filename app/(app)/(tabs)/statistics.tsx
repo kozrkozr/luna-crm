@@ -19,7 +19,13 @@ import { useStrings } from '../../../src/i18n/LanguageProvider'
 import type { Strings } from '../../../src/i18n'
 import { listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { plural } from '../../../src/features/shoots/home'
-import { CURRENCY, formatAmount, formatMoney } from '../../../src/features/shoots/money'
+import {
+  currencySymbol,
+  formatAmount,
+  formatMoney,
+  symbolLeads,
+} from '../../../src/features/shoots/money'
+import { useCurrency } from '../../../src/features/account/currency'
 import { statistics, type StatsPeriod, type Statistics } from '../../../src/features/shoots/stats'
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'loaded'; shoots: Shoot[] }
@@ -47,6 +53,8 @@ type State = { status: 'loading' } | { status: 'error' } | { status: 'loaded'; s
  */
 export default function StatisticsScreen() {
   const t = useStrings()
+  // `US-047` — every figure here is in the account's currency.
+  const currency = useCurrency()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [period, setPeriod] = useState<StatsPeriod>('month')
 
@@ -108,8 +116,9 @@ export default function StatisticsScreen() {
                 icon={CreditCard}
                 tint="bg-chart-3"
                 stripe="bg-success"
-                figure={formatAmount(stats.income)}
-                unit={CURRENCY}
+                figure={formatAmount(stats.income, currency)}
+                unit={currencySymbol(currency)}
+                unitFirst={symbolLeads(currency)}
                 unitClassName="text-title-lg text-success font-medium"
                 figureClassName="text-success"
                 line={line}
@@ -136,13 +145,13 @@ export default function StatisticsScreen() {
                     label={t.statsAverage}
                     icon={DollarSign}
                     tint="bg-chart-4"
-                    value={formatMoney(stats.average)}
+                    value={formatMoney(stats.average, currency)}
                   />
                   <SecondaryRow
                     label={t.statsUnpaid}
                     icon={Clock}
                     tint="bg-chart-1"
-                    value={formatMoney(stats.unpaid)}
+                    value={formatMoney(stats.unpaid, currency)}
                     valueClassName="text-warn"
                     divided
                   />
@@ -208,6 +217,7 @@ function HeroCard({
   stripe,
   figure,
   unit,
+  unitFirst = false,
   unitClassName,
   figureClassName,
   line,
@@ -219,6 +229,8 @@ function HeroCard({
   stripe: string
   figure: string
   unit: string
+  /** `US-047` AC-6 — «$12,000»: the dollar sign leads. */
+  unitFirst?: boolean
   unitClassName: string
   figureClassName: string
   line: string
@@ -238,6 +250,7 @@ function HeroCard({
           <SectionLabel label={label} />
         </View>
         <View className="mt-3 flex-row items-baseline gap-1.5">
+          {unitFirst ? <Text className={unitClassName}>{unit}</Text> : null}
           <Text
             className={`text-[38px] font-semibold ${figureClassName}`}
             // Absolute, like every line height in the scale: the figure is one
@@ -248,7 +261,7 @@ function HeroCard({
           </Text>
           {/* The unit carries its own colour: `₴` is the figure's green, while
               «зйомок» is dim — the artboard tints one and not the other. */}
-          <Text className={unitClassName}>{unit}</Text>
+          {unitFirst ? null : <Text className={unitClassName}>{unit}</Text>}
         </View>
         {line ? <Text className="text-body-sm text-muted-foreground mt-2">{line}</Text> : null}
       </View>

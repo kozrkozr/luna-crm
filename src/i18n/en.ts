@@ -75,6 +75,10 @@ export const en: Strings = {
   planFree: 'Free',
   settingsSection: 'Settings',
   appLanguage: 'App language',
+  // US-047 — owner, 2026-10-06.
+  currencyTitle: 'Currency',
+  currencyNames: ['Ukrainian hryvnia', 'US dollar', 'Euro', 'Polish złoty', 'Czech koruna'],
+  currencyHint: 'Amounts are not converted — only the symbol changes.',
   contactSupport: 'Contact support',
   versionTemplate: 'LUNA CRM · version {version}',
   phoneFormatInvalid: 'Check the phone number',

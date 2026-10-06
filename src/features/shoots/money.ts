@@ -6,12 +6,43 @@
  * screens look up the words — the same split `passwordRules.ts` uses, and for
  * the same reason. The arithmetic is what wants testing, not the copy.
  *
- * **Whole hryvnia.** The artboards show no decimals and the columns are
- * `integer`; there are no kopecks anywhere in this file by design.
+ * **Whole units.** The artboards show no decimals and the columns are
+ * `integer`; there are no kopecks or cents anywhere in this file by design.
+ *
+ * **In the account's currency** (`US-047`, `ADR-022`). The columns hold a bare
+ * number and the account says what it is in — so changing the currency
+ * changes the symbol and never the number (AC-4).
  */
 
-/** The one currency. `Shoot Detail v3.dc.html` hard-codes ₴ and so does this. */
-export const CURRENCY = '₴'
+/** `US-047` AC-1 — the five, in the order the «Валюта» screen lists them. */
+export const CURRENCIES = ['UAH', 'USD', 'EUR', 'PLN', 'CZK'] as const
+
+export type Currency = (typeof CURRENCIES)[number]
+
+const SYMBOL: Record<Currency, string> = {
+  UAH: '₴',
+  USD: '$',
+  EUR: '€',
+  PLN: 'zł',
+  CZK: 'Kč',
+}
+
+export function currencySymbol(currency: Currency): string {
+  return SYMBOL[currency]
+}
+
+/**
+ * `US-047` AC-6 — the dollar alone is written symbol-first, «$12,000»; every
+ * other is «12 000 ₴». Callers that lay the symbol out themselves (the amount
+ * field, the statistics figure) ask this rather than test for 'USD'.
+ */
+export function symbolLeads(currency: Currency): boolean {
+  return currency === 'USD'
+}
+
+export function isCurrency(value: unknown): value is Currency {
+  return (CURRENCIES as readonly unknown[]).includes(value)
+}
 
 /**
  * Group thousands: `12000` → `12 000`.
@@ -25,28 +56,33 @@ export const CURRENCY = '₴'
  * The separator is a **non-breaking space** (U+00A0), so an amount never wraps
  * between its thousands and its hundreds at the end of a line.
  */
-export function formatAmount(value: number): string {
+export function formatAmount(value: number, currency: Currency = 'UAH'): string {
+  // `US-047` AC-6 — a comma between a dollar amount's thousands, as in the US;
+  // the non-breaking space everywhere else.
+  const separator = currency === 'USD' ? ',' : '\u00A0'
   const whole = Math.trunc(Math.abs(value))
   const digits = String(whole)
   let grouped = ''
   for (let i = 0; i < digits.length; i++) {
     // Count from the right: a separator every three digits, never leading.
-    if (i > 0 && (digits.length - i) % 3 === 0) grouped += ' '
+    if (i > 0 && (digits.length - i) % 3 === 0) grouped += separator
     grouped += digits[i]
   }
   return value < 0 ? `-${grouped}` : grouped
 }
 
 /**
- * `12000` → `12\u00A0000\u00A0₴`. What every read-only surface shows.
+ * `12000` → `12\u00A0000\u00A0₴`, or `$12,000` (`US-047` AC-6). What every
+ * read-only surface shows.
  *
  * The space before the symbol is non-breaking too, for the same reason the
  * grouping separator is: an amount must never be split across a line from its
  * currency. Both are U+00A0 and neither is a plain space — worth knowing before
  * anyone writes a test that compares against one.
  */
-export function formatMoney(value: number): string {
-  return `${formatAmount(value)} ${CURRENCY}`
+export function formatMoney(value: number, currency: Currency): string {
+  const amount = formatAmount(value, currency)
+  return symbolLeads(currency) ? `${SYMBOL[currency]}${amount}` : `${amount}\u00A0${SYMBOL[currency]}`
 }
 
 /**

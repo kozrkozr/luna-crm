@@ -82,6 +82,12 @@ export const uk = {
   planFree: 'Free',
   settingsSection: 'Налаштування',
   appLanguage: 'Мова застосунку',
+  /* ── US-047 — the account's currency. Copy approved by the owner, 2026-10-06. ── */
+  /** The profile row and the screen's title. */
+  currencyTitle: 'Валюта',
+  /** In `CURRENCIES` order: UAH, USD, EUR, PLN, CZK. */
+  currencyNames: ['Гривня', 'Долар США', 'Євро', 'Польський злотий', 'Чеська крона'],
+  currencyHint: 'Суми не перераховуються — змінюється лише символ.',
   contactSupport: 'Написати в підтримку',
   /** «LUNA CRM · версія 0.1.0» — the number comes from `expo-constants`. */
   versionTemplate: 'LUNA CRM · версія {version}',

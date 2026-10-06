@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase/client'
 import { confirmRedirectUrl } from './emailConfirmation'
 import { phoneLanguage } from '../../i18n/device'
+import { regionCurrency } from '../account/currency'
 
 export type RegistrationInput = {
   name: string
@@ -76,6 +77,8 @@ export async function register(input: RegistrationInput): Promise<RegistrationRe
           the auth metadata as well, where `US-048`'s email templates read it.
         */
         language: phoneLanguage(),
+        // `US-047` AC-2 — the account's currency, from the phone's region.
+        currency: regionCurrency(),
       },
     },
   })
