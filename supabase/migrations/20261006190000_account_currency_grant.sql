@@ -1,0 +1,12 @@
+-- US-047 AC-4 — the account may change its own currency.
+--
+-- `ADR-019` (20260929120000) narrowed what a signed-in user may update on
+-- their own `users` row to a column list, so that `email_confirmed_at` can
+-- never be written from the app. `currency` (20261006180000) arrived after and
+-- was not on it, so every change from the «Валюта» screen was refused with
+-- "permission denied for table users" — and the screen, which shows a choice
+-- at once and puts it back when the write fails, flicked back to UAH.
+--
+-- Column-level, like the rest of that grant: adding a column to the table must
+-- never make it writable by default.
+grant update (currency) on public.users to authenticated;
