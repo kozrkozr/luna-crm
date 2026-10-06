@@ -213,7 +213,10 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
 
       {canMarkDelivered(shoot) ? (
         <Pressable
-          className="border-border min-h-[46px] flex-row items-center gap-[9px] border-t px-3.5 active:bg-secondary"
+          // Centred, and shaped like «Запрошення на зйомку» at the foot of the
+          // client's card on «Деталі» (owner, 2026-10-06) — the same kind of
+          // single action closing a card.
+          className="border-border min-h-11 flex-row items-center justify-center gap-[7px] border-t p-2 active:bg-secondary"
           disabled={busy}
           onPress={() => {
             tapped()
@@ -221,8 +224,8 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
           }}
           role="button"
         >
-          <Icon as={Check} size={15} strokeWidth={2} className="text-muted-foreground" />
-          <Text className="text-label text-muted-foreground font-semibold">
+          <Icon as={Check} size={14} strokeWidth={1.8} className="text-muted-foreground" />
+          <Text className="text-label text-foreground font-semibold">
             {t.deadlineMarkDelivered}
           </Text>
         </Pressable>
