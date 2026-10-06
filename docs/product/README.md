@@ -5,14 +5,24 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-10-05 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03 and 2026-10-04)*
+- **Frozen:** 2026-10-06 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04 and 2026-10-05)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `0312f14` — *docs(US-041): list two shoots in the digest, the rest counted on the second line*.
+- **Source commit:** `731d005` — *docs(US-042): add an optional delivery deadline to a shoot*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-10-06 re-freeze (`US-042`)
+**A shoot can carry an optional delivery deadline**, from beta feedback. `US-042` (in `EP-02`)
+puts it on the «Матеріали» tab: a date the finished files are owed by, a chip relative to today
+(neutral, warning within 2 days, danger once overdue), a «Знято · Обробка · Передано» progress
+driven by the derived «Завершена» status, and «Позначити як передано клієнту» on finished shoots.
+Creator only — never in a link payload. The deadline moves with the shoot's date by the same
+number of days. `data-model.md` gains `Shoot.delivery_due` and `Shoot.delivered_at`.
+
+- **AC-10, the calendar card, waits on design** — build AC-1 to AC-9 first.
 
 ## What moved in the second 2026-10-05 re-freeze (`US-041` AC-3, AC-12)
 **The evening digest's copy is new**, after the owner tested the first build: three titles per

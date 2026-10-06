@@ -37,6 +37,8 @@ Only registered users have a language preference — link views are Ukrainian-on
 | `location_attachment` | one image **or** one video (`US-018` AC-2) |
 | `raw_files_url`, `finished_photos_url` | nullable pasted external links. Kept beside hosted files as an alternative (`US-024`, `US-025`; `ADR-020`) |
 | `files_delete_at` | **new, `ADR-020`** — set once, at the first `ShootFile` upload, to that moment + 30 days; never moved by later uploads. Null while the shoot has no hosted files (`US-036` AC-2) |
+| `delivery_due` | **new, `US-042`** — nullable date the finished files are owed by; never before `date`, and moved by the same number of days when `date` changes (AC-8). Creator only — never in a link payload |
+| `delivered_at` | **new, `US-042`** — nullable; set by «Позначити як передано клієнту», cleared with `delivery_due` (AC-7) |
 | `deleted_at` | soft delete — see Link validity |
 
 ### Reference
