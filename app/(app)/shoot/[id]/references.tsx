@@ -5,6 +5,7 @@ import { Text } from '../../../../src/components/ui/text'
 import { ReferenceGrid } from '../../../../src/components/ReferenceGrid'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
 import { listReferences, type Reference } from '../../../../src/features/references/api'
+import { categoryKeyOf, categoryLabel } from '../../../../src/i18n/vocabulary'
 import { Starfield } from '../../../../src/components/Starfield'
 
 type State =
@@ -69,14 +70,14 @@ export default function AllReferencesScreen() {
   }
 
   const shown = category
-    ? state.references.filter((reference) => reference.category === category)
+    ? state.references.filter((reference) => categoryKeyOf(reference.category) === categoryKeyOf(category))
     : state.references
 
   return (
     <>
       {/* The group's own name as the title when the page is narrowed to it —
           «Усі референси» would contradict the list underneath. */}
-      {category ? <Stack.Screen options={{ title: category }} /> : null}
+      {category ? <Stack.Screen options={{ title: categoryLabel(category, t) }} /> : null}
       <View className="bg-background flex-1">
         <Starfield />
         <ScrollView contentInsetAdjustmentBehavior="automatic">

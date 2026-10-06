@@ -18,7 +18,13 @@ import { Avatar } from '../../../../../src/components/Avatar'
 import { RoleChip } from '../../../../../src/components/RoleChip'
 import { useDiscardGuard } from '../../../../../src/components/DiscardGuard'
 import { FieldLabel } from '../../../../../src/components/ShootFormFields'
-import { ROLES_UK, roleWithEmoji, uk } from '../../../../../src/i18n/uk'
+import {
+  OTHER_ROLE,
+  ROLE_KEYS,
+  roleLabel,
+  roleWithEmoji,
+} from '../../../../../src/i18n/vocabulary'
+import type { Strings } from '../../../../../src/i18n'
 import { VisibilityNote } from '../../../../../src/components/Visibility'
 import { useStrings } from '../../../../../src/i18n/LanguageProvider'
 import { succeeded, tapped } from '../../../../../src/lib/haptics'
@@ -88,7 +94,7 @@ export default function AddCrewScreen() {
   const [phone, setPhone] = useState('')
   const [instagram, setInstagram] = useState('')
   const [telegram, setTelegram] = useState('')
-  const [role, setRole] = useState<string>(ROLES_UK[0])
+  const [role, setRole] = useState<string>(ROLE_KEYS[0])
   /** Only read when `role` is «Інша роль» — see `resolvedRole`. */
   const [customRole, setCustomRole] = useState('')
   const [note, setNote] = useState('')
@@ -222,7 +228,7 @@ export default function AddCrewScreen() {
     registration and the profile — `crew_members.role` is a `text` column, so
     the free-text value stores like any other.
   */
-  const resolvedRole = role === uk.otherRole ? customRole.trim() : role
+  const resolvedRole = role === OTHER_ROLE ? customRole.trim() : role
 
   /*
     «Скасувати» asks before discarding (owner, 2026-09-06).
@@ -233,7 +239,7 @@ export default function AddCrewScreen() {
     decisions, which is no less annoying for having been made by tapping rather
     than typing.
 
-    `ROLES_UK[0]` is the role a fresh form starts on, so it is not a change; a
+    `ROLE_KEYS[0]` is the role a fresh form starts on, so it is not a change; a
     reader who picks a different one has changed something.
   */
   const dirty =
@@ -243,13 +249,13 @@ export default function AddCrewScreen() {
     instagram.trim() !== '' ||
     telegram.trim() !== '' ||
     note.trim() !== '' ||
-    resolvedRole !== ROLES_UK[0]
+    resolvedRole !== ROLE_KEYS[0]
   const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
     dirty,
     onLeave: () => router.back(),
   })
   const newReady = name.trim().length > 1 && !!resolvedRole
-  const contacts = filterContacts(past ?? [], query, onShoot)
+  const contacts = filterContacts(past ?? [], query, onShoot, t)
 
   return (
     <View className="bg-background flex-1">
@@ -405,13 +411,16 @@ export default function AddCrewScreen() {
 function filterContacts(
   contacts: PastCrewMember[],
   query: string,
-  onShoot: Set<string>
+  onShoot: Set<string>,
+  /** `US-044` — a role is found by its name in the app's language (AC-4). */
+  t: Strings
 ): PastCrewMember[] {
   const term = query.trim().toLowerCase()
   const matched = term
     ? contacts.filter(
         (person) =>
-          person.name.toLowerCase().includes(term) || person.role.toLowerCase().includes(term)
+          person.name.toLowerCase().includes(term) ||
+          roleLabel(person.role, t).toLowerCase().includes(term)
       )
     : contacts
 
@@ -552,7 +561,7 @@ function ContactRow({
         <Text className="text-label text-muted-foreground" numberOfLines={1}>
           {inCrew
             ? t.alreadyInCrewMeta
-            : [roleWithEmoji(person.role), contact].filter(Boolean).join(' · ')}
+            : [roleWithEmoji(person.role, t), contact].filter(Boolean).join(' · ')}
         </Text>
       </View>
 
@@ -689,31 +698,30 @@ function NewContactTab({
           to come from the list, which meant a crew member could be given a job
           the person filling the form could not name.
 
-          `ROLES_UK`, not the dictionary — these are values written to
-          `crew_members.role` and read back on the Ukrainian-only link views, so
-          they are not the dictionary's to translate. See the note on ROLES_UK.
+          `ROLE_KEYS` — the key is what reaches `crew_members.role`, and every
+          surface shows it in its own language (`US-044`).
         */}
         <View className="flex-row flex-wrap gap-1.5">
-          {/* `label` carries the glyph; `option` stays the bare role — it is
+          {/* `label` carries the glyph; `option` stays the bare key — it is
               what `onRole` sets and what reaches `crew_members.role`. */}
-          {[...ROLES_UK, uk.otherRole].map((option) => (
+          {[...ROLE_KEYS, OTHER_ROLE].map((option) => (
             <RoleChip
               key={option}
-              label={roleWithEmoji(option)}
+              label={roleWithEmoji(option, t)}
               active={option === role}
               onPress={() => onRole(option)}
             />
           ))}
         </View>
-        {role === uk.otherRole ? (
+        {role === OTHER_ROLE ? (
           <Input
             value={customRole}
             onChangeText={onCustomRole}
-            placeholder={uk.otherRolePlaceholder}
+            placeholder={t.otherRolePlaceholder}
           />
         ) : null}
         {errors.role ? (
-          <Text className="text-destructive text-sm">{uk.otherRoleRequired}</Text>
+          <Text className="text-destructive text-sm">{t.otherRoleRequired}</Text>
         ) : null}
       </View>
 

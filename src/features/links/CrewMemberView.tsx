@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/card'
 import { HandleRow } from '../../components/HandleRow'
 import { InstagramIcon } from '../../components/ui/instagram-icon'
 import { ImageViewer } from '../../components/ImageViewer'
-import { roleWithEmoji } from '../../i18n/uk'
+import { roleWithEmoji } from '../../i18n/vocabulary'
 import { useStrings } from '../../i18n/LanguageProvider'
 import {
   resolveLink,
@@ -148,7 +148,7 @@ export function CrewMemberView({
               --foreground inverted (ADR-017). */}
           <Card variant="block" className="gap-1">
               <Field label={t.crewName} value={member.name} strong />
-              <Field label={t.crewRole} value={roleWithEmoji(member.role)} />
+              <Field label={t.crewRole} value={roleWithEmoji(member.role, t)} />
               <Field label={t.crewContact} value={member.contact} />
               {/*
                 Telegram, on both audiences since 2026-09-05 (owner). The column

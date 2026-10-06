@@ -310,6 +310,18 @@ export const en: Strings = {
   crewCountConfirmed: '{total} · {done} confirmed',
   yourTurn: 'Your turn',
   referenceCategories: ['Light', 'Poses', 'Style'],
+  // US-044 — owner, 2026-10-06. Roles had no English names before.
+  roleNames: [
+    'Photographer',
+    'Videographer',
+    'Stylist',
+    'Hair stylist',
+    'Make-up artist',
+    'Gaffer',
+    'Model',
+    'Assistant',
+    'Producer',
+  ],
   address: 'Address',
   addressPlaceholder: 'e.g. Studio, Kyiv',
   attachVideo: '+ Video',

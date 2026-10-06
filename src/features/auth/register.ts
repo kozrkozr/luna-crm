@@ -1,5 +1,4 @@
 import { supabase } from '../../lib/supabase/client'
-import type { Role } from '../../i18n/uk'
 import { confirmRedirectUrl } from './emailConfirmation'
 
 export type RegistrationInput = {

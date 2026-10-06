@@ -14,6 +14,7 @@ import { useDestructiveConfirm } from './DestructiveAction'
 import { useStrings } from '../i18n/LanguageProvider'
 import { succeeded, tapped } from '../lib/haptics'
 import type { AddReferenceResult, Reference } from '../features/references/api'
+import { CATEGORY_KEYS, categoryKeyOf, categoryLabel } from '../i18n/vocabulary'
 
 type Props = {
   references: Reference[]
@@ -78,7 +79,11 @@ export function ReferencesEditor({
   const [kindSheetOpen, setKindSheetOpen] = useState(false)
   const [linkDraft, setLinkDraft] = useState<string | null>(null)
 
-  const shown = category === null ? references : references.filter((r) => r.category === category)
+  // `US-044` — compared by key, so a reference filed in either language is found.
+  const shown =
+    category === null
+      ? references
+      : references.filter((r) => categoryKeyOf(r.category) === category)
 
   const handle = (result: AddReferenceResult) => {
     if (result.ok) {
@@ -267,12 +272,14 @@ export function ReferencesEditor({
           active={category === null}
           onPress={() => setCategory(null)}
         />
-        {t.referenceCategories.map((name) => (
+        {CATEGORY_KEYS.map((key) => (
           <FilterChip
-            key={name}
-            label={`${name} ${references.filter((r) => r.category === name).length}`}
-            active={category === name}
-            onPress={() => setCategory(name)}
+            key={key}
+            label={`${categoryLabel(key, t)} ${
+              references.filter((r) => categoryKeyOf(r.category) === key).length
+            }`}
+            active={category === key}
+            onPress={() => setCategory(key)}
           />
         ))}
       </View>
@@ -363,7 +370,7 @@ export function ReferencesEditor({
         open={kindSheetOpen}
         title={
           category
-            ? t.addReferenceSheetTitle.replace('{category}', category)
+            ? t.addReferenceSheetTitle.replace('{category}', categoryLabel(category, t))
             : t.addReferenceSheetTitleAll
         }
         cancelLabel={t.cancel}

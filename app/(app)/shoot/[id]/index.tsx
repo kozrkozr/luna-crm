@@ -49,7 +49,7 @@ import {
 } from '../../../../src/features/shoots/date'
 import { countdownLabel, plural } from '../../../../src/features/shoots/home'
 import { useStrings } from '../../../../src/i18n/LanguageProvider'
-import { roleWithEmoji } from '../../../../src/i18n/uk'
+import { roleWithEmoji } from '../../../../src/i18n/vocabulary'
 import { LinkifiedText } from '../../../../src/components/LinkifiedText'
 import { failed, succeeded, tapped } from '../../../../src/lib/haptics'
 import { takePendingToast } from '../../../../src/lib/nextScreenToast'
@@ -1336,7 +1336,7 @@ function PersonRow({
               `ROLE_EMOJI`. `member.role` is untouched; only what is drawn from
               it changes, and a role that has no glyph draws as it always did. */}
           <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-            {roleWithEmoji(member.role)}
+            {roleWithEmoji(member.role, t)}
           </Text>
         </View>
         <ResponsePill value={member.response} label={responseLabel(member, t)} />

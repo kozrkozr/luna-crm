@@ -1,5 +1,6 @@
 import type { Client } from '../clients/api'
-import { roleWithEmoji } from '../../i18n/uk'
+import type { Strings } from '../../i18n'
+import { roleWithEmoji } from '../../i18n/vocabulary'
 import type { Contact } from './api'
 
 /**
@@ -101,7 +102,9 @@ export function clientPerson(
 export function crewPerson(
   contact: Contact,
   shootCount: number,
-  shootCountLabel: (count: number) => string
+  shootCountLabel: (count: number) => string,
+  /** `US-044` — the role is a key; this is the language it is shown in. */
+  t: Strings
 ): DirectoryPerson {
   return {
     id: contact.id,
@@ -117,7 +120,7 @@ export function crewPerson(
       matches. Only the raw `contact.role` is ever stored; nothing reads `sub`
       back.
     */
-    sub: [roleWithEmoji(contact.role), shootCountLabel(shootCount)]
+    sub: [roleWithEmoji(contact.role, t), shootCountLabel(shootCount)]
       .filter(Boolean)
       .join(' · '),
     phone: contact.phone,

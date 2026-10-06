@@ -7,7 +7,7 @@ import { Icon } from '../../../src/components/ui/icon'
 import { Tabs } from '../../../src/components/ui/tabs'
 import { Text } from '../../../src/components/ui/text'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
-import { roleWithEmoji } from '../../../src/i18n/uk'
+import { roleWithEmoji } from '../../../src/i18n/vocabulary'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { plural } from '../../../src/features/shoots/home'
 import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
@@ -469,6 +469,7 @@ function visible(all: Row[], selectedDate: string | null, todayIso: string): Row
  * the reader's own session resolves the shoot, so every row on this list opens.
  */
 function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
+  const t = useStrings()
   const body = (
     /*
       The same card as AgendaRow, which it interleaves with in one list — a
@@ -488,8 +489,8 @@ function CrewRow({ entry, badge }: { entry: CrewShoot; badge: string }) {
         </Text>
         <Text className="text-label text-muted-foreground">
           {entry.locationAddress
-            ? `${entry.date} · ${roleWithEmoji(entry.role)}`
-            : roleWithEmoji(entry.role)}
+            ? `${entry.date} · ${roleWithEmoji(entry.role, t)}`
+            : roleWithEmoji(entry.role, t)}
         </Text>
       </View>
       {/* The badge stays borderless, like every other chip in the system

@@ -599,6 +599,21 @@ export const uk = {
    * supabase/migrations/20260830120000_reference_category.sql.
    */
   referenceCategories: ['Світло', 'Пози', 'Стиль'],
+  /**
+   * `US-044` — the nine roles, in `ROLE_KEYS` order (`../i18n/vocabulary.ts`).
+   * Words for the screen only: the database holds the key.
+   */
+  roleNames: [
+    'Фотограф',
+    'Відеограф',
+    'Стиліст',
+    'Hair стиліст',
+    'Візажист',
+    'Гафер',
+    'Модель',
+    'Асистент',
+    'Продюсер',
+  ],
   address: 'Адреса',
   addressPlaceholder: 'напр. Студія, Київ',
   attachVideo: '+ Відео',
@@ -1379,130 +1394,3 @@ export const uk = {
 } as const
 
 export type CopyKey = keyof typeof uk
-
-
-/**
- * Professional roles, offered wherever a role is chosen — registration
- * (`US-001`), the profile, and a new crew contact.
- *
- * **`Edit Profile.dc.html`'s list, verbatim** (owner, 2026-09-03). It was the
- * five the glossary confirmed; the artboard draws nine, and every pass until now
- * had kept the five on the grounds that they are stored values.
- *
- * **«Менеджер зйомок» is gone, and it was glossary-confirmed.** `US-001` defers
- * the list to "the glossary's confirmed roles as the starting list", and the
- * glossary confirms makeup artist, stylist, gaffer and **shoot manager**. The
- * artboard has no equivalent, so taking it verbatim drops one. Rows already
- * holding it keep it — the column is `text` and every screen renders what it
- * finds — but nobody can choose it again, and it shows up under «Інша роль» on
- * the two screens that resolve an unknown value that way. **`US-001` and the
- * glossary need amending, or the role needs adding back.**
- *
- * **Deliberately NOT in the dictionary.** These are values written to
- * `crew_members.role` and `users.role` and read back on every surface,
- * including the two Ukrainian-only ones. `US-015` AC-2 requires that switching
- * language leaves "the shoot's own content (client info, references, names)"
- * unchanged — translating a stored role would rewrite data, and a client's link
- * view would then disagree with the creator's screen about what someone does.
- */
-export const ROLES_UK = [
-  'Фотограф',
-  'Відеограф',
-  'Стиліст',
-  'Hair стиліст',
-  'Візажист',
-  'Гафер',
-  'Модель',
-  'Асистент',
-  'Продюсер',
-] as const
-
-export type Role = (typeof ROLES_UK)[number]
-
-/**
- * The glyph shown beside a role **where a role is chosen** (owner, 2026-09-05).
- *
- * ── Display only, and that is the whole design ───────────────────────────────
- *
- * `crew_members.role` and `contacts.role` store the plain Ukrainian string and
- * keep storing it. Nothing here is ever written, concatenated into a value, or
- * compared against one. Storing «📸 Фотограф» would rewrite every existing row,
- * push emoji into the link gateway's payloads, and make an equality test
- * against `'Фотограф'` fail without saying why.
- *
- * ── Where it shows ──────────────────────────────────────────────────────────
- *
- * Pickers, and the surfaces that show a SHOOT'S TEAM: the «Команда» tab, and
- * the link views a crew member or a client opens — the crew list, one member's
- * own page, the «Ваша роль» badge, and the organizer card beside them.
- *
- * That was pickers only for a few hours on 2026-09-05 before the owner extended
- * it; the intermediate state is in docs/redesign-log.md, and this comment used
- * to argue for it.
- *
- * **Everywhere, as of the third pass.** It went pickers → team surfaces →
- * everything, in three steps on one afternoon, each time because the surface
- * left out looked broken beside the ones that had it. The contacts directory,
- * a contact's profile, the saved-contact picker and the "shoots I am crew on"
- * rows all carry it now. If a new surface renders a role, it calls this.
- *
- * The one thing that does NOT is `t.clientRole` («Клієнт») on the shoot screen:
- * it is a dictionary string describing an audience, not a value from
- * `ROLES_UK`, and this function would return it unchanged in any case.
- *
- * ── Not translated, and not in `Strings` ────────────────────────────────────
- *
- * Roles stay Ukrainian in the English UI (open question #23), so there is one
- * list and one map. This is deliberately not a dictionary key: an emoji is not
- * copy, and `en.ts` would have to repeat all nine to say nothing different.
- *
- * Keyed by `Role`, so removing a role from `ROLES_UK` without removing it here
- * — or adding one and forgetting the glyph — is a compile error rather than a
- * blank space in a chip.
- *
- * **«Hair стиліст» is a ZWJ sequence** (fairy + ZWJ + male sign + VS16), unlike
- * the other eight. It renders on iOS, which is what v1 ships; older Android and
- * some web fonts fall back to two glyphs side by side. Worth knowing before it
- * is reported as a bug.
- */
-export const ROLE_EMOJI: Record<Role, string> = {
-  Фотограф: '📸',
-  Відеограф: '🎥',
-  Стиліст: '👠',
-  'Hair стиліст': '🧚‍♂️',
-  Візажист: '💄',
-  Гафер: '💡',
-  Модель: '💃',
-  Асистент: '🌟',
-  Продюсер: '🎬',
-}
-
-/**
- * «Інша роль» — the escape hatch every picker appends after the nine.
- *
- * Separate from `ROLE_EMOJI` because it is **not** a `Role`: choosing it reveals
- * a text field and stores whatever is typed there, so «Інша роль» itself never
- * reaches a column. Keeping it out of the record is what preserves that
- * record's exhaustiveness check over `ROLES_UK`.
- */
-const OTHER_ROLE_EMOJI = '🪄'
-
-/**
- * «📸 Фотограф» — a role as it is SHOWN. One space, always.
- *
- * Call this at the point of RENDER and nowhere else. Every picker keeps
- * comparing and storing the bare `option`, every read surface keeps the raw
- * `member.role` it was given, and the gateway's payloads carry the column
- * untouched — so the value in `crew_members.role`, `contacts.role` and
- * `users.role` is the same string it has always been.
- *
- * A role with no glyph comes back unchanged rather than blank-prefixed — which
- * is not a theoretical case: `crew_members.role` and `contacts.role` can hold
- * anything typed into «Інша роль», and those values are shown by the same
- * chips when a saved contact is edited.
- */
-export function roleWithEmoji(role: string): string {
-  if (role === uk.otherRole) return `${OTHER_ROLE_EMOJI} ${role}`
-  const glyph = ROLE_EMOJI[role as Role]
-  return glyph ? `${glyph} ${role}` : role
-}

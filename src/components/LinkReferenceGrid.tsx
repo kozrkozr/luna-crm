@@ -6,6 +6,7 @@ import { Card } from './ui/card'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
 import { uk } from '../i18n/uk'
+import { categoryKeyOf, categoryLabel } from '../i18n/vocabulary'
 import { openExternalUrl } from '../lib/openExternalUrl'
 import type { LinkReference } from '../features/links/gateway'
 
@@ -51,7 +52,8 @@ export function LinkReferenceGrid({
   */
   const groups: { category: string | null; items: LinkReference[] }[] = []
   for (const reference of references) {
-    const key = reference.category?.trim() || null
+    // `US-044` — grouped by key, so a label and its key are one group.
+    const key = categoryKeyOf(reference.category) ?? (reference.category?.trim() || null)
     const existing = groups.find((g) => g.category === key)
     if (existing) existing.items.push(reference)
     else groups.push({ category: key, items: [reference] })
@@ -78,7 +80,7 @@ export function LinkReferenceGrid({
             {group.category ? (
               <View className="flex-row items-baseline justify-between">
                 <Text className="text-body-sm text-foreground font-medium">
-                  {group.category}
+                  {categoryLabel(group.category, uk)}
                 </Text>
                 <Text className="text-label text-muted-foreground">
                   {`${group.items.length} ${uk.photosWord}`}
@@ -94,7 +96,9 @@ export function LinkReferenceGrid({
                     disabled={!reference.url}
                     onPress={() => reference.url && setViewing(reference.url)}
                     role="button"
-                    accessibilityLabel={reference.category ?? uk.references}
+                    accessibilityLabel={
+                      reference.category ? categoryLabel(reference.category, uk) : uk.references
+                    }
                   >
                     {reference.url ? (
                       <Image

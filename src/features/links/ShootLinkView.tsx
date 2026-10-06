@@ -25,7 +25,7 @@ import { handleLabel, handleUrl } from '../../lib/socialHandle'
 import { isAvatarTint } from '../auth/avatar'
 import { ResponsePill } from '../../components/ResponsePill'
 import { SectionLabel } from '../../components/ShootFormFields'
-import { roleWithEmoji } from '../../i18n/uk'
+import { roleWithEmoji } from '../../i18n/vocabulary'
 import { useStrings } from '../../i18n/LanguageProvider'
 import type { Strings } from '../../i18n'
 import { openExternalUrl } from '../../lib/openExternalUrl'
@@ -226,7 +226,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
                 variant="muted"
                 label={
                   isCrew
-                    ? t.yourRoleTemplate.replace('{role}', roleWithEmoji(payload.viewer.role))
+                    ? t.yourRoleTemplate.replace('{role}', roleWithEmoji(payload.viewer.role, t))
                     : t.youAreTheClient
                 }
               />
@@ -548,7 +548,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
                               2026-09-03) because the «ВИ» badge beside the name
                               already says whose row this is. */}
                           <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-                            {roleWithEmoji(member.role)}
+                            {roleWithEmoji(member.role, t)}
                           </Text>
                         </View>
                         {/*
@@ -906,7 +906,7 @@ function OrganizerCard({ organizer, t }: { organizer: LinkOrganizer; t: Strings 
               than a distinction. `users.role` is drawn from the same list.
             */}
             <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-              {roleWithEmoji(organizer.role)}
+              {roleWithEmoji(organizer.role, t)}
             </Text>
           </View>
         </View>

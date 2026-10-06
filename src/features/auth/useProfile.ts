@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase/client'
-import type { Role } from '../../i18n/uk'
 
 export type Profile = {
   name: string
   email: string
   phone: string | null
-  role: Role | string
+  /** `US-044` — a role key, or a role typed into «Інша роль». */
+  role: string
   socialHandle: string | null
   /** `20260831100000` — a second handle beside `socialHandle` (Instagram). */
   telegram: string | null

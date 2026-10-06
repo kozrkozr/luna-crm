@@ -28,7 +28,13 @@ import { LanguageSwitcher } from '../../../src/components/LanguageSwitcher'
 import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { Toast } from '../../../src/components/Toast'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
-import { ROLES_UK, roleWithEmoji, uk } from '../../../src/i18n/uk'
+import {
+  OTHER_ROLE,
+  ROLE_KEYS,
+  roleKeyOf,
+  roleLabel,
+  roleWithEmoji,
+} from '../../../src/i18n/vocabulary'
 import { useLanguage, useStrings } from '../../../src/i18n/LanguageProvider'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
 import { failed, selected as tickSelection, succeeded, tapped } from '../../../src/lib/haptics'
@@ -95,7 +101,7 @@ type Draft = {
  *   The second pass makes the field editable with a re-confirmation notice;
  *   that is a story with a migration, not a restyle.
  * - **«KULT Studio» is still not in the subtitle** (P-3) — there is no studio
- *   column — and the role chips are still `ROLES_UK`'s five rather than the
+ *   column — and the role chips are still `ROLE_KEYS`' five rather than the
  *   artboard's nine, which are stored values the glossary confirms.
  */
 export default function ProfileScreen() {
@@ -139,13 +145,14 @@ export default function ProfileScreen() {
   // already be typing by the time a refetch lands.
   useEffect(() => {
     if (state.status !== 'loaded' || saved) return
-    const known = ROLES_UK.includes(state.profile.role as (typeof ROLES_UK)[number])
+    // `US-044` — a key, or a label from a row written before keys.
+    const known = roleKeyOf(state.profile.role)
     const loaded: Draft = {
       name: state.profile.name,
       phone: state.profile.phone ?? '',
       // A role saved through «Інша роль» is not one of the chips, so the chip
       // set opens on «Інша роль» with the stored text beside it.
-      role: known ? state.profile.role : uk.otherRole,
+      role: known ?? OTHER_ROLE,
       customRole: known ? '' : state.profile.role,
       instagram: state.profile.socialHandle ?? '',
       telegram: state.profile.telegram ?? '',
@@ -279,7 +286,7 @@ export default function ProfileScreen() {
   ].filter((label): label is string => typeof label === 'string')
   const dirty = changed.length > 0
 
-  const resolvedRole = draft.role === uk.otherRole ? draft.customRole.trim() : draft.role
+  const resolvedRole = draft.role === OTHER_ROLE ? draft.customRole.trim() : draft.role
 
   /*
     «Українська · 19 вересня» — the design's sample line under «Мова
@@ -535,7 +542,7 @@ export default function ProfileScreen() {
             {/* Role alone — the design appends « · KULT Studio», and there is
                 no studio column to append (P-3). */}
             <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
-              {resolvedRole}
+              {roleLabel(resolvedRole, t)}
             </Text>
 
             {/*
@@ -672,7 +679,7 @@ export default function ProfileScreen() {
           <View className="gap-2">
             <SectionLabel label={t.yourRoleSection} />
             <View className="flex-row flex-wrap gap-1.5">
-              {[...ROLES_UK, uk.otherRole].map((option) => {
+              {[...ROLE_KEYS, OTHER_ROLE].map((option) => {
                 const active = draft.role === option
                 return (
                   <Pressable
@@ -691,19 +698,19 @@ export default function ProfileScreen() {
                     accessibilityState={{ selected: active }}
                   >
                     {/* Label only — `set('role', option)` above stores the
-                        bare role, which is what `ROLES_UK.includes` reads back. */}
+                        bare key, which is what `roleKeyOf` reads back. */}
                     <Text
                       className={`text-body-sm font-medium ${
                         active ? 'text-primary-foreground' : 'text-foreground/85'
                       }`}
                     >
-                      {roleWithEmoji(option)}
+                      {roleWithEmoji(option, t)}
                     </Text>
                   </Pressable>
                 )
               })}
             </View>
-            {draft.role === uk.otherRole ? (
+            {draft.role === OTHER_ROLE ? (
               <Input
                 value={draft.customRole}
                 onChangeText={(value) => {

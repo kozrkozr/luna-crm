@@ -99,7 +99,8 @@ export default function ContactsScreen() {
                 counts?.[contactIdentity(contact.name, contact.phone, contact.email)] ?? 0,
                 // With no counts at all, the role stands alone rather than
                 // every crew member claiming «0 зйомок».
-                counts ? label : () => ''
+                counts ? label : () => '',
+                t
               )
             ),
           ],

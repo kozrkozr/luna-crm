@@ -22,7 +22,8 @@ import { Text } from '../../components/ui/text'
 import { Toast } from '../../components/Toast'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { privacyUrl, termsUrl } from '../../lib/legalUrls'
-import { ROLES_UK, roleWithEmoji, uk, type Role } from '../../i18n/uk'
+import { uk } from '../../i18n/uk'
+import { OTHER_ROLE, ROLE_KEYS, roleWithEmoji } from '../../i18n/vocabulary'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
@@ -464,7 +465,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
   const [submitting, setSubmitting] = useState(false)
 
   /** What actually goes in `users.role` — the chip, or what «Інша роль» opened. */
-  const resolvedRole = role === uk.otherRole ? customRole.trim() : (role ?? '')
+  const resolvedRole = role === OTHER_ROLE ? customRole.trim() : (role ?? '')
 
   const submit = async () => {
     const next: typeof errors = {}
@@ -480,7 +481,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
     // AC-2 — registration is blocked without a role, and «Інша роль» is not a
     // role until it has been filled in.
     if (!role) next.role = uk.roleRequired
-    else if (role === uk.otherRole && !customRole.trim()) next.role = uk.otherRoleRequired
+    else if (role === OTHER_ROLE && !customRole.trim()) next.role = uk.otherRoleRequired
     /*
       The terms box BLOCKS now (owner, 2026-08-31), where it gated nothing.
       **Both documents it names still do not exist** — redesign-log A-4 — so
@@ -842,13 +843,13 @@ function RoleChips({
   onCustomChange: (value: string) => void
   error: string | null
 }) {
-  const isOther = value === uk.otherRole
+  const isOther = value === OTHER_ROLE
 
   return (
     <View className="gap-2">
       <Text className="text-body-sm text-foreground font-medium">{uk.role}</Text>
       <View className="flex-row flex-wrap gap-1.5">
-        {[...ROLES_UK, uk.otherRole].map((option) => {
+        {[...ROLE_KEYS, OTHER_ROLE].map((option) => {
           const active = value === option
           return (
             <Pressable
@@ -866,13 +867,13 @@ function RoleChips({
               accessibilityState={{ selected: active }}
             >
               {/* The glyph is on the LABEL only — `option` stays the bare
-                  role in `onChange`, in `active`, and in what is stored. */}
+                  key in `onChange`, in `active`, and in what is stored. */}
               <Text
                 className={`text-body-sm font-medium ${
                   active ? 'text-primary-foreground' : 'text-foreground/85'
                 }`}
               >
-                {roleWithEmoji(option)}
+                {roleWithEmoji(option, uk)}
               </Text>
             </Pressable>
           )

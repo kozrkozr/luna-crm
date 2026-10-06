@@ -11,7 +11,7 @@ import { FieldLabel } from '../../components/ShootFormFields'
 import { RoleChip } from '../../components/RoleChip'
 import { useDiscardGuard } from '../../components/DiscardGuard'
 import { VisibilityNote } from '../../components/Visibility'
-import { ROLES_UK, roleWithEmoji, uk } from '../../i18n/uk'
+import { OTHER_ROLE, ROLE_KEYS, roleKeyOf, roleWithEmoji } from '../../i18n/vocabulary'
 import { useStrings } from '../../i18n/LanguageProvider'
 import { succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
@@ -32,7 +32,7 @@ export type ContactDraft = {
 
 export const EMPTY_DRAFT: ContactDraft = {
   name: '',
-  role: ROLES_UK[0],
+  role: ROLE_KEYS[0],
   phone: '',
   instagram: '',
   note: '',
@@ -63,7 +63,7 @@ export const EMPTY_DRAFT: ContactDraft = {
  * their name on every shoot they are on (`deleteClient`). So the toggle is
  * shown, and disabled, when editing.
  *
- * **Role chips are `ROLES_UK`'s nine**, not the artboard's six. They are values
+ * **Role chips are `ROLE_KEYS`' nine**, not the artboard's six. They are values
  * written to a `role` column and read back on the Ukrainian-only link views;
  * the owner took `Edit Profile.dc.html`'s list verbatim on 2026-09-03 and this
  * follows it. «Оператор» is therefore not offerable — the list has «Відеограф»
@@ -95,8 +95,9 @@ export function ContactForm({
     beside it — the same resolution the add-crew form and the profile use for a
     column that is plain `text`.
   */
-  const known = (ROLES_UK as readonly string[]).includes(initial.role)
-  const [role, setRole] = useState<string>(known || !initial.role ? initial.role : uk.otherRole)
+  // `US-044` — a key, or a label from a row written before keys, opens its chip.
+  const known = roleKeyOf(initial.role)
+  const [role, setRole] = useState<string>(known ?? (initial.role ? OTHER_ROLE : initial.role))
   const [customRole, setCustomRole] = useState(known ? '' : initial.role)
   const [chosenKind, setChosenKind] = useState<DirectoryKind>(kind)
   const [busy, setBusy] = useState(false)
@@ -112,7 +113,7 @@ export function ContactForm({
     form on this frame uses, rather than an error message after the fact.
   */
   const nameOk = draft.name.trim().length > 1
-  const resolvedRole = role === uk.otherRole ? customRole.trim() : role
+  const resolvedRole = role === OTHER_ROLE ? customRole.trim() : role
 
   /*
     «Скасувати» asks before discarding (owner, 2026-09-06). `initial` is what
@@ -291,20 +292,20 @@ export function ContactForm({
               <View className="flex-row flex-wrap gap-1.5">
                 {/* `label` carries the glyph; `option` stays the bare role in
                     `active`, in `setRole`, and in what `normalise` stores. */}
-                {[...ROLES_UK, uk.otherRole].map((option) => (
+                {[...ROLE_KEYS, OTHER_ROLE].map((option) => (
                   <RoleChip
                     key={option}
-                    label={roleWithEmoji(option)}
+                    label={roleWithEmoji(option, t)}
                     active={option === role}
                     onPress={() => setRole(option)}
                   />
                 ))}
               </View>
-              {role === uk.otherRole ? (
+              {role === OTHER_ROLE ? (
                 <Input
                   value={customRole}
                   onChangeText={setCustomRole}
-                  placeholder={uk.otherRolePlaceholder}
+                  placeholder={t.otherRolePlaceholder}
                 />
               ) : null}
             </View>
