@@ -90,13 +90,14 @@ const config: ExpoConfig = {
       {
         /*
          * The iOS photo-library permission prompt (US-003's gallery picker).
-         * Ukrainian per CLAUDE.md rule 4 — the system prompt is user-facing
-         * copy, and the plugin's default is English.
          *
-         * The wording is NOT from the specification: no story or prototype
-         * covers permission copy. Placeholder; see docs/open-questions.md.
+         * `US-050` — this is only the build's fallback, written into
+         * Info.plist itself. What a phone shows comes from `locales` below:
+         * iOS picks the Ukrainian or the English text by the phone's language.
+         * English here, because English is the development region — the
+         * language iOS falls back to for a phone in neither.
          */
-        photosPermission: 'Luna потребує доступу до фото, щоб додати референс до зйомки.',
+        photosPermission: 'Luna Shoots needs access to your photos to add a reference to a shoot.',
         // No camera in US-003 — the story says "picks an image from their
         // phone", i.e. the library. Disabled so the build does not request a
         // permission nothing uses.
@@ -160,6 +161,31 @@ const config: ExpoConfig = {
       // export-compliance question on every upload and holds the build.
       usesNonExemptEncryption: false,
     },
+    infoPlist: {
+      /*
+       * `US-050` AC-3 — the app's languages, declared to iOS: this is what
+       * puts a per-app language in iOS Settings and both languages on the
+       * App Store page. `locales` below writes the files; Expo does not
+       * declare the list itself.
+       *
+       * English is the development region — the fallback for a phone in
+       * neither language. **A phone in Russian gets English here**, while the
+       * app's own text is Ukrainian (`US-045`): iOS matches its own list of
+       * languages, and adding a Russian one is ruled out (CLAUDE.md rule 4).
+       */
+      CFBundleDevelopmentRegion: 'en',
+      CFBundleLocalizations: ['en', 'uk'],
+    },
+  },
+  /*
+   * `US-050` — iOS's own texts (permission prompts) per language, written
+   * into `<lang>.lproj/InfoPlist.strings` at prebuild. iOS chooses by the
+   * phone's language, never by the account's (AC-2). Every system text the
+   * app adds goes into both files (AC-4).
+   */
+  locales: {
+    en: './locales/ios-en.json',
+    uk: './locales/ios-uk.json',
   },
   /*
    * Android is not a target (CLAUDE.md: iOS first), but `expo prebuild`
