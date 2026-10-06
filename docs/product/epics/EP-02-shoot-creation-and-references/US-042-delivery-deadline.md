@@ -140,12 +140,15 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 | Знято · Обробка · Передано | Shot · Editing · Delivered |
 | Позначити як передано клієнту | Mark as delivered to client |
 | Дедлайн здачі файлів | Delivery deadline for files |
+| Відлік від дня зйомки. Дата з'явиться на картці завершеної зйомки в календарі. | Counted from the shoot day. It shows on the finished shoot's card in the calendar. |
 | Або оберіть дату | Or pick a date |
 | 7 днів після зйомки · У день зйомки | 7 days after the shoot · On the shoot day |
 | Готово · Скасувати | Done · Cancel |
+| Дедлайн здачі — 16 вересня *(save toast)* | Deadline set: 16 September |
 | Дедлайн видалено | Deadline removed |
-| Прострочено *(calendar label)* | Overdue *(not yet confirmed)* |
+| Прострочено *(calendar label)* | Overdue |
 | Позначено як передано клієнту | Marked as delivered to client |
+| Змінити дедлайн · Видалити дедлайн *(VoiceOver labels)* | Change deadline · Remove deadline |
 
 ## Out of scope
 - Reminders or notifications about a deadline — not now (owner, 2026-10-06).
@@ -156,7 +159,4 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 `US-018`, `US-019`, `US-020`, `US-030`.
 
 ## Open questions
-1. English for the editor's caption («Відлік від дня зйомки…»), the save toast («Дедлайн здачі —
-   16 вересня») and the edit and delete buttons' accessibility labels («Змінити дедлайн»,
-   «Видалити дедлайн») — not yet confirmed.
-2. English for the calendar card's «Прострочено» — «Overdue» proposed, not yet confirmed.
+None — the English copy was confirmed by the owner, chat 2026-10-06.

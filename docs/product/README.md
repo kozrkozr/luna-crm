@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-06 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04 and 2026-10-05)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `1659624` — *docs(US-042): specify AC-10, the deadline on the calendar card*.
+- **Source commit:** `1aaaba1` — *docs(US-042): confirm the remaining English copy*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
@@ -24,6 +24,7 @@ number of days. `data-model.md` gains `Shoot.delivery_due` and `Shoot.delivered_
 
 - **AC-10, the calendar card**, was specified in a second pass the same day, from `Calendar.dc.html`'s
   «Кроки з іконкою»: the same steps, a date label instead of the chip, finished shoots only.
+- **The English copy is complete** — the last five strings were confirmed in a third pass.
 
 ## What moved in the second 2026-10-05 re-freeze (`US-041` AC-3, AC-12)
 **The evening digest's copy is new**, after the owner tested the first build: three titles per
