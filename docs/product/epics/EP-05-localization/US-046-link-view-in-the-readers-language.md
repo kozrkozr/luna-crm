@@ -47,6 +47,9 @@ in Warsaw would otherwise send a Polish client a Ukrainian page.
 
 ## Out of scope
 - The language of anything the photographer writes.
+- **A decline reason** (`US-008`) is kept as the crew member sent it — in the language of their
+  page — and shown to the photographer as it is, not translated: the photographer reads what the
+  person wrote (owner, 2026-10-07).
 
 ## Dependencies
 `US-044`, `US-010`, `US-023`, `US-026`.

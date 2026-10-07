@@ -27,6 +27,12 @@ static pages; every phone field shows the placeholder `+380 __ ___ ____`.
 ### AC-3 — The phone placeholder
 - **Given** any phone field in the app
 - **Then** its placeholder no longer shows the Ukrainian `+380` mask
+- **And** it shows an example number of the phone's region — the region set on the phone, not the
+  app's language: a Ukrainian-language app on a phone set to Poland shows a Polish number
+  (owner, 2026-10-07)
+- **And** when the region is unknown or has no example number, the Ukrainian example is shown
+- **And** the "phone or email" field of a crew member shows the same example, followed by "or
+  email" in the app's language
 
 ## Out of scope
 - Matching crew by an international number (`ADR-022`, deferred).
@@ -35,5 +41,6 @@ static pages; every phone field shows the placeholder `+380 __ ___ ____`.
 `US-045`.
 
 ## Open questions
-1. The new phone placeholder, in both languages.
+1. ~~The new phone placeholder, in both languages.~~ Answered 2026-10-07 — an example number of
+   the phone's region, see AC-3.
 2. The English privacy policy and terms (owner, with a lawyer).
