@@ -21,8 +21,10 @@ static pages; every phone field shows the placeholder `+380 __ ___ ____`.
 - **Then** the privacy-policy and terms links open the English versions; in Ukrainian otherwise
 
 ### AC-2 — The text
-- The English texts are supplied by the owner — after the GDPR review `ADR-022` asks for. Nothing
-  is translated or written by the build.
+- The English texts are drafted by the build from the Ukrainian ones, with the facts checked
+  against the code, and ship before the GDPR review `ADR-022` asks for (owner, 2026-10-07). The
+  open points for that review are listed with the drafts (`docs/legal-review.md` in luna-crm); its
+  outcome replaces both languages' texts.
 
 ### AC-3 — The phone placeholder
 - **Given** any phone field in the app
@@ -43,4 +45,5 @@ static pages; every phone field shows the placeholder `+380 __ ___ ____`.
 ## Open questions
 1. ~~The new phone placeholder, in both languages.~~ Answered 2026-10-07 — an example number of
    the phone's region, see AC-3.
-2. The English privacy policy and terms (owner, with a lawyer).
+2. ~~The English privacy policy and terms (owner, with a lawyer).~~ Answered 2026-10-07 — drafts
+   ship now, the lawyer reviews them afterwards, see AC-2.
