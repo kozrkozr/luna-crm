@@ -22,7 +22,7 @@ import { Text } from '../../components/ui/text'
 import { Toast } from '../../components/Toast'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { privacyUrl, termsUrl } from '../../lib/legalUrls'
-import { useStrings } from '../../i18n/LanguageProvider'
+import { useLanguage, useStrings } from '../../i18n/LanguageProvider'
 import { phoneExample } from '../../i18n/device'
 import { OTHER_ROLE, ROLE_KEYS, roleWithEmoji } from '../../i18n/vocabulary'
 import { selected } from '../../lib/haptics'
@@ -448,6 +448,7 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
 /** `US-001` — register an account and select a professional role. */
 function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: string) => void }) {
   const t = useStrings()
+  const language = useLanguage()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [name, setName] = useState('')
@@ -725,7 +726,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             <Text
               className="text-foreground underline"
               onPress={() => {
-                const url = termsUrl()
+                const url = termsUrl(language)
                 if (url) void openExternalUrl(url)
               }}
             >
@@ -735,7 +736,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             <Text
               className="text-foreground underline"
               onPress={() => {
-                const url = privacyUrl()
+                const url = privacyUrl(language)
                 if (url) void openExternalUrl(url)
               }}
             >
