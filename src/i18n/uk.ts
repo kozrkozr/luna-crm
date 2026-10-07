@@ -537,7 +537,6 @@ export const uk = {
   viewClientProfile: 'Глянути профіль',
   unlinkClient: 'Відвʼязати',
   phoneField: 'Телефон',
-  phonePlaceholder: '+380 xx xxx xx xx',
   /** «Цей номер уже належить профілю {name} — це вона?» */
   phoneBelongsToTemplate: 'Цей номер уже належить профілю {name} — це вона?',
   yesSamePerson: 'Так, це вона',
@@ -1289,7 +1288,6 @@ export const uk = {
    * crew member to an account, and fewer people will think to type one.
    */
   crewPhoneLabel: 'Телефон',
-  crewPhonePlaceholder: '+380 __ ___ ____',
   crewInstagramLabel: 'Інстаграм',
   crewInstagramPlaceholder: '@nickname',
   optionalSuffix: '— необовʼязково',

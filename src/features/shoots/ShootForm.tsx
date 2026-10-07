@@ -25,6 +25,7 @@ import {
   AlertDialogFooter,
 } from '../../components/ui/alert-dialog'
 import { useStrings } from '../../i18n/LanguageProvider'
+import { phoneExample } from '../../i18n/device'
 import {
   createShoot,
   getShoot,
@@ -835,7 +836,7 @@ export function ShootForm(props: ShootFormMode) {
                 }}
                 autoCapitalize="none"
                 keyboardType="phone-pad"
-                placeholder={t.phonePlaceholder}
+                placeholder={phoneExample()}
               />
             </View>
 

@@ -287,7 +287,6 @@ export const en: Strings = {
   viewClientProfile: 'Open the profile',
   unlinkClient: 'Unlink',
   phoneField: 'Phone',
-  phonePlaceholder: '+380 xx xxx xx xx',
   phoneBelongsToTemplate: 'That number already belongs to {name} — is this them?',
   yesSamePerson: 'Yes, same person',
   noNewClient: 'No, a new client',
@@ -582,7 +581,6 @@ export const en: Strings = {
 
   crewNameExample: 'e.g. Dmytro Marchuk',
   crewPhoneLabel: 'Phone',
-  crewPhonePlaceholder: '+380 __ ___ ____',
   crewInstagramLabel: 'Instagram',
   crewInstagramPlaceholder: '@nickname',
   optionalSuffix: '— optional',

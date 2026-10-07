@@ -1,4 +1,6 @@
 import { getLocales } from 'expo-localization'
+import { getExampleNumber, isSupportedCountry } from 'libphonenumber-js'
+import examples from 'libphonenumber-js/mobile/examples'
 import type { Language } from './index'
 
 /**
@@ -21,4 +23,18 @@ import type { Language } from './index'
 export function phoneLanguage(): Language {
   const code = getLocales()[0]?.languageCode?.toLowerCase()
   return code === 'uk' || code === 'ru' ? 'uk' : 'en'
+}
+
+/**
+ * `US-049` AC-3 — the placeholder of every phone field: an example mobile
+ * number of the region set on the phone, not of the app's language — a
+ * Ukrainian-language app on a phone set to Poland shows `+48 512 345 678`.
+ * An unknown region, or one without an example, gets the Ukrainian number.
+ */
+export function phoneExample(): string {
+  const region = getLocales()[0]?.regionCode?.toUpperCase() ?? ''
+  const example =
+    (isSupportedCountry(region) && getExampleNumber(region, examples)) ||
+    getExampleNumber('UA', examples)
+  return example?.formatInternational() ?? ''
 }

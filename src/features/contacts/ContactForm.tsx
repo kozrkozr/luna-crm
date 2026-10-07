@@ -13,6 +13,7 @@ import { useDiscardGuard } from '../../components/DiscardGuard'
 import { VisibilityNote } from '../../components/Visibility'
 import { OTHER_ROLE, ROLE_KEYS, roleKeyOf, roleWithEmoji } from '../../i18n/vocabulary'
 import { useStrings } from '../../i18n/LanguageProvider'
+import { phoneExample } from '../../i18n/device'
 import { succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import type { DirectoryKind } from './directory'
@@ -268,7 +269,7 @@ export function ContactForm({
               id="contact-phone"
               value={draft.phone}
               onChangeText={(value) => set('phone', value)}
-              placeholder={t.crewPhonePlaceholder}
+              placeholder={phoneExample()}
               keyboardType="phone-pad"
             />
           </View>

@@ -36,6 +36,7 @@ import {
   roleWithEmoji,
 } from '../../../src/i18n/vocabulary'
 import { useLanguage, useStrings } from '../../../src/i18n/LanguageProvider'
+import { phoneExample } from '../../../src/i18n/device'
 import { useCurrency } from '../../../src/features/account/currency'
 import { currencySymbol } from '../../../src/features/shoots/money'
 import { formatDayMonth, toIsoDate } from '../../../src/features/shoots/date'
@@ -646,7 +647,7 @@ export default function ProfileScreen() {
                   set('phone', value)
                   setErrors((e) => ({ ...e, phone: undefined }))
                 }}
-                placeholder={t.phonePlaceholder}
+                placeholder={phoneExample()}
                 keyboardType="phone-pad"
                 changed={draft.phone.trim() !== saved.phone}
                 error={errors.phone}

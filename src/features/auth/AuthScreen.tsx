@@ -23,6 +23,7 @@ import { Toast } from '../../components/Toast'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { privacyUrl, termsUrl } from '../../lib/legalUrls'
 import { useStrings } from '../../i18n/LanguageProvider'
+import { phoneExample } from '../../i18n/device'
 import { OTHER_ROLE, ROLE_KEYS, roleWithEmoji } from '../../i18n/vocabulary'
 import { selected } from '../../lib/haptics'
 import { login } from './login'
@@ -602,7 +603,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
           autoCapitalize="none"
           autoComplete="tel"
           keyboardType="phone-pad"
-          placeholder={t.phonePlaceholder}
+          placeholder={phoneExample()}
         />
         <FieldError message={errors.phone ?? null} />
       </View>

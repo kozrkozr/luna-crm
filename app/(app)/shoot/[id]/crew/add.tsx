@@ -27,6 +27,7 @@ import {
 import type { Strings } from '../../../../../src/i18n'
 import { VisibilityNote } from '../../../../../src/components/Visibility'
 import { useStrings } from '../../../../../src/i18n/LanguageProvider'
+import { phoneExample } from '../../../../../src/i18n/device'
 import { succeeded, tapped } from '../../../../../src/lib/haptics'
 import { toastOnNextScreen } from '../../../../../src/lib/nextScreenToast'
 import {
@@ -652,7 +653,7 @@ function NewContactTab({
           id="crew-contact"
           value={phone}
           onChangeText={onPhone}
-          placeholder={t.crewPhonePlaceholder}
+          placeholder={phoneExample()}
           autoCapitalize="none"
           keyboardType="email-address"
         />
