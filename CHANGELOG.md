@@ -9,7 +9,7 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 - Each entry names its story, so `git log --grep=US-0xx` finds the code.
 - How a build is shipped: `docs/releases/`.
 
-## 1.0.0 (build 2) — unreleased
+## 1.0.0 (build 2) — 2026-10-07
 
 Checklist: [`docs/releases/1.0.0-build-2.md`](docs/releases/1.0.0-build-2.md).
 Since build 1 (`f34cb40`, archived 2026-10-01).
