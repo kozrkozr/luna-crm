@@ -28,6 +28,10 @@ proposed it and it awaits confirmation. Every `provisional` row must be raised a
 | рейт | rate | A photographer's or crew member's day rate/pricing tier (`00-intake/s02`, line 157) | confirmed |
 | автор зйомки | shoot creator | Whoever created a specific shoot and holds edit rights over it — a per-shoot relationship, distinct from the "shoot manager" profession (`decisions/ADR-001-*.md`) | confirmed |
 | посилання | link | The per-person URL that gives a crew member or client access to one shoot without an account or an app — the product's core sharing mechanism (`02-product/prd.md` R-05, R-11; `04-tech/data-model.md`, AccessLink) | confirmed |
+| підписка | subscription | The monthly payment that gives a registered account full access — $4.99, sold through the App Store (`ADR-023`) | provisional |
+| пробний період | free trial | The first 14 days of a subscription, free — Apple's introductory offer, started on the paywall (`ADR-023`) | provisional |
+| екран оплати | paywall | The screen that offers the free trial and the subscription (`US-051`) | provisional |
+| режим перегляду | view mode | An account without access: sees its shoots, cannot create, edit or delete (`US-052`) | provisional |
 
 ## Awaiting confirmation
 None — all rows confirmed by the owner in chat, 2026-08-22; `посилання` confirmed 2026-08-25.

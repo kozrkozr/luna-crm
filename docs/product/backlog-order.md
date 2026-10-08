@@ -87,6 +87,19 @@ AC-3 stays unbuilt either way (`open-questions.md` item 14).
 `EP-07`'s open questions (10, listed in `EP-07.md`) — #1, #2 and #5 bear on `US-036`'s schema
 and should be answered before step 2.
 
+## EP-09 Subscription — *added 2026-10-08, `ADR-023`*
+Before the public App Store release; independent of the paused `EP-07`.
+
+| # | Step | Stories | Why here |
+|---|---|---|---|
+| 1 | **Spike S-7** — one sandbox purchase of the real product with its 14-day trial on a device, through RevenueCat (`ADR-023`), and the server recording the account's access | none | The one thing that can invalidate the provider choice — cheap only before anything sits on top of it |
+| 2 | Access record and view mode | `US-052` | Every other story reads the access it records; the database rules must exist before any screen relies on them |
+| 3 | Paywall and trial | `US-051` | Needs the access record |
+| 4 | Subscription in the profile | `US-053` | Reuses the paywall and restore |
+| 5 | Trial-ending reminder | `US-054` | Reuses `US-041`'s local notifications |
+| 6 | Beta testers' 3 months | `US-055` | Needs the launch date (`ADR-023` open question 1) |
+| 7 | Legal texts | `US-056` | Before the release that sells, not before the code |
+
 ## Notes on the order
 - **EP-03 before EP-04 is the one non-obvious call.** Both are link views; EP-03 builds the
   gateway, audience shaping, and the revoked-link state, and EP-04 is then mostly a second
