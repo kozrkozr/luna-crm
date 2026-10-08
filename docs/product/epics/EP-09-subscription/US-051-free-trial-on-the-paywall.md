@@ -29,7 +29,14 @@ of scope (`EP-09`).
   storefront's currency as Apple gives it), that it renews monthly until cancelled, a button that
   starts the trial, «Відновити покупки» / "Restore purchases", links to the terms and the privacy
   policy (in the app's language — `US-049`), and a way to close it
+- **And** the price after the trial is shown as prominently as the trial itself — directly under
+  the title, not small or dimmed under the button (App Store Review Guideline 3.1.2: the billed
+  amount must be clear and conspicuous)
+- **And** it lists four benefits, worded as drawn (owner, 2026-10-08 — kept over livelier
+  alternatives): «Зйомки, команда й клієнти без обмежень» · «Посилання для команди й клієнтів — без
+  застосунку і реєстрації» · «Нагадування про зйомки» · «Терміни передачі матеріалів»
 - **And** it is in the app's language (`US-045`)
+- **Design:** `Paywall.dc.html` (Claude Design, 2026-10-08)
 
 ### AC-3 — Starting the trial
 - **Given** the paywall
@@ -58,6 +65,27 @@ of scope (`EP-09`).
 - **When** the person taps «Відновити покупки»
 - **Then** the account's access is restored
 
+## Copy
+Owner confirmed, 2026-10-08. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example.
+
+| Ukrainian | English |
+|---|---|
+| 14 днів безкоштовно | 14 days free |
+| Потім {price} на місяць | Then {price} a month |
+| Усі зйомки, команда й клієнти в одному місці. | All your shoots, crew and clients in one place. |
+| Зйомки, команда й клієнти без обмежень | Unlimited shoots, crew and clients |
+| Посилання для команди й клієнтів — без застосунку і реєстрації | Links for crew and clients — no app, no sign-up |
+| Нагадування про зйомки | Shoot reminders |
+| Терміни передачі матеріалів | Delivery deadlines |
+| Спробувати безкоштовно | Try it free |
+| Скасувати можна будь-коли в налаштуваннях Apple. | Cancel anytime in your Apple settings. |
+| Підписка Luna Shoots *(AC-6)* | Luna Shoots subscription |
+| {price} на місяць *(AC-6)* | {price} a month |
+| Оформити — {price} на місяць *(AC-6)* | Subscribe — {price} a month |
+| Щомісячне продовження. Скасувати можна будь-коли в налаштуваннях Apple. *(AC-6)* | Renews monthly. Cancel anytime in your Apple settings. |
+| Покупку не завершено. Спробуйте ще раз. *(AC-7)* | The purchase didn't go through. Please try again. |
+| Відновити покупки · Умови · Політика конфіденційності | Restore purchases · Terms · Privacy Policy |
+
 ## Out of scope
 - Buying on the web (`EP-09`).
 - A yearly plan (`ADR-023`).
@@ -66,7 +94,4 @@ of scope (`EP-09`).
 `US-052` (the access record and view mode), spike `S-7`, the owner's App Store Connect product.
 
 ## Open questions
-| # | Question | What decision it blocks |
-|---|---|---|
-| 1 | The paywall's design and copy — designed together after this spec (owner, 2026-10-08), in both languages — including whether it lists what the subscription includes | AC-2's screen |
-| 2 | The message for AC-7, in both languages | AC-7 |
+None.

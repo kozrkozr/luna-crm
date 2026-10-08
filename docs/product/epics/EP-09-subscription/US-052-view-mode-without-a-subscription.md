@@ -62,6 +62,22 @@ buttons alone is not enough, the same principle as `ADR-013`.
 - **Then** it is in view mode there too, and a screen in place of the paywall says the subscription
   is bought in the iOS app (owner, 2026-10-08: "напевно екран додамо"; its content is open)
 
+### AC-9 — The view-mode banner
+- **Given** an account without access
+- **Then** the home screen shows a banner «Режим перегляду · Оформити підписку» under its header,
+  and tapping it opens the paywall (owner, 2026-10-08; drawn in `Home.dc.html`, state «Режим
+  перегляду»)
+
+## Copy
+Owner confirmed, 2026-10-08. Designs: `Home.dc.html` (banner), `Web Subscription Required.dc.html`.
+
+| Ukrainian | English |
+|---|---|
+| Режим перегляду · Оформити підписку *(AC-9)* | View mode · Subscribe |
+| Потрібна підписка *(AC-8, web)* | Subscription required |
+| Підписку оформлюють у застосунку Luna Shoots на iPhone. Після оформлення тут відкриється все. | Subscriptions are bought in the Luna Shoots iPhone app. Once you subscribe, everything opens up here. |
+| Зрозуміло | Got it |
+
 ## Out of scope
 - A free tier with limits (`ADR-023`).
 - Buying on the web.
@@ -70,6 +86,4 @@ buttons alone is not enough, the same principle as `ADR-013`.
 `ADR-023`; spike `S-7` for how access is recorded.
 
 ## Open questions
-| # | Question | What decision it blocks |
-|---|---|---|
-| 1 | The web screen's design and copy (AC-8) | AC-8's screen |
+None.

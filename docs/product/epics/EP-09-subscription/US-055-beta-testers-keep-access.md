@@ -40,6 +40,14 @@ their Apple ID is still eligible.
 - **Then** the subscription starts and is charged from the purchase, as Apple sells it; the
   remaining beta access adds nothing (owner, 2026-10-08)
 
+## Copy
+Owner confirmed, 2026-10-08.
+
+| Ukrainian | English |
+|---|---|
+| **Бета-доступ закінчується** *(AC-3a title)* | **Your beta access ends soon** |
+| Через 2 дні застосунок перейде в режим перегляду. Оформіть підписку, щоб і далі створювати зйомки. | In 2 days the app switches to view mode. Subscribe to keep creating shoots. |
+
 ## Dependencies
 `US-052`; the launch date (`ADR-023` open question 1).
 

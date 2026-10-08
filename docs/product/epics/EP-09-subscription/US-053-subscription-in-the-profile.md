@@ -27,7 +27,7 @@ cancel itself.
 - **Then** iOS's subscription settings for Luna open
 
 ### AC-3 — Subscribe
-- **Given** no access
+- **Given** no access, or beta access (`US-055` AC-4 — owner, 2026-10-08)
 - **When** the person taps subscribe
 - **Then** the paywall opens (`US-051`)
 
@@ -44,10 +44,29 @@ cancel itself.
 - **Then** they are warned that Apple keeps charging until the subscription is cancelled in the
   Apple ID's settings, with a way to open those settings (owner, 2026-10-08)
 
+## Copy
+Owner confirmed, 2026-10-08. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example. Dates follow the app's language. Designs: `Subscription.dc.html`, `Edit Profile.dc.html` (AC-6).
+
+| Ukrainian | English |
+|---|---|
+| Підписка *(screen title, profile row)* | Subscription |
+| Пробний період / Активна / Не продовжиться / Бета-доступ / Неактивна *(status)* | Free trial / Active / Won't renew / Beta access / Inactive |
+| Безкоштовно до {date} | Free until {date} |
+| Потім {price} на місяць | Then {price} a month |
+| Наступне списання {date} · {price} | Next charge {date} · {price} |
+| Доступ до {date} | Access until {date} |
+| Безкоштовно для бета-тестерів до {date} | Free for beta testers until {date} |
+| Бета-доступ закінчиться {date}. Оформити підписку можна вже зараз. | Beta access ends {date}. You can subscribe now. |
+| Режим перегляду — створювати й редагувати можна з підпискою | View mode — subscribe to create and edit |
+| Керувати підпискою | Manage subscription |
+| Оформити підписку | Subscribe |
+| Відновити покупки | Restore purchases |
+| Підписка не скасується сама *(AC-6)* | Your subscription won't cancel itself |
+| Видалення акаунта не зупиняє оплату. Скасуйте підписку в налаштуваннях Apple, інакше списання продовжаться. | Deleting your account doesn't stop payments. Cancel the subscription in your Apple settings, or you'll keep being charged. |
+| Відкрити налаштування Apple / Все одно видалити / Скасувати | Open Apple settings / Delete anyway / Cancel |
+
 ## Dependencies
 `US-051`, `US-052`.
 
 ## Open questions
-| # | Question | What decision it blocks |
-|---|---|---|
-| 1 | The screen's design and copy, and AC-6's warning, in both languages | AC-1–AC-6 |
+None.
