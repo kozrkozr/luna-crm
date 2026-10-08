@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-08 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05 and 2026-10-06)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `af1b4f9` — *docs(ADR-023): settle RevenueCat and the owner's answers on view mode, beta and legal texts*.
+- **Source commit:** `46e6abe` — *docs(US-055): an early subscription is charged from the purchase*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and

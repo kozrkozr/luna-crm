@@ -37,7 +37,8 @@ their Apple ID is still eligible.
 
 ### AC-4 — Subscribing early
 - **Given** such an account that subscribes before its beta access ends
-- **Then** the subscription applies; nothing of the beta access is lost
+- **Then** the subscription starts and is charged from the purchase, as Apple sells it; the
+  remaining beta access adds nothing (owner, 2026-10-08)
 
 ## Dependencies
 `US-052`; the launch date (`ADR-023` open question 1).
@@ -46,4 +47,3 @@ their Apple ID is still eligible.
 | # | Question | What decision it blocks |
 |---|---|---|
 | 1 | The public launch date | AC-1's end date |
-| 2 | AC-4: does an early subscription start charging at once, or after the beta access ends? | AC-4 |
