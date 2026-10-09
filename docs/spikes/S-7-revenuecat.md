@@ -73,7 +73,8 @@ After the trial was used, the same product came back with **intro: none**. `US-0
 «14 днів безкоштовно» must therefore show only to someone still eligible — Apple grants one trial
 per Apple ID per subscription group (`ADR-023`). On the App Store the SDK's
 `checkTrialOrIntroductoryPriceEligibility` is the check; the Test Store hid the intro outright.
-The ineligible paywall's copy is not in `US-051` — **a question for the discovery repo.**
+The ineligible paywall is already `US-051` AC-6, with its copy («Оформити — {price} на місяць»,
+no days — confirmed again by the owner, 2026-10-09).
 
 ### F-5 — `GET /v1/subscribers` creates the customer it is asked about.
 The dashboard's test event carries a random uuid; the first version of the function asked
