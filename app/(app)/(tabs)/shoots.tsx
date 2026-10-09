@@ -27,6 +27,7 @@ import {
 } from '../../../src/components/ShootCalendar'
 import { Starfield } from '../../../src/components/Starfield'
 import { TabHeader } from '../../../src/components/TabHeader'
+import { useGuard } from '../../../src/features/subscription/access'
 
 type State =
   | { status: 'loading' }
@@ -131,7 +132,7 @@ export default function ShootListScreen() {
     **Created rows only.** `US-009`'s crew rows are somebody else's shoot; they
     are not wrapped, so there is nothing to swipe on them.
   */
-  const { ask: askDelete, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
+  const { ask: askDeleteUnguarded, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
     label: t.deleteShoot,
     question: t.confirmDeleteShoot,
     onConfirm: (shoot) => {
@@ -152,6 +153,9 @@ export default function ShootListScreen() {
       })()
     },
   })
+  // `US-052` AC-2 — without access, a swipe's «Видалити» opens the paywall.
+  const guard = useGuard()
+  const askDelete = guard(askDeleteUnguarded)
 
   /*
     The calendar's position and grid, lifted out of `ShootCalendar` on
@@ -352,7 +356,7 @@ export default function ShootListScreen() {
           the list. `py-2.5` is the artboard's own `padding:10px`.
         */}
         <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
-          <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
+          <Button variant="cta" size="cta" onPress={guard(() => router.push('/(app)/new-shoot'))}>
             <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
           </Button>
         </View>

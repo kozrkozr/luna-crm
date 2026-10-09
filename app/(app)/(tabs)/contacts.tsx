@@ -31,6 +31,7 @@ import {
 } from '../../../src/features/contacts/directory'
 import { Starfield } from '../../../src/components/Starfield'
 import { TabHeader } from '../../../src/components/TabHeader'
+import { useGuard } from '../../../src/features/subscription/access'
 
 type State =
   | { status: 'loading' }
@@ -57,6 +58,8 @@ type State =
  */
 export default function ContactsScreen() {
   const t = useStrings()
+  // `US-052` AC-2 — without access, creating, editing and deleting open the paywall.
+  const guard = useGuard()
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
@@ -195,7 +198,7 @@ export default function ContactsScreen() {
         fade is still not built (C-10), so it keeps the hairline.
       */}
       <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
-        <Button variant="cta" size="cta" onPress={() => router.push('/(app)/contact/new')}>
+        <Button variant="cta" size="cta" onPress={guard(() => router.push('/(app)/contact/new'))}>
           <Text className="text-subtitle font-semibold">{`+ ${t.newContactTitle}`}</Text>
         </Button>
       </View>

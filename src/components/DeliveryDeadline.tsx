@@ -27,6 +27,7 @@ import {
   type DeadlineChip,
   type DeadlineTone,
 } from '../features/shoots/deadline'
+import { useGuard } from '../features/subscription/access'
 
 /** The two columns this section owns, as the screen holds them. */
 export type DeadlinePatch = Pick<Shoot, 'deliveryDue' | 'deliveredAt'>
@@ -50,6 +51,9 @@ type Props = {
  */
 export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
   const t = useStrings()
+  // `US-052` AC-2 — setting, changing or marking the deadline is editing the
+  // shoot: without access each opens the paywall.
+  const guard = useGuard()
   // The editor's draft, or null while it is closed.
   const [draft, setDraft] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -135,10 +139,10 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
     return (
       <Pressable
         className="border-border-strong min-h-[58px] flex-row items-center gap-[11px] rounded-xl border-[1.5px] border-dashed px-3.5 py-2.5 active:bg-secondary"
-        onPress={() => {
+        onPress={guard(() => {
           tapped()
           setDraft(addDaysIso(shoot.date, DEADLINE_DEFAULT_DAYS))
-        }}
+        })}
         role="button"
       >
         <View className="bg-secondary h-[34px] w-[34px] items-center justify-center rounded-lg">
@@ -176,10 +180,10 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
         </View>
         <Pressable
           className="h-9 w-9 items-center justify-center rounded-lg active:bg-secondary"
-          onPress={() => {
+          onPress={guard(() => {
             tapped()
             setDraft(due)
-          }}
+          })}
           role="button"
           accessibilityLabel={t.deadlineEditA11y}
         >
@@ -200,10 +204,10 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
           // single action closing a card.
           className="border-border min-h-11 flex-row items-center justify-center gap-[7px] border-t p-2 active:bg-secondary"
           disabled={busy}
-          onPress={() => {
+          onPress={guard(() => {
             tapped()
             void markDelivered()
-          }}
+          })}
           role="button"
         >
           <Icon as={Check} size={14} strokeWidth={1.8} className="text-muted-foreground" />
