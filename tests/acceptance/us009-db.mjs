@@ -1,6 +1,7 @@
 import './env.mjs'
 import { createClient } from '@supabase/supabase-js'
 import { ok } from './cdp.mjs'
+import { grantAccess } from './access.mjs'
 /**
  * US-009 at the data layer: the matching rules from spike S-5, and the query
  * the schedule is built on.
@@ -33,6 +34,7 @@ const account = async (tag, email = `us009-${tag}-${stamp}@example.com`, role = 
   })
   if (error) throw error
   await client.auth.signInWithPassword({ email, password: 'testpass123' })
+  await grantAccess(data.user.id)
   return { client, id: data.user.id, email }
 }
 /**

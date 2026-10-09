@@ -15,6 +15,11 @@ nothing about code that is not on a path some story describes.
 > **nothing**. `env.mjs` refuses to start if `SB_URL` is not localhost or a private LAN address —
 > do not work around that check. A hosted project would be filled with junk within a few runs.
 
+> **Since US-052 an account without access cannot create, edit or delete anything.** A suite
+> whose accounts make shoots must call `grantAccess(id)` from `access.mjs` after signing up — the
+> way the RevenueCat webhook would grant it. `us009-db` and `us042-db` do; the older browser suites
+> predate it, and several already fail on schema drift (`client_contact`, dropped by `ADR-018`).
+
 ## What has to be running
 
 **Node 22** — `nvm use 22`. Same reason as the app (see the root README).
@@ -36,7 +41,7 @@ Eight suites need no browser at all:
 
 | Suite | Needs |
 |---|---|
-| `softdelete-fn` `us003-check` `us005-media` `us009-db` `us018-media` `us042-db` | Supabase only |
+| `softdelete-fn` `us003-check` `us005-media` `us009-db` `us018-media` `us042-db` `us052-db` | Supabase only |
 | `us006-gateway` `us009-app` | Supabase + `functions serve link-gateway` |
 
 Everything else needs all four.
