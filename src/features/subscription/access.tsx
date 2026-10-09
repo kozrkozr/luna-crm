@@ -13,9 +13,10 @@ import { onPurchasesChanged } from './purchases'
  * never used for it; a purchase only prompts a re-read.
  *
  * Re-read on mount, when the app returns to the foreground, the moment the
- * current access runs out, and after RevenueCat reports a change — for a short
- * while, because the webhook lands a few seconds after the purchase (`S-7`
- * F-3).
+ * current access runs out, and after RevenueCat reports a change. After a
+ * change the app first asks the server to sync the account from RevenueCat
+ * (`revenuecat-sync`), because the webhook can land a minute later (`S-7` F-3,
+ * and once on the device); polling covers that call failing.
  */
 type AccessValue = {
   /**
@@ -80,7 +81,9 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onPurchasesChanged(() => {
       stop()
       const started = Date.now()
-      void refresh()
+      // Ask the server to record the purchase now (AC-7) rather than wait for
+      // the webhook; the polling below is the fallback if that call fails.
+      void supabase.functions.invoke('revenuecat-sync', { method: 'POST' }).then(() => refresh())
       timer = setInterval(() => {
         if (hasAccessRef.current || Date.now() - started > AFTER_PURCHASE_MS) return stop()
         void refresh()
