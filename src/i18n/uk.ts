@@ -1395,6 +1395,11 @@ export const uk = {
   deadlineMarkedDelivered: 'Позначено як передано клієнту',
   deadlineEditA11y: 'Змінити дедлайн',
   deadlineRemoveA11y: 'Видалити дедлайн',
+
+  // ── US-052 — view mode ─────────────────────────────────────────────────────
+  /** AC-9 — the home banner: «Режим перегляду · Оформити підписку». */
+  viewModeBanner: 'Режим перегляду',
+  viewModeSubscribe: 'Оформити підписку',
 } as const
 
 export type CopyKey = keyof typeof uk

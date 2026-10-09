@@ -16,6 +16,7 @@ import {
 import { deleteClient, getClient } from '../../../../src/features/clients/api'
 import type { DirectoryKind } from '../../../../src/features/contacts/directory'
 import { Starfield } from '../../../../src/components/Starfield'
+import { useGuard } from '../../../../src/features/subscription/access'
 
 /**
  * A person from «Мої контакти», and the two ways in.
@@ -46,6 +47,8 @@ import { Starfield } from '../../../../src/components/Starfield'
  */
 export default function ContactProfileScreen() {
   const t = useStrings()
+  // `US-052` AC-2 — without access, creating, editing and deleting open the paywall.
+  const guard = useGuard()
   const router = useRouter()
   const params = useLocalSearchParams<{
     id: string
@@ -238,14 +241,15 @@ export default function ContactProfileScreen() {
         view={state.view}
         onEdit={
           subject
-            ? () =>
+            ? guard(() =>
                 router.push({
                   pathname: '/(app)/contact/[id]/edit',
                   params: { id: subject.id, kind: subject.kind },
                 })
+              )
             : undefined
         }
-        onDelete={subject?.deletable ? () => askDelete(null) : undefined}
+        onDelete={subject?.deletable ? guard(() => askDelete(null)) : undefined}
       />
       {deleteDialog}
       <Toast message={error} onDone={() => setError(null)} />

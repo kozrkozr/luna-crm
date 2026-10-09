@@ -1,0 +1,13 @@
+-- «Мої контакти» — the app's grants on `contacts`, stated explicitly.
+--
+-- `20260904100000` wrote the table's policies and no GRANT, relying on
+-- Supabase's default privileges. The hosted projects have them, so the app
+-- works there; the local stack does not (`config.toml` turns them off), and
+-- there `authenticated` holds no SELECT, INSERT or UPDATE at all — every
+-- contacts read and write fails locally. Found while testing US-052's rules on
+-- this table.
+--
+-- The same three privileges `clients` and `shoots` are given; no DELETE —
+-- `deleted_at` is the delete, through the update policy. Additive on the hosted
+-- projects, which already hold them.
+grant select, insert, update on public.contacts to authenticated;

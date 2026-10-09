@@ -1,6 +1,7 @@
 import './env.mjs'
 import { createClient } from '@supabase/supabase-js'
 import { ok } from './cdp.mjs'
+import { grantAccess } from './access.mjs'
 /**
  * US-042 at the data layer: the delivery deadline's two columns, the rules the
  * database holds for them, and the trigger that moves the deadline with the
@@ -20,6 +21,7 @@ const account = async (tag) => {
   })
   if (error) throw error
   await client.auth.signInWithPassword({ email, password: 'testpass123' })
+  await grantAccess(data.user.id)
   return { client, id: data.user.id }
 }
 

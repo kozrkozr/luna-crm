@@ -15,6 +15,7 @@ import { useStrings } from '../i18n/LanguageProvider'
 import { succeeded, tapped } from '../lib/haptics'
 import type { AddReferenceResult, Reference } from '../features/references/api'
 import { CATEGORY_KEYS, categoryKeyOf, categoryLabel } from '../i18n/vocabulary'
+import { useGuard } from '../features/subscription/access'
 
 type Props = {
   references: Reference[]
@@ -61,6 +62,8 @@ export function ReferencesEditor({
   resolveImage,
 }: Props) {
   const t = useStrings()
+  // `US-052` AC-2 — adding or removing a reference opens the paywall without access.
+  const guard = useGuard()
   const [category, setCategory] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -286,16 +289,16 @@ export function ReferencesEditor({
 
       <ReferenceGrid
         references={shown}
-        onRemove={askRemove}
+        onRemove={guard(askRemove)}
         resolveImage={resolveImage}
         trailing={
           <Pressable
             className="border-border aspect-square w-full items-center justify-center rounded-[10px] border active:bg-secondary"
             disabled={busy}
-            onPress={() => {
+            onPress={guard(() => {
               tapped()
               setKindSheetOpen(true)
-            }}
+            })}
             role="button"
             accessibilityLabel={t.addReferenceOrFile}
           >

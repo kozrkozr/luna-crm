@@ -56,6 +56,8 @@ import {
   upcomingShoots,
 } from '../../../src/features/shoots/home'
 import { Starfield } from '../../../src/components/Starfield'
+import { ViewModeBanner } from '../../../src/features/subscription/ViewModeBanner'
+import { useGuard } from '../../../src/features/subscription/access'
 
 type State =
   | { status: 'loading' }
@@ -212,7 +214,7 @@ export default function HomeScreen() {
     the way to the confirm — the alternative is a second piece of state that can
     drift from what the alert is asking about.
   */
-  const { ask: askDelete, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
+  const { ask: askDeleteUnguarded, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
     label: t.deleteShoot,
     question: t.confirmDeleteShoot,
     onConfirm: (shoot) => {
@@ -262,6 +264,9 @@ export default function HomeScreen() {
       })()
     },
   })
+  // `US-052` AC-2 — without access, a swipe's «Видалити» opens the paywall.
+  const guard = useGuard()
+  const askDelete = guard(askDeleteUnguarded)
 
   return (
     <View className="bg-background flex-1">
@@ -442,7 +447,7 @@ export default function HomeScreen() {
             that wraps to two lines — which `Button` chose deliberately for
             Ukrainian, «Позначити як «Закінчена»» being 22 characters.
           */}
-          <Button variant="cta" size="cta" onPress={() => router.push('/(app)/new-shoot')}>
+          <Button variant="cta" size="cta" onPress={guard(() => router.push('/(app)/new-shoot'))}>
             <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
           </Button>
         </View>
@@ -741,7 +746,10 @@ function HomeHeader({
         </Link>
       </View>
       }
-    />
+    >
+      {/* `US-052` AC-9 — under the header, inside its border. */}
+      <ViewModeBanner />
+    </TabHeader>
   )
 }
 

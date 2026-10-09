@@ -664,4 +664,9 @@ export const en: Strings = {
   deadlineMarkedDelivered: 'Marked as delivered to client',
   deadlineEditA11y: 'Change deadline',
   deadlineRemoveA11y: 'Remove deadline',
+
+  // ── US-052 — view mode ─────────────────────────────────────────────────────
+  /** AC-9 — the home banner: «Режим перегляду · Оформити підписку». */
+  viewModeBanner: 'View mode',
+  viewModeSubscribe: 'Subscribe',
 }

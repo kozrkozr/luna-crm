@@ -76,6 +76,7 @@ import {
   signedLocationUrl,
 } from '../../../../src/features/shoots/locationMedia'
 import { Starfield } from '../../../../src/components/Starfield'
+import { useGuard } from '../../../../src/features/subscription/access'
 
 type State =
   | { status: 'loading' }
@@ -111,6 +112,9 @@ type ToastState = { message: string; undo?: () => void } | null
  */
 export default function ShootDetailScreen() {
   const t = useStrings()
+  // `US-052` AC-2 — every create, edit and delete here opens the paywall
+  // without access. Copying a link is not one of them (AC-4).
+  const guard = useGuard()
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const insets = useSafeAreaInsets()
@@ -456,8 +460,8 @@ export default function ShootDetailScreen() {
         >
           {tab === 'details' ? (
             <DetailsActions
-              onEdit={() => router.push(`/(app)/shoot/${shoot.id}/edit`)}
-              onCancelShoot={() => askCancelShoot(null)}
+              onEdit={guard(() => router.push(`/(app)/shoot/${shoot.id}/edit`))}
+              onCancelShoot={guard(() => askCancelShoot(null))}
             />
           ) : (
             /*
@@ -470,10 +474,10 @@ export default function ShootDetailScreen() {
             <Button
               variant="cta"
               size="cta"
-              onPress={() => {
+              onPress={guard(() => {
                 tapped()
                 router.push(`/(app)/shoot/${shoot.id}/crew/add`)
-              }}
+              })}
             >
               {/* `router.push`, not `Link asChild` — the calendar's «+ Нова
                   зйомка» is a plain `Button` and this is meant to be the same
@@ -1159,6 +1163,7 @@ function PeopleTab({
   onRemove: (person: SheetPerson) => void
 }) {
   const t = useStrings()
+  const guard = useGuard()
   // One at a time: two open rows push the second one off the screen, and the
   // list is the thing being scanned.
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -1228,10 +1233,10 @@ function PeopleTab({
                 removable: true,
               })
             }
-            onRemove={() => {
+            onRemove={guard(() => {
               setExpanded(null)
               askRemove(member)
-            }}
+            })}
           />
         ))}
       </Card>
@@ -1496,6 +1501,7 @@ function MaterialsTab({
   onLinkSaved: (field: ShootLinkField, url: string | null) => void
 }) {
   const t = useStrings()
+  const guard = useGuard()
   // Which file link is open for editing, if any. One at a time: the two rows
   // sit on top of each other and a second open editor would push the first
   // off-screen mid-paste.
@@ -1552,7 +1558,7 @@ function MaterialsTab({
               url={file.url}
               divided={index > 0}
               editing={editingLink === file.field}
-              onStartEdit={() => setEditingLink(file.field)}
+              onStartEdit={guard(() => setEditingLink(file.field))}
               onCancelEdit={() => setEditingLink(null)}
               onSave={async (value) => {
                 const ok = await updateShootLink(shoot.id, file.field, value)
