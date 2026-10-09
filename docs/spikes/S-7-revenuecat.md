@@ -68,6 +68,11 @@ for the row after a purchase, or have the app ask the server to re-read the cust
 code as the webhook, called with the user's JWT). To decide when building `US-051`; not a
 product question.
 
+**Resolved in `US-052`** (2026-10-09): on the device the webhook once took about a minute, past
+the app's 30-second polling. The app now calls `revenuecat-sync` right after RevenueCat reports a
+purchase or restore — the same re-read the webhook does, for the caller's own account — and
+access returned within seconds on the next run.
+
 ### F-4 — Trial eligibility is per customer, and the paywall has to ask.
 After the trial was used, the same product came back with **intro: none**. `US-051`'s copy
 «14 днів безкоштовно» must therefore show only to someone still eligible — Apple grants one trial
