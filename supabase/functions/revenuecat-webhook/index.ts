@@ -70,6 +70,18 @@ Deno.serve(async (req) => {
   console.log(`event ${event.type} ${event.environment ?? ''} → ${[...ids].join(', ') || 'no account'}`)
 
   for (const userId of ids) {
+    /*
+      The account is checked BEFORE RevenueCat is asked: `GET /v1/subscribers`
+      creates the customer it is asked about. The dashboard's test event carries
+      a random uuid, and asking about it left a phantom customer in RevenueCat
+      (found on the device run, 2026-10-09). An id with no Luna account — the
+      test event, another environment's user, a deleted account — is ignored.
+    */
+    const { data: user } = await db.from('users').select('id').eq('id', userId).maybeSingle()
+    if (!user) {
+      console.log(`no account ${userId} here — ignored`)
+      continue
+    }
     const subscriber = await fetchSubscriber(userId)
     if (!subscriber) return new Response('revenuecat unavailable', { status: 502 })
     const error = await record(userId, subscriber)
@@ -98,14 +110,6 @@ async function fetchSubscriber(userId: string): Promise<Subscriber | null> {
  * entitlement it has ever held, and none for one it no longer lists.
  */
 async function record(userId: string, subscriber: Subscriber): Promise<string | null> {
-  // An id that is a uuid but no Luna account — another environment's user, a
-  // deleted account. The foreign key would refuse it; skip instead.
-  const { data: user } = await db.from('users').select('id').eq('id', userId).maybeSingle()
-  if (!user) {
-    console.log(`no account ${userId} here — ignored`)
-    return null
-  }
-
   const rows = Object.entries(subscriber.entitlements).map(([entitlement, e]) => {
     const subscription = subscriber.subscriptions[e.product_identifier]
     return {
