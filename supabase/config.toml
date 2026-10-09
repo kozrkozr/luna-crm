@@ -448,3 +448,7 @@ enabled = true
 # the token in the URL is the whole credential, so a JWT must not be required.
 [functions.link-gateway]
 verify_jwt = false
+
+# S-7 — RevenueCat calls it with its own Authorization header, not a Supabase JWT.
+[functions.revenuecat-webhook]
+verify_jwt = false

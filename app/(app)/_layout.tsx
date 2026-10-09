@@ -4,6 +4,7 @@ import { CurrencyProvider } from '../../src/features/account/currency'
 import { RequireSession } from '../../src/features/auth/RequireSession'
 import { navigationScreenOptions } from '../../src/theme/palette'
 import { RemindersHost } from '../../src/features/reminders/RemindersHost'
+import { PurchasesHost } from '../../src/features/subscription/PurchasesHost'
 
 /**
  * The creator's surface. Everything here requires a session (EP-01), enforced
@@ -31,6 +32,8 @@ export default function AppLayout() {
             account's language (AC-12), and inside the session, because they are
             planned from the creator's shoots. */}
         <RemindersHost />
+        {/* S-7 — RevenueCat's customer is the signed-in account. */}
+        <PurchasesHost />
       </LanguageProvider>
     </RequireSession>
   )
@@ -125,6 +128,8 @@ function AppStack() {
       <Stack.Screen name="notifications" options={{ headerShown: false }} />
       {/* US-047's «Валюта» — pushed from the profile like «Сповіщення». */}
       <Stack.Screen name="currency" options={{ headerShown: false }} />
+      {/* S-7's throwaway purchase screen — dev builds only. */}
+      <Stack.Screen name="spike-s7" options={{ title: 'S-7', headerLargeTitle: false }} />
       {/*
         The shoot's two screens draw their own headers (2026-08-30), which makes
         three routes in this navigator that do — `index` was the first.
