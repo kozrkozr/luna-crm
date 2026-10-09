@@ -4,7 +4,8 @@
 - **Status:** accepted — owner (chat, 2026-10-07/08); the provider (RevenueCat) proposed by the
   agent, accepted by the owner 2026-10-08
 - **Amends:** `prd.md` Constraints — the price ($5/month → **$4.99/month**); `US-009`'s premise that
-  a registered crew member uses the app for free
+  a registered crew member uses the app for free; `ADR-021` — the photographer's web app becomes part
+  of the planned PRO tier (decision 7)
 - **Does not change:** `ADR-013` (anonymous link reads through the gateway), `ADR-014` (link validity
   from soft deletes) — links never depend on a subscription
 - **Phase:** 02-product, revisited post-handoff
@@ -59,7 +60,8 @@ Facts that constrained the choice:
 
 ## Decision
 1. **Price:** one plan, **$4.99 per month**, the same in every storefront (Apple's automatic
-   conversion). No yearly plan for now.
+   conversion). A yearly plan was weighed on 2026-10-09 and deferred until the higher tier exists,
+   so the paywall is redesigned for plans once, not twice (owner).
 2. **Free trial:** **14 days, Apple's introductory offer**, offered on a paywall shown right after
    registration. One trial per Apple ID, as Apple grants it.
 3. **Who pays:** everyone who installs the app and registers — photographers and crew members
@@ -72,11 +74,22 @@ Facts that constrained the choice:
    die over a payment.
 6. **Nothing is deleted** when access ends.
 7. **Access is decided on the server**, and enforced by the database, not by hiding buttons — the
-   same principle as `ADR-013`. So the photographer's web app (`ADR-021`) follows the same access;
-   buying from the web is deferred.
+   same principle as `ADR-013`. **The photographer's web app (`ADR-021`) and file storage (`EP-07`)
+   belong to the planned PRO tier, not to this subscription** (owner, 2026-10-09): this subscription
+   is the iOS app. Neither is built, so nothing is taken away from anyone. The plan names: this one is
+   «Luna Shoots», the higher one «Luna Shoots PRO» (owner, 2026-10-09).
 8. **Beta testers:** every account registered before the public launch has full access for
    **3 months from the launch date**, granted by the server, with no purchase.
-9. **Provider:** RevenueCat over StoreKit; the RevenueCat customer is the Luna
+9. **Ready for more plans** (agent, owner 2026-10-09 — "можемо десь закласти логіку під майбутню
+   річну, і майбутні різні види підписок"): a yearly plan and a higher tier with the web app and file
+   storage are planned later, not now. So from the start:
+   - product IDs name the tier and the period — `com.lunashoots.ios.base.monthly`; later
+     `…base.yearly`, `…pro.monthly`, `…pro.yearly`;
+   - **one subscription group** holds every plan, so Apple handles moving between them;
+   - the access the server records names the tier (RevenueCat entitlement `base`), not a yes/no —
+     a higher tier is a second entitlement, not a rewrite;
+   - the paywall reads the plans on offer from RevenueCat, not from the code.
+10. **Provider:** RevenueCat over StoreKit; the RevenueCat customer is the Luna
    account id, so a subscription belongs to the Luna account, not to whoever is signed in to the
    Apple ID.
 

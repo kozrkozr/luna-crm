@@ -57,11 +57,6 @@ buttons alone is not enough, the same principle as `ADR-013`.
 - **When** the account starts a trial or a subscription again
 - **Then** full access returns at once, with everything as it was
 
-### AC-8 — The web app follows the same access
-- **Given** an account without access, in the photographer's web app (`ADR-021`)
-- **Then** it is in view mode there too, and a screen in place of the paywall says the subscription
-  is bought in the iOS app (owner, 2026-10-08: "напевно екран додамо"; its content is open)
-
 ### AC-9 — The view-mode banner
 - **Given** an account without access
 - **Then** the home screen shows a banner «Режим перегляду · Оформити підписку» under its header,
@@ -69,18 +64,20 @@ buttons alone is not enough, the same principle as `ADR-013`.
   перегляду»)
 
 ## Copy
-Owner confirmed, 2026-10-08. Designs: `Home.dc.html` (banner), `Web Subscription Required.dc.html`.
+Owner confirmed, 2026-10-08. Designs: `Home.dc.html` (banner); `Web Subscription Required.dc.html` (for PRO, not built here).
 
 | Ukrainian | English |
 |---|---|
 | Режим перегляду · Оформити підписку *(AC-9)* | View mode · Subscribe |
-| Потрібна підписка *(AC-8, web)* | Subscription required |
+| Потрібна підписка *(web — PRO, not built here)* | Subscription required |
 | Підписку оформлюють у застосунку Luna Shoots на iPhone. Після оформлення тут відкриється все. | Subscriptions are bought in the Luna Shoots iPhone app. Once you subscribe, everything opens up here. |
 | Зрозуміло | Got it |
 
 ## Out of scope
 - A free tier with limits (`ADR-023`).
-- Buying on the web.
+- **The web app.** It belongs to the planned PRO tier (`ADR-023` decision 7, owner 2026-10-09) — an
+  earlier AC-8 that put view mode and a "buy in the iOS app" screen on the web was removed. That
+  screen is drawn (`Web Subscription Required.dc.html`) and its copy kept below for the PRO work.
 
 ## Dependencies
 `ADR-023`; spike `S-7` for how access is recorded.

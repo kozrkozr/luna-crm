@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-08 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05 and 2026-10-06)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `4446f41` — *docs(ADR-023): confirm the subscription screens' copy in Ukrainian and English*.
+- **Source commit:** `fc85919` — *docs(US-051): the redesigned paywall — a plan card, no zero price, renewal in words*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
@@ -24,7 +24,11 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 - **Without access, view mode:** everything visible, nothing created, edited or deleted; replies,
   the profile, sharing existing links and deleting the account stay allowed. **Links keep working**
   for crew and clients whatever the creator pays.
-- **Access is decided on the server and enforced by the database** — the web app follows it.
+- **Access is decided on the server and enforced by the database.** The photographer's web app and
+  file storage belong to a planned **PRO** tier (amends `ADR-021`); this subscription is the iOS app.
+- **Monthly only for now.** A yearly plan waits for PRO; product IDs (`com.lunashoots.ios.base.monthly`),
+  the RevenueCat entitlement (`base`) and the paywall's plan card are already shaped for more plans.
+- **The paywall is `Paywall copy.dc.html`** (2026-10-09), not the older `Paywall.dc.html`.
 - **Beta testers get 3 months** from the public launch date (not yet set).
 - **Purchases through RevenueCat.** Spike **S-7** (one sandbox purchase on a device) comes first.
 - Stories `US-051`–`US-056`; four provisional glossary terms (subscription, free trial, paywall,

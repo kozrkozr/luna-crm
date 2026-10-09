@@ -29,14 +29,17 @@ of scope (`EP-09`).
   storefront's currency as Apple gives it), that it renews monthly until cancelled, a button that
   starts the trial, «Відновити покупки» / "Restore purchases", links to the terms and the privacy
   policy (in the app's language — `US-049`), and a way to close it
-- **And** the price after the trial is shown as prominently as the trial itself — directly under
-  the title, not small or dimmed under the button (App Store Review Guideline 3.1.2: the billed
-  amount must be clear and conspicuous)
+- **And** the price is shown in a plan card, at least as prominent as the trial, and the screen
+  shows **no zero price** («0 $») — the billed amount must be the clearest price on the screen
+  (App Store Review Guideline 3.1.2; owner, 2026-10-09)
+- **And** the automatic monthly renewal is stated in words under the plan card
+- **And** the plan card is a selectable row, so a later plan (`ADR-023` decision 9) is a second row
 - **And** it lists four benefits, worded as drawn (owner, 2026-10-08 — kept over livelier
   alternatives): «Зйомки, команда й клієнти без обмежень» · «Посилання для команди й клієнтів — без
   застосунку і реєстрації» · «Нагадування про зйомки» · «Терміни передачі матеріалів»
 - **And** it is in the app's language (`US-045`)
-- **Design:** `Paywall.dc.html` (Claude Design, 2026-10-08)
+- **Design:** `Paywall copy.dc.html` (Claude Design, 2026-10-09) — **the final one**; it replaces
+  `Paywall.dc.html` (2026-10-08), which is kept only as history
 
 ### AC-3 — Starting the trial
 - **Given** the paywall
@@ -66,25 +69,26 @@ of scope (`EP-09`).
 - **Then** the account's access is restored
 
 ## Copy
-Owner confirmed, 2026-10-08. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example.
+Owner confirmed, 2026-10-08, revised for the 2026-10-09 design. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example. «Luna Shoots» under the logo is the name, not translated.
 
 | Ukrainian | English |
 |---|---|
+| Відновити *(top left — restore, AC-8)* | Restore |
 | 14 днів безкоштовно | 14 days free |
-| Потім {price} на місяць | Then {price} a month |
 | Усі зйомки, команда й клієнти в одному місці. | All your shoots, crew and clients in one place. |
 | Зйомки, команда й клієнти без обмежень | Unlimited shoots, crew and clients |
 | Посилання для команди й клієнтів — без застосунку і реєстрації | Links for crew and clients — no app, no sign-up |
 | Нагадування про зйомки | Shoot reminders |
 | Терміни передачі матеріалів | Delivery deadlines |
+| **Щомісяця:** {price} / місяць *(plan card)* | **Monthly:** {price} / month |
+| Перші 14 днів — безкоштовно *(plan card, trial only)* | First 14 days free |
+| Продовжується автоматично щомісяця. Скасувати можна будь-коли в налаштуваннях Apple. *(trial)* | Renews automatically every month. Cancel anytime in your Apple settings. |
 | Спробувати безкоштовно | Try it free |
-| Скасувати можна будь-коли в налаштуваннях Apple. | Cancel anytime in your Apple settings. |
-| Підписка Luna Shoots *(AC-6)* | Luna Shoots subscription |
-| {price} на місяць *(AC-6)* | {price} a month |
-| Оформити — {price} на місяць *(AC-6)* | Subscribe — {price} a month |
+| Підписка Luna Shoots *(AC-6 title)* | Luna Shoots subscription |
 | Щомісячне продовження. Скасувати можна будь-коли в налаштуваннях Apple. *(AC-6)* | Renews monthly. Cancel anytime in your Apple settings. |
+| Оформити — {price} на місяць *(AC-6 button)* | Subscribe — {price} a month |
 | Покупку не завершено. Спробуйте ще раз. *(AC-7)* | The purchase didn't go through. Please try again. |
-| Відновити покупки · Умови · Політика конфіденційності | Restore purchases · Terms · Privacy Policy |
+| Умови · Політика конфіденційності | Terms · Privacy Policy |
 
 ## Out of scope
 - Buying on the web (`EP-09`).
