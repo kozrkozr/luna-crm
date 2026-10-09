@@ -669,4 +669,30 @@ export const en: Strings = {
   /** AC-9 — the home banner: «Режим перегляду · Оформити підписку». */
   viewModeBanner: 'View mode',
   viewModeSubscribe: 'Subscribe',
+
+  // ── US-051 — the paywall ───────────────────────────────────────────────────
+  paywallRestore: 'Restore',
+  paywallClose: 'Close',
+  paywallTrialTitle: '14 days free',
+  paywallSubscriptionTitle: 'Luna Shoots subscription',
+  paywallSubtitle: 'All your shoots, crew and clients in one place.',
+  paywallBenefits: [
+    'Unlimited shoots, crew and clients',
+    'Links for crew and clients — no app, no sign-up',
+    'Shoot reminders',
+    'Delivery deadlines',
+  ],
+  paywallPlanLabel: 'Monthly:',
+  paywallPlanPriceTemplate: '{price} / month',
+  paywallPlanTrial: 'First 14 days free',
+  paywallRenewTrial: 'Renews automatically every month. Cancel anytime in your Apple settings.',
+  paywallRenewNoTrial: 'Renews monthly. Cancel anytime in your Apple settings.',
+  paywallTryFree: 'Try it free',
+  paywallSubscribeTemplate: 'Subscribe — {price} a month',
+  paywallPurchaseFailed: "The purchase didn't go through. Please try again.",
+  paywallRestoreNone: 'No active subscription found.',
+  paywallRestoreFailed: "Couldn't restore purchases. Please try again.",
+  paywallOtherAccount: 'This subscription belongs to another Luna account. Sign in to that account to use it.',
+  paywallTerms: 'Terms',
+  paywallPrivacy: 'Privacy Policy',
 }

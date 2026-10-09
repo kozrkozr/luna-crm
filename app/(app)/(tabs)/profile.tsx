@@ -839,17 +839,6 @@ export default function ProfileScreen() {
                 />
               </Pressable>
 
-              {/* S-7 — the spike's purchase screen, in dev builds only. */}
-              {__DEV__ ? (
-                <Pressable
-                  className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                  onPress={() => router.push('/(app)/spike-s7')}
-                  role="button"
-                >
-                  <Text className="text-body-sm text-muted-foreground flex-1">S-7 · RevenueCat</Text>
-                </Pressable>
-              ) : null}
-
               {/* STUB — no support address exists anywhere in the repo, so this
                   opens nothing. Drawn complete regardless (owner, 2026-09-02). */}
               <View className="border-border min-h-14 flex-row items-center gap-3 border-t px-4">

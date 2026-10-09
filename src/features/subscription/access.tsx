@@ -26,9 +26,19 @@ type AccessValue = {
    */
   hasAccess: boolean | null
   refresh: () => Promise<void>
+  /**
+   * Asks the server to record what RevenueCat holds for this account now, then
+   * re-reads — `US-051` calls it after a purchase or restore, before closing
+   * the paywall (AC-3).
+   */
+  syncNow: () => Promise<void>
 }
 
-const AccessContext = createContext<AccessValue>({ hasAccess: null, refresh: async () => {} })
+const AccessContext = createContext<AccessValue>({
+  hasAccess: null,
+  refresh: async () => {},
+  syncNow: async () => {},
+})
 
 /** How long, and how often, to look for the webhook's row after a purchase. */
 const AFTER_PURCHASE_MS = 30_000
@@ -52,6 +62,11 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     const soonest = ends.length > 0 ? Math.min(...ends) : Infinity
     setExpiresAt(Number.isFinite(soonest) ? soonest : null)
   }, [])
+
+  const syncNow = useCallback(async () => {
+    await supabase.functions.invoke('revenuecat-sync', { method: 'POST' })
+    await refresh()
+  }, [refresh])
 
   useEffect(() => {
     void refresh()
@@ -83,7 +98,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
       const started = Date.now()
       // Ask the server to record the purchase now (AC-7) rather than wait for
       // the webhook; the polling below is the fallback if that call fails.
-      void supabase.functions.invoke('revenuecat-sync', { method: 'POST' }).then(() => refresh())
+      void syncNow()
       timer = setInterval(() => {
         if (hasAccessRef.current || Date.now() - started > AFTER_PURCHASE_MS) return stop()
         void refresh()
@@ -93,9 +108,9 @@ export function AccessProvider({ children }: { children: ReactNode }) {
       stop()
       unsubscribe()
     }
-  }, [refresh])
+  }, [refresh, syncNow])
 
-  return <AccessContext.Provider value={{ hasAccess, refresh }}>{children}</AccessContext.Provider>
+  return <AccessContext.Provider value={{ hasAccess, refresh, syncNow }}>{children}</AccessContext.Provider>
 }
 
 export function useAccess(): AccessValue {
