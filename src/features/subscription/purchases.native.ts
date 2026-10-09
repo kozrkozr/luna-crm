@@ -20,6 +20,7 @@ export async function identifyPurchaser(userId: string): Promise<void> {
   if (configuredFor === null) {
     if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.DEBUG)
     Purchases.configure({ apiKey: API_KEY, appUserID: userId })
+    Purchases.addCustomerInfoUpdateListener(() => listeners.forEach((l) => l()))
   } else {
     await Purchases.logIn(userId)
   }
@@ -27,3 +28,21 @@ export async function identifyPurchaser(userId: string): Promise<void> {
 }
 
 export const purchasesAvailable = Boolean(API_KEY)
+
+/**
+ * Calls back whenever RevenueCat reports a change to the customer — a purchase,
+ * a restore, a renewal noticed on launch. The app does not trust it for access
+ * (`ADR-023` decision 7); it is the cue to re-read `account_access`.
+ *
+ * Callers may subscribe before `identifyPurchaser` has configured the SDK (the
+ * access provider mounts beside `PurchasesHost`), so callbacks are kept here and
+ * the SDK listener is attached once, on configure.
+ */
+const listeners = new Set<() => void>()
+
+export function onPurchasesChanged(callback: () => void): () => void {
+  listeners.add(callback)
+  return () => {
+    listeners.delete(callback)
+  }
+}

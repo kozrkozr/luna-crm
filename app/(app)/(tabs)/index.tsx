@@ -56,6 +56,7 @@ import {
   upcomingShoots,
 } from '../../../src/features/shoots/home'
 import { Starfield } from '../../../src/components/Starfield'
+import { ViewModeBanner } from '../../../src/features/subscription/ViewModeBanner'
 
 type State =
   | { status: 'loading' }
@@ -741,7 +742,10 @@ function HomeHeader({
         </Link>
       </View>
       }
-    />
+    >
+      {/* `US-052` AC-9 — under the header, inside its border. */}
+      <ViewModeBanner />
+    </TabHeader>
   )
 }
 

@@ -6,3 +6,7 @@
 export async function identifyPurchaser(_userId: string): Promise<void> {}
 
 export const purchasesAvailable = false
+
+export function onPurchasesChanged(_callback: () => void): () => void {
+  return () => {}
+}
