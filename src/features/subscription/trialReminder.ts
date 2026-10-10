@@ -4,6 +4,14 @@ import type { PlannedReminder } from '../reminders/plan'
 /** `US-054` AC-1 — how long before the trial ends the reminder comes. */
 export const TRIAL_REMINDER_BEFORE_MS = 2 * 24 * 3600 * 1000
 
+/**
+ * Dev builds only (the Test Store's `test_…` key): the Test Store runs a
+ * 14-day trial in about seven minutes, so "two days before" is always already
+ * past and the reminder could never be seen on a device. Two minutes there.
+ * The wording stays AC-1's — it is a test of the scheduling, not of the copy.
+ */
+export const TEST_STORE_REMINDER_BEFORE_MS = 2 * 60 * 1000
+
 export type Trial = {
   /** When the trial ends — `account_access.expires_at`. */
   endsAt: Date
@@ -27,10 +35,11 @@ export function planTrialReminder(
   trial: Trial | null,
   price: string | null,
   now: Date,
-  t: Strings
+  t: Strings,
+  beforeMs: number = TRIAL_REMINDER_BEFORE_MS
 ): PlannedReminder | null {
   if (!trial) return null
-  const at = new Date(trial.endsAt.getTime() - TRIAL_REMINDER_BEFORE_MS)
+  const at = new Date(trial.endsAt.getTime() - beforeMs)
   if (at.getTime() <= now.getTime()) return null
   if (trial.willRenew && !price) return null
   return {

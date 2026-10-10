@@ -4,7 +4,12 @@ import { supabase } from '../../lib/supabase/client'
 import { DEFAULT_LANGUAGE, stringsFor, type Language } from '../../i18n'
 import { listShoots } from '../shoots/api'
 import { MAX_PENDING, planReminders } from './plan'
-import { planTrialReminder, type Trial } from '../subscription/trialReminder'
+import {
+  planTrialReminder,
+  TEST_STORE_REMINDER_BEFORE_MS,
+  TRIAL_REMINDER_BEFORE_MS,
+  type Trial,
+} from '../subscription/trialReminder'
 import { loadOffer } from '../subscription/purchases'
 import { loadReminderSettings } from './settings'
 
@@ -75,7 +80,10 @@ async function run(): Promise<void> {
     // cancel-everything step below cannot wipe it. It goes first: the 64-slot
     // cut keeps the soonest shoots, and a trial ending must not be the one
     // dropped.
-    const trialReminder = planTrialReminder(await readTrial(), await readPrice(), now, t)
+    const beforeMs = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY?.startsWith('test_')
+      ? TEST_STORE_REMINDER_BEFORE_MS
+      : TRIAL_REMINDER_BEFORE_MS
+    const trialReminder = planTrialReminder(await readTrial(), await readPrice(), now, t, beforeMs)
     const plan = [
       ...(trialReminder ? [trialReminder] : []),
       ...planReminders(shoots, settings, now, t),
