@@ -2,7 +2,7 @@
 /**
  * Run a command against one environment, without touching `.env`.
  *
- *   node scripts/variant.mjs <local|dev|prod> [--prebuild|--clean] [command ...]
+ *   node scripts/variant.mjs <local|dev|prod|store-sandbox> [--prebuild|--clean] [command ...]
  *
  * Loads `.env.<target>` into the command's environment and sets APP_VARIANT —
  * `production` for prod, `development` otherwise (app.config.ts). Variables in
@@ -14,17 +14,25 @@
  *   --clean     regenerate ios/ first, always — for an App Store archive
  *
  * With no command, it only prebuilds.
+ *
+ * `store-sandbox` (EP-09) — **Luna Shoots** against the **dev** backend, with the
+ * App Store's RevenueCat key from `.env.prod`. Apple sells the real product only
+ * to `com.lunashoots.ios`, which the prod target bakes against prod; this is
+ * that app pointed at dev, for buying with a sandbox Apple ID without touching
+ * the production database (`docs/spikes/S-7-revenuecat.md`, "Still owed").
+ * Installing it replaces the TestFlight build on that phone — reinstall from
+ * TestFlight afterwards.
  */
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
-const FILES = { local: '.env.local', dev: '.env.dev', prod: '.env.prod' }
+const FILES = { local: '.env.local', dev: '.env.dev', prod: '.env.prod', 'store-sandbox': '.env.dev' }
 
 const [target, ...rest] = process.argv.slice(2)
 if (!FILES[target]) {
-  console.error('usage: node scripts/variant.mjs <local|dev|prod> [--prebuild|--clean] [command ...]')
+  console.error('usage: node scripts/variant.mjs <local|dev|prod|store-sandbox> [--prebuild|--clean] [command ...]')
   process.exit(1)
 }
 const prebuild = rest[0] === '--prebuild' || rest[0] === '--clean'
@@ -41,7 +49,17 @@ for (const line of readFileSync(envFile, 'utf8').split('\n')) {
   const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line)
   if (m && !line.trimStart().startsWith('#')) vars[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2')
 }
-const variant = target === 'prod' ? 'production' : 'development'
+if (target === 'store-sandbox') {
+  // The App Store key, not the Test Store one: the purchase has to reach Apple.
+  const prod = readFileSync(join(ROOT, FILES.prod), 'utf8')
+  const key = /^\s*EXPO_PUBLIC_REVENUECAT_IOS_KEY\s*=\s*(\S+)/m.exec(prod)?.[1]
+  if (!key?.startsWith('appl_')) {
+    console.error('store-sandbox needs EXPO_PUBLIC_REVENUECAT_IOS_KEY=appl_… in .env.prod')
+    process.exit(1)
+  }
+  vars.EXPO_PUBLIC_REVENUECAT_IOS_KEY = key
+}
+const variant = target === 'prod' || target === 'store-sandbox' ? 'production' : 'development'
 const env = { ...process.env, ...vars, APP_VARIANT: variant }
 
 const ref = vars.EXPO_PUBLIC_SUPABASE_URL?.match(/\/\/([^.:/]+)/)?.[1] ?? '(unset)'
