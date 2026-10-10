@@ -20,4 +20,11 @@ booked (a real request seen on Threads: a calendar plus simple booking and payme
 Not promised, because the app does not have them: a shoot type, a booking status other than the
 time-derived one. Both came up in that request — candidates for the backlog, not for screenshots.
 
+## The files
+
+`screenshots/uk/` and `screenshots/en/` — what goes to App Store Connect, 1320×2868 (iPhone 6.9"),
+named by the order above. Framed and captioned in Claude Design (owner, 2026-10-10), then
+flattened to JPEG: App Store Connect refuses PNGs with an alpha channel, and Claude Design's
+exports had one.
+
 How the raw screenshots are made: `scripts/demo/README.md`.
