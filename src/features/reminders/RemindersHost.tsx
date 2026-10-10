@@ -6,6 +6,7 @@ import { useLanguage } from '../../i18n/LanguageProvider'
 import { onShootsChanged } from '../shoots/changes'
 import type { ReminderData } from './plan'
 import { setReminderLanguage, syncReminders } from './sync'
+import { useAccess } from '../subscription/access'
 
 /*
  * A reminder that comes due while the app is open is still shown as a banner —
@@ -54,6 +55,18 @@ export function RemindersHost() {
 
   // AC-8 — a create, edit or delete re-plans at once, not at the next launch.
   useEffect(() => onShootsChanged(() => void syncReminders()), [])
+
+  /*
+    `US-054` — the trial's reminder follows the access: planned when a trial
+    starts, re-worded when it is cancelled (AC-2), gone when it ends or turns
+    into a subscription. The status object changes identity on every read, so
+    the key is what it says.
+  */
+  const { subscription } = useAccess()
+  const accessKey = subscription ? JSON.stringify(subscription) : null
+  useEffect(() => {
+    if (accessKey !== null) void syncReminders()
+  }, [accessKey])
 
   useEffect(() => {
     if (!response) return

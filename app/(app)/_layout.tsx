@@ -34,12 +34,14 @@ export default function AppLayout() {
             <AppStack />
             {/* `US-051` AC-1 — after the stack, so the route it pushes exists. */}
             <PaywallOnFirstEntry />
+            {/* US-041 — inside the language provider, because reminders are
+                worded in the account's language (AC-12), and inside the session,
+                because they are planned from the creator's shoots. Inside
+                `AccessProvider` since `US-054`: a trial starting, ending or being
+                cancelled re-plans its reminder. */}
+            <RemindersHost />
           </AccessProvider>
         </CurrencyProvider>
-        {/* US-041 — inside the provider, because reminders are worded in the
-            account's language (AC-12), and inside the session, because they are
-            planned from the creator's shoots. */}
-        <RemindersHost />
         {/* S-7 — RevenueCat's customer is the signed-in account. */}
         <PurchasesHost />
       </LanguageProvider>

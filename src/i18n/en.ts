@@ -713,4 +713,10 @@ export const en: Strings = {
   deleteSubOpenApple: 'Open Apple settings',
   deleteSubAnyway: 'Delete anyway',
   deleteSubCancel: 'Cancel',
+
+  // ── US-054 — the trial reminder ────────────────────────────────────────────
+  trialReminderTitle: 'Your free trial ends soon',
+  trialReminderChargeTemplate: "In 2 days you'll be charged {price} a month. You can cancel in your Apple settings.",
+  trialReminderViewMode: 'In 2 days the app switches to view mode. Subscribe to keep creating shoots.',
+  trialBannerTemplate: 'Free trial: {days} left',
 }

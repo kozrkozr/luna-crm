@@ -1447,6 +1447,15 @@ export const uk = {
   deleteSubOpenApple: 'Відкрити налаштування Apple',
   deleteSubAnyway: 'Все одно видалити',
   deleteSubCancel: 'Скасувати',
+
+  // ── US-054 — the trial reminder ────────────────────────────────────────────
+  trialReminderTitle: 'Пробний період закінчується',
+  /** AC-1 — the trial will turn into a paid subscription. */
+  trialReminderChargeTemplate: 'Через 2 дні почнеться оплата {price} на місяць. Скасувати можна в налаштуваннях Apple.',
+  /** AC-2 — the trial was cancelled in Apple's settings. */
+  trialReminderViewMode: 'Через 2 дні застосунок перейде в режим перегляду. Оформіть підписку, щоб і далі створювати зйомки.',
+  /** AC-4 — `{days}` is «5 днів», through `dayForms`. */
+  trialBannerTemplate: 'Пробний період: залишилось {days}',
 } as const
 
 export type CopyKey = keyof typeof uk
