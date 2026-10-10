@@ -5,6 +5,7 @@ import { DEFAULT_LANGUAGE, stringsFor, type Language } from '../../i18n'
 import { listShoots } from '../shoots/api'
 import { MAX_PENDING, planReminders } from './plan'
 import {
+  planBetaReminder,
   planTrialReminder,
   TEST_STORE_REMINDER_BEFORE_MS,
   TRIAL_REMINDER_BEFORE_MS,
@@ -84,8 +85,10 @@ async function run(): Promise<void> {
       ? TEST_STORE_REMINDER_BEFORE_MS
       : TRIAL_REMINDER_BEFORE_MS
     const trialReminder = planTrialReminder(await readTrial(), await readPrice(), now, t, beforeMs)
+    const betaReminder = planBetaReminder(await readBetaUntil(), now, t)
     const plan = [
       ...(trialReminder ? [trialReminder] : []),
+      ...(betaReminder ? [betaReminder] : []),
       ...planReminders(shoots, settings, now, t),
     ].slice(0, MAX_PENDING)
 
@@ -133,4 +136,21 @@ async function readPrice(): Promise<string | null> {
     // keep the last one
   }
   return lastPrice
+}
+
+/**
+ * `US-055` — when a picked beta tester's access ends, or null: not on the list,
+ * no launch date, already over, or a purchase running (AC-4 — it replaces the
+ * beta access, and so does its warning).
+ */
+async function readBetaUntil(): Promise<Date | null> {
+  const [beta, bought] = await Promise.all([
+    supabase.rpc('beta_access_until'),
+    supabase.from('account_access').select('expires_at'),
+  ])
+  if (beta.error || bought.error || typeof beta.data !== 'string') return null
+  const now = Date.now()
+  if ((bought.data ?? []).some((r) => r.expires_at === null || Date.parse(r.expires_at) > now)) return null
+  const until = new Date(beta.data)
+  return until.getTime() > now ? until : null
 }

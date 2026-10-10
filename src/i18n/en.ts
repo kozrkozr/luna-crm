@@ -719,4 +719,8 @@ export const en: Strings = {
   trialReminderChargeTemplate: "In 2 days you'll be charged {price} a month. You can cancel in your Apple settings.",
   trialReminderViewMode: 'In 2 days the app switches to view mode. Subscribe to keep creating shoots.',
   trialBannerTemplate: 'Free trial: {days} left',
+
+  // ── US-055 — picked beta testers ───────────────────────────────────────────
+  betaReminderTitle: 'Your access ends soon',
+  betaReminderBody: 'In 2 days the app switches to view mode. Subscribe to keep creating shoots.',
 }

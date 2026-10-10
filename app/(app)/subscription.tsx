@@ -71,7 +71,11 @@ export default function SubscriptionScreen() {
   }
 
   const status = subscription ?? { kind: 'none' }
-  const runs = status.kind !== 'none'
+  // Something Apple renews or runs — managed in Apple's settings (AC-2). Beta
+  // access (`US-055`) is not Apple's: it reads «Не продовжиться» like a
+  // cancelled subscription, but gets «Оформити підписку» (AC-3) — and is never
+  // named (`US-055` AC-3b).
+  const runs = status.kind === 'trial' || status.kind === 'active' || status.kind === 'wontRenew'
 
   return (
     <View className="bg-background flex-1">
@@ -122,7 +126,7 @@ export default function SubscriptionScreen() {
                     ? t.subscriptionNextChargeTemplate
                         .replace('{date}', date(status.until))
                         .replace(' · {price}', price ? ` · ${price}` : '')
-                    : status.kind === 'wontRenew'
+                    : status.kind === 'wontRenew' || status.kind === 'beta'
                       ? t.subscriptionAccessUntilTemplate.replace('{date}', date(status.until))
                       : t.subscriptionViewMode}
               </Text>
@@ -196,7 +200,7 @@ function StatusPill({ status }: { status: SubscriptionStatus }) {
       ? [t.subscriptionStatusTrial, 'border-info-border bg-info-bg text-link']
       : status.kind === 'active'
         ? [t.subscriptionStatusActive, 'border-success-border bg-success-bg text-success-soft']
-        : status.kind === 'wontRenew'
+        : status.kind === 'wontRenew' || status.kind === 'beta'
           ? [t.subscriptionStatusWontRenew, 'border-warn-border bg-warn-bg text-warn']
           : [t.subscriptionStatusNone, 'border-border-strong bg-secondary text-muted-foreground']
   const [border, bg, text] = tone.split(' ')

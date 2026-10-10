@@ -21,13 +21,15 @@ import { onPurchasesChanged } from './purchases'
 /**
  * `US-053` AC-1, AC-5 — what the account's access is, for the «Підписка»
  * screen and its profile row. Derived from the same live rows as `hasAccess`.
- * `beta` arrives with `US-055`.
+ * `beta` — `US-055`'s picked testers, shown only when no purchase runs: a
+ * subscription bought during the beta replaces it (AC-4).
  */
 export type SubscriptionStatus =
   | { kind: 'trial'; until: string }
   | { kind: 'active'; until: string }
   /** Cancelled in Apple's settings, still running (AC-5). `trial` — a cancelled trial (`US-054` AC-2). */
   | { kind: 'wontRenew'; until: string; trial: boolean }
+  | { kind: 'beta'; until: string }
   | { kind: 'none' }
 
 type AccessValue = {
@@ -66,18 +68,26 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   const hasAccessRef = useRef<boolean | null>(null)
 
   const refresh = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('account_access')
-      .select('expires_at, period_type, will_renew')
-    if (error) return
+    const [{ data, error }, beta] = await Promise.all([
+      supabase.from('account_access').select('expires_at, period_type, will_renew'),
+      // `US-055` — the end of this account's beta access, or null.
+      supabase.rpc('beta_access_until'),
+    ])
+    if (error || beta.error) return
     const now = Date.now()
     const live = (data ?? []).filter((r) => r.expires_at === null || Date.parse(r.expires_at) > now)
-    const next = live.length > 0
+    const betaUntil = typeof beta.data === 'string' && Date.parse(beta.data) > now ? beta.data : null
+    const next = live.length > 0 || betaUntil !== null
     hasAccessRef.current = next
     setHasAccess(next)
-    setSubscription(statusOf(live))
+    setSubscription(
+      live.length === 0 && betaUntil ? { kind: 'beta', until: betaUntil } : statusOf(live)
+    )
     // The soonest moment the answer can change on its own; null = never.
-    const ends = live.map((r) => (r.expires_at === null ? Infinity : Date.parse(r.expires_at)))
+    const ends = [
+      ...live.map((r) => (r.expires_at === null ? Infinity : Date.parse(r.expires_at))),
+      ...(betaUntil ? [Date.parse(betaUntil)] : []),
+    ]
     const soonest = ends.length > 0 ? Math.min(...ends) : Infinity
     setExpiresAt(Number.isFinite(soonest) ? soonest : null)
   }, [])
