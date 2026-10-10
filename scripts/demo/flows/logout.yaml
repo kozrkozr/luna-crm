@@ -1,0 +1,18 @@
+# Signs whoever is in out, from the profile tab — either language.
+appId: com.lunashoots.ios.dev
+---
+- launchApp
+- tapOn: "Головна|Home"
+- tapOn: "Профіль|Profile"
+- scroll
+- scroll
+- scroll
+- tapOn: "Вийти з акаунту|Log out.*"
+- runFlow:
+    when:
+      visible: "Вийти|Log out"
+    commands:
+      - tapOn: "Вийти|Log out"
+- extendedWaitUntil:
+    visible: "Luna Shoots"
+    timeout: 15000

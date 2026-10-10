@@ -25,14 +25,13 @@ appId: com.lunashoots.ios.dev
     text: "your@mail.com"
 - inputText: ${EMAIL}
 - tapOn: "Crew, location, references and confirmations — in one place"
+# The password field is secure, and iOS drops what Maestro types into a secure
+# field (it kept 3 characters, then none). «Show» makes it a plain one first.
+- tapOn: "Show password"
 - tapOn:
     text: "Password"
     index: 1
-# In pieces: typed in one go into a secure field, iOS sometimes kept only the
-# first few characters.
-- inputText: "luna"
-- inputText: "demo"
-- inputText: "123"
+- inputText: "lunademo123"
 - tapOn: "Crew, location, references and confirmations — in one place"
 - tapOn:
     text: "Log in"
