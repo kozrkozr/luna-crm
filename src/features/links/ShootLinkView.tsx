@@ -223,7 +223,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
               <View className="p-4">
                 <View className="flex-row items-start justify-between gap-2.5">
                   <Text className="text-label text-muted-foreground flex-1 font-medium">
-                    {formatDayMonthWeekday(shoot.date, t.monthsGenitive, t.weekdaysFull)}
+                    {formatDayMonthWeekday(shoot.date, t.monthsGenitive, t.weekdaysFull, t.weekdayCaseInDate === 'lower')}
                   </Text>
                   <Badge variant="solid" label={distanceLabel(days, t)} />
                 </View>

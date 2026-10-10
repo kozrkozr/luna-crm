@@ -85,12 +85,19 @@ export function formatTimeRange(start: string | null, end: string | null): strin
 export function formatDayMonthWeekday(
   isoDate: string,
   monthsGenitive: readonly string[],
-  weekdaysFull: readonly string[]
+  weekdaysFull: readonly string[],
+  /**
+   * Ukrainian writes the weekday lower-case mid-phrase («10 жовтня, субота»);
+   * English capitalises it («10 October, Saturday») — the dictionaries say
+   * which (`weekdayCaseInDate`). It was lower-cased unconditionally, which
+   * read «saturday» in English (seen on the App Store screenshots, 2026-10-10).
+   */
+  lowercaseWeekday: boolean
 ): string {
   const [year, month, day] = isoDate.split('-').map(Number)
   // getDay() is 0=Sunday; the dictionaries list Monday first.
   const weekday = weekdaysFull[(new Date(year, month - 1, day).getDay() + 6) % 7]
-  return `${day} ${monthsGenitive[month - 1]}, ${weekday.toLowerCase()}`
+  return `${day} ${monthsGenitive[month - 1]}, ${lowercaseWeekday ? weekday.toLowerCase() : weekday}`
 }
 
 /** Minutes between two `HH:MM` wall-clock values, or null if either is missing. */
