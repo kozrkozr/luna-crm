@@ -1,0 +1,48 @@
+# Signs the demo account in. ${EMAIL} comes from the caller (-e EMAIL=…).
+appId: ${APP_ID}
+---
+# Starts from the sign-in screen — sign the previous account out first
+# (logout.yaml). Clearing the app's state instead brings back iOS's
+# notification prompt, which Maestro cannot answer reliably.
+- launchApp
+- runFlow:
+    when:
+      visible: "Back to sign in"
+    commands:
+      - tapOn: "Back to sign in"
+# iOS's own notification prompt: Maestro sees it but cannot tap it by text,
+# so the «Allow» button's spot. Harmless when the prompt is not there.
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn:
+          point: "67%,58%"
+- extendedWaitUntil:
+    visible: "Luna Shoots"
+    timeout: 15000
+- tapOn:
+    text: "your@mail.com"
+- inputText: ${EMAIL}
+- tapOn: "Crew, location, references and confirmations — in one place"
+# The password field is secure, and iOS drops what Maestro types into a secure
+# field (it kept 3 characters, then none). «Show» makes it a plain one first.
+- tapOn: "Show password"
+- tapOn:
+    text: "Password"
+    index: 1
+- inputText: "lunademo123"
+- tapOn: "Crew, location, references and confirmations — in one place"
+- tapOn:
+    text: "Log in"
+    index: 1
+# iOS offers to save the password.
+- runFlow:
+    when:
+      visible: "Not Now"
+    commands:
+      - tapOn: "Not Now"
+- extendedWaitUntil:
+    visible: "${EXPECT}"
+    timeout: 20000

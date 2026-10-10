@@ -1,0 +1,70 @@
+# The nine App Store screenshots (docs/appstore/screenshots.md), one language.
+# Run after login.yaml, from the folder the PNGs should land in:
+#   maestro test -e APP_ID=com.lunashoots.ios -e L=en -e TODAY="Maria Lewis" \
+#     -e DEADLINE_SHOOT=<id> -e CLIENT="Sofia Bennett" -e T_CAL=Calendar -e T_HOME=Home \
+#     -e T_STATS=Statistics -e T_NEW="+ New shoot" -e T_NAME="Client's name" \
+#     -e T_CREW="Crew.*" -e T_MAT="Materials.*" -e T_BACK=Cancel shots.yaml
+# Screens 5 (the link view, in Safari) and 8 (a reminder) are taken outside the app.
+appId: ${APP_ID}
+---
+- launchApp
+- extendedWaitUntil:
+    visible: ".*${TODAY}.*"
+    timeout: 20000
+
+# 1 — the calendar
+- tapOn: ${T_CAL}
+- waitForAnimationToEnd
+- takeScreenshot: ${L}-1-calendar
+
+# 2 — a new shoot, started
+- tapOn: ${T_NEW}
+- waitForAnimationToEnd
+- tapOn: ${T_NAME}
+- inputText: ${CLIENT}
+# Off the field, so the keyboard closes and the form shows.
+- tapOn: "${T_CLIENT_LABEL}"
+- waitForAnimationToEnd
+- takeScreenshot: ${L}-2-new-shoot
+- tapOn: ${T_BACK}
+- runFlow:
+    when:
+      visible: "${T_DISCARD}"
+    commands:
+      - tapOn: "${T_DISCARD}"
+
+# 3, 4, 6 — today's shoot
+- tapOn: ${T_HOME}
+- tapOn: ".*${TODAY}.*"
+- waitForAnimationToEnd
+- takeScreenshot: ${L}-3-details
+- tapOn: ${T_CREW}
+- waitForAnimationToEnd
+- takeScreenshot: ${L}-4-crew
+- tapOn: ${T_MAT}
+- waitForAnimationToEnd
+# The references up top — the file rows above them are not this screen's point.
+- scroll
+- takeScreenshot: ${L}-6-references
+- tapOn: ${T_BACK}
+
+# 7 — a past shoot with its delivery deadline
+- openLink: lunashoots://shoot/${DEADLINE_SHOOT}
+# iOS asks before a custom scheme opens the app (the simulator is in English).
+- extendedWaitUntil:
+    visible: "Open"
+    timeout: 5000
+    optional: true
+- tapOn:
+    text: "Open"
+    optional: true
+- waitForAnimationToEnd
+- tapOn: ${T_MAT}
+- waitForAnimationToEnd
+- takeScreenshot: ${L}-7-deadline
+- tapOn: ${T_BACK}
+
+# 9 — statistics
+- tapOn: ${T_STATS}
+- waitForAnimationToEnd
+- takeScreenshot: ${L}-9-statistics

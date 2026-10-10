@@ -1,0 +1,41 @@
+# Every main screen of the English demo account, for the App Store.
+# Run after login.yaml. Screenshots land in the folder maestro is run from.
+appId: com.lunashoots.ios.dev
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Not Now"
+    commands:
+      - tapOn: "Not Now"
+- extendedWaitUntil:
+    visible: ".*Maria Lewis.*"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: en-01-home
+- tapOn: ".*Maria Lewis.*"
+- extendedWaitUntil:
+    visible: "Details"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: en-02-shoot-details
+- tapOn: "Crew.*"
+- waitForAnimationToEnd
+- takeScreenshot: en-03-shoot-crew
+- tapOn: "Materials.*"
+- waitForAnimationToEnd
+- takeScreenshot: en-04-shoot-materials
+- tapOn: "Cancel"
+- tapOn: "Calendar"
+- waitForAnimationToEnd
+- takeScreenshot: en-05-calendar
+- tapOn: "Contacts"
+- waitForAnimationToEnd
+- takeScreenshot: en-06-contacts
+- tapOn: "Statistics"
+- waitForAnimationToEnd
+- takeScreenshot: en-07-statistics
+- tapOn: "Home"
+- tapOn: "Profile"
+- waitForAnimationToEnd
+- takeScreenshot: en-08-profile

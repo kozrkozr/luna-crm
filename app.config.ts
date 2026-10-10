@@ -34,7 +34,11 @@ if (IS_PROD) {
     ? readFileSync(prodFile, 'utf8').match(/^EXPO_PUBLIC_SUPABASE_URL=(.*)$/m)?.[1]?.trim()
     : undefined
   const actual = process.env.EXPO_PUBLIC_SUPABASE_URL
-  if (expected && actual !== expected) {
+  // `scripts/variant.mjs store-sandbox` and `local-shots` build Luna Shoots
+  // against dev or local on purpose — the Apple sandbox purchase and the App
+  // Store screenshots — and say so; nothing else may.
+  const deliberate = process.env.LUNA_NONPROD_BACKEND === '1'
+  if (expected && actual !== expected && !deliberate) {
     throw new Error(
       `APP_VARIANT=production but EXPO_PUBLIC_SUPABASE_URL is ${actual ?? '(unset)'}, ` +
         `not ${expected} from .env.prod. Build through scripts/variant.mjs prod.`
