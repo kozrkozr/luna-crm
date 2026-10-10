@@ -1,5 +1,5 @@
 # Signs the demo account in. ${EMAIL} comes from the caller (-e EMAIL=…).
-appId: com.lunashoots.ios.dev
+appId: ${APP_ID}
 ---
 # Starts from the sign-in screen — sign the previous account out first
 # (logout.yaml). Clearing the app's state instead brings back iOS's
@@ -12,15 +12,16 @@ appId: com.lunashoots.ios.dev
       - tapOn: "Back to sign in"
 # iOS's own notification prompt: Maestro sees it but cannot tap it by text,
 # so the «Allow» button's spot. Harmless when the prompt is not there.
-- extendedWaitUntil:
-    visible: "Luna Shoots"
-    timeout: 15000
+- waitForAnimationToEnd
 - runFlow:
     when:
       visible: "Allow"
     commands:
       - tapOn:
           point: "67%,58%"
+- extendedWaitUntil:
+    visible: "Luna Shoots"
+    timeout: 15000
 - tapOn:
     text: "your@mail.com"
 - inputText: ${EMAIL}

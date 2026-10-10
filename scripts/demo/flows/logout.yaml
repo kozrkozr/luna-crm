@@ -1,5 +1,5 @@
 # Signs whoever is in out, from the profile tab — either language.
-appId: com.lunashoots.ios.dev
+appId: ${APP_ID}
 ---
 - launchApp
 - tapOn: "Головна|Home"
@@ -7,7 +7,7 @@ appId: com.lunashoots.ios.dev
 - scroll
 - scroll
 - scroll
-- tapOn: "Вийти з акаунту|Log out.*"
+- tapOn: "Вийти з акаунту|Sign out"
 - runFlow:
     when:
       visible: "Вийти|Log out"
