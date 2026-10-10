@@ -78,8 +78,11 @@ Facts that constrained the choice:
    belong to the planned PRO tier, not to this subscription** (owner, 2026-10-09): this subscription
    is the iOS app. Neither is built, so nothing is taken away from anyone. The plan names: this one is
    «Luna Shoots», the higher one «Luna Shoots PRO» (owner, 2026-10-09).
-8. **Beta testers:** every account registered before the public launch has full access for
-   **3 months from the launch date**, granted by the server, with no purchase.
+8. **Beta testers:** ~~every account registered before the public launch~~ **only the beta testers
+   the owner picks** have full access for **3 months from the launch date**, granted by the server,
+   with no purchase (owner, 2026-10-10: "не всім прям бета-тестерам хочу дати, а тільки деяким").
+   The owner keeps the list in the database, one row per account; every other tester is a regular
+   account from the launch on.
 9. **Ready for more plans** (agent, owner 2026-10-09 — "можемо десь закласти логіку під майбутню
    річну, і майбутні різні види підписок"): a yearly plan and a higher tier with the web app and file
    storage are planned later, not now. So from the start:
