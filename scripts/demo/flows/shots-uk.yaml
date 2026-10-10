@@ -1,0 +1,41 @@
+# Every main screen of the Ukrainian demo account, for the App Store.
+# Run after login.yaml. Screenshots land in the folder maestro is run from.
+appId: com.lunashoots.ios.dev
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Not Now"
+    commands:
+      - tapOn: "Not Now"
+- extendedWaitUntil:
+    visible: ".*Марія Литвин.*"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: uk-01-home
+- tapOn: ".*Марія Литвин.*"
+- extendedWaitUntil:
+    visible: "Деталі"
+    timeout: 10000
+- waitForAnimationToEnd
+- takeScreenshot: uk-02-shoot-details
+- tapOn: "Команда.*"
+- waitForAnimationToEnd
+- takeScreenshot: uk-03-shoot-crew
+- tapOn: "Матеріали.*"
+- waitForAnimationToEnd
+- takeScreenshot: uk-04-shoot-materials
+- tapOn: "Скасувати"
+- tapOn: "Календар"
+- waitForAnimationToEnd
+- takeScreenshot: uk-05-calendar
+- tapOn: "Контакти"
+- waitForAnimationToEnd
+- takeScreenshot: uk-06-contacts
+- tapOn: "Статистика"
+- waitForAnimationToEnd
+- takeScreenshot: uk-07-statistics
+- tapOn: "Головна"
+- tapOn: "Профіль"
+- waitForAnimationToEnd
+- takeScreenshot: uk-08-profile
