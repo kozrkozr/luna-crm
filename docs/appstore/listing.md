@@ -12,8 +12,9 @@ Luna Shoots
 **Subtitle** (29/30)
 Облік зйомок без складної CRM
 
-**Promotional text** (144/170) — changeable without a new build
-Календар зйомок, оплати й команда в одному застосунку. Ділися зйомкою з командою й клієнтом за посиланням — без реєстрації. 14 днів безкоштовно.
+**Promotional text** (169/170) — changeable without a new build. No «оплати»: the app records a
+shoot's price, it takes no payments, and the word reads as a payments integration (owner, 2026-10-10)
+Календар зйомок, команда, референси й дедлайни в одному застосунку. Нагадування перед кожною зйомкою. Ділися зйомкою за посиланням — без реєстрації. 14 днів безкоштовно.
 
 **Keywords** (98/100, comma-separated, no spaces; words already in the name and subtitle are indexed
 anyway, so they are not repeated)
@@ -63,8 +64,8 @@ Luna Shoots: Shoot Planner
 **Subtitle** (30/30)
 Shoot bookings, no complex CRM
 
-**Promotional text** (139/170)
-Your shoot calendar, payments and crew in one app. Share a shoot with crew and client by link — no sign-up needed. Try it free for 14 days.
+**Promotional text** (161/170)
+Your shoot calendar, crew, references and deadlines in one app. Reminders before every shoot. Share a shoot by link — no sign-up needed. Try it free for 14 days.
 
 **Keywords** (93/100)
 photographer,photoshoot,booking,calendar,client,deposit,deadline,crew,makeup,wedding,schedule
