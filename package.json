@@ -13,6 +13,7 @@
     "ios:local": "node scripts/variant.mjs local --prebuild expo run:ios",
     "ios:prod": "node scripts/variant.mjs prod --prebuild expo run:ios --device --configuration Release",
     "prebuild:prod": "node scripts/variant.mjs prod --clean",
+    "ios:store-sandbox": "node scripts/variant.mjs store-sandbox --prebuild expo run:ios --device --configuration Release",
     "web": "expo start --web",
     "export:web": "expo export -p web --clear && node scripts/prepare-link-surface.js",
     "use:dev": "node scripts/env.mjs use dev",
