@@ -41,7 +41,14 @@ their Apple ID is still eligible.
 ### AC-3a — Warned before it ends
 - **Given** such an account, with notification permission granted
 - **When** two days remain of its beta access
-- **Then** it is notified, as a trial is (`US-054`) (owner, 2026-10-08: "попереджати як всіх")
+- **Then** it is notified, as a trial is (`US-054`) (owner, 2026-10-08: "попереджати як всіх";
+  wording without «бета» — owner, 2026-10-10)
+
+### AC-3b — The app never says «beta» *(owner, 2026-10-10)*
+- **Then** nothing in the app names beta access: the subscription screen and the profile row show
+  it as a subscription that will not renew — «Не продовжиться», «Доступ до {date}» (`US-053`'s own
+  copy) — with «Оформити підписку» rather than «Керувати підпискою», because Apple has nothing to
+  manage
 
 ### AC-4 — Subscribing early
 - **Given** such an account that subscribes before its beta access ends
@@ -49,11 +56,11 @@ their Apple ID is still eligible.
   remaining beta access adds nothing (owner, 2026-10-08)
 
 ## Copy
-Owner confirmed, 2026-10-08.
+Owner confirmed, 2026-10-08; the title replaced 2026-10-10 so that no text names beta access (AC-3b).
 
 | Ukrainian | English |
 |---|---|
-| **Бета-доступ закінчується** *(AC-3a title)* | **Your beta access ends soon** |
+| **Доступ закінчується** *(AC-3a title)* | **Your access ends soon** |
 | Через 2 дні застосунок перейде в режим перегляду. Оформіть підписку, щоб і далі створювати зйомки. | In 2 days the app switches to view mode. Subscribe to keep creating shoots. |
 
 ## Dependencies
