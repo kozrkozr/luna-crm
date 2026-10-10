@@ -110,7 +110,7 @@ Privacy Policy: https://lunashoots.com/en/privacy
 
 | Field | Value |
 |---|---|
-| Support URL *(required)* | none yet — a `lunashoots.com/support` page with `support@lunashoots.com`, to make |
+| Support URL *(required)* | uk `https://lunashoots.com/support`, en `https://lunashoots.com/en/support` — goes live with `npm run deploy:web` |
 | Marketing URL *(optional)* | `https://lunashoots.com` — once it is more than the link surface; leave empty for now |
 | Copyright | `2026 Kozer Vitalii` |
 | Category | Primary: **Business**; secondary: **Photo & Video** |
