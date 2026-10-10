@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Pressable, View } from 'react-native'
+import { ActivityIndicator, Image, Pressable, View, Linking } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
@@ -62,6 +62,7 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from '../../../src/components/ui/alert-dialog'
+import { SUPPORT_EMAIL } from '../../../src/lib/support'
 
 /** The editable half of the profile — everything the save button writes. */
 type Draft = {
@@ -881,9 +882,20 @@ export default function ProfileScreen() {
                 />
               </Pressable>
 
-              {/* STUB — no support address exists anywhere in the repo, so this
-                  opens nothing. Drawn complete regardless (owner, 2026-09-02). */}
-              <View className="border-border min-h-14 flex-row items-center gap-3 border-t px-4">
+              {/* «Написати в підтримку» — a new email to support@lunashoots.com
+                  (owner, 2026-10-10), the address the support page and the legal
+                  pages give. A stub since 2026-09-02, when no address existed. */}
+              <Pressable
+                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+                onPress={() => {
+                  tapped()
+                  void Linking.openURL(`mailto:${SUPPORT_EMAIL}`).catch(() => {
+                    // No mail account on the phone: nothing is specified, and the
+                    // address is on the support page for anyone who looks.
+                  })
+                }}
+                role="button"
+              >
                 <Text className="text-body-sm text-muted-foreground flex-1">
                   {t.contactSupport}
                 </Text>
@@ -893,7 +905,7 @@ export default function ProfileScreen() {
                   strokeWidth={2}
                   className="text-muted-foreground shrink-0"
                 />
-              </View>
+              </Pressable>
 
               {/*
                 The one irreversible action, moved into this card by the second
