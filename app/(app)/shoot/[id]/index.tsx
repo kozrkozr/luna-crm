@@ -649,7 +649,7 @@ function DetailsTab({
 
         <SeparatorRow
           label={t.date}
-          value={formatDayMonthWeekday(shoot.date, t.monthsGenitive, t.weekdaysFull)}
+          value={formatDayMonthWeekday(shoot.date, t.monthsGenitive, t.weekdaysFull, t.weekdayCaseInDate === 'lower')}
         />
         {/* `US-030` AC-6 — a shoot created before that story has no range, and
             the row is left out rather than showing half of one. The duration
