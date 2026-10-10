@@ -110,6 +110,10 @@ RevenueCat project.
    offered «Спробувати безкоштовно» a second time to an account whose trial had ended without
    converting (2026-10-10), so on dev builds the trial comes from the Test Store's product alone.
    On the App Store the app asks StoreKit's eligibility check instead — untested until this run.
+   The same run owes `US-054` its device check — the trial banner and the reminder (two minutes
+   before the end on Test Store builds, `TEST_STORE_REMINDER_BEFORE_MS`): on 2026-10-10 the Test
+   Store stopped offering the trial on the owner's phone and the check could not be made. The
+   planning itself is covered by a pure test of `planTrialReminder`.
 2. **Which build runs it.** The App Store product exists only for `com.lunashoots.ios` — Luna
    Shoots, which is baked against **prod**. Either the run happens on prod (after `F-6`'s split,
    with the migration and the function deployed there), or a Luna Shoots build is pointed at dev
