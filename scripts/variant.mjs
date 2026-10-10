@@ -2,7 +2,7 @@
 /**
  * Run a command against one environment, without touching `.env`.
  *
- *   node scripts/variant.mjs <local|dev|prod|store-sandbox> [--prebuild|--clean] [command ...]
+ *   node scripts/variant.mjs <local|dev|prod|store-sandbox|local-shots> [--prebuild|--clean] [command ...]
  *
  * Loads `.env.<target>` into the command's environment and sets APP_VARIANT —
  * `production` for prod, `development` otherwise (app.config.ts). Variables in
@@ -22,17 +22,28 @@
  * the production database (`docs/spikes/S-7-revenuecat.md`, "Still owed").
  * Installing it replaces the TestFlight build on that phone — reinstall from
  * TestFlight afterwards.
+ *
+ * `local-shots` — **Luna Shoots** against the **local** backend, for the App
+ * Store screenshots (`scripts/demo/README.md`): the app's name shows in a
+ * notification and in Safari's back link, and it must say Luna Shoots, not
+ * Luna Dev. Simulator only.
  */
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = new URL('..', import.meta.url).pathname
-const FILES = { local: '.env.local', dev: '.env.dev', prod: '.env.prod', 'store-sandbox': '.env.dev' }
+const FILES = {
+  local: '.env.local',
+  dev: '.env.dev',
+  prod: '.env.prod',
+  'store-sandbox': '.env.dev',
+  'local-shots': '.env.local',
+}
 
 const [target, ...rest] = process.argv.slice(2)
 if (!FILES[target]) {
-  console.error('usage: node scripts/variant.mjs <local|dev|prod|store-sandbox> [--prebuild|--clean] [command ...]')
+  console.error('usage: node scripts/variant.mjs <local|dev|prod|store-sandbox|local-shots> [--prebuild|--clean] [command ...]')
   process.exit(1)
 }
 const prebuild = rest[0] === '--prebuild' || rest[0] === '--clean'
@@ -59,8 +70,11 @@ if (target === 'store-sandbox') {
   }
   vars.EXPO_PUBLIC_REVENUECAT_IOS_KEY = key
 }
-const variant = target === 'prod' || target === 'store-sandbox' ? 'production' : 'development'
+const variant = ['prod', 'store-sandbox', 'local-shots'].includes(target) ? 'production' : 'development'
 const env = { ...process.env, ...vars, APP_VARIANT: variant }
+// app.config.ts refuses Luna Shoots against anything but prod unless told this
+// is one of the two deliberate exceptions.
+if (target === 'store-sandbox' || target === 'local-shots') env.LUNA_NONPROD_BACKEND = '1'
 
 const ref = vars.EXPO_PUBLIC_SUPABASE_URL?.match(/\/\/([^.:/]+)/)?.[1] ?? '(unset)'
 console.log(
