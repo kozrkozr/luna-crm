@@ -1,12 +1,8 @@
-import { SpikeScreen } from '../../src/features/subscription/SpikeScreen'
+import { PaywallScreen } from '../../src/features/subscription/PaywallScreen'
 
 /**
- * The paywall's route — `US-052` AC-2 opens it from every create, edit and
- * delete action, and from the view-mode banner (AC-9).
- *
- * **A stand-in until `US-051`**, which builds the real screen from
- * `Paywall copy.dc.html`. It shows `S-7`'s purchase screen for now, so the
- * whole loop — view mode, purchase, access back — can be tried on a dev build.
- * No build ships before EP-09 is complete (owner, 2026-10-09).
+ * `US-051` — the paywall's route. Opened right after registration (AC-1), from
+ * every create, edit and delete without access and from the view-mode banner
+ * (`US-052` AC-2, AC-9).
  */
-export default SpikeScreen
+export default PaywallScreen

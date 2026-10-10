@@ -1400,6 +1400,34 @@ export const uk = {
   /** AC-9 — the home banner: «Режим перегляду · Оформити підписку». */
   viewModeBanner: 'Режим перегляду',
   viewModeSubscribe: 'Оформити підписку',
+
+  // ── US-051 — the paywall ───────────────────────────────────────────────────
+  // Owner-confirmed copy (US-051 Copy, 2026-10-08/10). `{price}` is Apple's own
+  // localized price — never a hard-coded amount (Guideline 3.1.2).
+  paywallRestore: 'Відновити',
+  paywallClose: 'Закрити',
+  paywallTrialTitle: '14 днів безкоштовно',
+  paywallSubscriptionTitle: 'Підписка Luna Shoots',
+  paywallSubtitle: 'Усі зйомки, команда й клієнти в одному місці.',
+  paywallBenefits: [
+    'Зйомки, команда й клієнти без обмежень',
+    'Посилання для команди й клієнтів — без застосунку і реєстрації',
+    'Нагадування про зйомки',
+    'Терміни передачі матеріалів',
+  ],
+  paywallPlanLabel: 'Щомісяця:',
+  paywallPlanPriceTemplate: '{price} / місяць',
+  paywallPlanTrial: 'Перші 14 днів — безкоштовно',
+  paywallRenewTrial: 'Продовжується автоматично щомісяця. Скасувати можна будь-коли в налаштуваннях Apple.',
+  paywallRenewNoTrial: 'Щомісячне продовження. Скасувати можна будь-коли в налаштуваннях Apple.',
+  paywallTryFree: 'Спробувати безкоштовно',
+  paywallSubscribeTemplate: 'Оформити — {price} на місяць',
+  paywallPurchaseFailed: 'Покупку не завершено. Спробуйте ще раз.',
+  paywallRestoreNone: 'Активних підписок не знайдено.',
+  paywallRestoreFailed: 'Не вдалося відновити покупки. Спробуйте ще раз.',
+  paywallOtherAccount: 'Ця підписка вже привʼязана до іншого акаунта Luna. Увійдіть у нього, щоб користуватися.',
+  paywallTerms: 'Умови',
+  paywallPrivacy: 'Політика конфіденційності',
 } as const
 
 export type CopyKey = keyof typeof uk

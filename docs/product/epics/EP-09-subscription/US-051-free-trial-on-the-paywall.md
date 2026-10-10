@@ -68,6 +68,19 @@ of scope (`EP-09`).
 - **When** the person taps «Відновити покупки»
 - **Then** the account's access is restored
 
+### AC-9 — Restore finds nothing, or fails *(owner, 2026-10-10)*
+- **When** Apple finds no active subscription on the Apple ID
+- **Then** the paywall says so («Активних підписок не знайдено.») and stays open
+- **When** the restore fails (network, Apple)
+- **Then** the paywall says so («Не вдалося відновити покупки. Спробуйте ще раз.») and stays open
+
+### AC-10 — The Apple ID's subscription belongs to another Luna account *(owner, 2026-10-10)*
+- **Given** a subscription bought on this Apple ID by a different Luna account (`ADR-023` decision
+  10 — a subscription belongs to the Luna account, not the Apple ID)
+- **When** the person restores or buys on this account
+- **Then** the subscription stays with the account that bought it, and the paywall says so and
+  suggests signing in to that account
+
 ## Copy
 Owner confirmed, 2026-10-08, revised for the 2026-10-09 design. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example. «Luna Shoots» under the logo is the name, not translated.
 
@@ -88,6 +101,9 @@ Owner confirmed, 2026-10-08, revised for the 2026-10-09 design. `{price}` is the
 | Щомісячне продовження. Скасувати можна будь-коли в налаштуваннях Apple. *(AC-6)* | Renews monthly. Cancel anytime in your Apple settings. |
 | Оформити — {price} на місяць *(AC-6 button)* | Subscribe — {price} a month |
 | Покупку не завершено. Спробуйте ще раз. *(AC-7)* | The purchase didn't go through. Please try again. |
+| Активних підписок не знайдено. *(AC-9)* | No active subscription found. |
+| Не вдалося відновити покупки. Спробуйте ще раз. *(AC-9)* | Couldn't restore purchases. Please try again. |
+| Ця підписка вже привʼязана до іншого акаунта Luna. Увійдіть у нього, щоб користуватися. *(AC-10)* | This subscription belongs to another Luna account. Sign in to that account to use it. |
 | Умови · Політика конфіденційності | Terms · Privacy Policy |
 
 ## Out of scope

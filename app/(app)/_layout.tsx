@@ -6,6 +6,7 @@ import { navigationScreenOptions } from '../../src/theme/palette'
 import { RemindersHost } from '../../src/features/reminders/RemindersHost'
 import { PurchasesHost } from '../../src/features/subscription/PurchasesHost'
 import { AccessProvider } from '../../src/features/subscription/access'
+import { PaywallOnFirstEntry } from '../../src/features/subscription/PaywallOnFirstEntry'
 
 /**
  * The creator's surface. Everything here requires a session (EP-01), enforced
@@ -31,6 +32,8 @@ export default function AppLayout() {
               every screen's guard and the home banner read it. */}
           <AccessProvider>
             <AppStack />
+            {/* `US-051` AC-1 — after the stack, so the route it pushes exists. */}
+            <PaywallOnFirstEntry />
           </AccessProvider>
         </CurrencyProvider>
         {/* US-041 — inside the provider, because reminders are worded in the
@@ -133,13 +136,10 @@ function AppStack() {
       <Stack.Screen name="notifications" options={{ headerShown: false }} />
       {/* US-047's «Валюта» — pushed from the profile like «Сповіщення». */}
       <Stack.Screen name="currency" options={{ headerShown: false }} />
-      {/* S-7's throwaway purchase screen — dev builds only. */}
-      <Stack.Screen name="spike-s7" options={{ title: 'S-7', headerLargeTitle: false }} />
-      {/* `US-052` AC-2's paywall. A sheet for the stand-in, so it can be swiped
-          away; `US-051` AC-1 makes it full screen with its own close. */}
+      {/* `US-051` — full screen, as AC-1 asks; it draws its own ✕. */}
       <Stack.Screen
         name="paywall"
-        options={{ presentation: 'modal', title: 'S-7', headerLargeTitle: false }}
+        options={{ presentation: 'fullScreenModal', headerShown: false, gestureEnabled: false }}
       />
       {/*
         The shoot's two screens draw their own headers (2026-08-30), which makes
