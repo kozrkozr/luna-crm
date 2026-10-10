@@ -6,8 +6,8 @@ App Store Connect's; counts are characters.
 
 ## Українська
 
-**Name** (26/30)
-Luna Shoots — облік зйомок
+**Name** (11/30) — the app's name alone (owner, 2026-10-10); the subtitle carries «облік зйомок»
+Luna Shoots
 
 **Subtitle** (29/30)
 Облік зйомок без складної CRM
