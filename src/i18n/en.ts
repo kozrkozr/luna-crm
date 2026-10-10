@@ -217,6 +217,8 @@ export const en: Strings = {
   conflictLessThanHour: 'Less than an hour after the previous one',
   language: 'Language',
   greeting: 'Good afternoon',
+  /** A weekday after a date: `lower` («10 жовтня, субота») or `as-is` ("10 October, Saturday"). */
+  weekdayCaseInDate: 'as-is',
   weekdaysFull: [
     'Monday',
     'Tuesday',

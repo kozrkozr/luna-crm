@@ -379,6 +379,8 @@ export const uk = {
    * logged in docs/redesign-log.md.
    */
   greeting: 'Доброго дня',
+  /** A weekday after a date: `lower` («10 жовтня, субота») or `as-is` ("10 October, Saturday"). */
+  weekdayCaseInDate: 'lower',
   weekdaysFull: [
     'Понеділок',
     'Вівторок',
