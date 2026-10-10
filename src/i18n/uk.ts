@@ -77,9 +77,6 @@ export const uk = {
    */
   viewPublicProfile: 'Переглянути публічний профіль',
   subscriptionSection: 'Підписка',
-  planLabel: 'Тариф',
-  /** The only plan there is. A product name, so it is not translated. */
-  planFree: 'Free',
   settingsSection: 'Налаштування',
   appLanguage: 'Мова застосунку',
   /* ── US-047 — the account's currency. Copy approved by the owner, 2026-10-06. ── */
@@ -1428,6 +1425,28 @@ export const uk = {
   paywallOtherAccount: 'Ця підписка вже привʼязана до іншого акаунта Luna. Увійдіть у нього, щоб користуватися.',
   paywallTerms: 'Умови',
   paywallPrivacy: 'Політика конфіденційності',
+
+  // ── US-053 — the subscription screen ───────────────────────────────────────
+  // Owner-confirmed copy (US-053 Copy, 2026-10-08). `{price}` is Apple's own.
+  subscriptionTitle: 'Підписка',
+  subscriptionStatusTrial: 'Пробний період',
+  subscriptionStatusActive: 'Активна',
+  subscriptionStatusWontRenew: 'Не продовжиться',
+  subscriptionStatusNone: 'Неактивна',
+  subscriptionFreeUntilTemplate: 'Безкоштовно до {date}',
+  subscriptionThenTemplate: 'Потім {price} на місяць',
+  subscriptionNextChargeTemplate: 'Наступне списання {date} · {price}',
+  subscriptionAccessUntilTemplate: 'Доступ до {date}',
+  subscriptionViewMode: 'Режим перегляду — створювати й редагувати можна з підпискою',
+  subscriptionManage: 'Керувати підпискою',
+  subscriptionSubscribe: 'Оформити підписку',
+  subscriptionRestore: 'Відновити покупки',
+  /** AC-6 — before deleting an account whose subscription will renew. */
+  deleteSubTitle: 'Підписка не скасується сама',
+  deleteSubBody: 'Видалення акаунта не зупиняє оплату. Скасуйте підписку в налаштуваннях Apple, інакше списання продовжаться.',
+  deleteSubOpenApple: 'Відкрити налаштування Apple',
+  deleteSubAnyway: 'Все одно видалити',
+  deleteSubCancel: 'Скасувати',
 } as const
 
 export type CopyKey = keyof typeof uk

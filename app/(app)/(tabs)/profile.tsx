@@ -54,6 +54,14 @@ import {
   uploadAvatar,
 } from '../../../src/features/auth/profile'
 import { Starfield } from '../../../src/components/Starfield'
+import { useAccess } from '../../../src/features/subscription/access'
+import { openManageSubscriptions } from '../../../src/features/subscription/purchases'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from '../../../src/components/ui/alert-dialog'
 
 /** The editable half of the profile — everything the save button writes. */
 type Draft = {
@@ -109,6 +117,9 @@ type Draft = {
  */
 export default function ProfileScreen() {
   const t = useStrings()
+  // `US-053` — the profile row's status, and AC-6's warning before deleting.
+  const { subscription } = useAccess()
+  const [deleteSubOpen, setDeleteSubOpen] = useState(false)
   const language = useLanguage()
   const currency = useCurrency()
   const router = useRouter()
@@ -580,22 +591,53 @@ export default function ProfileScreen() {
                 thing to itself. */}
           </Card>
 
-          {/* ── Підписка ── STUB: no plan concept, no column, no billing. */}
+          {/* ── Підписка ── `US-053`: the status on the right, the screen behind
+              it (`Subscription.dc.html`, «Рядок у профілі»). */}
           <View className="gap-2">
             <SectionLabel label={t.subscriptionSection} />
             <Card variant="flat" className="gap-0 p-0">
-              <View className="min-h-14 flex-row items-center gap-3 px-4">
-                <Text className="text-body-sm text-muted-foreground flex-1">{t.planLabel}</Text>
-                <Text className="text-body-sm text-foreground">{t.planFree}</Text>
-                {/* Drawn as the design draws it (owner, 2026-09-02) even though
-                    the row leads nowhere yet — see the note on the section. */}
+              <Pressable
+                className="active:bg-secondary min-h-14 flex-row items-center gap-3 px-4"
+                onPress={() => {
+                  tapped()
+                  router.push('/(app)/subscription')
+                }}
+                role="button"
+              >
+                <Text className="text-body-sm text-muted-foreground flex-1">
+                  {t.subscriptionTitle}
+                </Text>
+                {subscription ? (
+                  <View className="flex-row items-center gap-[7px]">
+                    <View
+                      className={`h-[7px] w-[7px] rounded-full ${
+                        subscription.kind === 'trial'
+                          ? 'bg-link'
+                          : subscription.kind === 'active'
+                            ? 'bg-success'
+                            : subscription.kind === 'wontRenew'
+                              ? 'bg-warn'
+                              : 'bg-muted-foreground'
+                      }`}
+                    />
+                    <Text className="text-body-sm text-foreground">
+                      {subscription.kind === 'trial'
+                        ? t.subscriptionStatusTrial
+                        : subscription.kind === 'active'
+                          ? t.subscriptionStatusActive
+                          : subscription.kind === 'wontRenew'
+                            ? t.subscriptionStatusWontRenew
+                            : t.subscriptionStatusNone}
+                    </Text>
+                  </View>
+                ) : null}
                 <Icon
                   as={ChevronRight}
                   size={15}
                   strokeWidth={2}
                   className="text-muted-foreground shrink-0"
                 />
-              </View>
+              </Pressable>
             </Card>
           </View>
 
@@ -862,7 +904,15 @@ export default function ProfileScreen() {
                 className="active:bg-destructive/10 border-border min-h-14 flex-row items-center gap-3 border-t px-4"
                 onPress={() => {
                   tapped()
-                  askDelete(null)
+                  /*
+                    `US-053` AC-6 — a trial or subscription that will renew keeps
+                    charging after the account is gone: Apple bills the Apple ID,
+                    not Luna. Warn first; «Все одно видалити» goes on to the
+                    usual confirmation (`Edit Profile.dc.html`).
+                  */
+                  if (subscription?.kind === 'trial' || subscription?.kind === 'active') {
+                    setDeleteSubOpen(true)
+                  } else askDelete(null)
                 }}
                 role="button"
               >
@@ -953,6 +1003,48 @@ export default function ProfileScreen() {
       </Sheet>
 
       {deleteDialog}
+      <AlertDialog open={deleteSubOpen} onOpenChange={setDeleteSubOpen}>
+        <AlertDialogContent>
+          <AlertDialogTitle>{t.deleteSubTitle}</AlertDialogTitle>
+          <AlertDialogDescription>{t.deleteSubBody}</AlertDialogDescription>
+          <View className="mt-1.5 gap-2">
+            <Button
+              variant="cta"
+              size="cta"
+              className="min-h-[46px] py-0"
+              onPress={() => {
+                setDeleteSubOpen(false)
+                void openManageSubscriptions()
+              }}
+            >
+              <Text className="font-semibold" style={{ fontSize: 14 }}>
+                {t.deleteSubOpenApple}
+              </Text>
+            </Button>
+            <Pressable
+              className="border-danger-border min-h-[46px] items-center justify-center rounded-full border active:bg-danger-bg"
+              onPress={() => {
+                setDeleteSubOpen(false)
+                askDelete(null)
+              }}
+              role="button"
+            >
+              <Text className="text-destructive font-semibold" style={{ fontSize: 14 }}>
+                {t.deleteSubAnyway}
+              </Text>
+            </Pressable>
+            <Pressable
+              className="min-h-[46px] items-center justify-center rounded-full active:bg-secondary"
+              onPress={() => setDeleteSubOpen(false)}
+              role="button"
+            >
+              <Text className="text-foreground/85 font-medium" style={{ fontSize: 14 }}>
+                {t.deleteSubCancel}
+              </Text>
+            </Pressable>
+          </View>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* «Фото профілю» — native on device, the app's own Sheet on web. */}
       {avatarSheet}
       {/*

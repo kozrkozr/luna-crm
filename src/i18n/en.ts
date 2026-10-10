@@ -71,8 +71,6 @@ export const en: Strings = {
   // See the note in uk.ts.
   viewPublicProfile: 'View public profile',
   subscriptionSection: 'Subscription',
-  planLabel: 'Plan',
-  planFree: 'Free',
   settingsSection: 'Settings',
   appLanguage: 'App language',
   // US-047 — owner, 2026-10-06.
@@ -695,4 +693,24 @@ export const en: Strings = {
   paywallOtherAccount: 'This subscription belongs to another Luna account. Sign in to that account to use it.',
   paywallTerms: 'Terms',
   paywallPrivacy: 'Privacy Policy',
+
+  // ── US-053 — the subscription screen ───────────────────────────────────────
+  subscriptionTitle: 'Subscription',
+  subscriptionStatusTrial: 'Free trial',
+  subscriptionStatusActive: 'Active',
+  subscriptionStatusWontRenew: "Won't renew",
+  subscriptionStatusNone: 'Inactive',
+  subscriptionFreeUntilTemplate: 'Free until {date}',
+  subscriptionThenTemplate: 'Then {price} a month',
+  subscriptionNextChargeTemplate: 'Next charge {date} · {price}',
+  subscriptionAccessUntilTemplate: 'Access until {date}',
+  subscriptionViewMode: 'View mode — subscribe to create and edit',
+  subscriptionManage: 'Manage subscription',
+  subscriptionSubscribe: 'Subscribe',
+  subscriptionRestore: 'Restore purchases',
+  deleteSubTitle: "Your subscription won't cancel itself",
+  deleteSubBody: "Deleting your account doesn't stop payments. Cancel the subscription in your Apple settings, or you'll keep being charged.",
+  deleteSubOpenApple: 'Open Apple settings',
+  deleteSubAnyway: 'Delete anyway',
+  deleteSubCancel: 'Cancel',
 }

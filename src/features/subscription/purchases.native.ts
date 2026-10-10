@@ -1,3 +1,4 @@
+import { Linking } from 'react-native'
 import Purchases, {
   INTRO_ELIGIBILITY_STATUS,
   LOG_LEVEL,
@@ -123,4 +124,21 @@ export async function restore(): Promise<RestoreResult> {
     if (OWNED_ELSEWHERE.has(e?.code)) return 'otherAccount'
     return 'failed'
   }
+}
+
+/**
+ * `US-053` AC-2, AC-6 — iOS's own subscription settings for Luna. Cancelling is
+ * Apple's; the app only opens the place to do it. RevenueCat's sheet first,
+ * the App Store's subscriptions page if it cannot show one.
+ */
+export async function openManageSubscriptions(): Promise<void> {
+  try {
+    if (API_KEY && configuredFor !== null) {
+      await Purchases.showManageSubscriptions()
+      return
+    }
+  } catch {
+    // fall through
+  }
+  await Linking.openURL('https://apps.apple.com/account/subscriptions')
 }
