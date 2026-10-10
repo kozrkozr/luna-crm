@@ -18,7 +18,21 @@ import { onPurchasesChanged } from './purchases'
  * (`revenuecat-sync`), because the webhook can land a minute later (`S-7` F-3,
  * and once on the device); polling covers that call failing.
  */
+/**
+ * `US-053` AC-1, AC-5 — what the account's access is, for the «Підписка»
+ * screen and its profile row. Derived from the same live rows as `hasAccess`.
+ * `beta` arrives with `US-055`.
+ */
+export type SubscriptionStatus =
+  | { kind: 'trial'; until: string }
+  | { kind: 'active'; until: string }
+  /** Cancelled in Apple's settings, still running (AC-5). */
+  | { kind: 'wontRenew'; until: string }
+  | { kind: 'none' }
+
 type AccessValue = {
+  /** `null` while the first read is in flight. */
+  subscription: SubscriptionStatus | null
   /**
    * `null` while the first read is in flight. Treated as access by `useGuard`,
    * so nothing flashes the paywall on launch; the database still refuses a
@@ -35,6 +49,7 @@ type AccessValue = {
 }
 
 const AccessContext = createContext<AccessValue>({
+  subscription: null,
   hasAccess: null,
   refresh: async () => {},
   syncNow: async () => {},
@@ -46,17 +61,21 @@ const AFTER_PURCHASE_EVERY_MS = 2_000
 
 export function AccessProvider({ children }: { children: ReactNode }) {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null)
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null)
   const [expiresAt, setExpiresAt] = useState<number | null>(null)
   const hasAccessRef = useRef<boolean | null>(null)
 
   const refresh = useCallback(async () => {
-    const { data, error } = await supabase.from('account_access').select('expires_at')
+    const { data, error } = await supabase
+      .from('account_access')
+      .select('expires_at, period_type, will_renew')
     if (error) return
     const now = Date.now()
     const live = (data ?? []).filter((r) => r.expires_at === null || Date.parse(r.expires_at) > now)
     const next = live.length > 0
     hasAccessRef.current = next
     setHasAccess(next)
+    setSubscription(statusOf(live))
     // The soonest moment the answer can change on its own; null = never.
     const ends = live.map((r) => (r.expires_at === null ? Infinity : Date.parse(r.expires_at)))
     const soonest = ends.length > 0 ? Math.min(...ends) : Infinity
@@ -110,7 +129,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh, syncNow])
 
-  return <AccessContext.Provider value={{ hasAccess, refresh, syncNow }}>{children}</AccessContext.Provider>
+  return <AccessContext.Provider value={{ subscription, hasAccess, refresh, syncNow }}>{children}</AccessContext.Provider>
 }
 
 export function useAccess(): AccessValue {
@@ -135,4 +154,20 @@ export function useGuard() {
       },
     [hasAccess, router]
   )
+}
+
+/**
+ * The live row that runs longest decides. `will_renew` is read only while the
+ * row is live — after a lapse it can still say true (`S-7` F-2).
+ */
+function statusOf(
+  live: { expires_at: string | null; period_type: string; will_renew: boolean }[]
+): SubscriptionStatus {
+  if (live.length === 0) return { kind: 'none' }
+  const row = [...live].sort(
+    (a, b) => (b.expires_at ? Date.parse(b.expires_at) : Infinity) - (a.expires_at ? Date.parse(a.expires_at) : Infinity)
+  )[0]
+  const until = row.expires_at ?? ''
+  if (!row.will_renew) return { kind: 'wontRenew', until }
+  return row.period_type === 'trial' ? { kind: 'trial', until } : { kind: 'active', until }
 }

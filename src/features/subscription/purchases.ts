@@ -22,3 +22,4 @@ export async function buy(_offer: Offer): Promise<BuyResult> {
 export async function restore(): Promise<RestoreResult> {
   return 'failed'
 }
+export async function openManageSubscriptions(): Promise<void> {}

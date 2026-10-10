@@ -136,6 +136,8 @@ function AppStack() {
       <Stack.Screen name="notifications" options={{ headerShown: false }} />
       {/* US-047's «Валюта» — pushed from the profile like «Сповіщення». */}
       <Stack.Screen name="currency" options={{ headerShown: false }} />
+      {/* `US-053`'s «Підписка» — pushed from the profile like «Валюта». */}
+      <Stack.Screen name="subscription" options={{ headerShown: false }} />
       {/* `US-051` — full screen, as AC-1 asks; it draws its own ✕. */}
       <Stack.Screen
         name="paywall"
