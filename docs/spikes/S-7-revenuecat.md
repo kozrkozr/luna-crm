@@ -106,6 +106,10 @@ RevenueCat project.
    sandbox Apple ID. Blocked on the Paid Apps Agreement (address change at Apple, then W-8BEN).
    The SDK path is the same as F-1; what it adds is Apple's sheet, Apple's trial, and
    `store = app_store` in the row.
+   It must also show that **a used trial is not offered again** (`US-051` AC-6): the Test Store
+   offered «Спробувати безкоштовно» a second time to an account whose trial had ended without
+   converting (2026-10-10), so on dev builds the trial comes from the Test Store's product alone.
+   On the App Store the app asks StoreKit's eligibility check instead — untested until this run.
 2. **Which build runs it.** The App Store product exists only for `com.lunashoots.ios` — Luna
    Shoots, which is baked against **prod**. Either the run happens on prod (after `F-6`'s split,
    with the migration and the function deployed there), or a Luna Shoots build is pointed at dev
