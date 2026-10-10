@@ -71,17 +71,26 @@ export async function loadOffer(): Promise<Offer | null> {
   if (!pkg) return null
   const product = pkg.product
   let trial = product.introPrice !== null
-  if (trial) {
+  /*
+    The App Store is asked; the Test Store (dev builds, `test_…` key) is not.
+    StoreKit's eligibility check knows nothing of the Test Store's simulated
+    purchases and answered "ineligible" for a brand-new account on the device
+    (2026-10-10), while the Test Store itself offers the intro only to a
+    customer who has not used it (`S-7` F-4) — so there the product decides.
+  */
+  if (trial && !API_KEY.startsWith('test_')) {
     try {
       const status = (await Purchases.checkTrialOrIntroductoryPriceEligibility([product.identifier]))[
         product.identifier
       ]?.status
+      if (__DEV__) console.log(`[US-051] intro eligibility for ${product.identifier}: ${status}`)
       if (status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_INELIGIBLE) trial = false
       if (status === INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_NO_INTRO_OFFER_EXISTS) trial = false
     } catch {
       // Unknown — keep what the product says.
     }
   }
+  if (__DEV__) console.log(`[US-051] offer ${product.identifier} ${product.priceString} trial=${trial}`)
   return { id: product.identifier, priceString: product.priceString, trial, pkg }
 }
 
