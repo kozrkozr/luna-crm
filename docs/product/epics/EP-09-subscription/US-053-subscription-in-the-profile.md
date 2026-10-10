@@ -19,7 +19,8 @@ cancel itself.
 
 ### AC-1 — The status
 - **Then** the screen shows one of: the free trial and the date it ends; an active subscription and
-  its next renewal date; beta access and the date it ends (`US-055`); or no access
+  its next renewal date; a subscription that will not renew and the date access ends — which is
+  also how `US-055`'s beta access is shown, never named (owner, 2026-10-10); or no access
 
 ### AC-2 — Manage
 - **Given** a trial or an active subscription
@@ -50,13 +51,11 @@ Owner confirmed, 2026-10-08. `{price}` is the localized price string Apple retur
 | Ukrainian | English |
 |---|---|
 | Підписка *(screen title, profile row)* | Subscription |
-| Пробний період / Активна / Не продовжиться / Бета-доступ / Неактивна *(status)* | Free trial / Active / Won't renew / Beta access / Inactive |
+| Пробний період / Активна / Не продовжиться / Неактивна *(status)* | Free trial / Active / Won't renew / Inactive |
 | Безкоштовно до {date} | Free until {date} |
 | Потім {price} на місяць | Then {price} a month |
 | Наступне списання {date} · {price} | Next charge {date} · {price} |
 | Доступ до {date} | Access until {date} |
-| Безкоштовно для бета-тестерів до {date} | Free for beta testers until {date} |
-| Бета-доступ закінчиться {date}. Оформити підписку можна вже зараз. | Beta access ends {date}. You can subscribe now. |
 | Режим перегляду — створювати й редагувати можна з підпискою | View mode — subscribe to create and edit |
 | Керувати підпискою | Manage subscription |
 | Оформити підписку | Subscribe |

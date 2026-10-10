@@ -615,7 +615,7 @@ export default function ProfileScreen() {
                           ? 'bg-link'
                           : subscription.kind === 'active'
                             ? 'bg-success'
-                            : subscription.kind === 'wontRenew'
+                            : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
                               ? 'bg-warn'
                               : 'bg-muted-foreground'
                       }`}
@@ -625,7 +625,7 @@ export default function ProfileScreen() {
                         ? t.subscriptionStatusTrial
                         : subscription.kind === 'active'
                           ? t.subscriptionStatusActive
-                          : subscription.kind === 'wontRenew'
+                          : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
                             ? t.subscriptionStatusWontRenew
                             : t.subscriptionStatusNone}
                     </Text>

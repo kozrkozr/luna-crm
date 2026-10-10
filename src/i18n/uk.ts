@@ -1456,6 +1456,12 @@ export const uk = {
   trialReminderViewMode: 'Через 2 дні застосунок перейде в режим перегляду. Оформіть підписку, щоб і далі створювати зйомки.',
   /** AC-4 — `{days}` is «5 днів», through `dayForms`. */
   trialBannerTemplate: 'Пробний період: залишилось {days}',
+
+  // ── US-055 — picked beta testers ───────────────────────────────────────────
+  // The app never names beta access (AC-3b): the screens show it as «Не
+  // продовжиться», and its warning says only that access ends.
+  betaReminderTitle: 'Доступ закінчується',
+  betaReminderBody: 'Через 2 дні застосунок перейде в режим перегляду. Оформіть підписку, щоб і далі створювати зйомки.',
 } as const
 
 export type CopyKey = keyof typeof uk

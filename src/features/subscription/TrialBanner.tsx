@@ -24,8 +24,9 @@ export function TrialBanner() {
   const t = useStrings()
   const router = useRouter()
   const { subscription } = useAccess()
-  if (!subscription || subscription.kind === 'none' || subscription.kind === 'active') return null
-  if (subscription.kind === 'wontRenew' && !subscription.trial) return null
+  const onTrial =
+    subscription?.kind === 'trial' || (subscription?.kind === 'wontRenew' && subscription.trial)
+  if (!onTrial || !subscription || !('until' in subscription)) return null
 
   const days = Math.max(1, Math.ceil((Date.parse(subscription.until) - Date.now()) / DAY_MS))
 

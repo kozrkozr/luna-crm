@@ -52,3 +52,27 @@ export function planTrialReminder(
     data: { kind: 'trial' },
   }
 }
+
+/**
+ * `US-055` AC-3a — the picked beta tester's warning, two days before their
+ * access ends, as a trial's is. Only while nothing is bought: a subscription
+ * replaces the beta access (AC-4), so the caller passes null then. Worded
+ * without «бета» (AC-3b).
+ */
+export function planBetaReminder(
+  until: Date | null,
+  now: Date,
+  t: Strings,
+  beforeMs: number = TRIAL_REMINDER_BEFORE_MS
+): PlannedReminder | null {
+  if (!until) return null
+  const at = new Date(until.getTime() - beforeMs)
+  if (at.getTime() <= now.getTime()) return null
+  return {
+    id: 'beta-ending',
+    at,
+    title: t.betaReminderTitle,
+    body: t.betaReminderBody,
+    data: { kind: 'beta' },
+  }
+}
