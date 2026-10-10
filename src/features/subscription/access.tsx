@@ -26,8 +26,8 @@ import { onPurchasesChanged } from './purchases'
 export type SubscriptionStatus =
   | { kind: 'trial'; until: string }
   | { kind: 'active'; until: string }
-  /** Cancelled in Apple's settings, still running (AC-5). */
-  | { kind: 'wontRenew'; until: string }
+  /** Cancelled in Apple's settings, still running (AC-5). `trial` — a cancelled trial (`US-054` AC-2). */
+  | { kind: 'wontRenew'; until: string; trial: boolean }
   | { kind: 'none' }
 
 type AccessValue = {
@@ -168,6 +168,6 @@ function statusOf(
     (a, b) => (b.expires_at ? Date.parse(b.expires_at) : Infinity) - (a.expires_at ? Date.parse(a.expires_at) : Infinity)
   )[0]
   const until = row.expires_at ?? ''
-  if (!row.will_renew) return { kind: 'wontRenew', until }
+  if (!row.will_renew) return { kind: 'wontRenew', until, trial: row.period_type === 'trial' }
   return row.period_type === 'trial' ? { kind: 'trial', until } : { kind: 'active', until }
 }

@@ -24,6 +24,8 @@ export type PlannedReminder = {
 export type ReminderData =
   | { kind: 'digest'; date: string }
   | { kind: 'before'; shootId: string }
+  /** `US-054` — the free trial ends in two days. */
+  | { kind: 'trial' }
 
 /**
  * iOS keeps at most 64 pending local notifications per app and silently drops

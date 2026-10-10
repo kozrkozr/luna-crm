@@ -66,7 +66,9 @@ export function onPurchasesChanged(callback: () => void): () => void {
  * which is also all the Test Store reports (`S-7` F-4).
  */
 export async function loadOffer(): Promise<Offer | null> {
-  if (!API_KEY) return null
+  // Not yet configured — a reminder sync can run at launch before the
+  // signed-in account is known (`US-054`); the next one will have it.
+  if (!API_KEY || configuredFor === null) return null
   const offerings = await Purchases.getOfferings()
   const pkg = offerings.current?.availablePackages[0]
   if (!pkg) return null

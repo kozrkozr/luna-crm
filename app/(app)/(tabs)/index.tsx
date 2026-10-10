@@ -57,6 +57,7 @@ import {
 } from '../../../src/features/shoots/home'
 import { Starfield } from '../../../src/components/Starfield'
 import { ViewModeBanner } from '../../../src/features/subscription/ViewModeBanner'
+import { TrialBanner } from '../../../src/features/subscription/TrialBanner'
 import { useGuard } from '../../../src/features/subscription/access'
 
 type State =
@@ -747,8 +748,10 @@ function HomeHeader({
       </View>
       }
     >
-      {/* `US-052` AC-9 — under the header, inside its border. */}
+      {/* `US-052` AC-9 and `US-054` AC-4 — under the header, inside its
+          border. At most one shows: view mode has no trial. */}
       <ViewModeBanner />
+      <TrialBanner />
     </TabHeader>
   )
 }

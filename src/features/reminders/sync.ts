@@ -3,7 +3,14 @@ import * as Notifications from 'expo-notifications'
 import { supabase } from '../../lib/supabase/client'
 import { DEFAULT_LANGUAGE, stringsFor, type Language } from '../../i18n'
 import { listShoots } from '../shoots/api'
-import { planReminders } from './plan'
+import { MAX_PENDING, planReminders } from './plan'
+import {
+  planTrialReminder,
+  TEST_STORE_REMINDER_BEFORE_MS,
+  TRIAL_REMINDER_BEFORE_MS,
+  type Trial,
+} from '../subscription/trialReminder'
+import { loadOffer } from '../subscription/purchases'
 import { loadReminderSettings } from './settings'
 
 /**
@@ -67,7 +74,20 @@ async function run(): Promise<void> {
     // reminder because of one dropped request.
     if (!shoots) return
 
-    const plan = planReminders(shoots, settings, new Date(), stringsFor(language))
+    const now = new Date()
+    const t = stringsFor(language)
+    // `US-054` — the trial's reminder rides in the same plan, so the
+    // cancel-everything step below cannot wipe it. It goes first: the 64-slot
+    // cut keeps the soonest shoots, and a trial ending must not be the one
+    // dropped.
+    const beforeMs = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY?.startsWith('test_')
+      ? TEST_STORE_REMINDER_BEFORE_MS
+      : TRIAL_REMINDER_BEFORE_MS
+    const trialReminder = planTrialReminder(await readTrial(), await readPrice(), now, t, beforeMs)
+    const plan = [
+      ...(trialReminder ? [trialReminder] : []),
+      ...planReminders(shoots, settings, now, t),
+    ].slice(0, MAX_PENDING)
 
     await Notifications.cancelAllScheduledNotificationsAsync()
     for (const reminder of plan) {
@@ -81,4 +101,36 @@ async function run(): Promise<void> {
     // A reminder is a convenience; failing to schedule one must never surface
     // as a failed save. The next sync tries again.
   }
+}
+
+/**
+ * `US-054` — the running free trial, if there is one: a live `account_access`
+ * row whose period is the trial. Null on a failed read too — the trial's
+ * reminder is then left out of this pass and planned by the next.
+ */
+async function readTrial(): Promise<Trial | null> {
+  const { data, error } = await supabase
+    .from('account_access')
+    .select('expires_at, period_type, will_renew')
+    .eq('period_type', 'trial')
+  if (error || !data) return null
+  const now = Date.now()
+  const row = data.find((r) => r.expires_at !== null && Date.parse(r.expires_at) > now)
+  return row ? { endsAt: new Date(row.expires_at as string), willRenew: row.will_renew } : null
+}
+
+/**
+ * Apple's localized price for AC-1's wording, from the store. Remembered, so
+ * a sync without the network still words the reminder; asked again each time
+ * because the storefront can change.
+ */
+let lastPrice: string | null = null
+
+async function readPrice(): Promise<string | null> {
+  try {
+    lastPrice = (await loadOffer())?.priceString ?? lastPrice
+  } catch {
+    // keep the last one
+  }
+  return lastPrice
 }
