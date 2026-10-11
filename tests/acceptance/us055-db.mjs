@@ -50,12 +50,15 @@ try {
   ok('AC-1 a picked tester has access after the launch', await canCreate(picked))
   ok('AC-1 a tester not on the list does not', !(await canCreate(other)))
   const until = (await picked.client.rpc('beta_access_until')).data
-  const expected = new Date(Date.now() - 10 * DAY); expected.setMonth(expected.getMonth() + 3)
-  ok('AC-1 until the launch date plus 3 months', until?.slice(0, 10) === iso(expected), JSON.stringify(until))
+  const expected = new Date(Date.now() - 10 * DAY); expected.setFullYear(expected.getFullYear() + 1)
+  ok('AC-1 until the launch date plus 1 year', until?.slice(0, 10) === iso(expected), JSON.stringify(until))
   ok('AC-1 the others see no beta end', (await other.client.rpc('beta_access_until')).data === null)
 
   setLaunch(iso(new Date(Date.now() - 100 * DAY)))
-  ok('AC-3 three months on, the picked tester is in view mode', !(await canCreate(picked)))
+  ok('AC-1 three months on, the picked tester still has access (a year since 2026-10-11)', await canCreate(picked))
+
+  setLaunch(iso(new Date(Date.now() - 370 * DAY)))
+  ok('AC-3 a year on, the picked tester is in view mode', !(await canCreate(picked)))
 
   await grantAccess(picked.id)
   ok('AC-4 a subscription still gives access after the beta ended', await canCreate(picked))
