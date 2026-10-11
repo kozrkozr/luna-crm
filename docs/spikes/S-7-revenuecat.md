@@ -4,9 +4,9 @@
   (`ADR-023` decision 10, RevenueCat) does not hold up on a device
 - **Date:** 2026-10-09
 - **Branch:** `spike/s-7-revenuecat`
-- **Status:** **the chain works end to end through RevenueCat's Test Store. The Apple sandbox run
-  is still owed** — App Store Connect's Paid Apps Agreement is not active until Apple updates the
-  owner's address and the W-8BEN is filed. See "Still owed".
+- **Status:** **the chain works end to end** — through RevenueCat's Test Store (2026-10-09) and
+  through the Apple sandbox (2026-10-11, "The Apple sandbox run"). One device check is left
+  undone by the owner's choice: the `US-054` reminder.
 
 ## What the spike was for
 `ADR-023` chose RevenueCat over a hand-built StoreKit integration and decided that access is
@@ -118,3 +118,25 @@ RevenueCat project.
    Shoots, which is baked against **prod**. Either the run happens on prod (after `F-6`'s split,
    with the migration and the function deployed there), or a Luna Shoots build is pointed at dev
    for the run. **Owner's call.**
+
+## The Apple sandbox run — 2026-10-11, passed
+Luna Shoots against dev (`npm run ios:store-sandbox`, `appl_` key) on the owner's iPhone, the UA
+and PL sandbox testers. Paid Apps Agreement active the same day; App Store Server Notifications
+(Version 2) point at RevenueCat for Production and Sandbox.
+
+| Step | Result |
+|---|---|
+| New account → paywall | the 14-day trial and Apple's price |
+| Buy (UA tester) | Apple's sheet with the trial; access within seconds; dev `account_access` row, `store = app_store`, `period_type = trial` |
+| Trial → paid, app closed | RevenueCat "Converted from a trial … USD 4.99"; the row followed (`period_type = normal`) — Apple → RevenueCat → webhook → Supabase without the app |
+| Second account, same Apple ID | no trial offered (`US-051` AC-6 — Still owed 1 closed); buying says the subscription belongs to another account (AC-10) |
+| «Відновити» | first account keeps access; second account gets none (transfer behaviour holds) |
+| PL tester, third account | price in złoty; trial bought and cancelled at once → «Не продовжиться» (`US-053` AC-5), the trial banner stays (`US-054` AC-4); at the trial's end, view mode |
+
+Not checked on a device: the `US-054` reminder. It is planned two days before the trial's end, and
+only Test Store builds shorten that (`TEST_STORE_REMINDER_BEFORE_MS`); the sandbox's trial lasts
+minutes, so nothing is planned. Owner's decision (2026-10-11): leave it — the pure test of
+`planTrialReminder` covers it.
+
+On the device the Sandbox Account entry in Settings did not appear before the first purchase; the
+purchase sheet asked for the sandbox tester's sign-in instead.
