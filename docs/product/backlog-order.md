@@ -97,7 +97,7 @@ Before the public App Store release; independent of the paused `EP-07`.
 | 3 | Paywall and trial | `US-051` | Needs the access record |
 | 4 | Subscription in the profile | `US-053` | Reuses the paywall and restore |
 | 5 | Trial-ending reminder | `US-054` | Reuses `US-041`'s local notifications |
-| 6 | Beta testers' 3 months | `US-055` | Needs the launch date (`ADR-023` open question 1) |
+| 6 | Beta testers' year | `US-055` | Needs the launch date (`ADR-023` open question 1) |
 | 7 | Legal texts | `US-056` | Before the release that sells, not before the code |
 
 ## Notes on the order

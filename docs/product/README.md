@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-08 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05 and 2026-10-06)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `a4cc4be` — *docs(US-055): beta access is never named in the app — shown as won't renew, warned as access ending*.
+- **Source commit:** `a8b15ad` — *docs(US-055): picked beta testers keep access for a year from the launch, not 3 months*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
@@ -29,7 +29,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 - **Monthly only for now.** A yearly plan waits for PRO; product IDs (`com.lunashoots.ios.base.monthly`),
   the RevenueCat entitlement (`base`) and the paywall's plan card are already shaped for more plans.
 - **The paywall is `Paywall copy.dc.html`** (2026-10-09), not the older `Paywall.dc.html`.
-- **Beta testers get 3 months** from the public launch date (not yet set).
+- **Picked beta testers get 1 year** from the public launch date (was 3 months until 2026-10-11).
 - **Purchases through RevenueCat.** Spike **S-7** (one sandbox purchase on a device) comes first.
 - Stories `US-051`–`US-056`; four provisional glossary terms (subscription, free trial, paywall,
   view mode).

@@ -79,10 +79,12 @@ Facts that constrained the choice:
    is the iOS app. Neither is built, so nothing is taken away from anyone. The plan names: this one is
    «Luna Shoots», the higher one «Luna Shoots PRO» (owner, 2026-10-09).
 8. **Beta testers:** ~~every account registered before the public launch~~ **only the beta testers
-   the owner picks** have full access for **3 months from the launch date**, granted by the server,
-   with no purchase (owner, 2026-10-10: "не всім прям бета-тестерам хочу дати, а тільки деяким").
-   The owner keeps the list in the database, one row per account; every other tester is a regular
-   account from the launch on.
+   the owner picks** have full access for ~~3 months~~ **1 year from the launch date**, granted by
+   the server, with no purchase (owner, 2026-10-10: "не всім прям бета-тестерам хочу дати, а тільки
+   деяким"). The owner keeps the list in the database, one row per account; every other tester is
+   a regular account from the launch on. Lengthened to a year (owner, 2026-10-11: "дамо
+   безкоштовний доступ тільки 2 тестерам і на 1 рік") — two testers for now; how many is the
+   list's business, not the app's.
 9. **Ready for more plans** (agent, owner 2026-10-09 — "можемо десь закласти логіку під майбутню
    річну, і майбутні різні види підписок"): a yearly plan and a higher tier with the web app and file
    storage are planned later, not now. So from the start:
@@ -116,4 +118,4 @@ Facts that constrained the choice:
 ## Open questions
 | # | Question | What decision it blocks |
 |---|---|---|
-| 1 | The public launch date — after EP-09 is built and tested (owner, 2026-10-08) | The end of the beta testers' 3 months (`US-055`) |
+| 1 | The public launch date — after EP-09 is built and tested (owner, 2026-10-08) | The end of the beta testers' year (`US-055`) |
