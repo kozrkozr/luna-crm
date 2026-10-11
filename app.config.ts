@@ -159,7 +159,7 @@ const config: ExpoConfig = {
      * Connect rejects a duplicate build number outright
      * (docs/release-appstore.md 1.6).
      */
-    buildNumber: '2',
+    buildNumber: '3',
     config: {
       // HTTPS only, which is exempt. Without this App Store Connect asks the
       // export-compliance question on every upload and holds the build.

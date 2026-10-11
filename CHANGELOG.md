@@ -9,6 +9,32 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 - Each entry names its story, so `git log --grep=US-0xx` finds the code.
 - How a build is shipped: `docs/releases/`.
 
+## 1.0.0 (build 3) — the App Store, with the subscription
+
+Checklist: [`docs/releases/1.0.0-build-3-app-store.md`](docs/releases/1.0.0-build-3-app-store.md).
+Since build 2 (`v1.0.0-build.2`). The date is set when it is released.
+
+### Added
+- **A monthly subscription** with Apple's 14-day free trial, bought through RevenueCat; the
+  database records an account's access from RevenueCat's webhook (`S-7`, `ADR-023`).
+- **The paywall** right after registration — the trial or the subscription, «Відновити», and
+  what went wrong (`US-051`).
+- **View mode without access** — everything visible, nothing created, edited or deleted; the
+  database refuses it and every such action opens the paywall (`US-052`).
+- **«Підписка» in the profile** — the plan, its state, managing it in Apple's settings, restore;
+  deleting the account warns about a running subscription (`US-053`).
+- **The free trial's end** — a banner on the home screen and a reminder two days before
+  (`US-054`).
+- **Picked beta testers keep full access** for a year from the launch, shown as a subscription
+  that will not renew (`US-055`).
+- **The terms and the privacy policy describe the subscription**, both languages (`US-056`).
+- **«Написати в підтримку»** in the profile opens an email to support@lunashoots.com (`US-016`),
+  and a support page in both languages (`ADR-017`).
+
+### Fixed
+- The weekday stays capitalised after an English date (`US-015`).
+- The app's access to crew contacts is granted explicitly (`US-005`).
+
 ## 1.0.0 (build 2) — 2026-10-07
 
 Checklist: [`docs/releases/1.0.0-build-2.md`](docs/releases/1.0.0-build-2.md).
