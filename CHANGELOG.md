@@ -12,7 +12,8 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 ## 1.0.0 (build 3) — the App Store, with the subscription
 
 Checklist: [`docs/releases/1.0.0-build-3-app-store.md`](docs/releases/1.0.0-build-3-app-store.md).
-Since build 2 (`v1.0.0-build.2`). The date is set when it is released.
+Since build 2 (`v1.0.0-build.2`). Released on the App Store 2026-10-13 (Ukraine and the US; the EU
+waits for Apple's DSA trader approval).
 
 ### Added
 - **A monthly subscription** with Apple's 14-day free trial, bought through RevenueCat; the
