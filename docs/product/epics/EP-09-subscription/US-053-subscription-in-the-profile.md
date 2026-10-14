@@ -46,7 +46,7 @@ cancel itself.
   Apple ID's settings, with a way to open those settings (owner, 2026-10-08)
 
 ## Copy
-Owner confirmed, 2026-10-08. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example. Dates follow the app's language. Designs: `Subscription.dc.html`, `Edit Profile.dc.html` (AC-6).
+Owner confirmed, 2026-10-08. `{price}` is the localized price string Apple returns for the person's storefront — never a hard-coded amount (Guideline 3.1.2); «4,99 $» in the designs is an example. Dates follow the app's language, and carry the year only when it is not the current one — «13 жовтня 2027», but «13 листопада» this year (owner, 2026-10-14, after beta access at launch showed «Доступ до 13 жовтня» a year ahead). Designs: `Subscription.dc.html`, `Edit Profile.dc.html` (AC-6).
 
 | Ukrainian | English |
 |---|---|

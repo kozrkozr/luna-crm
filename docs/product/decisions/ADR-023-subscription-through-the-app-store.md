@@ -118,4 +118,4 @@ Facts that constrained the choice:
 ## Open questions
 | # | Question | What decision it blocks |
 |---|---|---|
-| 1 | The public launch date — after EP-09 is built and tested (owner, 2026-10-08) | The end of the beta testers' year (`US-055`) |
+| 1 | ~~The public launch date — after EP-09 is built and tested (owner, 2026-10-08)~~ **Answered: 2026-10-13** — 1.0.0 (build 3) approved and released on the App Store that day; the `launch` row on prod says so, and the beta testers' year ends on 2027-10-13 | Nothing |
