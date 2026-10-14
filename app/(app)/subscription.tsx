@@ -12,7 +12,7 @@ import { Starfield } from '../../src/components/Starfield'
 import { Toast } from '../../src/components/Toast'
 import { useStrings } from '../../src/i18n/LanguageProvider'
 import { failed, succeeded, tapped } from '../../src/lib/haptics'
-import { formatDayMonth } from '../../src/features/shoots/date'
+import { formatDayMonthYear } from '../../src/features/shoots/date'
 import { useAccess, type SubscriptionStatus } from '../../src/features/subscription/access'
 import { loadOffer, openManageSubscriptions, restore } from '../../src/features/subscription/purchases'
 
@@ -50,7 +50,7 @@ export default function SubscriptionScreen() {
     }
   }, [])
 
-  const date = (iso: string) => formatDayMonth(iso.slice(0, 10), t.monthsGenitive)
+  const date = (iso: string) => formatDayMonthYear(iso.slice(0, 10), t.monthsGenitive)
 
   const onRestore = async () => {
     if (restoring) return

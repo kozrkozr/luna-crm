@@ -62,6 +62,23 @@ export function formatDayMonth(isoDate: string, monthsGenitive: readonly string[
   return `${day} ${monthsGenitive[month - 1]}`
 }
 
+/**
+ * «13 жовтня 2027» — `formatDayMonth` with the year, but only when it is not
+ * this year's: «13 листопада» stays as it is (`US-053` copy, owner,
+ * 2026-10-14). A subscription's dates can lie a year ahead — beta access
+ * (`US-055`) ends a year after the launch, and without the year it read as
+ * ending today.
+ */
+export function formatDayMonthYear(
+  isoDate: string,
+  monthsGenitive: readonly string[],
+  today: string = toIsoDate(new Date())
+): string {
+  const year = isoDate.slice(0, 4)
+  const dayMonth = formatDayMonth(isoDate, monthsGenitive)
+  return year === today.slice(0, 4) ? dayMonth : `${dayMonth} ${Number(year)}`
+}
+
 export function formatTimeRange(start: string | null, end: string | null): string | null {
   if (!start || !end) return null
   return `${start} – ${end}`
