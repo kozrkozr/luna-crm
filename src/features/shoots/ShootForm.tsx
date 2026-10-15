@@ -616,8 +616,10 @@ export function ShootForm(props: ShootFormMode) {
   const pay = payment({ price: priceValue, prepayment: prepaymentValue })
   const valid =
     typedName.trim().length > 1 && !!date && !!start && !!end && !pay.invalid
+  /* Without the shoot being edited, which would otherwise clash with itself. */
+  const others = shootId ? existing.filter((shoot) => shoot.id !== shootId) : existing
   const clashes =
-    date && start && end ? overlappingShoots(existing, isoOf(date), start, end) : []
+    date && start && end ? overlappingShoots(others, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
 
   /*
