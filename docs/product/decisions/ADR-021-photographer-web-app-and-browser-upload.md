@@ -10,6 +10,8 @@
   `ADR-013` (anonymous reads through the gateway), `ADR-016` (the UI layer)
 - **Phase:** 02-product, revisited post-handoff
 - **Deciders:** owner (chat, 2026-10-04)
+- **Amended by:** `ADR-024` (2026-10-15) — answer 1 (the desktop layout) and the web app's place
+  in `EP-07`: it is its own epic, `EP-10`, built before file hosting
 
 ## Context
 `ADR-020` (2026-10-03) put uploading in the iOS app and left a web app for the photographer to a
@@ -72,7 +74,8 @@ Option C.
 | `04-tech/architecture.md` | the creator's app is a third surface on Pages |
 
 ## Answered after acceptance — owner, chat 2026-10-04
-1. **Desktop layout:** the phone layout, centred. No separate desktop screens.
+1. ~~**Desktop layout:** the phone layout, centred. No separate desktop screens.~~ Amended by
+   `ADR-024` decision 3 (owner, 2026-10-15): a sidebar and desktop layouts (`US-057`).
 2. **Address:** `app.lunashoots.com`. The link surface stays on `lunashoots.com`.
 3. **Auth emails:** one link for both — on a phone it opens the iOS app, on a computer the web
    app.

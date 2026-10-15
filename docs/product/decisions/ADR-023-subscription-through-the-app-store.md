@@ -74,9 +74,10 @@ Facts that constrained the choice:
    die over a payment.
 6. **Nothing is deleted** when access ends.
 7. **Access is decided on the server**, and enforced by the database, not by hiding buttons — the
-   same principle as `ADR-013`. **The photographer's web app (`ADR-021`) and file storage (`EP-07`)
+   same principle as `ADR-013`. ~~**The photographer's web app (`ADR-021`) and file storage (`EP-07`)
    belong to the planned PRO tier, not to this subscription** (owner, 2026-10-09): this subscription
-   is the iOS app. Neither is built, so nothing is taken away from anyone. The plan names: this one is
+   is the iOS app.~~ **File storage (`EP-07`) belongs to the planned PRO tier; the photographer's web
+   app is part of this subscription** (`ADR-024` decision 2, owner 2026-10-15). Neither is built, so nothing is taken away from anyone. The plan names: this one is
    «Luna Shoots», the higher one «Luna Shoots PRO» (owner, 2026-10-09).
 8. **Beta testers:** ~~every account registered before the public launch~~ **only the beta testers
    the owner picks** have full access for ~~3 months~~ **1 year from the launch date**, granted by
