@@ -2,13 +2,20 @@
 import Plus from 'lucide-react-native/icons/plus'
 import X from 'lucide-react-native/icons/x'
 import { Pressable, View } from 'react-native'
+import { DateField } from './DateField'
 import { MonthPicker } from './MonthPicker'
 import { Icon } from './ui/icon'
 import { Input } from './ui/input'
 import { Text } from './ui/text'
 import { Textarea } from './ui/textarea'
 import { useStrings } from '../i18n/LanguageProvider'
-import { formatDayMonth, formatMinutes, toIsoDate } from '../features/shoots/date'
+import {
+  formatDayMonth,
+  formatMinutes,
+  fromTimeValue,
+  toIsoDate,
+  toTimeValue,
+} from '../features/shoots/date'
 import { selected as tickSelection, tapped } from '../lib/haptics'
 import type { Shoot } from '../features/shoots/api'
 
@@ -57,15 +64,33 @@ function toMinutes(time: string): number {
  * - **The end is entered, not derived.** `US-030` AC-5 always stored both; what
  *   changed is that a shoot can once again be missing one, so the callers
  *   validate for it. That reinstates a refusal 2b had removed.
- * - **Half-hour starts are no longer expressible.** The artboard's step is 60
- *   and it was taken as drawn. A shoot already stored at 09:30 keeps its value —
- *   nothing rounds it — and the summary line reports the truth, but the grid
- *   cannot highlight a cell that does not exist, so its highlight begins at the
- *   next full hour. Any tap replaces the pair with hours.
- * - **A range may end at midnight.** 23:00 + a step is 24:00, stored as
- *   `00:00`, which is an end before its start. `US-030` AC-3 is unwritten
- *   (02-product/open-questions.md item 14), so nothing forbids it; the highlight
- *   normalises it back to 1440 rather than collapsing (see `endMinutes`).
+ * - **Half-hour starts are no longer expressible** (until 2026-10-15, below).
+ *   The artboard's step is 60 and it was taken as drawn. A shoot already stored
+ *   at 09:30 keeps its value — nothing rounds it — and the summary line reports
+ *   the truth, but the grid cannot highlight a cell that does not exist, so its
+ *   highlight begins at the next full hour. Any tap replaces the pair with hours.
+ * - **A range may end at midnight** (from the grid until 2026-10-15). 23:00 + a
+ *   step is 24:00, stored as `00:00`, which is an end before its start.
+ *   `US-030` AC-3 is unwritten (02-product/open-questions.md item 14), so
+ *   nothing forbids it; the highlight normalises it back to 1440 rather than
+ *   collapsing (see `endMinutes`).
+ *
+ * ── Minutes, 2026-10-15 ───────────────────────────────────────────────────
+ *
+ * `Time Picker Options.dc.html` 3a, after launch feedback asked for 1.5-hour
+ * shoots. The grid stays the main control; under it, two platform pickers,
+ * «Початок» and «Завершення», hold the chosen range on a 5-minute step. So
+ * minutes are expressible again:
+ *
+ * - **The pickers are always shown** (owner, after trying it on a device). The
+ *   artboard hides them behind an «Інший час» toggle; that toggle is gone.
+ * - **Minutes part-fill their hour** in the grid — 14:30–17:30 fills the right
+ *   half of 14:00, 15 and 16 whole, and the left half of 17:00 (`coverage`).
+ * - **A tap on the grid goes back to whole hours**: the anchor is floored to
+ *   its hour before the artboard's rules apply.
+ * - **No "end before start" error**, though the artboard draws one. `US-030`
+ *   AC-3 stays unwritten (owner, 2026-10-15), so an earlier end still reads as
+ *   crossing midnight, exactly as the grid's 24:00 already does.
  */
 export function ShootWhenFields({
   date,
@@ -92,28 +117,43 @@ export function ShootWhenFields({
   clashes: Shoot[]
 }) {
   const t = useStrings()
-
   const from = start ? toMinutes(start) : null
   const rawEnd = end ? toMinutes(end) : null
   /*
-    An end at or before the start means the range crosses midnight — the only
-    way to reach that here is the last slot, whose end is 24:00 stored as
-    `00:00`. Adding a day back makes the highlight and the duration read
+    An end at or before the start means the range crosses midnight — reached
+    through «Завершення», or a range stored before 2026-10-15 that ended on the
+    old grid's 24:00, kept as `00:00`. Adding a day back makes the highlight and the duration read
     correctly instead of the range appearing empty.
   */
   const endMinutes =
     rawEnd !== null && from !== null && rawEnd <= from ? rawEnd + MINUTES_IN_DAY : rawEnd
 
   /*
-    The artboard's own `rangePicker`, verbatim in behaviour: a complete range
-    starts a new one, tapping the anchor makes a single step, and tapping before
-    the anchor moves the start and ends where the anchor was.
+    **A cell is a moment, not an hour** (owner, 2026-10-15): 08:00 then 09:00 is
+    08:00–09:00. The artboard's `rangePicker` read a cell as the hour after its
+    label, so the same two taps made two hours. The rest of its rules stay: a
+    complete range starts a new one, tapping the anchor again makes one hour,
+    and tapping before the anchor moves the start and ends where the anchor was.
+    The last cell is 23:00, so an end at midnight is set in «Завершення».
   */
   const pick = (slot: number) => {
     if (from === null || endMinutes !== null) return onRangeChange(minutesToTime(slot), null)
-    if (slot === from) return onRangeChange(start, minutesToTime(slot + STEP_MINUTES))
-    if (slot < from) return onRangeChange(minutesToTime(slot), minutesToTime(from + STEP_MINUTES))
-    return onRangeChange(start, minutesToTime(slot + STEP_MINUTES))
+    const anchor = Math.floor(from / STEP_MINUTES) * STEP_MINUTES
+    const anchorTime = minutesToTime(anchor)
+    if (slot === anchor) return onRangeChange(anchorTime, minutesToTime(slot + STEP_MINUTES))
+    if (slot < anchor) return onRangeChange(minutesToTime(slot), anchorTime)
+    return onRangeChange(anchorTime, minutesToTime(slot))
+  }
+
+  /* A picker that sets one half of an empty pair fills the other an hour away,
+     as the artboard's `onStart` / `onEnd` do. */
+  const pickStart = (value: Date) => {
+    const next = toTimeValue(value)
+    onRangeChange(next, end ?? minutesToTime(toMinutes(next) + STEP_MINUTES))
+  }
+  const pickEnd = (value: Date) => {
+    const next = toTimeValue(value)
+    onRangeChange(start ?? minutesToTime(toMinutes(next) - STEP_MINUTES + MINUTES_IN_DAY), next)
   }
 
   const hint =
@@ -169,7 +209,7 @@ export function ShootWhenFields({
                 <TimeCell
                   key={slot}
                   label={minutesToTime(slot)}
-                  active={isInRange(slot, from, endMinutes)}
+                  cover={coverage(slot, from, endMinutes)}
                   onPress={() => pick(slot)}
                 />
               ))}
@@ -180,6 +220,27 @@ export function ShootWhenFields({
         {timeInvalid ? (
           <Text className="text-destructive mt-2 text-sm">{t.pickTimeError}</Text>
         ) : null}
+
+        <View className="mt-3 flex-row gap-2.5">
+          <View className="flex-1 gap-2">
+            <FieldLabel label={t.timeStart} />
+            <DateField
+              mode="time"
+              minuteInterval={5}
+              value={start ? fromTimeValue(start) : null}
+              onChange={pickStart}
+            />
+          </View>
+          <View className="flex-1 gap-2">
+            <FieldLabel label={t.timeEnd} />
+            <DateField
+              mode="time"
+              minuteInterval={5}
+              value={end ? fromTimeValue(end) : null}
+              onChange={pickEnd}
+            />
+          </View>
+        </View>
       </View>
 
       {/* The summary bar: what was chosen, in one line. */}
@@ -207,14 +268,27 @@ export function ShootWhenFields({
   )
 }
 
+/** The part of a slot the range covers, as fractions of its width. */
+type Cover = { from: number; to: number } | null
+
+const WHOLE: Cover = { from: 0, to: 1 }
+
 /**
- * Whether a slot falls inside the chosen range, or IS the anchor of a range
- * that has no end yet — which is what makes a half-made selection visible.
+ * How a cell shows the chosen range. Cells are moments (see `pick`), so a cell
+ * on the start or the end is whole: 08:00–09:00 lights 08 and 09. Minutes fill
+ * their hour in part (owner, 2026-10-15) — a 14:30 start fills the right half
+ * of 14:00, a 12:30 end the left half of 12:00, and 12:15–12:45 the middle of
+ * 12:00. A range with no end yet lights its anchor alone, which is what makes a
+ * half-made selection visible.
  */
-function isInRange(slot: number, from: number | null, to: number | null): boolean {
-  if (from === null) return false
-  if (to === null) return slot === from
-  return slot >= from && slot < to
+function coverage(slot: number, from: number | null, to: number | null): Cover {
+  if (from === null) return null
+  if (to === null) return slot === from ? WHOLE : null
+  const slotEnd = slot + STEP_MINUTES
+  if (slot > to || from >= slotEnd) return null
+  const left = from > slot ? (from - slot) / STEP_MINUTES : 0
+  const right = to > slot && to < slotEnd ? (to - slot) / STEP_MINUTES : 1
+  return left === 0 && right === 1 ? WHOLE : { from: left, to: right }
 }
 
 /**
@@ -483,17 +557,23 @@ export function FieldLabel({ label, optional = false }: { label: string; optiona
 /** One slot in the time grid: 44pt tall, so the row is a legal touch target. */
 function TimeCell({
   label,
-  active,
+  cover,
   onPress,
 }: {
   label: string
-  active: boolean
+  cover: Cover
   onPress: () => void
 }) {
+  const full = cover !== null && cover.from === 0 && cover.to === 1
+  const part = cover !== null && !full
   return (
     <Pressable
-      className={`h-11 flex-1 items-center justify-center rounded-lg border ${
-        active ? 'bg-primary border-primary' : 'bg-background border-border active:bg-secondary'
+      className={`h-11 flex-1 items-center justify-center overflow-hidden rounded-lg border ${
+        full
+          ? 'bg-primary border-primary'
+          : part
+            ? 'bg-background border-primary'
+            : 'bg-background border-border active:bg-secondary'
       }`}
       onPress={() => {
         tickSelection()
@@ -501,11 +581,18 @@ function TimeCell({
       }}
       role="button"
       accessibilityLabel={label}
-      accessibilityState={{ selected: active }}
+      accessibilityState={{ selected: cover !== null }}
     >
+      {/* The artboard's gradient, as a layer: React Native has no CSS one. */}
+      {cover && part ? (
+        <View
+          className="bg-primary absolute top-0 bottom-0"
+          style={{ left: `${cover.from * 100}%`, width: `${(cover.to - cover.from) * 100}%` }}
+        />
+      ) : null}
       <Text
         className={`text-label font-semibold ${
-          active ? 'text-primary-foreground' : 'text-muted-foreground'
+          full ? 'text-primary-foreground' : part ? 'text-foreground' : 'text-muted-foreground'
         }`}
       >
         {label}

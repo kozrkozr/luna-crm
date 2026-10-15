@@ -420,6 +420,12 @@ export const uk = {
   timeHintPickStart: 'Торкніться початку',
   timeHintPickEnd: 'Тепер — кінця',
   pickTimeError: 'Виберіть час',
+  /*
+   * The start picker under the grid, for minutes (`Time Picker Options.dc.html`
+   * 3a, owner 2026-10-15). The end picker reuses `timeEnd`, «Завершення», not
+   * the artboard's «Кінець» (owner, same day).
+   */
+  timeStart: 'Початок',
   /** The summary bar's left half when no date has been picked yet. */
   noDatePicked: 'Дата не вибрана',
   shootWord: 'Зйомка',

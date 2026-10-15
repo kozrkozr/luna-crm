@@ -9,6 +9,17 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 - Each entry names its story, so `git log --grep=US-0xx` finds the code.
 - How a build is shipped: `docs/releases/`.
 
+## Unreleased
+
+1.0.0 is released on the App Store, so the next upload is a new version.
+
+### Changed
+- **Minutes for a shoot's time** — two pickers, «Початок» and «Завершення», always under the
+  grid, on a 5-minute step, for a shoot that does not run on whole hours; a part-covered hour is
+  part-filled in the grid (`US-030`, `Time Picker Options.dc.html` 3a).
+- **A cell in the time grid is a moment, not an hour** — 08:00 then 09:00 is 08:00–09:00, where it
+  used to be 08:00–10:00; an end at midnight is set in «Завершення» (`US-030`).
+
 ## 1.0.0 (build 3) — the App Store, with the subscription
 
 Checklist: [`docs/releases/1.0.0-build-3-app-store.md`](docs/releases/1.0.0-build-3-app-store.md).

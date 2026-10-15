@@ -34,6 +34,12 @@ type Props = {
    * The wheel refuses to settle before it, so nothing earlier can be chosen.
    */
   minimumDate?: Date
+  /**
+   * The wheel's minute step, `time` mode only — 5 for «Інший час» under the
+   * shoot's time grid (`Time Picker Options.dc.html` 3a, `step="300"`). iOS
+   * only; Android ignores it.
+   */
+  minuteInterval?: 5
 }
 
 /**
@@ -61,6 +67,7 @@ export function DateField({
   placeholder,
   onClear,
   minimumDate,
+  minuteInterval,
   mode = 'date',
 }: Props) {
   const t = useStrings()
@@ -110,7 +117,7 @@ export function DateField({
               back.
             */
             Keyboard.dismiss()
-            setDraft(value ?? new Date())
+            setDraft(onStep(value ?? new Date(), minuteInterval))
             setOpen(true)
           }}
         >
@@ -177,6 +184,7 @@ export function DateField({
                 display="spinner"
                 themeVariant="dark"
                 minimumDate={minimumDate}
+                minuteInterval={minuteInterval}
                 style={{ flex: 1, height: PICKER_HEIGHT }}
                 /*
                   `onValueChange`, not the deprecated `onChange` — 9.1.0 warns on
@@ -212,4 +220,16 @@ export function DateField({
       </Modal>
     </>
   )
+}
+
+/**
+ * The wheel shows a time rounded to its step but reports nothing until it is
+ * turned, so «Готово» on an untouched wheel would save 14:32 under a 5-minute
+ * step. Rounding the draft first makes what is saved what was shown.
+ */
+function onStep(date: Date, minuteInterval: number | undefined): Date {
+  if (!minuteInterval) return date
+  const rounded = new Date(date)
+  rounded.setMinutes(Math.round(date.getMinutes() / minuteInterval) * minuteInterval, 0, 0)
+  return rounded
 }

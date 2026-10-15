@@ -239,6 +239,8 @@ export const en: Strings = {
   timeHintPickStart: 'Tap the start',
   timeHintPickEnd: 'Now the end',
   pickTimeError: 'Pick a time',
+  /* The pickers under the time grid — see the note in uk.ts. */
+  timeStart: 'Start time',
   noDatePicked: 'No date picked',
   shootWord: 'Shoot',
   locationNameLabel: 'Name',
