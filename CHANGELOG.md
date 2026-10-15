@@ -9,9 +9,11 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 - Each entry names its story, so `git log --grep=US-0xx` finds the code.
 - How a build is shipped: `docs/releases/`.
 
-## Unreleased
+## 1.0.1 (build 4) — minutes in a shoot's time
 
-1.0.0 is released on the App Store, so the next upload is a new version.
+Checklist: [`docs/releases/1.0.1-build-4.md`](docs/releases/1.0.1-build-4.md).
+Since build 3 (`v1.0.0-build.3`). The first update after the launch; app-only — no migration,
+no Edge Function, no change to the link surface.
 
 ### Changed
 - **Minutes for a shoot's time** — two pickers, «Початок» and «Завершення», always under the
@@ -23,6 +25,8 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 ### Fixed
 - **Editing a shoot no longer warns that it overlaps itself** — «Перетин із …» left the shoot
   being edited in the list it compared against (`ADR-017`).
+- **«Доступ до» shows the year** when it is not the current one — a beta tester's access runs to
+  next year and read as this one (`US-053`, found on prod 2026-10-14).
 
 ## 1.0.0 (build 3) — the App Store, with the subscription
 
