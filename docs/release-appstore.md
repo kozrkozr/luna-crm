@@ -165,6 +165,11 @@ password is a tester who is finished with the app.
 
 - [x] ~~Custom SMTP on the prod project. Resend or Postmark; Resend's free tier (3k/month) is more
       than a beta needs.~~ Resend, 2026-09-29.
+- [x] ~~Raise Supabase's email rate limit.~~ With custom SMTP it defaults to 30/hour, shared by
+      every signup, reset and email change in the project; on 2026-10-14 a real user's signup
+      failed with `429: email rate limit exceeded`. Raised to 200/hour (Authentication → Rate
+      Limits), and Resend moved to the paid plan ($20/month, 50k/month, no 100/day cap) the
+      same day.
 - [x] ~~A sending domain, verified (SPF/DKIM). This wants the custom domain from 1.5.~~
       `lunashoots.com` — `resend._domainkey` and `send.` SPF records are live.
 - [x] ~~Translate the Supabase email templates to Ukrainian.~~ They are English by default, and
@@ -528,7 +533,11 @@ the release model, not a release task.
 - [ ] Someone watches Supabase usage. Pro has limits too, and uploaded video is the line item
       that moves.
 - [ ] Confirm backups are on and have actually run.
-- [ ] A support address that a person reads.
+- [x] A support address that a person reads. `support@lunashoots.com` is an address only, no
+      mailbox: Cloudflare Email Routing forwards it to **`lunashoots.team@gmail.com`** (created
+      2026-10-14, a Gmail kept apart from the owner's own), and replies go out as support@ through
+      Gmail «Send mail as» over Resend SMTP (`smtp.resend.com`, own API key `gmail-support`). Set up
+      and checked by the owner, 2026-10-15.
 - [ ] A way to tell testers what changed, since they cannot see commits.
 
 ---
@@ -540,11 +549,11 @@ the release model, not a release task.
 | Apple Developer Program | **$99/year** — mandatory |
 | Supabase Pro | **$25/month** — see 1.3 |
 | Domain | ~$12/year |
-| Email (Resend free tier) | $0 |
+| Email (Resend Pro, since 2026-10-14) | **$20/month** — see 1.4 |
 | Cloudflare Pages | $0 |
 | Sentry (free tier) | $0 |
 
-**~$99 up front, ~$25/month running.** The `$0` in `architecture.md` Stage 1 was true for
+**~$99 up front, ~$45/month running.** The `$0` in `architecture.md` Stage 1 was true for
 development and stops being true here.
 
 ---
