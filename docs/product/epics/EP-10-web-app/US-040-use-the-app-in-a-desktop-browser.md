@@ -54,6 +54,11 @@ decision 3, owner 2026-10-15).
 - **Then** it is in view mode (`US-052`) — and on the web nothing offers, buys, restores or manages
   a subscription: the paywall, the «Підписка» screen and the profile's subscription row are not
   shown (`ADR-024` decision 4)
+- **And** the view-mode banner reads «Режим перегляду» alone — no «Оформити підписку», nothing to
+  press — and a create, edit or delete without access does nothing. *Interim*, until open
+  question 1 decides what an account without access sees on the web (owner, 2026-10-16)
+- **And** on a trial, the home banner still shows the days left, but opens nothing (owner,
+  2026-10-16: "показувати без переходу")
 
 ### AC-7 — No notification settings on the web
 - **Given** the profile on the web
@@ -72,4 +77,6 @@ Every creator story it covers.
 
 ## Open questions
 1. What a newcomer who registers on the web sees, with no trial available there (`ADR-024` open
-   question 1). Blocks the public launch of the web app, not this story's build.
+   question 1) — and with it, what any account without access sees there (owner, 2026-10-16: the
+   same question). Until then AC-6's interim. Blocks the public launch of the web app, not this
+   story's build.

@@ -7,7 +7,7 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-15 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05, 2026-10-06 and 2026-10-08)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `0bb8130` — *docs(US-057): a desktop layout for the web app*.
+- **Source commit:** `00de90d` — *docs(US-057): the date under the greeting is not an addition — iOS already shows it*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
@@ -28,6 +28,9 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 - **`app.lunashoots.com`**, as `ADR-021` already answered.
 - **Open:** what a newcomer who registers on the web sees — blocks the public web launch, not the
   build.
+- **2026-10-16:** without access the web shows «Режим перегляду» alone and guarded actions do
+  nothing (interim, `US-040` AC-6); the trial banner opens nothing. The date under «Головна»'s
+  greeting is not a `US-057` addition — iOS has it.
 
 ## What moved in the 2026-10-08 re-freeze (`ADR-023`)
 **The public App Store release is paid.** `ADR-023` and the new `EP-09`:

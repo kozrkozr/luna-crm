@@ -33,9 +33,10 @@ order; components, icons, type and spacing come from the app as built.
 ### AC-3 — The draft's own additions
 - **Given** the web app at the desktop width
 - **When** the calendar, «Головна» or the sidebar is shown
-- **Then** a calendar day cell shows its shoots' start time and client name; «Головна» shows
-  today's date under the greeting; the sidebar shows the «L» mark the sign-in screen already uses —
-  none of which the iOS app has (owner, 2026-10-15: "хай залишаються твої пропозиції")
+- **Then** a calendar day cell shows its shoots' start time and client name, and the sidebar shows
+  the «L» mark the sign-in screen already uses — neither of which the iOS app has (owner,
+  2026-10-15: "хай залишаються твої пропозиції"). *Corrected 2026-10-16:* the date under the
+  greeting on «Головна» was listed here as a third addition; the iOS app already shows it.
 
 ### AC-4 — A narrow window gets the phone layout *(edge)*
 - **Given** the web app in a window narrower than 1024 px — a phone's browser, or a narrow

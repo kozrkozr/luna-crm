@@ -87,3 +87,6 @@ Option C.
    start Apple's trial there, and the web shows no paywall (decision 4). What do they see — view
    mode pointing to the iOS app, registration only in iOS, or something else? Owner: "decide
    later" (2026-10-15). Blocks the web app's public launch, not the start of the build.
+   The same answer decides what **any** account without access sees on the web (owner,
+   2026-10-16); until then `US-040` AC-6's interim: «Режим перегляду» alone, and guarded actions
+   do nothing.
