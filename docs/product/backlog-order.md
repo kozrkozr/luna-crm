@@ -31,7 +31,7 @@ of the build lives here and is invisible in a backlog of 24 small-looking storie
 | 3 | **EP-03** Crew management and the crew-facing link | `US-005` → `US-006` → `US-007` → `US-008` → `US-023` → `US-022` → `US-009` | Builds the link gateway (`ADR-013`), which EP-04 then reuses. `US-009` last — it is the only `should`, and `open-questions.md` #3 may remove it |
 | 4 | **EP-04** Client view | `US-027` → `US-010` → `US-026` → `US-024` → `US-025` | ~1 week only because the gateway already exists from EP-03. Reversing 3 and 4 would mean building the gateway twice. `US-027` is first by dependency — a link has to be created before anyone can open one — though it was added after `US-010` was already built, which is why it appears out of order in the build's history |
 | 5 | **EP-05** Localization | `US-014` → `US-015` | Full uk+en string coverage across every screen — cheapest once every screen exists. The *scaffolding* is in foundation, so no screen is built untranslatable |
-| 6 | **EP-06** Client records | `US-029` → `US-028` | Added 2026-08-28 (`ADR-017`, `ADR-018`). After EP-02 because `US-029` changes `US-002`'s creation form, and after EP-05 only in the sense that it arrived later — it carries its own uk strings |
+| 6 | **EP-06** Client records | `US-029` → `US-028` | Added 2026-08-28 (`ADR-017`, `ADR-018`). After EP-02 because `US-029` changes `US-002`'s creation form, and after EP-05 only in the sense that it arrived later — it carries its own uk strings. `US-059` (feedback #15) was added and retired on 2026-10-16 — do not build it |
 
 ## The 2026-08-28 redesign wave
 
