@@ -34,7 +34,7 @@ import {
   type Shoot,
 } from '../../features/shoots/api'
 import { toIsoDate as isoOf } from '../../features/shoots/date'
-import { overlappingShoots, pastLocations } from '../../features/shoots/home'
+import { lastShootOf, overlappingShoots, pastLocations } from '../../features/shoots/home'
 import {
   createClient,
   digitsOf,
@@ -43,7 +43,12 @@ import {
   updateClient,
   type Client,
 } from '../../features/clients/api'
-import { toIsoDate, toTimeValue } from '../../features/shoots/date'
+import {
+  formatDayMonth,
+  formatTimeRange,
+  toIsoDate,
+  toTimeValue,
+} from '../../features/shoots/date'
 import { failed, selected as selectedTick, succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import { RoleChip } from '../../components/RoleChip'
@@ -315,6 +320,8 @@ export function ShootForm(props: ShootFormMode) {
   /** `US-029` AC-4 — the client this number turns out to belong to. */
   const [phoneMatch, setPhoneMatch] = useState<Client | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  /** `US-059` AC-6 — the shoot the form was filled from; its card is gone. */
+  const [filledFrom, setFilledFrom] = useState<string | null>(null)
 
   useFocusEffect(
     useCallback(() => {
@@ -433,6 +440,26 @@ export function ShootForm(props: ShootFormMode) {
     setInstagram(found.instagram ?? '')
     setTelegram(found.telegram ?? '')
     setErrors((current) => ({ ...current, client: false }))
+  }
+
+  /**
+   * `US-059` AC-4/AC-5 — the client's last shoot fills the fields that are
+   * still empty, and nothing else. Never the date, the prepayment or either
+   * note; start and end count as one field.
+   */
+  const fillFrom = (last: Shoot) => {
+    if (!start && !end && last.startTime && last.endTime) {
+      setStart(last.startTime)
+      setEnd(last.endTime)
+      setErrors((current) => ({ ...current, time: false }))
+    }
+    if (!locationName.trim() && last.locationName) setLocationName(last.locationName)
+    if (!address.trim() && last.locationAddress) setAddress(last.locationAddress)
+    if (!locationDetails.trim() && last.locationNote) setLocationDetails(last.locationNote)
+    if (!price.trim() && last.price !== null) setPrice(formatAmount(last.price, currency))
+    setFilledFrom(last.id)
+    selectedTick()
+    setToast(t.filledFromShootTemplate.replace('{date}', formatDayMonth(last.date, t.monthsGenitive)))
   }
 
   /**
@@ -623,6 +650,8 @@ export function ShootForm(props: ShootFormMode) {
   const clashes =
     date && start && end ? overlappingShoots(others, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
+  /* `US-059` AC-1/AC-3 — only on a new shoot, and only with a client linked. */
+  const lastShoot = !isEdit && client ? lastShootOf(existing, client.id) : null
 
   /*
     «Скасувати» asks before discarding (owner, 2026-09-06). It left on the first
@@ -822,13 +851,36 @@ export function ShootForm(props: ShootFormMode) {
                   setPhone('')
                   setInstagram('')
                   setTelegram('')
+                  // `US-059` AC-7 — what was filled stays; only the card resets.
+                  setFilledFrom(null)
                 }}
                 typedName={typedName}
                 onTypedNameChange={(name) => {
                   setTypedName(name)
                   setErrors((current) => ({ ...current, client: false }))
                 }}
-              />
+              >
+                {lastShoot && filledFrom !== lastShoot.id ? (
+                  <Pressable
+                    onPress={() => fillFrom(lastShoot)}
+                    role="button"
+                    className="bg-card border-border mt-2 gap-0.5 rounded-xl border px-4 py-3 active:scale-[0.98]"
+                  >
+                    <Text className="text-body text-card-foreground font-semibold">
+                      {t.fillFromLastShoot}
+                    </Text>
+                    <Text className="text-caption text-muted-foreground" numberOfLines={1}>
+                      {[
+                        formatDayMonth(lastShoot.date, t.monthsGenitive),
+                        formatTimeRange(lastShoot.startTime, lastShoot.endTime),
+                        lastShoot.locationName,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </ClientField>
               <FieldError show={!!errors.client} message={t.clientRequiredShort} />
             </View>
 

@@ -231,6 +231,29 @@ export function pastLocations(shoots: Shoot[], limit = 6): string[] {
 }
 
 /**
+ * `US-059` AC-2 — the client's shoot with the latest date, past or future; of
+ * two on one day, the one that starts later. A shoot without a start time
+ * (created before `US-030`) counts as starting earliest on its day.
+ *
+ * No `deleted_at` check, and none needed: `shoots` comes from `listShoots`,
+ * whose RLS policy already drops deleted rows (`ADR-014`).
+ */
+export function lastShootOf(shoots: Shoot[], clientId: string): Shoot | null {
+  let last: Shoot | null = null
+  for (const shoot of shoots) {
+    if (shoot.clientId !== clientId) continue
+    if (
+      !last ||
+      shoot.date > last.date ||
+      (shoot.date === last.date && (shoot.startTime ?? '') > (last.startTime ?? ''))
+    ) {
+      last = shoot
+    }
+  }
+  return last
+}
+
+/**
  * Shoots on `isoDate` whose time range overlaps `[startTime, endTime)`.
  *
  * It took a duration in minutes until 2026-09-03, when the forms stopped

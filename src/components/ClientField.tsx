@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Pressable, View, type LayoutRectangle, type TextInput } from 'react-native'
 import { Link } from 'expo-router'
 import { Portal } from '@rn-primitives/portal'
@@ -47,6 +47,11 @@ type Props = {
    * marking WHICH field had failed.
    */
   invalid?: boolean
+  /**
+   * Drawn between the linked client and «Глянути профіль» — `US-059`'s
+   * «Заповнити з останньої зйомки» card. Only shown while a client is linked.
+   */
+  children?: ReactNode
 }
 
 export function ClientField({
@@ -56,6 +61,7 @@ export function ClientField({
   typedName,
   onTypedNameChange,
   invalid = false,
+  children,
 }: Props) {
   const t = useStrings()
   const inputRef = useRef<TextInput>(null)
@@ -127,6 +133,8 @@ export function ClientField({
             <Text className="text-muted-foreground text-[20px]">×</Text>
           </Pressable>
         </View>
+
+        {children}
 
         {/*
           AC-3's way into the profile — the contact profile «Контакти» opens,
