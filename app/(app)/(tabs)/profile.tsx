@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Pressable, View, Linking } from 'react-native'
+import { ActivityIndicator, Image, Pressable, View, Linking, Platform } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
@@ -593,54 +593,57 @@ export default function ProfileScreen() {
           </Card>
 
           {/* ── Підписка ── `US-053`: the status on the right, the screen behind
-              it (`Subscription.dc.html`, «Рядок у профілі»). */}
-          <View className="gap-2">
-            <SectionLabel label={t.subscriptionSection} />
-            <Card variant="flat" className="gap-0 p-0">
-              <Pressable
-                className="active:bg-secondary min-h-14 flex-row items-center gap-3 px-4"
-                onPress={() => {
-                  tapped()
-                  router.push('/(app)/subscription')
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-muted-foreground flex-1">
-                  {t.subscriptionTitle}
-                </Text>
-                {subscription ? (
-                  <View className="flex-row items-center gap-[7px]">
-                    <View
-                      className={`h-[7px] w-[7px] rounded-full ${
-                        subscription.kind === 'trial'
-                          ? 'bg-link'
+              it (`Subscription.dc.html`, «Рядок у профілі»). Not on the web —
+              nothing there shows or manages a subscription (`US-040` AC-6). */}
+          {Platform.OS === 'web' ? null : (
+            <View className="gap-2">
+              <SectionLabel label={t.subscriptionSection} />
+              <Card variant="flat" className="gap-0 p-0">
+                <Pressable
+                  className="active:bg-secondary min-h-14 flex-row items-center gap-3 px-4"
+                  onPress={() => {
+                    tapped()
+                    router.push('/(app)/subscription')
+                  }}
+                  role="button"
+                >
+                  <Text className="text-body-sm text-muted-foreground flex-1">
+                    {t.subscriptionTitle}
+                  </Text>
+                  {subscription ? (
+                    <View className="flex-row items-center gap-[7px]">
+                      <View
+                        className={`h-[7px] w-[7px] rounded-full ${
+                          subscription.kind === 'trial'
+                            ? 'bg-link'
+                            : subscription.kind === 'active'
+                              ? 'bg-success'
+                              : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
+                                ? 'bg-warn'
+                                : 'bg-muted-foreground'
+                        }`}
+                      />
+                      <Text className="text-body-sm text-foreground">
+                        {subscription.kind === 'trial'
+                          ? t.subscriptionStatusTrial
                           : subscription.kind === 'active'
-                            ? 'bg-success'
+                            ? t.subscriptionStatusActive
                             : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
-                              ? 'bg-warn'
-                              : 'bg-muted-foreground'
-                      }`}
-                    />
-                    <Text className="text-body-sm text-foreground">
-                      {subscription.kind === 'trial'
-                        ? t.subscriptionStatusTrial
-                        : subscription.kind === 'active'
-                          ? t.subscriptionStatusActive
-                          : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
-                            ? t.subscriptionStatusWontRenew
-                            : t.subscriptionStatusNone}
-                    </Text>
-                  </View>
-                ) : null}
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
-            </Card>
-          </View>
+                              ? t.subscriptionStatusWontRenew
+                              : t.subscriptionStatusNone}
+                      </Text>
+                    </View>
+                  ) : null}
+                  <Icon
+                    as={ChevronRight}
+                    size={15}
+                    strokeWidth={2}
+                    className="text-muted-foreground shrink-0"
+                  />
+                </Pressable>
+              </Card>
+            </View>
+          )}
 
           {/* ── Акаунт ── */}
           <View className="gap-2">
@@ -862,25 +865,28 @@ export default function ProfileScreen() {
               {/* US-041 AC-9 — «Сповіщення», between the language and support,
                   drawn like the support row (owner, 2026-10-05). The canvas's
                   own «Сповіщення» section in `Edit Profile.dc.html` is not
-                  built: the owner kept this screen as it is. */}
-              <Pressable
-                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                onPress={() => {
-                  tapped()
-                  router.push('/(app)/notifications')
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-muted-foreground flex-1">
-                  {t.notificationsRow}
-                </Text>
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
+                  built: the owner kept this screen as it is. Not on the web:
+                  reminders are the iOS app's (`US-040` AC-7). */}
+              {Platform.OS === 'web' ? null : (
+                <Pressable
+                  className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+                  onPress={() => {
+                    tapped()
+                    router.push('/(app)/notifications')
+                  }}
+                  role="button"
+                >
+                  <Text className="text-body-sm text-muted-foreground flex-1">
+                    {t.notificationsRow}
+                  </Text>
+                  <Icon
+                    as={ChevronRight}
+                    size={15}
+                    strokeWidth={2}
+                    className="text-muted-foreground shrink-0"
+                  />
+                </Pressable>
+              )}
 
               {/* «Написати в підтримку» — a new email to support@lunashoots.com
                   (owner, 2026-10-10), the address the support page and the legal
