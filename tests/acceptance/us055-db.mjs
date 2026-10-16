@@ -60,6 +60,19 @@ try {
   setLaunch(iso(new Date(Date.now() - 370 * DAY)))
   ok('AC-3 a year on, the picked tester is in view mode', !(await canCreate(picked)))
 
+  // AC-1 amended 2026-10-16 — a tester's own end date
+  const own = await account('own')
+  sql(`insert into beta_testers (user_id, note, access_until) values ('${own.id}', 'us055-db', '${iso(new Date(Date.now() + 80 * DAY))}')`)
+  ok('AC-1 own end date: until that date, not the launch year',
+    (await own.client.rpc('beta_access_until')).data?.slice(0, 10) === iso(new Date(Date.now() + 80 * DAY)))
+  ok('AC-1 own end date gives access even after the launch year ran out', await canCreate(own))
+  setLaunch(null)
+  ok('AC-1 own end date does not need a launch row', await canCreate(own))
+  ok('AC-1 the default still needs one', !(await canCreate(picked)))
+  sql(`update beta_testers set access_until = '${iso(new Date(Date.now() - DAY))}' where user_id = '${own.id}'`)
+  ok('AC-3 own end date passed → view mode', !(await canCreate(own)))
+  setLaunch(iso(new Date(Date.now() - 370 * DAY)))
+
   await grantAccess(picked.id)
   ok('AC-4 a subscription still gives access after the beta ended', await canCreate(picked))
 
