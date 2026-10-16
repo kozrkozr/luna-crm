@@ -47,6 +47,7 @@ import { toIsoDate, toTimeValue } from '../../features/shoots/date'
 import { failed, selected as selectedTick, succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import { RoleChip } from '../../components/RoleChip'
+import { ClientField } from '../../components/ClientField'
 import {
   PREPAYMENT_STEPS,
   currencySymbol,
@@ -498,8 +499,9 @@ export function ShootForm(props: ShootFormMode) {
       the name **moves the shoot to another client** and never renames one — a
       name is shared by every shoot that client is on, and rewriting it here
       would silently rewrite their history. That was the edit screen's rule
-      before the merge and it is unchanged; what is new is that creating a shoot
-      now takes this path every time, because nothing links by name any more.
+      before the merge and it is unchanged. A picked client replaces the field
+      with its chip (`ClientField`), so the name can only drift from a phone
+      match, never from a pick.
     */
     const keepsClient = !!client && client.name.trim() === typedName.trim()
     const target = keepsClient
@@ -802,27 +804,30 @@ export function ShootForm(props: ShootFormMode) {
             <SectionLabel label={t.clientField} />
 
             {/*
-              **A plain input** (owner, 2026-09-03). It was `ClientField` —
-              `US-029`'s search over existing clients, with the suggestion list
-              and the row that fills the form.
+              `US-029`'s search over existing clients, back (owner, 2026-10-16).
+              It was a plain input from 2026-09-03, and every new shoot made a
+              new client row — a name typed twice was two clients, and a regular
+              client's handles had to be retyped each time (feedback #13).
 
-              What that costs is on `target` in `submit`: with no search, a name
-              typed twice is two client rows. `ADR-018` made the client a row so
-              that a client has an identity across shoots, and the only thing
-              still joining them is the phone match below.
+              Unlinking clears what `link` filled in, so the next client picked
+              or typed does not inherit the previous one's contacts.
             */}
             <View className="gap-2">
-              <Input
-                id="client-name"
-                value={typedName}
-                onChangeText={(name) => {
+              <ClientField
+                value={client}
+                invalid={!!errors.client}
+                onLink={link}
+                onUnlink={() => {
+                  setClient(null)
+                  setPhone('')
+                  setInstagram('')
+                  setTelegram('')
+                }}
+                typedName={typedName}
+                onTypedNameChange={(name) => {
                   setTypedName(name)
                   setErrors((current) => ({ ...current, client: false }))
                 }}
-                autoCapitalize="words"
-                autoComplete="off"
-                placeholder={t.clientNameSearchPlaceholder}
-                className={errors.client ? 'border-destructive/60' : undefined}
               />
               <FieldError show={!!errors.client} message={t.clientRequiredShort} />
             </View>
