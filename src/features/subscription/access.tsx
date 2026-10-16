@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase/client'
 import { onPurchasesChanged } from './purchases'
@@ -148,7 +148,9 @@ export function useAccess(): AccessValue {
 
 /**
  * `US-052` AC-2 — wraps a create, edit or delete action: with access it runs,
- * without it the paywall opens instead and nothing is changed.
+ * without it the paywall opens instead and nothing is changed. On the web there
+ * is no paywall (`US-040` AC-6), so without access nothing happens — interim,
+ * until `ADR-024` open question 1 settles it (owner, 2026-10-16).
  *
  *   const guard = useGuard()
  *   <Button onPress={guard(() => router.push('/(app)/new-shoot'))} />
@@ -159,8 +161,9 @@ export function useGuard() {
   return useCallback(
     <A extends unknown[]>(action: (...args: A) => void) =>
       (...args: A) => {
-        if (hasAccess === false) router.push('/(app)/paywall')
-        else action(...args)
+        if (hasAccess === false) {
+          if (Platform.OS !== 'web') router.push('/(app)/paywall')
+        } else action(...args)
       },
     [hasAccess, router]
   )
