@@ -2,7 +2,9 @@
 
 - **Parent epic:** [EP-06 — Client records](EP-06.md)
 - **Subproject:** 001-luna-crm
-- **Status:** draft
+- **Status:** retired — built and tried on a device, 2026-10-16; the owner dropped it the same day:
+  linking the client and filling their contacts (`US-029`) is enough. Kept on disk for history; not
+  to be built.
 - **Size:** M
 
 ## Story
