@@ -7,6 +7,7 @@ import { RemindersHost } from '../../src/features/reminders/RemindersHost'
 import { PurchasesHost } from '../../src/features/subscription/PurchasesHost'
 import { AccessProvider } from '../../src/features/subscription/access'
 import { PaywallOnFirstEntry } from '../../src/features/subscription/PaywallOnFirstEntry'
+import { AppShell } from '../../src/components/AppShell'
 
 /**
  * The creator's surface. Everything here requires a session (EP-01), enforced
@@ -31,7 +32,11 @@ export default function AppLayout() {
           {/* `US-052` — whether this account may create, edit and delete;
               every screen's guard and the home banner read it. */}
           <AccessProvider>
-            <AppStack />
+            {/* `US-057` — on a desktop browser, the sidebar beside the stack;
+                on iOS, nothing (`AppShell.tsx`). */}
+            <AppShell>
+              <AppStack />
+            </AppShell>
             {/* `US-051` AC-1 — after the stack, so the route it pushes exists. */}
             <PaywallOnFirstEntry />
             {/* US-041 — inside the language provider, because reminders are
