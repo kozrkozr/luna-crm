@@ -84,7 +84,9 @@ Facts that constrained the choice:
    деяким"). The owner keeps the list in the database, one row per account; every other tester is
    a regular account from the launch on. Lengthened to a year (owner, 2026-10-11: "дамо
    безкоштовний доступ тільки 2 тестерам і на 1 рік") — two testers for now; how many is the
-   list's business, not the app's.
+   list's business, not the app's. **A term per tester** (owner, 2026-10-16: "одному бета тестеру
+   потрібно доступ безкоштовний на 3 місяці дати", "від сьогодні"): the year stays the default; the
+   owner may set one tester their own end date on the list — the first, 3 months from 2026-10-16.
 9. **Ready for more plans** (agent, owner 2026-10-09 — "можемо десь закласти логіку під майбутню
    річну, і майбутні різні види підписок"): a yearly plan and a higher tier with the web app and file
    storage are planned later, not now. So from the start:

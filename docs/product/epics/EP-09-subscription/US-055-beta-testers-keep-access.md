@@ -1,4 +1,4 @@
-# US-055 — Picked beta testers keep full access for 1 year after the launch
+# US-055 — Picked beta testers keep full access for a term the owner sets, 1 year after the launch by default
 
 - **Parent epic:** [EP-09 — Subscription](EP-09.md)
 - **Subproject:** 001-luna-crm
@@ -13,16 +13,21 @@ so that **helping test it is rewarded, not followed by a paywall on launch day**
 ## Context
 `ADR-023` decision 8 (owner, 2026-10-07: "3 місяці безкоштовно"; narrowed 2026-10-10 to the
 testers the owner picks; lengthened 2026-10-11 to a year, for two testers — "дамо безкоштовний
-доступ тільки 2 тестерам і на 1 рік"). How many testers is the owner's list, not a rule in the
+доступ тільки 2 тестерам і на 1 рік"; a term per tester added 2026-10-16, for a new tester
+given 3 months from the day they were added — "одному бета тестеру потрібно доступ безкоштовний
+на 3 місяці дати", "від сьогодні"). How many testers is the owner's list, not a rule in the
 app. Granted by the server — no purchase, no Apple offer code, no RevenueCat promotional grant. The owner adds a person to the beta list in the database, by their account;
 nothing in the app does it. After it, the person is offered Apple's trial like anyone else, if
 their Apple ID is still eligible.
 
 ## Acceptance criteria
 
-### AC-1 — Who *(amended 2026-10-10, 2026-10-11)*
+### AC-1 — Who *(amended 2026-10-10, 2026-10-11, 2026-10-16)*
 - **Given** an account the owner has put on the beta list
 - **Then** it has full access until the launch date plus 1 year *(was 3 months until 2026-10-11)*
+- **Unless** the owner set that account its own end date on the list — then until that date
+  *(2026-10-16; the first such tester: 3 months from the day they were added, until 2027-01-16)*
+- **And** the testers already on the list keep their year — nothing changes for them
 - **And** a tester the owner has not put on it is a regular account: view mode, the paywall and
   Apple's trial as for anyone (`US-051`, `US-052`)
 
