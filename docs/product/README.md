@@ -7,12 +7,23 @@ This is a point-in-time copy of the handoff package produced by the discovery pi
 
 - **Frozen:** 2026-10-15 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05, 2026-10-06 and 2026-10-08)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `00de90d` — *docs(US-057): the date under the greeting is not an addition — iOS already shows it*.
+- **Source commit:** `28b4bdf` — *docs(US-040): Safari and Firefox are checked after the desktop redesign*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-10-16 re-freeze (`ADR-025`)
+**The confirmation and recovery emails carry a code as well as the link.** `ADR-025`, `US-058`:
+
+- A photographer who asks for the email on the iPhone and opens it on a computer could not use
+  its link (`lunashoots://` opens nothing there). The code works in the iOS app and on the web,
+  whichever device opened the email. The link is unchanged.
+- **Meets `US-040` AC-3** without Universal Links, so it no longer waits for the deploy.
+- Copy confirmed (`US-058`, Copy); a code and a link live **30 minutes** — the build sets
+  `otp_expiry = 1800`, the owner the same in the production dashboard. Templates are pasted again.
+- `US-040`: Safari and Firefox are checked after `US-057`'s redesign; Chrome and Edge are done.
 
 ## What moved in the 2026-10-15 re-freeze (`ADR-024`)
 **The photographer's web app is built now, on its own.** `ADR-024` and the new `EP-10`:

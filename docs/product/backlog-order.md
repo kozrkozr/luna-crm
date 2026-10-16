@@ -94,6 +94,7 @@ Now, after the 1.0.1 release; before `EP-07`, which builds on it.
 |---|---|---|---|
 | 1 | Everything works in the browser, phone layout | `US-040` | The web app at all — auth, every creator screen, access as on iOS |
 | 2 | Desktop layout | `US-057` | Needs the approved design; changes layout only, so it sits on a working app |
+| 3 | A code in the auth emails | `US-058` | `ADR-025`: `US-040` AC-3 rests on it; needs its copy confirmed and an iOS build |
 
 ## EP-09 Subscription — *added 2026-10-08, `ADR-023`*
 Before the public App Store release; independent of the paused `EP-07`.

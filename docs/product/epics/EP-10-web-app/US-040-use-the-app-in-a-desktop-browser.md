@@ -24,6 +24,8 @@ only uploading. It no longer waits for file hosting (`ADR-024` decision 1). The 
 - **When** a registered user signs in on the web
 - **Then** every creator story behaves as its acceptance criteria say, as in the iOS app — except
   what AC-6 and AC-7 leave out
+- *Checked so far (2026-10-16):* Chrome and Edge. Safari and Firefox are checked last, after
+  `US-057`'s redesign (owner, 2026-10-16)
 
 ### AC-2 — One account on both
 - **Given** a user registered in the iOS app
@@ -35,6 +37,9 @@ only uploading. It no longer waits for file hosting (`ADR-024` decision 1). The 
 - **When** the user follows its link
 - **Then** on a phone it opens the iOS app, and on a computer the web app — the same link in
   both cases (owner, chat 2026-10-04)
+- *Met by `US-058` since `ADR-025` (2026-10-16):* the email carries a code that works in the iOS
+  app and on the web whichever device opened it; the link keeps going back to where the email was
+  asked for. Universal Links are not needed for this criterion.
 
 ### AC-4 — The layout
 ~~The phone layout, centred — no separate desktop layout~~ — replaced by `US-057` (`ADR-024`

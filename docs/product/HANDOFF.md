@@ -70,6 +70,7 @@ each before the epic it de-risks.
 - **ADR-003** — crew are entered manually per shoot. There is no crew directory and no global person table.
 - **ADR-005** (amended by **ADR-008**), both superseded by **ADR-020** — raw files and finished photos are hosted on Backblaze B2, deleted 30 days after a shoot's first upload, 200 GB per account. The pasted link stays beside them. Small images (`US-003`, `US-005`, `US-018`) stay in Supabase Storage.
 - **ADR-021** — the photographer's app is supported in a desktop browser, and files upload from there; uploading from iOS is deferred.
+- **ADR-025** — the confirmation and recovery emails carry a code as well as the link; the code works on any device.
 - **ADR-024** — the web app ships before file hosting (`EP-10`), for every Luna Shoots subscriber, with a desktop layout; it shows no subscription and no notification settings.
 - **ADR-006**, superseded in part by **ADR-009** — the client does not react to references at all, and never proposed them.
 - **ADR-010**, superseded by **ADR-016** — React Native stays; the UI layer is React Native

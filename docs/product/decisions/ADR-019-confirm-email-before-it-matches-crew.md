@@ -7,6 +7,8 @@
 - **Does not change:** `ADR-015` (email + password, phone optional), the phone match key
 - **Phase:** 02-product, revisited post-handoff
 - **Deciders:** owner (chat, 2026-09-29)
+- **Amended by:** `ADR-025` (2026-10-16) — how the email is confirmed (a code as well as the
+  link), not whether
 
 ## Context
 `US-001` AC-1 says a registered user "land[s] on their (empty) shoot list". The build honoured
