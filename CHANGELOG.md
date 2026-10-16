@@ -12,7 +12,8 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 ## 1.0.1 (build 4) — minutes in a shoot's time
 
 Checklist: [`docs/releases/1.0.1-build-4.md`](docs/releases/1.0.1-build-4.md).
-Since build 3 (`v1.0.0-build.3`). The first update after the launch; app-only — no migration,
+Since build 3 (`v1.0.0-build.3`). Released on the App Store 2026-10-16, approved and released
+automatically the same day. The first update after the launch; app-only — no migration,
 no Edge Function, no change to the link surface.
 
 ### Changed
