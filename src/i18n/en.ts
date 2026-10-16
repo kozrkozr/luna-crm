@@ -288,8 +288,6 @@ export const en: Strings = {
   newClientHint: 'New client — a profile will be created automatically',
   viewClientProfile: 'Open the profile',
   unlinkClient: 'Unlink',
-  fillFromLastShoot: 'Fill from the last shoot',
-  filledFromShootTemplate: 'Filled from the shoot on {date}',
   phoneField: 'Phone',
   phoneBelongsToTemplate: 'That number already belongs to {name} — is this them?',
   yesSamePerson: 'Yes, same person',

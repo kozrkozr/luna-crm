@@ -541,10 +541,6 @@ export const uk = {
   newClientHint: 'Новий клієнт — профіль створиться автоматично',
   viewClientProfile: 'Глянути профіль',
   unlinkClient: 'Відвʼязати',
-  // US-059.
-  fillFromLastShoot: 'Заповнити з останньої зйомки',
-  /** «Заповнено із зйомки 12 вересня». */
-  filledFromShootTemplate: 'Заповнено із зйомки {date}',
   phoneField: 'Телефон',
   /** «Цей номер уже належить профілю {name} — це вона?» */
   phoneBelongsToTemplate: 'Цей номер уже належить профілю {name} — це вона?',
