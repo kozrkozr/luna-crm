@@ -174,7 +174,7 @@ export default function ShootListScreen() {
     The month follows the date, or a digest on the 31st would select a day on a
     grid that is not showing it.
   */
-  const params = useLocalSearchParams<{ date?: string }>()
+  const params = useLocalSearchParams<{ date?: string; month?: string }>()
   useEffect(() => {
     const date = params.date
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return
@@ -183,6 +183,21 @@ export default function ShootListScreen() {
     setFocus(new Date(year, month - 1, day))
     router.setParams({ date: undefined })
   }, [params.date, router])
+
+  /*
+    `US-061` AC-4 — «Заплановано» on a month's statistics opens that month as
+    `?month=YYYY-MM`, with no day selected. Applied once and cleared, like
+    `date` above.
+  */
+  useEffect(() => {
+    const month = params.month
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) return
+    const [year, index] = month.split('-').map(Number)
+    setMode('month')
+    setSelectedDate(null)
+    setFocus(new Date(year, index - 1, 1))
+    router.setParams({ month: undefined })
+  }, [params.month, router])
 
   const all = state.status === 'loaded' ? rows(state.shoots, state.crewShoots) : []
   const inPeriod = all.filter((row) => withinPeriod(row.date, mode, focus))

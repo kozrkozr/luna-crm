@@ -1327,10 +1327,26 @@ export const uk = {
   statsYearWord: 'рік',
   statsSincePrefix: 'З',
   statsIncome: 'Дохід',
-  statsShootsDone: 'Проведено зйомок',
+  // US-061 (owner, 2026-10-17) — was «Проведено зйомок».
+  statsShootsDone: 'Проведено',
   statsAverage: 'Середній чек',
   statsUnpaid: 'Очікує оплати',
   statsHours: 'Годин на зйомках',
+  // US-061 (owner, 2026-10-17).
+  statsPlanned: 'Заплановано',
+  /** «Найближча 21 жовтня». */
+  statsNextTemplate: 'Найближча {date}',
+  statsNothingPlanned: 'Немає запланованих',
+  /** «2 зйомки без оплати» — {noun} from `shootCountForms`. */
+  statsUnpaidShootsTemplate: '{n} {noun} без оплати',
+  statsAllPaid: 'Усі зйомки оплачені',
+  statsPrevPeriod: 'Попередній період',
+  statsNextPeriod: 'Наступний період',
+  statsChoosePeriod: 'Обрати період',
+  statsChooseMonth: 'Оберіть місяць',
+  statsChooseYear: 'Оберіть рік',
+  statsThisMonth: 'Поточний місяць',
+  statsThisYear: 'Поточний рік',
 
   /* ── US-041 — shoot reminders. Copy approved by the owner, chat 2026-10-05. ── */
   notificationsRow: 'Сповіщення',
