@@ -128,6 +128,16 @@ function shootMinutes(shoot: StatsShoot): number {
   return end > start ? end - start : end + 1440 - start
 }
 
+/**
+ * `US-062` AC-2 — the shoots behind «{n} зйомок без оплати»: in the period,
+ * with a price and something still outstanding, finished or planned. The
+ * same test `statistics` counts them by, so the list and the number agree.
+ */
+export function isUnpaid(shoot: StatsShoot): boolean {
+  const money = payment(shoot)
+  return money.price > 0 && money.balance > 0
+}
+
 /** Earlier date first; on one day, the earlier start (a missing one first). */
 function earlier(a: StatsShoot, b: StatsShoot): boolean {
   return a.date < b.date || (a.date === b.date && (a.startTime ?? '') < (b.startTime ?? ''))
@@ -167,7 +177,7 @@ export function statistics(
       pricedShoots += 1
       priceSum += money.price
       unpaid += money.balance
-      if (money.balance > 0) unpaidShoots += 1
+      if (isUnpaid(shoot)) unpaidShoots += 1
     }
 
     // Work — finished shoots only; the rest are planned (AC-4).
