@@ -439,7 +439,10 @@ function CountCard({
   onPress?: () => void
 }) {
   const body = (
-    <Card variant="flat" className="flex-1 flex-row gap-0 overflow-hidden p-0">
+    // No `flex-1` here: the wrapper splits the width, and the card's height
+    // comes from its content. A flexing card in a column whose height came from
+    // the card collapsed to nothing on «Весь час» (owner's device, 2026-10-17).
+    <Card variant="flat" className="flex-row gap-0 overflow-hidden p-0">
       <View className={`w-[3px] shrink-0 ${stripe}`} />
       <View className="min-w-0 flex-1 px-3.5 pb-[15px] pt-3.5">
         <View className="flex-row items-center gap-2">
