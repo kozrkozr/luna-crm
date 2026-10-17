@@ -470,6 +470,9 @@ export const uk = {
   removeClientNotesLabel: 'Прибрати нотатки для клієнта',
   /** `US-043` — the references section's × on the new-shoot form. */
   removeReferencesLabel: 'Прибрати референси',
+  /** `US-064` AC-9 — the «Команда» section's ×, and a row's «−». */
+  removeCrewLabel: 'Прибрати команду',
+  removeCrewMemberTemplate: 'Прибрати {name}',
   /** `US-043` AC-6 — the CTA while a new shoot's references upload. */
   savingReferences: 'Зберігаємо референси…',
   /**

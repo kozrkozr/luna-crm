@@ -34,7 +34,15 @@ import {
   type Shoot,
 } from '../../features/shoots/api'
 import { toIsoDate as isoOf } from '../../features/shoots/date'
-import { overlappingShoots, pastLocations } from '../../features/shoots/home'
+import { overlappingShoots, pastLocations, plural } from '../../features/shoots/home'
+import { addCrewMember, type AddCrewMemberInput } from '../crew/api'
+import { offerCrewOnForm, takeHeldCrew } from '../crew/draftCrew'
+import { Avatar } from '../../components/Avatar'
+import { Card } from '../../components/ui/card'
+import { Icon } from '../../components/ui/icon'
+import { roleWithEmoji } from '../../i18n/vocabulary'
+import Minus from 'lucide-react-native/icons/minus'
+import Plus from 'lucide-react-native/icons/plus'
 import {
   createClient,
   digitsOf,
@@ -109,6 +117,11 @@ export type ShootFormMode = { mode: 'create' } | { mode: 'edit'; id: string }
  */
 const SECTIONS = [
   { key: 'pay', label: 'paymentSection', remove: 'removePaymentLabel' },
+  /*
+    `US-064` — second, as `New Shoot.dc.html` lists it. Create form only (AC-8),
+    and its pill opens the add screen rather than an empty section (AC-1).
+  */
+  { key: 'crew', label: 'crew', remove: 'removeCrewLabel' },
   { key: 'notes', label: 'teamNotesSection', remove: 'removeTeamNotesLabel' },
   { key: 'clientNotes', label: 'clientNotesSection', remove: 'removeClientNotesLabel' },
   /* `US-043` — the fourth, and the only one the edit form never offers (AC-8). */
@@ -122,6 +135,9 @@ const SECTIONS = [
  * null for a link.
  */
 type DraftReference = { reference: Reference; asset: ImagePickerAsset | null }
+
+/** `US-064` — a person held on the new-shoot form, saved after the shoot. */
+type DraftCrewMember = { id: string; person: AddCrewMemberInput }
 
 /** The grid's picture for a draft image: the local file, not a signed URL. */
 const localImage = async (reference: Reference) => reference.urlOrPath
@@ -172,6 +188,8 @@ function fingerprint(values: {
   prepayment: string
   /** `US-043` AC-3 — the drafts' ids, so adding or removing one is a change. */
   references: string
+  /** `US-064` AC-5 — the same, for the crew held on the form. */
+  crew: string
 }): string {
   return [
     values.typedName.trim(),
@@ -189,6 +207,7 @@ function fingerprint(values: {
     values.price.trim(),
     values.prepayment.trim(),
     values.references,
+    values.crew,
   ].join('\u0000')
 }
 
@@ -219,6 +238,7 @@ const EMPTY_FINGERPRINT = fingerprint({
   price: '',
   prepayment: '',
   references: '',
+  crew: '',
 })
 
 function openSections(
@@ -227,6 +247,8 @@ function openSections(
 ): Record<SectionKey, boolean> {
   return {
     pay: filled.pay || added.pay,
+    // Never `added`: the section exists only while it holds someone (`US-064` AC-3).
+    crew: filled.crew,
     notes: filled.notes || added.notes,
     clientNotes: filled.clientNotes || added.clientNotes,
     refs: filled.refs || added.refs,
@@ -279,6 +301,8 @@ export function ShootForm(props: ShootFormMode) {
   /** `US-043` — references added here, saved after the shoot is created. */
   const [drafts, setDrafts] = useState<DraftReference[]>([])
   const draftSeq = useRef(0)
+  /** `US-064` — crew added here, saved after the shoot is created. */
+  const [crew, setCrew] = useState<DraftCrewMember[]>([])
   /** `US-043` AC-6 — the shoot exists and its references are uploading. */
   const [savingReferences, setSavingReferences] = useState(false)
   /** Every shoot, for the location chips and the overlap warning. */
@@ -292,6 +316,7 @@ export function ShootForm(props: ShootFormMode) {
    */
   const [added, setAdded] = useState<Record<SectionKey, boolean>>({
     pay: false,
+    crew: false,
     notes: false,
     clientNotes: false,
     refs: false,
@@ -330,6 +355,30 @@ export function ShootForm(props: ShootFormMode) {
       }
     }, [])
   )
+
+  /*
+    `US-064` — whoever was picked on the add screen, back on the form. Taken on
+    focus, as the toast handoff is, because the add screen is a route of its own.
+  */
+  useFocusEffect(
+    useCallback(() => {
+      const people = takeHeldCrew()
+      if (people.length === 0) return
+      setCrew((current) => [
+        ...current,
+        ...people.map((person) => {
+          draftSeq.current += 1
+          return { id: `crew-${draftSeq.current}`, person }
+        }),
+      ])
+    }, [])
+  )
+
+  /** `US-064` AC-1, AC-3 — the add screen, told who is already on the form. */
+  const openCrew = () => {
+    offerCrewOnForm(crew.map((draft) => draft.person))
+    router.push('/(app)/new-shoot-crew')
+  }
 
   /*
     Edit only: load the shoot into the same fields the create mode starts empty.
@@ -404,6 +453,7 @@ export function ShootForm(props: ShootFormMode) {
             price: shoot.price === null ? '' : formatAmount(shoot.price, currency),
             prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency),
             references: '',
+            crew: '',
           })
         )
         setLoading(false)
@@ -570,6 +620,14 @@ export function ShootForm(props: ShootFormMode) {
     }
 
     /*
+      `US-064` AC-6 — the crew first, in the order they were added, each saved
+      as `US-005` saves one. AC-7 — a failure is ignored (owner, 2026-10-17);
+      the shoot opens with whoever was saved. No text of its own on the button:
+      a row is quick, unlike an upload.
+    */
+    for (const { person } of crew) await addCrewMember(result.id, person)
+
+    /*
       `US-043` AC-6 — the references, now that there is a shoot to hang them on.
       One at a time and in the order they were added, for the reasons the
       «Матеріали» gallery gives (`ReferencesEditor`): the list is ordered by
@@ -650,6 +708,7 @@ export function ShootForm(props: ShootFormMode) {
     price,
     prepayment,
     references: drafts.map((draft) => draft.reference.id).join(','),
+    crew: crew.map((draft) => draft.id).join(','),
   })
   const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
     dirty: current !== snapshot,
@@ -664,13 +723,17 @@ export function ShootForm(props: ShootFormMode) {
   */
   const filled: Record<SectionKey, boolean> = {
     pay: price.trim() !== '' || prepayment.trim() !== '',
+    crew: crew.length > 0,
     notes: notes.trim() !== '',
     clientNotes: clientNotes.trim() !== '',
     refs: drafts.length > 0,
   }
   const open = openSections(filled, added)
   // `US-043` AC-8 — the edit form keeps references on «Матеріали» alone.
-  const offered = SECTIONS.filter((section) => !isEdit || section.key !== 'refs')
+  // `US-064` AC-8 — and its crew on its «Команда» tab alone.
+  const offered = SECTIONS.filter(
+    (section) => !isEdit || (section.key !== 'refs' && section.key !== 'crew')
+  )
   const closed = offered.filter((section) => !open[section.key])
 
   /** Empty the section and close it. Both halves, always — see `openSections`. */
@@ -682,6 +745,8 @@ export function ShootForm(props: ShootFormMode) {
       setNotes('')
     } else if (key === 'refs') {
       setDrafts([])
+    } else if (key === 'crew') {
+      setCrew([])
     } else {
       setClientNotes('')
     }
@@ -1000,6 +1065,71 @@ export function ShootForm(props: ShootFormMode) {
           ) : null}
 
           {/*
+            ── Команда ── `US-064`: after «Оплата», as `New Shoot.dc.html` draws
+            it. Open only while it holds someone — the pill goes straight to the
+            add screen, and removing the last person closes it (AC-1, AC-3). No
+            hint under it (owner, 2026-10-17).
+          */}
+          {open.crew && !isEdit ? (
+            <View className="gap-2">
+              <OptionalSectionHeader
+                label={t.crew}
+                meta={`${crew.length} ${plural(crew.length, t.participantForms)}`}
+                removeLabel={t.removeCrewLabel}
+                onRemove={() => removeSection('crew')}
+              />
+              <Card variant="flat" className="gap-0 overflow-hidden p-0">
+                {crew.map(({ id, person }) => (
+                  <View
+                    key={id}
+                    className="border-border min-h-[60px] flex-row items-center gap-3 border-b py-2.5 pl-3.5 pr-2"
+                  >
+                    <Avatar name={person.name} size={36} />
+                    <View className="min-w-0 flex-1 gap-0.5">
+                      <Text className="text-body text-foreground font-semibold" numberOfLines={1}>
+                        {person.name.trim()}
+                      </Text>
+                      <Text className="text-label text-muted-foreground" numberOfLines={1}>
+                        {[roleWithEmoji(person.role, t), person.contact.trim()]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                    </View>
+                    {/* AC-3 — at once, without a question: nothing is saved yet. */}
+                    <Pressable
+                      className="active:bg-secondary h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      onPress={() => {
+                        tapped()
+                        setCrew((current) => current.filter((draft) => draft.id !== id))
+                      }}
+                      role="button"
+                      accessibilityLabel={t.removeCrewMemberTemplate.replace(
+                        '{name}',
+                        person.name.trim()
+                      )}
+                    >
+                      <Icon as={Minus} size={16} strokeWidth={1.8} className="text-muted-foreground" />
+                    </Pressable>
+                  </View>
+                ))}
+                <Pressable
+                  className="active:bg-secondary min-h-12 flex-row items-center justify-center gap-2"
+                  onPress={() => {
+                    tapped()
+                    openCrew()
+                  }}
+                  role="button"
+                >
+                  <Icon as={Plus} size={14} strokeWidth={2} className="text-muted-foreground" />
+                  <Text className="text-body-sm text-muted-foreground font-medium">
+                    {t.addCrewMember}
+                  </Text>
+                </Pressable>
+              </Card>
+            </View>
+          ) : null}
+
+          {/*
             ── Нотатки для команди ──
 
             Renamed from «Нотатки» on 2026-09-05, when the form grew a second
@@ -1102,7 +1232,10 @@ export function ShootForm(props: ShootFormMode) {
             sections={closed.map((section) => ({
               key: section.key,
               label: t[section.label],
-              add: () => setAdded((current) => ({ ...current, [section.key]: true })),
+              add: () =>
+                section.key === 'crew'
+                  ? openCrew()
+                  : setAdded((current) => ({ ...current, [section.key]: true })),
             }))}
           />
 
