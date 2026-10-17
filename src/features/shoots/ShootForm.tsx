@@ -303,6 +303,8 @@ export function ShootForm(props: ShootFormMode) {
   const draftSeq = useRef(0)
   /** `US-064` — crew added here, saved after the shoot is created. */
   const [crew, setCrew] = useState<DraftCrewMember[]>([])
+  /** `US-064` AC-6 — the shoot exists and its crew is being saved. */
+  const [savingCrew, setSavingCrew] = useState(false)
   /** `US-043` AC-6 — the shoot exists and its references are uploading. */
   const [savingReferences, setSavingReferences] = useState(false)
   /** Every shoot, for the location chips and the overlap warning. */
@@ -622,10 +624,14 @@ export function ShootForm(props: ShootFormMode) {
     /*
       `US-064` AC-6 — the crew first, in the order they were added, each saved
       as `US-005` saves one. AC-7 — a failure is ignored (owner, 2026-10-17);
-      the shoot opens with whoever was saved. No text of its own on the button:
-      a row is quick, unlike an upload.
+      the shoot opens with whoever was saved. The button reads «Зберігаємо
+      команду…» meanwhile (owner, 2026-10-17).
     */
-    for (const { person } of crew) await addCrewMember(result.id, person)
+    if (crew.length > 0) {
+      setSavingCrew(true)
+      for (const { person } of crew) await addCrewMember(result.id, person)
+      setSavingCrew(false)
+    }
 
     /*
       `US-043` AC-6 — the references, now that there is a shoot to hang them on.
@@ -1257,7 +1263,9 @@ export function ShootForm(props: ShootFormMode) {
           onPress={() => void submit()}
         >
           <Text className={valid ? undefined : 'text-muted-foreground'}>
-            {savingReferences
+            {savingCrew
+              ? t.savingCrew
+              : savingReferences
               ? t.savingReferences
               : valid
                 ? isEdit

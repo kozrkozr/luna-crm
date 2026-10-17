@@ -263,6 +263,7 @@ export const en: Strings = {
   removeCrewLabel: 'Remove crew',
   removeCrewMemberTemplate: 'Remove {name}',
   savingReferences: 'Saving references…',
+  savingCrew: 'Saving crew…',
   confirmRemoveSection: 'Remove «{section}»? What you entered will be cleared.',
   removeAction: 'Remove',
   createShootCta: 'Create shoot',
