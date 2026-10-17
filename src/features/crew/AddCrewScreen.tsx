@@ -37,6 +37,7 @@ import {
   type PastCrewMember,
 } from './api'
 import { Starfield } from '../../components/Starfield'
+import { PhoneContactCard, type PhoneContactFill } from '../contacts/PhoneContactCard'
 
 type AddMode = 'contacts' | 'new'
 
@@ -342,6 +343,13 @@ export function AddCrewScreen({
             />
           ) : (
             <NewContactTab
+              onFillFromPhone={(fill) => {
+                if (fill.name !== undefined) {
+                  setName(fill.name)
+                  setErrors((e) => ({ ...e, name: false }))
+                }
+                if (fill.phone !== undefined) setPhone(fill.phone)
+              }}
               name={name}
               onName={(value) => {
                 setName(value)
@@ -611,6 +619,7 @@ function ContactRow({
 /* ───────────────────────────── «Новий контакт» ─────────────────────────── */
 
 function NewContactTab({
+  onFillFromPhone,
   name,
   onName,
   phone,
@@ -627,6 +636,8 @@ function NewContactTab({
   onNote,
   errors,
 }: {
+  /** `US-065` — the phone-contacts card's pick, written into this tab's state. */
+  onFillFromPhone: (fill: PhoneContactFill) => void
   name: string
   onName: (value: string) => void
   phone: string
@@ -647,6 +658,8 @@ function NewContactTab({
 
   return (
     <View className="gap-3.5">
+      <PhoneContactCard onFill={onFillFromPhone} />
+
       <View className="gap-2">
         <Label htmlFor="crew-name">{t.crewName}</Label>
         <Input
