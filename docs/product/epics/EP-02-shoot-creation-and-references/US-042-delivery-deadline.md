@@ -87,6 +87,17 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 - The row is not shown on a shoot that is not finished, or that is already delivered.
 - Undoing the toast is the only way to take the mark back.
 
+### AC-6a — Confetti across the screen *(owner, 2026-10-17)*
+- **When** the files have been marked delivered (AC-6)
+- **Then** confetti — 🎉 ✨ 🎊 ⭐ and coloured paper strips — is thrown up from the button across
+  the whole screen, fluttering down and fading within about two seconds, as `US-060` AC-2a does
+  with banknotes
+- **And** it does not block a tap — the toast's undo works underneath it
+- **Given** the phone asks for reduced motion
+- **Then** there is no confetti; the haptic and the toast still say it
+- Fireworks — rings of sparks bursting in the upper half — were tried beside it on a device and
+  not kept.
+
 ### AC-7 — Delete the deadline
 - **When** the creator taps the bin in the editor
 - **Then** the deadline is removed **together with the delivered mark**, the section returns to
