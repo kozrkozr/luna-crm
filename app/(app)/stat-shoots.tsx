@@ -3,7 +3,13 @@ import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
+import CalendarPlus from 'lucide-react-native/icons/calendar-plus'
+import Camera from 'lucide-react-native/icons/camera'
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
+import Clock from 'lucide-react-native/icons/clock'
+import CreditCard from 'lucide-react-native/icons/credit-card'
+import Plus from 'lucide-react-native/icons/plus'
+import SquareCheck from 'lucide-react-native/icons/square-check'
 import { Icon } from '../../src/components/ui/icon'
 import { Text } from '../../src/components/ui/text'
 import { Starfield } from '../../src/components/Starfield'
@@ -28,6 +34,7 @@ import {
 } from '../../src/features/shoots/stats'
 import { statusOf } from '../../src/features/shoots/status'
 import { tapped } from '../../src/lib/haptics'
+import { useGuard } from '../../src/features/subscription/access'
 
 type State =
   | { status: 'loading' }
@@ -60,6 +67,7 @@ export default function StatShootsScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const currency = useCurrency()
+  const guard = useGuard()
   const params = useLocalSearchParams<{
     kind?: string
     period?: string
@@ -146,13 +154,23 @@ export default function StatShootsScreen() {
     editing: t.statsEditing,
     overdue: t.deadlineOverdue,
   }[kind]
-  // `US-062` AC-5, `US-063` AC-4 — a list emptied while it was open.
+  // `US-063` AC-4 — the empty list, as `Statistics Empty States.dc.html` draws it.
   const empty = {
-    unpaid: t.statsAllPaid,
-    done: t.statsNoneDone,
-    planned: t.statsNothingPlanned,
-    editing: t.statsAllDelivered,
-    overdue: t.statsNoneOverdue,
+    done: { icon: Camera, title: t.emptyDoneTitle, body: t.emptyDoneBody, add: true },
+    planned: {
+      icon: CalendarPlus,
+      title: t.emptyPlannedTitle,
+      body: t.emptyPlannedBody,
+      add: true,
+    },
+    unpaid: { icon: CreditCard, title: t.emptyUnpaidTitle, body: t.emptyUnpaidBody, add: false },
+    editing: {
+      icon: SquareCheck,
+      title: t.emptyEditingTitle,
+      body: t.emptyEditingBody,
+      add: false,
+    },
+    overdue: { icon: Clock, title: t.emptyOverdueTitle, body: t.emptyOverdueBody, add: false },
   }[kind]
 
   return (
@@ -199,16 +217,27 @@ export default function StatShootsScreen() {
         ) : state.status === 'error' ? (
           <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
         ) : groups.length === 0 ? (
-          <View className="border-border items-center rounded-xl border px-4 py-7">
-            <Text
-              className={`text-body text-center ${
-                kind === 'unpaid' || kind === 'editing' || kind === 'overdue'
-                  ? 'text-success'
-                  : 'text-muted-foreground'
-              }`}
-            >
-              {empty}
+          <View className="bg-card border-border items-center rounded-[14px] border px-6 pb-[30px] pt-[34px]">
+            <Icon as={empty.icon} size={44} strokeWidth={1.3} className="text-muted-foreground" />
+            <Text className="text-subtitle text-foreground mt-4 text-center font-semibold">
+              {empty.title}
             </Text>
+            <Text className="text-body-sm text-muted-foreground mt-1.5 max-w-[270px] text-center">
+              {empty.body}
+            </Text>
+            {empty.add ? (
+              <Pressable
+                onPress={guard(() => {
+                  tapped()
+                  router.push('/(app)/new-shoot')
+                })}
+                role="button"
+                className="border-border-strong active:bg-secondary mt-[18px] min-h-11 flex-row items-center gap-1.5 rounded-full border px-5"
+              >
+                <Icon as={Plus} size={16} strokeWidth={2} className="text-foreground" />
+                <Text className="text-body text-foreground font-semibold">{t.newShootTitle}</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : (
           <View className="gap-3">

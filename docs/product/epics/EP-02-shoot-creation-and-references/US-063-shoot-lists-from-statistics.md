@@ -54,19 +54,40 @@ changed here.
 
 - Each is the same list as `US-062`'s: the calendar's cards under date headings,
   **chronological, earliest first**, read again on coming back.
-- **Given** a count is zero
-- **Then** its card or row does not respond to a tap
+- **Every one of them opens its list, zero included** — a zero opens an empty list, which says
+  so (AC-4) (owner, 2026-10-17; it was «a zero does not respond»).
+
+### AC-2a — They look tappable *(owner, 2026-10-17)*
+- Each of the six carries a **chevron ›**, always: on the «Очікує оплати», «В обробці» and
+  «Прострочено» rows after the number; on the «Проведено» and «Заплановано» cards top right,
+  level with the label. The same chevron as the profile's «Сповіщення» and «Валюта» rows —
+  size and muted colour.
+
+### AC-2b — Two cards under «Проведено» and «Заплановано» *(owner, 2026-10-17)*
+- First, the rows that open a list: «Очікує оплати», «В обробці», «Прострочено».
+- Under it, a second card with the plain figures: «Середній чек», «Годин на зйомках».
 
 ### AC-3 — «Заплановано» no longer opens «Календар»
 - Replaces `US-061` AC-4's tap. «Календар» is not opened from «Статистика» any more.
 
-### AC-4 — An emptied list *(edge)*
-- **Given** a list emptied while it was open — a shoot delivered, deleted or rescheduled
-- **Then** it says, in place of the cards:
-  - «Проведено» — «Немає проведених зйомок»
-  - «Заплановано» — «Немає запланованих» (as `US-061`)
-  - «В обробці» — «Усе передано клієнтам»
-  - «Прострочено» — «Немає прострочених»
+### AC-4 — An empty list *(edge)* — `Statistics Empty States.dc.html` (owner, 2026-10-17)
+- **Given** a list with nothing in it — opened from a zero, or emptied while it was open (a
+  shoot paid, delivered, deleted or rescheduled)
+- **Then** in place of the cards, one card: a large outline icon, a title, a line under it, and
+  for two of them a «+ Нова зйомка» button that opens the new shoot form (view mode: the
+  paywall, `US-052`):
+
+| List | Icon | Title | Line | Button |
+|---|---|---|---|---|
+| Проведено | camera | Тут з’являться відзняті зйомки | Щойно зйомка відбудеться, вона потрапить сюди разом із годинами й доходом. | Нова зйомка |
+| Заплановано | calendar with + | Поки нічого не заплановано | Додайте зйомку, і вона з’явиться тут і в календарі. | Нова зйомка |
+| Без оплати | payment card | Усі розрахувалися | Кожна зйомка оплачена. Нікому не треба нагадувати. | — |
+| В обробці | frame with ✓ | Черга обробки порожня | Усі фото вже в клієнтів. Можна видихнути або взятися за нову зйомку. | — |
+| Прострочено | clock | Жодного зірваного дедлайну | Усі файли клієнти отримали вчасно. Так тримати. | — |
+
+- The same words for a period with no shoots at all, though they then claim more than is true
+  (owner, 2026-10-17: kept simple).
+- No date is filled into the new shoot form.
 
 ### AC-5 — Who sees it *(required)*
 - As `US-062` AC-6: creator only, their own shoots, never a link payload.
@@ -78,10 +99,13 @@ changed here.
 | List title | Проведено | Done |
 | List title | Заплановано | Planned |
 | Under a title | {period} · {n} зйомка / зйомки / зйомок | {period} · {n} shoot / shoots |
-| Empty, done | Немає проведених зйомок | No shoots done |
-| Empty, editing | Усе передано клієнтам | Everything delivered |
+| Empty, done | Тут з’являться відзняті зйомки · Щойно зйомка відбудеться, вона потрапить сюди разом із годинами й доходом. | Your finished shoots will appear here · Once a shoot has happened, it lands here with its hours and income. |
+| Empty, planned | Поки нічого не заплановано · Додайте зйомку, і вона з’явиться тут і в календарі. | Nothing planned yet · Add a shoot and it will appear here and in the calendar. |
+| Empty, unpaid | Усі розрахувалися · Кожна зйомка оплачена. Нікому не треба нагадувати. | Everyone has paid · Every shoot is paid. No one needs a reminder. |
+| Empty, editing | Черга обробки порожня · Усі фото вже в клієнтів. Можна видихнути або взятися за нову зйомку. | Nothing left to edit · All photos are with your clients. Take a breath, or start a new shoot. |
 | Row, and its list's title | Прострочено *(as `US-042`)* | Overdue *(as `US-042`)* |
-| Empty, overdue | Немає прострочених | Nothing overdue |
+| Empty, overdue | Жодного зірваного дедлайну · Усі файли клієнти отримали вчасно. Так тримати. | No missed deadlines · Every client got their files on time. Keep it up. |
+| Empty-state button | Нова зйомка *(as the calendar)* | New shoot |
 | Under «Очікує оплати» | На суму {sum} | Totalling {sum} |
 
 ## Out of scope
