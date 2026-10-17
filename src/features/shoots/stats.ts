@@ -45,6 +45,12 @@ export type StatsPeriod = 'month' | 'year' | 'all'
 export const STATS_PERIODS = ['month', 'year', 'all'] as const
 
 /**
+ * `US-062` / `US-063` — which shoots a list opened from «Статистика» shows:
+ * «Без оплати», «Проведено», «Заплановано», «В обробці».
+ */
+export type StatShootsKind = 'unpaid' | 'done' | 'planned' | 'editing'
+
+/**
  * `US-061` AC-1 — which month or year the screen is on. `month` is 1-based and
  * ignored by «Рік»; both are ignored by «Весь час».
  */
@@ -55,9 +61,12 @@ export type StatsAnchor = { year: number; month: number }
  *
  * A structural `Pick` rather than the whole `Shoot`, for the reason `payment()`
  * takes an inline shape: the caller can hand this a row from anywhere, and a
- * test needs six fields rather than twenty-five.
+ * test needs seven fields rather than twenty-five.
  */
-export type StatsShoot = Pick<Shoot, 'date' | 'startTime' | 'endTime' | 'price' | 'prepayment'>
+export type StatsShoot = Pick<
+  Shoot,
+  'date' | 'startTime' | 'endTime' | 'price' | 'prepayment' | 'deliveryDue' | 'deliveredAt'
+>
 
 export type Statistics = {
   /** «Дохід» — received in the period, finished and planned shoots alike. */
@@ -78,6 +87,8 @@ export type Statistics = {
   unpaidShoots: number
   /** Shoots with a price — zero means «Очікує оплати» has nothing to say under it. */
   pricedShoots: number
+  /** `US-063` AC-1 — «В обробці»: finished, with a deadline, not delivered. */
+  editing: number
   /**
    * The month the earliest counted shoot falls in, 1-based, for the «Весь час»
    * line («З березня 2023»). Null when the period counted nothing.
@@ -138,6 +149,15 @@ export function isUnpaid(shoot: StatsShoot): boolean {
   return money.price > 0 && money.balance > 0
 }
 
+/**
+ * `US-063` AC-1 — «В обробці»: the shoots whose calendar card lights «Обробка»
+ * (`US-042` AC-5, AC-10) — finished, with a delivery deadline, not yet marked
+ * delivered. Without a deadline there is no card and nothing to mark.
+ */
+export function isEditing(shoot: StatsShoot, now: Date = new Date()): boolean {
+  return statusOf(shoot, now) === 'finished' && !!shoot.deliveryDue && !shoot.deliveredAt
+}
+
 /** Earlier date first; on one day, the earlier start (a missing one first). */
 function earlier(a: StatsShoot, b: StatsShoot): boolean {
   return a.date < b.date || (a.date === b.date && (a.startTime ?? '') < (b.startTime ?? ''))
@@ -165,6 +185,7 @@ export function statistics(
   let pricedShoots = 0
   let unpaid = 0
   let unpaidShoots = 0
+  let editing = 0
   let first: { year: number; month: number } | null = null
 
   for (const shoot of shoots) {
@@ -184,6 +205,7 @@ export function statistics(
     if (statusOf(shoot, now) === 'finished') {
       done += 1
       minutes += shootMinutes(shoot)
+      if (isEditing(shoot, now)) editing += 1
     } else {
       planned += 1
       if (!next || earlier(shoot, next)) next = shoot
@@ -205,6 +227,7 @@ export function statistics(
     unpaid,
     unpaidShoots,
     pricedShoots,
+    editing,
     firstMonth: first,
   }
 }

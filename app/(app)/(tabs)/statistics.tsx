@@ -11,6 +11,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import CreditCard from 'lucide-react-native/icons/credit-card'
 import DollarSign from 'lucide-react-native/icons/dollar-sign'
+import FileClock from 'lucide-react-native/icons/file-clock'
 import type { LucideIcon } from 'lucide-react-native'
 import { Card } from '../../../src/components/ui/card'
 import { Sheet } from '../../../src/components/ui/sheet'
@@ -35,6 +36,7 @@ import { useCurrency } from '../../../src/features/account/currency'
 import { periodLine } from '../../../src/features/shoots/periodLine'
 import {
   statistics,
+  type StatShootsKind,
   type StatsAnchor,
   type StatsPeriod,
   type Statistics,
@@ -111,18 +113,14 @@ export default function StatisticsScreen() {
     })
 
   /*
-    AC-4 — «Заплановано» opens the calendar: on the month itself, or on the day
-    of the earliest planned shoot for a year or all time.
+    `US-062` / `US-063` — a figure opens the shoots behind it, for the period
+    on screen. A zero opens nothing: the callers pass no handler then.
   */
-  const openPlanned = (next: string) =>
-    router.navigate(
-      period === 'month'
-        ? {
-            pathname: '/(app)/(tabs)/shoots',
-            params: { month: `${anchor.year}-${String(anchor.month).padStart(2, '0')}` },
-          }
-        : { pathname: '/(app)/(tabs)/shoots', params: { date: next } }
-    )
+  const openList = (kind: StatShootsKind) =>
+    router.push({
+      pathname: '/(app)/stat-shoots',
+      params: { kind, period, year: String(anchor.year), month: String(anchor.month) },
+    })
 
   const periods: TabItem<StatsPeriod>[] = [
     { value: 'month', label: t.statsPeriodMonth },
@@ -188,6 +186,7 @@ export default function StatisticsScreen() {
                   figureClassName="text-info"
                   unit={plural(stats.done, t.shootCountForms)}
                   line={`${stats.hours} ${plural(stats.hours, t.hourForms)}`}
+                  onPress={stats.done > 0 ? () => openList('done') : undefined}
                 />
                 <CountCard
                   label={t.statsPlanned}
@@ -205,11 +204,8 @@ export default function StatisticsScreen() {
                         )
                       : t.statsNothingPlanned
                   }
-                  onPress={
-                    stats.nextPlanned
-                      ? ((next) => () => openPlanned(next))(stats.nextPlanned)
-                      : undefined
-                  }
+                  // `US-063` AC-3 — its list, no longer «Календар».
+                  onPress={stats.planned > 0 ? () => openList('planned') : undefined}
                 />
               </View>
 
@@ -240,19 +236,16 @@ export default function StatisticsScreen() {
                     }
                     subClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-success'}
                     // `US-062` AC-1 — only while there is something to list.
-                    onPress={
-                      stats.unpaidShoots > 0
-                        ? () =>
-                            router.push({
-                              pathname: '/(app)/unpaid',
-                              params: {
-                                period,
-                                year: String(anchor.year),
-                                month: String(anchor.month),
-                              },
-                            })
-                        : undefined
-                    }
+                    onPress={stats.unpaidShoots > 0 ? () => openList('unpaid') : undefined}
+                    divided
+                  />
+                  {/* `US-063` AC-1 — right under «Очікує оплати». */}
+                  <SecondaryRow
+                    label={t.statsEditing}
+                    icon={FileClock}
+                    tint="bg-chart-5"
+                    value={String(stats.editing)}
+                    onPress={stats.editing > 0 ? () => openList('editing') : undefined}
                     divided
                   />
                   <SecondaryRow

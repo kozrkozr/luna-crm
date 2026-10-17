@@ -1342,6 +1342,10 @@ export const uk = {
   statsAllPaid: 'Усі зйомки оплачені',
   // US-062 (owner, 2026-10-17).
   unpaidTitle: 'Без оплати',
+  // US-063 (owner, 2026-10-17).
+  statsEditing: 'В обробці',
+  statsNoneDone: 'Немає проведених зйомок',
+  statsAllDelivered: 'Усе передано клієнтам',
   statsPrevPeriod: 'Попередній період',
   statsNextPeriod: 'Наступний період',
   statsChoosePeriod: 'Обрати період',
