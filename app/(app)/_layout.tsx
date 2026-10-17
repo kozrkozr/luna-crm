@@ -114,6 +114,8 @@ function AppStack() {
         routes in this navigator now draw their own.
       */}
       <Stack.Screen name="new-shoot" options={{ headerShown: false }} />
+      {/* `US-064` — `US-005`'s add screen, opened from the form above. */}
+      <Stack.Screen name="new-shoot-crew" options={{ headerShown: false }} />
       {/*
         «Публічний профіль», both readers — the account holder previewing
         themselves and a person from «Мої контакти». Each draws its own header:

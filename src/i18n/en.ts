@@ -260,7 +260,10 @@ export const en: Strings = {
   removeClientNotesLabel: 'Remove notes for the client',
   // US-043 — owner, 2026-10-06.
   removeReferencesLabel: 'Remove references',
+  removeCrewLabel: 'Remove crew',
+  removeCrewMemberTemplate: 'Remove {name}',
   savingReferences: 'Saving references…',
+  savingCrew: 'Saving crew…',
   confirmRemoveSection: 'Remove «{section}»? What you entered will be cleared.',
   removeAction: 'Remove',
   createShootCta: 'Create shoot',

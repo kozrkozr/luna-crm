@@ -470,8 +470,13 @@ export const uk = {
   removeClientNotesLabel: 'Прибрати нотатки для клієнта',
   /** `US-043` — the references section's × on the new-shoot form. */
   removeReferencesLabel: 'Прибрати референси',
+  /** `US-064` AC-9 — the «Команда» section's ×, and a row's «−». */
+  removeCrewLabel: 'Прибрати команду',
+  removeCrewMemberTemplate: 'Прибрати {name}',
   /** `US-043` AC-6 — the CTA while a new shoot's references upload. */
   savingReferences: 'Зберігаємо референси…',
+  /** `US-064` AC-6 — before the references, while the crew is saved. */
+  savingCrew: 'Зберігаємо команду…',
   /**
    * The confirmation before a × clears a section that holds something (owner,
    * 2026-09-05 — the artboards clear it outright, with no step in between).

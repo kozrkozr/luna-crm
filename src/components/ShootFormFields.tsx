@@ -440,10 +440,13 @@ export function LocationChips({
  */
 export function OptionalSectionHeader({
   label,
+  meta,
   removeLabel,
   onRemove,
 }: {
   label: string
+  /** Beside the ×, e.g. «Команда»'s «2 учасники» (`US-064`). */
+  meta?: string
   /** Spoken by a screen reader: «Прибрати оплату». The × itself has no text. */
   removeLabel: string
   onRemove: () => void
@@ -453,6 +456,7 @@ export function OptionalSectionHeader({
       <View className="flex-1">
         <SectionLabel label={label} />
       </View>
+      {meta ? <Text className="text-label text-muted-foreground">{meta}</Text> : null}
       {/*
         28pt as drawn, which is under the 44pt minimum — `hitSlop` makes up the
         difference rather than a bigger circle, because the circle sits on the

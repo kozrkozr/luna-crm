@@ -27,8 +27,9 @@ the form and saved together with it.
 
 ### AC-1 — An optional section, last
 - **Given** the «Нова зйомка» form
-- **Then** «Референси» is closed, and offered as the **fourth** dashed pill at the foot of the
-  form, after «Оплата», «Нотатки для команди» and «Нотатки для клієнта»
+- **Then** «Референси» is closed, and offered as the **last** dashed pill at the foot of the
+  form, after «Оплата», «Команда» (`US-064`, 2026-10-17), «Нотатки для команди» and «Нотатки для
+  клієнта»
 - **When** the creator taps it
 - **Then** the section opens **last** on the form, below «Нотатки для клієнта», with a × in its
   heading like the other optional sections
@@ -82,7 +83,7 @@ the form and saved together with it.
 ## Out of scope
 - References on the edit form — AC-8.
 - Reporting a reference that failed to save — AC-7.
-- Crew or files on the creation form.
+- Files on the creation form. Crew — `US-064` (2026-10-17).
 
 ## Dependencies
 `US-002`, `US-003`, `US-032`.
