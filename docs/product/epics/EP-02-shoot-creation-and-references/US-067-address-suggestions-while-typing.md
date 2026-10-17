@@ -20,29 +20,37 @@ something no map knows («у Олі вдома», «локація №2»).
 
 ## Acceptance criteria
 
-### AC-1 — Suggestions appear
+### AC-1 — A search screen opens
 - **Given** the «Адреса» field of the shoot form, on iPhone
-- **When** the creator types into it — from the first letter (owner, 2026-10-17)
-- **Then** a list under the field shows Apple's suggestions, each with a title and a subtitle as
+- **When** the creator taps it
+- **Then** a search screen opens over the form, as in Apple Calendar's «Місце» (owner, 2026-10-17,
+  after the inline list was hidden behind the keyboard at the bottom of the screen): «Скасувати»
+  and the title «Адреса» at the top, the search field under them holding the current address,
+  with the keyboard open
+- **When** the creator types — from the first letter (owner, 2026-10-17)
+- **Then** Apple's suggestions are listed under the field, each with a title and a subtitle as
   Apple gives them («Хрещатик, 22» / «Київ, Україна»); streets and venues in one list
 - The app does **not** ask for the phone's location: suggestions are ranked by Apple's region
   alone, and no permission prompt appears (owner, 2026-10-17)
 
 ### AC-2 — A street address is picked
 - **When** the creator taps a suggestion that is an address
-- **Then** «Адреса» is filled with its full address and the list closes; «Назва» is not touched
+- **Then** the screen closes and «Адреса» is filled with its full address; «Назва» is not touched
 
 ### AC-3 — A venue is picked
 - **When** the creator taps a suggestion that is a place («Студія Світло»)
-- **Then** «Адреса» is filled with the place's address
+- **Then** the screen closes and «Адреса» is filled with the place's address
 - **And** «Назва» is filled with the place's name **only if «Назва» is empty** — anything already
   typed there is kept
 
 ### AC-4 — Typing stays free *(required)*
+- **When** the creator presses the keyboard's return key instead of picking a suggestion
+- **Then** the screen closes and «Адреса» holds exactly the typed text
+- **When** they tap «Скасувати»
+- **Then** the screen closes and «Адреса» is unchanged
 - **Given** no suggestion fits, there is no connection, or Apple returns an error
-- **Then** no list is shown, no message appears, and the field takes text exactly as it does today
-- The creator never has to pick a suggestion; both fields stay editable after a pick, and the form
-  saves and validates as it does today
+- **Then** no list is shown and no message appears; typing and the return key work as above
+- The form saves and validates as it does today
 
 ### AC-5 — Where it is offered
 - On every form that has «Адреса» — «Нова зйомка» and «Редагувати зйомку»
