@@ -1,3 +1,4 @@
 {
-  "NSPhotoLibraryUsageDescription": "Luna Shoots needs access to your photos to add a reference to a shoot."
+  "NSPhotoLibraryUsageDescription": "Luna Shoots needs access to your photos to add a reference to a shoot.",
+  "NSContactsUsageDescription": "Luna Shoots needs access to your contacts to fill in the name and phone of the person you choose."
 }

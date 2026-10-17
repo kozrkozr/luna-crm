@@ -18,6 +18,7 @@ import { succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import type { DirectoryKind } from './directory'
 import { createContact, updateContact } from './api'
+import { PhoneContactCard } from './PhoneContactCard'
 import { createClient, updateClientProfile } from '../clients/api'
 import { Starfield } from '../../components/Starfield'
 
@@ -232,6 +233,19 @@ export function ContactForm({
         contentContainerStyle={{ paddingBottom: insets.bottom + 104 }}
       >
         <View className="gap-3.5 p-4">
+          {/* `US-065` — create only (AC-7); a pick replaces «Імʼя» and «Телефон». */}
+          {mode === 'create' ? (
+            <PhoneContactCard
+              onFill={(fill) =>
+                setDraft((current) => ({
+                  ...current,
+                  name: fill.name,
+                  phone: fill.phone ?? current.phone,
+                }))
+              }
+            />
+          ) : null}
+
           {/* ── Тип контакту ── two segments, and fixed once saved. */}
           <View className="gap-2">
             <FieldLabel label={t.contactKindLabel} />

@@ -859,6 +859,14 @@ export const uk = {
   saveContact: 'Зберегти контакт',
   editContactHint: 'Зміни застосуються всюди, де цей контакт уже додано.',
   contactAddedTemplate: '{name} додано до контактів',
+  /** `US-065` — the card at the top of both «Новий контакт» forms. */
+  phoneContactChoose: 'Вибрати з контактів телефону',
+  phoneContactHint: 'Імʼя й телефон заповняться самі',
+  phoneContactOrByHand: 'або заповніть вручну',
+  /** Followed by the contact's name, set in a heavier weight. */
+  phoneContactFilledFrom: 'Заповнено з контакту',
+  phoneContactAnother: 'Інший',
+  phoneContactAlreadySavedTemplate: '{name} уже є у ваших контактах',
   contactDeletedTemplate: '{name} видалено з контактів',
   deleteContactAction: 'Видалити контакт',
   deleteContactQuestion: 'Видалити контакт «{name}»?',

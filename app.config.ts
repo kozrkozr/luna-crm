@@ -109,6 +109,20 @@ const config: ExpoConfig = {
         microphonePermission: false,
       },
     ],
+    [
+      'expo-contacts',
+      {
+        /*
+         * `US-065` — the contacts text, should iOS ever show it. The picker the
+         * app uses asks no permission (see src/features/contacts/phoneContact.ts),
+         * but the module links the Contacts framework and the plugin writes this
+         * key regardless. As with photos above: the build's English fallback;
+         * the phone shows the `locales` text.
+         */
+        contactsPermission:
+          'Luna Shoots needs access to your contacts to fill in the name and phone of the person you choose.',
+      },
+    ],
     /*
      * The launch screen (2026-09-21). There was no splash configuration at all
      * before this: `expo-splash-screen` was not installed and no `splash` key
