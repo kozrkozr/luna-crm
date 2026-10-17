@@ -19,7 +19,8 @@ import {
 } from '../features/shoots/date'
 import { selected as tickSelection, tapped } from '../lib/haptics'
 import type { Shoot } from '../features/shoots/api'
-import { useAddressSuggestions } from '../features/shoots/addressSuggestions'
+import { addressSearch, type ResolvedPlace } from '../../modules/address-search'
+import { AddressSearchScreen } from './AddressSearchScreen'
 
 /**
  * The fields the create and edit shoot forms share.
@@ -345,21 +346,15 @@ export function ShootLocationFields({
   chips: string[]
 }) {
   const t = useStrings()
-  const suggestions = useAddressSuggestions()
-  const [addressFocused, setAddressFocused] = useState(false)
-  const showSuggestions = addressFocused && address.trim() !== '' && suggestions.items.length > 0
+  const [searching, setSearching] = useState(false)
 
   /*
    * `US-067` AC-2 / AC-3. A street fills «Адреса» only; a venue fills «Адреса»
    * and, when «Назва» is empty, «Назва» — never over what was typed there.
-   * When Apple resolves nothing the field stays as typed (AC-4).
    */
-  const pickSuggestion = async (index: number) => {
-    tapped()
-    const place = await suggestions.resolve(index)
-    suggestions.clear()
-    if (!place) return
-    if (place.address) onAddressChange(place.address)
+  const pickPlace = (place: ResolvedPlace) => {
+    setSearching(false)
+    onAddressChange(place.address)
     if (place.isPlace && place.name && !name.trim()) onNameChange(place.name)
   }
 
@@ -381,47 +376,39 @@ export function ShootLocationFields({
 
       <View className="gap-2">
         <FieldLabel label={t.address} />
-        {/* `id` kept from the edit screen's own field: `us018-check.mjs` drives
-            `#address` and `#location-note`, and the ids cost nothing. */}
-        <Input
-          id="address"
-          value={address}
-          onChangeText={(value) => {
-            onAddressChange(value)
-            suggestions.search(value)
-          }}
-          onFocus={() => setAddressFocused(true)}
-          onBlur={() => {
-            setAddressFocused(false)
-            suggestions.clear()
-          }}
-          placeholder={t.locationAddressPlaceholder}
-        />
-        {/* Inline, not floating: the form scrolls, and an overlay would have
-            to track the field through the keyboard avoidance. The form's
-            `keyboardShouldPersistTaps="handled"` lets a row take the tap
-            without the field blurring first. */}
-        {showSuggestions ? (
-          <View className="border-border bg-card overflow-hidden rounded-lg border">
-            {suggestions.items.map((item, index) => (
-              <Pressable
-                key={`${item.title}|${item.subtitle}`}
-                onPress={() => void pickSuggestion(index)}
-                role="button"
-                className={`active:bg-secondary px-3.5 py-2.5 ${index > 0 ? 'border-border border-t' : ''}`}
-              >
-                <Text className="text-body text-foreground" numberOfLines={1}>
-                  {item.title}
-                </Text>
-                {item.subtitle ? (
-                  <Text className="text-body-sm text-muted-foreground" numberOfLines={1}>
-                    {item.subtitle}
-                  </Text>
-                ) : null}
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
+        {/*
+          On the iPhone the field opens `US-067`'s search screen instead of
+          taking the keyboard itself (AC-1); elsewhere there is no Apple search
+          and it stays the plain field it always was (AC-5). `id` kept from the
+          edit screen's own field: `us018-check.mjs` drives `#address` and
+          `#location-note` in a browser, and the ids cost nothing.
+        */}
+        {addressSearch ? (
+          <>
+            <Pressable onPress={() => setSearching(true)} role="button" accessibilityLabel={t.address}>
+              <View pointerEvents="none">
+                <Input value={address} placeholder={t.locationAddressPlaceholder} />
+              </View>
+            </Pressable>
+            <AddressSearchScreen
+              visible={searching}
+              initial={address}
+              onPick={pickPlace}
+              onDone={(text) => {
+                setSearching(false)
+                onAddressChange(text)
+              }}
+              onCancel={() => setSearching(false)}
+            />
+          </>
+        ) : (
+          <Input
+            id="address"
+            value={address}
+            onChangeText={onAddressChange}
+            placeholder={t.locationAddressPlaceholder}
+          />
+        )}
       </View>
 
       <View className="gap-2">

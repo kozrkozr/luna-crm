@@ -6,14 +6,6 @@ import {
 } from '../../../modules/address-search'
 
 /**
- * How many of Apple's suggestions the list shows. Apple returns up to about
- * fifteen; the list sits inline in the form, under the field, and pushes
- * «Деталі» down by every row. **Not in `US-067`** — a build choice, logged for
- * the owner.
- */
-const MAX_SUGGESTIONS = 5
-
-/**
  * `US-067` — the suggestions for «Адреса», from the iOS module.
  *
  * `search` takes every keystroke (AC-1, from the first letter). An answer for a
@@ -29,7 +21,7 @@ export function useAddressSuggestions() {
   useEffect(() => {
     if (!addressSearch) return
     const subscription = addressSearch.addListener('onSuggestions', (event) => {
-      if (event.query === latest.current) setItems(event.items.slice(0, MAX_SUGGESTIONS))
+      if (event.query === latest.current) setItems(event.items)
     })
     return () => subscription.remove()
   }, [])
