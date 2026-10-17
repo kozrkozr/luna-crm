@@ -46,8 +46,11 @@ something no map knows («у Олі вдома», «локація №2»).
   locations of the creator's own shoots, most recent first, without repeats, at most 6 — the
   same rule as the chips under «Назва» (owner, 2026-10-17)
 - A location with an address shows a map-pin icon, its name, and the address under it
-- A location with a name and no address shows a text icon, its name with a **«текст»** tag, and
-  **«Без адреси»** under it
+- A location with a name and no address shows a text icon, its name, and **«Без адреси»** under
+  it — no «текст» tag (owner, 2026-10-17)
+- Whether a location has an address is the only test: the shoot stores text, not where it came
+  from, so free text saved into «Адреса» («Біля фонтану») shows as an address (owner, 2026-10-17,
+  over saving a «picked from Apple Maps» flag)
 - **When** the creator taps one
 - **Then** the screen closes and **both** «Назва» and «Адреса» take that shoot's values — what was
   in them is replaced; a location without an address leaves «Адреса» empty
@@ -98,4 +101,4 @@ something no map knows («у Олі вдома», «локація №2»).
 | # | Question | What decision it blocks |
 |---|---|---|
 | 1 | Does Apple find the owner's real venues? The owner checks on maps.apple.com before building | Whether to build this on Apple at all (`ADR-026` revisit) |
-| 2 | The English for the new copy — proposed: «Place, address or any text», «Pick a place from the list or just type text — for example, “At the client's home” or “By the fountain on Kontraktova”.», «Your locations», «text», «No address», «Data: Apple Maps» | The EN strings |
+| 2 | The English for the new copy — proposed: «Place, address or any text», «Pick a place from the list or just type text — for example, “At the client's home” or “By the fountain on Kontraktova”.», «Your locations», «No address», «Data: Apple Maps» | The EN strings |
