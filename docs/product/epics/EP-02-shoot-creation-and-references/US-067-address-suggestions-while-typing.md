@@ -29,9 +29,9 @@ something no map knows («у Олі вдома», «локація №2»).
   after the inline list was hidden behind the keyboard at the bottom of the screen)
 - Its header is the shoot form's own: **«Скасувати»** muted at the left, the title **«Адреса»**
   centred, **«Зберегти»** at the right
-- Under the header, the search field holds the current address, with the keyboard open. Empty, it
-  shows the map-pin icon and the same placeholder; while text is in it, a magnifier at the left
-  and a clear button at the right
+- Under the header, the search field holds the current address, with the keyboard open. It is
+  the form's own «Адреса» field — the same map-pin icon and placeholder, no focus highlight, no
+  magnifier or clear button (owner, 2026-10-17)
 - **When** the creator types — from the first letter (owner, 2026-10-17)
 - **Then** Apple's suggestions are listed under the field in one rounded card, each row with a
   map-pin icon, a title and a subtitle as Apple gives them («Хрещатик, 22» / «Київ, Україна»);
