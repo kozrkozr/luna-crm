@@ -67,8 +67,9 @@ form there is no shoot yet, so the people are held on the form and saved togethe
 - **Then** the shoot is created first, then its crew members are saved in the order they were
   added — each exactly as `US-005` saves one, including remembering a new contact in
   «Мої контакти» — then its references (`US-043`), and the app opens the new shoot
-- The button has **no text of its own** for this step (it is quick, unlike uploading references);
-  it stays disabled as it is while the shoot is being created.
+- While the crew members are being saved, the button reads **«Зберігаємо команду…»** and cannot be
+  tapped again; then «Зберігаємо референси…» while the references are (`US-043` AC-6). A step with
+  nothing to save is skipped. (Owner, 2026-10-17 — this replaced an earlier "no text of its own".)
 
 ### AC-7 — A crew member that fails to save
 - **Given** the shoot was created, but one of its crew members could not be saved
@@ -89,6 +90,7 @@ Existing strings are reused: «Команда» / Crew, «Додати учас�
 |---|---|
 | Прибрати команду *(the section's × accessibility label)* | Remove crew |
 | Прибрати {name} *(a row's bin accessibility label)* | Remove {name} |
+| Зберігаємо команду… | Saving crew… |
 
 ## Out of scope
 - Crew on the edit form — AC-8.
