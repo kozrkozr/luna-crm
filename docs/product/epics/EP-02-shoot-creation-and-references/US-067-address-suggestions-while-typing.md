@@ -63,8 +63,9 @@ something no map knows («у Олі вдома», «локація №2»).
 ### AC-3 — A venue is picked
 - **When** the creator taps a suggestion that is a place («Студія Світло»)
 - **Then** the screen closes and «Адреса» is filled with the place's address
-- **And** «Назва» is filled with the place's name **only if «Назва» is empty** — anything already
-  typed there is kept
+- **And** «Назва» is replaced with the place's name, whatever it held (owner, 2026-10-17 — it was
+  filled only when empty; reversed after testing on the phone). A street address (AC-2) still
+  leaves «Назва» as it was
 
 ### AC-4 — Typing stays free *(required)*
 - **When** the creator taps «Зберегти» or presses the keyboard's return key instead of picking a
