@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native'
+import { Modal, Pressable, ScrollView, View } from 'react-native'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
-import CircleX from 'lucide-react-native/icons/circle-x'
 import MapPin from 'lucide-react-native/icons/map-pin'
-import Search from 'lucide-react-native/icons/search'
 import TextAlignStart from 'lucide-react-native/icons/text-align-start'
 import { Icon } from './ui/icon'
+import { Input } from './ui/input'
 import { Text } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
 import { useAddressSuggestions } from '../features/shoots/addressSuggestions'
@@ -51,7 +50,6 @@ export function AddressSearchScreen({
   const suggestions = useAddressSuggestions()
   const { search, clear } = suggestions
   const [query, setQuery] = useState(initial)
-  const [focused, setFocused] = useState(false)
 
   // Each opening starts from the form's address and searches it right away,
   // as Calendar does; closing drops the list so the next opening is fresh.
@@ -134,43 +132,22 @@ export function AddressSearchScreen({
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-          {/* The field: a pin while empty, a magnifier and a clear button
-              once there is text — the screenshot's first and second states. */}
-          <View
-            className={`bg-input/30 h-12 flex-row items-center gap-2.5 rounded-xl border px-3.5 ${
-              focused ? 'border-foreground' : 'border-input'
-            }`}
-          >
-            <Icon
-              as={empty ? MapPin : Search}
-              size={18}
-              strokeWidth={1.8}
-              className="text-muted-foreground"
-            />
-            <TextInput
-              className="text-foreground placeholder:text-muted-foreground h-full flex-1 text-base"
-              style={{ letterSpacing: 0 }}
+          {/* The form's own «Адреса» field, pin and all — the same `Input`, no
+              focus ring or icons of its own (owner, 2026-10-17). */}
+          <View className="justify-center">
+            <Input
               value={query}
               onChangeText={change}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
               onSubmitEditing={() => onDone(query)}
               placeholder={t.addressSearchPlaceholder}
+              className="pl-10"
               returnKeyType="done"
-              keyboardAppearance="dark"
               autoCorrect={false}
               autoFocus
             />
-            {query ? (
-              <Pressable
-                onPress={() => change('')}
-                hitSlop={10}
-                role="button"
-                accessibilityLabel={t.remove}
-              >
-                <Icon as={CircleX} size={18} strokeWidth={1.8} className="text-muted-foreground" />
-              </Pressable>
-            ) : null}
+            <View className="absolute left-3" pointerEvents="none">
+              <Icon as={MapPin} size={18} strokeWidth={1.8} className="text-muted-foreground" />
+            </View>
           </View>
 
           {empty ? (
