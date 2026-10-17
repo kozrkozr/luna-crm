@@ -21,7 +21,6 @@ import { SectionLabel } from '../../../src/components/ShootFormFields'
 import { Starfield } from '../../../src/components/Starfield'
 import { TabHeader } from '../../../src/components/TabHeader'
 import { useStrings } from '../../../src/i18n/LanguageProvider'
-import type { Strings } from '../../../src/i18n'
 import { listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { plural } from '../../../src/features/shoots/home'
 import { formatDayMonth } from '../../../src/features/shoots/date'
@@ -33,6 +32,7 @@ import {
   symbolLeads,
 } from '../../../src/features/shoots/money'
 import { useCurrency } from '../../../src/features/account/currency'
+import { periodLine } from '../../../src/features/shoots/periodLine'
 import {
   statistics,
   type StatsAnchor,
@@ -239,6 +239,20 @@ export default function StatisticsScreen() {
                           : null
                     }
                     subClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-success'}
+                    // `US-062` AC-1 — only while there is something to list.
+                    onPress={
+                      stats.unpaidShoots > 0
+                        ? () =>
+                            router.push({
+                              pathname: '/(app)/unpaid',
+                              params: {
+                                period,
+                                year: String(anchor.year),
+                                month: String(anchor.month),
+                              },
+                            })
+                        : undefined
+                    }
                     divided
                   />
                   <SecondaryRow
@@ -269,30 +283,6 @@ export default function StatisticsScreen() {
   )
 }
 
-/**
- * «Вересень 2026» · «2026 рік» · «З березня 2023» — what period is on screen.
- *
- * Composed here rather than in `stats.ts`, which returns the month and stays
- * i18n-free (the `money.ts` split). The all-time line dates itself from the
- * earliest shoot that counted, so an account with none shows no line at all
- * rather than a period it cannot name.
- *
- * `trim()` is for English, where `statsYearWord` is empty: «2026 рік» has a
- * word after the year and "2026" does not, and that is a language difference
- * rather than a missing string.
- */
-function periodLine(
-  period: StatsPeriod,
-  anchor: StatsAnchor,
-  stats: Statistics,
-  t: Strings
-): string {
-  if (period === 'month') return `${t.months[anchor.month - 1]} ${anchor.year}`
-  if (period === 'year') return `${anchor.year} ${t.statsYearWord}`.trim()
-  if (!stats.firstMonth) return ''
-  const { year, month } = stats.firstMonth
-  return `${t.statsSincePrefix} ${t.monthsGenitive[month - 1]} ${year}`
-}
 
 /**
  * One of the two big cards: a 3px coloured stripe, a tinted icon chip, the
@@ -381,6 +371,7 @@ function SecondaryRow({
   valueClassName = 'text-foreground',
   sub = null,
   subClassName = 'text-muted-foreground',
+  onPress,
   divided = false,
 }: {
   label: string
@@ -391,13 +382,21 @@ function SecondaryRow({
   /** `US-061` AC-6 — the line under «Очікує оплати». */
   sub?: string | null
   subClassName?: string
+  /** `US-062` AC-1 — makes the row a button; without it the row is inert. */
+  onPress?: () => void
   divided?: boolean
 }) {
   return (
-    <View
+    <Pressable
+      disabled={!onPress}
+      onPress={() => {
+        tapped()
+        onPress?.()
+      }}
+      role={onPress ? 'button' : undefined}
       className={`min-h-[54px] flex-row items-center gap-3 px-4 py-3 ${
-        divided ? 'border-border border-t' : ''
-      }`}
+        onPress ? 'active:bg-secondary' : ''
+      } ${divided ? 'border-border border-t' : ''}`}
     >
       <View className={`h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg ${tint}`}>
         <Icon as={icon} size={14} strokeWidth={2} className="text-tint-foreground" />
@@ -407,7 +406,7 @@ function SecondaryRow({
         {sub ? <Text className={`text-caption mt-[3px] ${subClassName}`}>{sub}</Text> : null}
       </View>
       <Text className={`text-subtitle shrink-0 font-semibold ${valueClassName}`}>{value}</Text>
-    </View>
+    </Pressable>
   )
 }
 

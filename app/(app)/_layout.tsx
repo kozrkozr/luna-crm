@@ -140,6 +140,8 @@ function AppStack() {
       <Stack.Screen name="currency" options={{ headerShown: false }} />
       {/* `US-053`'s «Підписка» — pushed from the profile like «Валюта». */}
       <Stack.Screen name="subscription" options={{ headerShown: false }} />
+      {/* `US-062`'s «Без оплати» — pushed from «Статистика», its own header. */}
+      <Stack.Screen name="unpaid" options={{ headerShown: false }} />
       {/* `US-051` — full screen, as AC-1 asks; it draws its own ✕. */}
       <Stack.Screen
         name="paywall"

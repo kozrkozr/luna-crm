@@ -613,6 +613,7 @@ export const en: Strings = {
   statsNothingPlanned: 'Nothing planned',
   statsUnpaidShootsTemplate: '{n} unpaid {noun}',
   statsAllPaid: 'All shoots paid',
+  unpaidTitle: 'Unpaid',
   statsPrevPeriod: 'Previous period',
   statsNextPeriod: 'Next period',
   statsChoosePeriod: 'Choose a period',

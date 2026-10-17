@@ -1340,6 +1340,8 @@ export const uk = {
   /** «2 зйомки без оплати» — {noun} from `shootCountForms`. */
   statsUnpaidShootsTemplate: '{n} {noun} без оплати',
   statsAllPaid: 'Усі зйомки оплачені',
+  // US-062 (owner, 2026-10-17).
+  unpaidTitle: 'Без оплати',
   statsPrevPeriod: 'Попередній період',
   statsNextPeriod: 'Наступний період',
   statsChoosePeriod: 'Обрати період',
