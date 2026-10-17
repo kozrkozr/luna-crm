@@ -162,7 +162,7 @@ has passed (`US-020`; owner, 2026-09-04 — `US-020` AC-1's manual control is re
 | Змінити дедлайн · Видалити дедлайн *(VoiceOver labels)* | Change deadline · Remove deadline |
 
 ## Out of scope
-- Reminders or notifications about a deadline — not now (owner, 2026-10-06).
+- Reminders or notifications about a deadline — not now (owner, 2026-10-06). *Lifted by `US-066` (owner, 2026-10-17).*
 - Showing the deadline to crew or the client.
 - Undoing «Передано» other than from the toast.
 
