@@ -1,6 +1,7 @@
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import Plus from 'lucide-react-native/icons/plus'
 import X from 'lucide-react-native/icons/x'
+import { useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { DateField } from './DateField'
 import { MonthPicker } from './MonthPicker'
@@ -18,6 +19,7 @@ import {
 } from '../features/shoots/date'
 import { selected as tickSelection, tapped } from '../lib/haptics'
 import type { Shoot } from '../features/shoots/api'
+import { useAddressSuggestions } from '../features/shoots/addressSuggestions'
 
 /**
  * The fields the create and edit shoot forms share.
@@ -343,6 +345,23 @@ export function ShootLocationFields({
   chips: string[]
 }) {
   const t = useStrings()
+  const suggestions = useAddressSuggestions()
+  const [addressFocused, setAddressFocused] = useState(false)
+  const showSuggestions = addressFocused && address.trim() !== '' && suggestions.items.length > 0
+
+  /*
+   * `US-067` AC-2 / AC-3. A street fills «Адреса» only; a venue fills «Адреса»
+   * and, when «Назва» is empty, «Назва» — never over what was typed there.
+   * When Apple resolves nothing the field stays as typed (AC-4).
+   */
+  const pickSuggestion = async (index: number) => {
+    tapped()
+    const place = await suggestions.resolve(index)
+    suggestions.clear()
+    if (!place) return
+    if (place.address) onAddressChange(place.address)
+    if (place.isPlace && place.name && !name.trim()) onNameChange(place.name)
+  }
 
   return (
     <View className="gap-3.5">
@@ -367,9 +386,42 @@ export function ShootLocationFields({
         <Input
           id="address"
           value={address}
-          onChangeText={onAddressChange}
+          onChangeText={(value) => {
+            onAddressChange(value)
+            suggestions.search(value)
+          }}
+          onFocus={() => setAddressFocused(true)}
+          onBlur={() => {
+            setAddressFocused(false)
+            suggestions.clear()
+          }}
           placeholder={t.locationAddressPlaceholder}
         />
+        {/* Inline, not floating: the form scrolls, and an overlay would have
+            to track the field through the keyboard avoidance. The form's
+            `keyboardShouldPersistTaps="handled"` lets a row take the tap
+            without the field blurring first. */}
+        {showSuggestions ? (
+          <View className="border-border bg-card overflow-hidden rounded-lg border">
+            {suggestions.items.map((item, index) => (
+              <Pressable
+                key={`${item.title}|${item.subtitle}`}
+                onPress={() => void pickSuggestion(index)}
+                role="button"
+                className={`active:bg-secondary px-3.5 py-2.5 ${index > 0 ? 'border-border border-t' : ''}`}
+              >
+                <Text className="text-body text-foreground" numberOfLines={1}>
+                  {item.title}
+                </Text>
+                {item.subtitle ? (
+                  <Text className="text-body-sm text-muted-foreground" numberOfLines={1}>
+                    {item.subtitle}
+                  </Text>
+                ) : null}
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <View className="gap-2">
