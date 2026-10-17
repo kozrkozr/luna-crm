@@ -13,8 +13,8 @@ import { tapped } from '../../lib/haptics'
 import { findSavedNameByPhone } from './api'
 import { canPickFromPhone, choosePhoneNumber, pickPhoneContact } from './phoneContact'
 
-/** What a pick fills. `phone` absent means «Телефон» keeps what it held. */
-export type PhoneContactFill = { name: string; phone?: string }
+/** What a pick fills. A field absent keeps what it held. */
+export type PhoneContactFill = { name?: string; phone?: string }
 
 /**
  * `US-065` — «Вибрати з контактів телефону», the card at the top of both
@@ -54,8 +54,12 @@ export function PhoneContactCard({ onFill }: { onFill: (fill: PhoneContactFill) 
       if (saved) return setToast(t.phoneContactAlreadySavedTemplate.replace('{name}', saved))
     }
 
-    onFill(phone ? { name: contact.name, phone } : { name: contact.name })
-    setFilledFrom(contact.name)
+    // A contact with no name and no company (a bare number) leaves «Імʼя» alone
+    // rather than blanking what was typed.
+    const name = contact.name || undefined
+    if (!name && !phone) return
+    onFill({ name, phone: phone ?? undefined })
+    setFilledFrom(contact.name || (phone as string))
   }
 
   return (

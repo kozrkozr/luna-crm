@@ -34,8 +34,18 @@ export async function pickPhoneContact(): Promise<PickedContact | null> {
   }
   if (!contact) return null
 
-  const hasName = !!(contact.firstName?.trim() || contact.lastName?.trim())
-  const name = (hasName ? contact.name : contact.company)?.trim() ?? ''
+  /*
+    Built from the parts, not read from `contact.name`: the legacy serialiser
+    only writes `name` when `"name"` is among the keys asked for, and for a
+    picked contact it asks with the mapped `CNContact` keys instead — so `name`
+    never arrives (found on a device, 2026-10-17). Given and family name, the
+    two AC-3 names; the company when there is neither.
+  */
+  const fullName = [contact.firstName, contact.middleName, contact.lastName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ')
+  const name = fullName || contact.company?.trim() || ''
 
   const numbers = (contact.phoneNumbers ?? [])
     .filter((p) => !!p.number?.trim())

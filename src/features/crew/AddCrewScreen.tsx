@@ -344,8 +344,10 @@ export function AddCrewScreen({
           ) : (
             <NewContactTab
               onFillFromPhone={(fill) => {
-                setName(fill.name)
-                setErrors((e) => ({ ...e, name: false }))
+                if (fill.name !== undefined) {
+                  setName(fill.name)
+                  setErrors((e) => ({ ...e, name: false }))
+                }
                 if (fill.phone !== undefined) setPhone(fill.phone)
               }}
               name={name}

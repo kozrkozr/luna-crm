@@ -239,7 +239,7 @@ export function ContactForm({
               onFill={(fill) =>
                 setDraft((current) => ({
                   ...current,
-                  name: fill.name,
+                  name: fill.name ?? current.name,
                   phone: fill.phone ?? current.phone,
                 }))
               }
