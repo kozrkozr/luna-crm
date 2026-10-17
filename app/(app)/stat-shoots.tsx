@@ -18,11 +18,15 @@ import { useCurrency } from '../../src/features/account/currency'
 import { periodLine } from '../../src/features/shoots/periodLine'
 import {
   inPeriod,
+  isEditing,
+  isOverdue,
   isUnpaid,
   statistics,
+  type StatShootsKind,
   type StatsAnchor,
   type StatsPeriod,
 } from '../../src/features/shoots/stats'
+import { statusOf } from '../../src/features/shoots/status'
 import { tapped } from '../../src/lib/haptics'
 
 type State =
@@ -31,10 +35,14 @@ type State =
   | { status: 'loaded'; shoots: Shoot[]; crewNames: Record<string, string[]> }
 
 /**
- * `US-062` — «Без оплати»: the shoots behind «Статистика»'s «{n} зйомок без
- * оплати», for the period it was on.
+ * The shoots behind a figure on «Статистика», for the period it was on:
  *
- * Opened as `/unpaid?period=month&year=2026&month=10`. The list is read again
+ * - `unpaid` — `US-062`, «Без оплати», from «{n} зйомок без оплати»
+ * - `done`, `planned`, `editing`, `overdue` — `US-063`, from «Проведено»,
+ *   «Заплановано», «В обробці» and «Прострочено»
+ *
+ * One screen with four selections (owner, 2026-10-17: «таку ж сторінку»).
+ * Opened as `/stat-shoots?kind=unpaid&period=month&year=2026&month=10`. The list is read again
  * every time the screen comes back into focus (AC-4), so a shoot marked paid
  * on its own screen (`US-060`) is gone on the way back.
  *
@@ -47,12 +55,24 @@ type State =
  * Only the creator's own shoots: `listShoots` returns those, never the ones
  * they are crew on (AC-6), and RLS drops deleted rows (`ADR-014`).
  */
-export default function UnpaidScreen() {
+export default function StatShootsScreen() {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const currency = useCurrency()
-  const params = useLocalSearchParams<{ period?: string; year?: string; month?: string }>()
+  const params = useLocalSearchParams<{
+    kind?: string
+    period?: string
+    year?: string
+    month?: string
+  }>()
+  const kind: StatShootsKind =
+    params.kind === 'done' ||
+    params.kind === 'planned' ||
+    params.kind === 'editing' ||
+    params.kind === 'overdue'
+      ? params.kind
+      : 'unpaid'
 
   const period: StatsPeriod =
     params.period === 'year' || params.period === 'all' ? params.period : 'month'
@@ -83,29 +103,65 @@ export default function UnpaidScreen() {
   const loaded = state.status === 'loaded' ? state : null
   const stats = loaded ? statistics(loaded.shoots, period, anchor) : null
   // AC-3 — oldest first; on one day, by start time.
-  const unpaid = loaded
+  const now = new Date()
+  const selected = (shoot: Shoot): boolean => {
+    switch (kind) {
+      case 'unpaid':
+        return isUnpaid(shoot)
+      case 'done':
+        return statusOf(shoot, now) === 'finished'
+      case 'planned':
+        return statusOf(shoot, now) !== 'finished'
+      case 'editing':
+        return isEditing(shoot, now)
+      case 'overdue':
+        return isOverdue(shoot, now)
+    }
+  }
+  const list = loaded
     ? loaded.shoots
-        .filter((shoot) => inPeriod(shoot.date, period, anchor) && isUnpaid(shoot))
+        .filter((shoot) => inPeriod(shoot.date, period, anchor) && selected(shoot))
         .sort((a, b) =>
           a.date === b.date
             ? (a.startTime ?? '').localeCompare(b.startTime ?? '')
             : a.date.localeCompare(b.date)
         )
     : []
-  const groups = groupByDate(unpaid)
+  const groups = groupByDate(list)
+  // `US-062` AC-3: the sum owed; `US-063` AC-2: how many shoots.
   const meta = stats
-    ? [periodLine(period, anchor, stats, t), formatMoney(stats.unpaid, currency)]
+    ? [
+        periodLine(period, anchor, stats, t),
+        kind === 'unpaid'
+          ? formatMoney(stats.unpaid, currency)
+          : `${list.length} ${plural(list.length, t.shootCountForms)}`,
+      ]
         .filter(Boolean)
         .join(' · ')
     : ''
+  const title = {
+    unpaid: t.unpaidTitle,
+    done: t.statsShootsDone,
+    planned: t.statsPlanned,
+    editing: t.statsEditing,
+    overdue: t.deadlineOverdue,
+  }[kind]
+  // `US-062` AC-5, `US-063` AC-4 — a list emptied while it was open.
+  const empty = {
+    unpaid: t.statsAllPaid,
+    done: t.statsNoneDone,
+    planned: t.statsNothingPlanned,
+    editing: t.statsAllDelivered,
+    overdue: t.statsNoneOverdue,
+  }[kind]
 
   return (
     <View className="bg-background flex-1">
       <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* «‹ Статистика · Без оплати», the period and the sum under the title
-          (AC-3) — the «Сповіщення» header, with a second line. */}
+      {/* «‹ Статистика · Без оплати», the period and the sum or count under the
+          title — the «Сповіщення» header, with a second line. */}
       <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
         <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
           <Pressable
@@ -124,7 +180,7 @@ export default function UnpaidScreen() {
             </Text>
           </Pressable>
           <View className="min-w-0 flex-1 items-center">
-            <Text className="text-subtitle text-foreground font-semibold">{t.unpaidTitle}</Text>
+            <Text className="text-subtitle text-foreground font-semibold">{title}</Text>
             {meta ? (
               <Text className="text-caption text-muted-foreground mt-px" numberOfLines={1}>
                 {meta}
@@ -143,9 +199,16 @@ export default function UnpaidScreen() {
         ) : state.status === 'error' ? (
           <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
         ) : groups.length === 0 ? (
-          // AC-5 — everything on the list has been paid.
           <View className="border-border items-center rounded-xl border px-4 py-7">
-            <Text className="text-body text-success text-center">{t.statsAllPaid}</Text>
+            <Text
+              className={`text-body text-center ${
+                kind === 'unpaid' || kind === 'editing' || kind === 'overdue'
+                  ? 'text-success'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              {empty}
+            </Text>
           </View>
         ) : (
           <View className="gap-3">

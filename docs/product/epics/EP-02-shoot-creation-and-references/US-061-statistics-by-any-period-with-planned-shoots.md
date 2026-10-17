@@ -58,6 +58,7 @@ its date.
   («зйомка / зйомки / зйомок»), and under it their hours («54 години»).
 - **«Заплановано»** — the number of **planned** shoots in the period, its noun beside it, and under
   it «Найближча {date}», the earliest of them, or «Немає запланованих». A past period has none.
+- *Superseded by `US-063` AC-3 (owner, 2026-10-17): the tap now opens the planned shoots' list.*
 - **When** the creator taps «Заплановано»
 - **Then** «Календар» opens:
   - for «Місяць» — on that month, no day selected
@@ -70,6 +71,8 @@ its date.
   without a price are left out. «—» when there are none.
 
 ### AC-6 — «Очікує оплати»
+- *Amended by `US-063` AC-1b (owner, 2026-10-17): the count on the right, «На суму {sum}» under
+  the label.*
 - The balance — price less prepayment — summed over every shoot in the period that has a price,
   finished or planned.
 - Under the label:

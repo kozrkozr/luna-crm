@@ -1338,10 +1338,16 @@ export const uk = {
   statsNextTemplate: 'Найближча {date}',
   statsNothingPlanned: 'Немає запланованих',
   /** «2 зйомки без оплати» — {noun} from `shootCountForms`. */
-  statsUnpaidShootsTemplate: '{n} {noun} без оплати',
+  /** «На суму 9 000 ₴» — under «Очікує оплати» (US-063 AC-1b). */
+  statsUnpaidSumTemplate: 'На суму {sum}',
   statsAllPaid: 'Усі зйомки оплачені',
   // US-062 (owner, 2026-10-17).
   unpaidTitle: 'Без оплати',
+  // US-063 (owner, 2026-10-17).
+  statsEditing: 'В обробці',
+  statsNoneDone: 'Немає проведених зйомок',
+  statsAllDelivered: 'Усе передано клієнтам',
+  statsNoneOverdue: 'Немає прострочених',
   statsPrevPeriod: 'Попередній період',
   statsNextPeriod: 'Наступний період',
   statsChoosePeriod: 'Обрати період',
