@@ -28,8 +28,15 @@ changed here.
   «Знято · Обробка · Передано» steps (`US-042` AC-5, AC-10) (owner, 2026-10-17).
 - No line under the label.
 
+### AC-1c — «Передано» *(owner, 2026-10-17)*
+- A row **right under «В обробці»**: «Передано», with the number of shoots on the right, in the
+  ordinary colour.
+- It counts the shoots in the period **marked delivered** — exactly the shoots whose calendar
+  card lights «Передано» in its «Знято · Обробка · Передано» steps (`US-042` AC-5, AC-6).
+- No line under the label.
+
 ### AC-1a — «Прострочено» *(owner, 2026-10-17)*
-- A row **right under «В обробці»**: «Прострочено», with the number of shoots on the right —
+- A row **right under «Передано»**: «Прострочено», with the number of shoots on the right —
   **red** while above zero, the ordinary colour at zero.
 - It counts the shoots in the period that are **finished, have a delivery deadline that has
   passed and are not marked delivered** — exactly the shoots whose calendar card shows
@@ -50,6 +57,7 @@ changed here.
 | «Заплановано» | planned shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
 | «Очікує оплати» (`US-062`) | unpaid shoots in the period | {period} · {sum} — unchanged |
 | «В обробці» | AC-1's shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
+| «Передано» | AC-1c's shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
 | «Прострочено» | AC-1a's shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
 
 - Each is the same list as `US-062`'s: the calendar's cards under date headings,
@@ -58,13 +66,13 @@ changed here.
   so (AC-4) (owner, 2026-10-17; it was «a zero does not respond»).
 
 ### AC-2a — They look tappable *(owner, 2026-10-17)*
-- Each of the six carries a **chevron ›**, always: on the «Очікує оплати», «В обробці» and
-  «Прострочено» rows after the number; on the «Проведено» and «Заплановано» cards top right,
+- Each of the seven carries a **chevron ›**, always: on the «Очікує оплати», «В обробці»,
+  «Передано» and «Прострочено» rows after the number; on the «Проведено» and «Заплановано» cards top right,
   level with the label. The same chevron as the profile's «Сповіщення» and «Валюта» rows —
   size and muted colour.
 
 ### AC-2b — Two cards under «Проведено» and «Заплановано» *(owner, 2026-10-17)*
-- First, the rows that open a list: «Очікує оплати», «В обробці», «Прострочено».
+- First, the rows that open a list: «Очікує оплати», «В обробці», «Передано», «Прострочено».
 - Under it, a second card with the plain figures: «Середній чек», «Годин на зйомках».
 
 ### AC-3 — «Заплановано» no longer opens «Календар»
@@ -72,7 +80,7 @@ changed here.
 
 ### AC-4 — An empty list *(edge)* — `Statistics Empty States.dc.html` (owner, 2026-10-17)
 - **Given** a list with nothing in it — opened from a zero, or emptied while it was open (a
-  shoot paid, delivered, deleted or rescheduled)
+  shoot paid, delivered, deleted or rescheduled, or its delivery undone)
 - **Then** in place of the cards, one card: a large outline icon, a title, a line under it, and
   for two of them a «+ Нова зйомка» button that opens the new shoot form (view mode: the
   paywall, `US-052`):
@@ -83,6 +91,7 @@ changed here.
 | Заплановано | calendar with + | Поки нічого не заплановано | Додайте зйомку, і вона з’явиться тут і в календарі. | Нова зйомка |
 | Без оплати | payment card | Усі розрахувалися | Кожна зйомка оплачена. Нікому не треба нагадувати. | — |
 | В обробці | frame with ✓ | Черга обробки порожня | Усі фото вже в клієнтів. Можна видихнути або взятися за нову зйомку. | — |
+| Передано | paper plane | Ще нічого не передано | Коли надішлете клієнту готові файли, зйомка з’явиться тут. | — |
 | Прострочено | clock | Жодного зірваного дедлайну | Усі файли клієнти отримали вчасно. Так тримати. | — |
 
 - The same words for a period with no shoots at all, though they then claim more than is true
@@ -103,13 +112,15 @@ changed here.
 | Empty, planned | Поки нічого не заплановано · Додайте зйомку, і вона з’явиться тут і в календарі. | Nothing planned yet · Add a shoot and it will appear here and in the calendar. |
 | Empty, unpaid | Усі розрахувалися · Кожна зйомка оплачена. Нікому не треба нагадувати. | Everyone has paid · Every shoot is paid. No one needs a reminder. |
 | Empty, editing | Черга обробки порожня · Усі фото вже в клієнтів. Можна видихнути або взятися за нову зйомку. | Nothing left to edit · All photos are with your clients. Take a breath, or start a new shoot. |
+| Row, and its list's title | Передано *(as `US-042`)* | Delivered *(as `US-042`)* |
+| Empty, delivered | Ще нічого не передано · Коли надішлете клієнту готові файли, зйомка з’явиться тут. | Nothing delivered yet · Once you send a client their finished files, the shoot will appear here. |
 | Row, and its list's title | Прострочено *(as `US-042`)* | Overdue *(as `US-042`)* |
 | Empty, overdue | Жодного зірваного дедлайну · Усі файли клієнти отримали вчасно. Так тримати. | No missed deadlines · Every client got their files on time. Keep it up. |
 | Empty-state button | Нова зйомка *(as the calendar)* | New shoot |
 | Under «Очікує оплати» | На суму {sum} | Totalling {sum} |
 
 ## Out of scope
-- A line under «В обробці» or «Прострочено».
+- A line under «В обробці», «Передано» or «Прострочено».
 - Marking a shoot delivered from the list — it is done on the shoot (`US-042`).
 - «Дохід», «Середній чек» and «Годин на зйомках» opening anything.
 

@@ -47,9 +47,9 @@ export const STATS_PERIODS = ['month', 'year', 'all'] as const
 
 /**
  * `US-062` / `US-063` — which shoots a list opened from «Статистика» shows:
- * «Без оплати», «Проведено», «Заплановано», «В обробці», «Прострочено».
+ * «Без оплати», «Проведено», «Заплановано», «В обробці», «Передано», «Прострочено».
  */
-export type StatShootsKind = 'unpaid' | 'done' | 'planned' | 'editing' | 'overdue'
+export type StatShootsKind = 'unpaid' | 'done' | 'planned' | 'editing' | 'delivered' | 'overdue'
 
 /**
  * `US-061` AC-1 — which month or year the screen is on. `month` is 1-based and
@@ -90,6 +90,8 @@ export type Statistics = {
   pricedShoots: number
   /** `US-063` AC-1 — «В обробці»: finished, with a deadline, not delivered. */
   editing: number
+  /** `US-063` AC-1c — «Передано»: marked delivered. */
+  delivered: number
   /** `US-063` AC-1a — «Прострочено»: «В обробці» whose deadline has passed. */
   overdue: number
   /**
@@ -162,6 +164,14 @@ export function isEditing(shoot: StatsShoot, now: Date = new Date()): boolean {
 }
 
 /**
+ * `US-063` AC-1c — «Передано»: the shoots whose calendar card lights «Передано»
+ * (`US-042` AC-5) — marked delivered, which is what `deadlineStep` reads too.
+ */
+export function isDelivered(shoot: StatsShoot): boolean {
+  return !!shoot.deliveredAt
+}
+
+/**
  * `US-063` AC-1a — «Прострочено»: «В обробці» with its deadline already
  * behind today — the calendar card's red «Прострочено» chip (`US-042` AC-4).
  */
@@ -197,6 +207,7 @@ export function statistics(
   let unpaid = 0
   let unpaidShoots = 0
   let editing = 0
+  let delivered = 0
   let overdue = 0
   let first: { year: number; month: number } | null = null
 
@@ -212,6 +223,9 @@ export function statistics(
       unpaid += money.balance
       if (isUnpaid(shoot)) unpaidShoots += 1
     }
+
+    // `US-063` AC-1c — as the card: delivered whatever the date says now.
+    if (isDelivered(shoot)) delivered += 1
 
     // Work — finished shoots only; the rest are planned (AC-4).
     if (statusOf(shoot, now) === 'finished') {
@@ -241,6 +255,7 @@ export function statistics(
     unpaidShoots,
     pricedShoots,
     editing,
+    delivered,
     overdue,
     firstMonth: first,
   }
