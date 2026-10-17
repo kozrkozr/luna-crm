@@ -883,12 +883,11 @@ export const uk = {
   /** «Зйомка з Марією Литвин · 3 години» — the link view's meta line. */
   shootWithTemplate: 'Зйомка з {name}',
   /*
-   * The three copy confirmations. All PAST tense: a toast reports what
+   * The copy confirmations. All PAST tense: a toast reports what
    * happened, and the button that caused it already said what it would do.
    * Verbatim from `Shoot Detail v3.dc.html`, which gets this right throughout.
    */
   linkCopied: 'Посилання скопійовано',
-  addressCopied: 'Адресу скопійовано',
   // Shown when EXPO_PUBLIC_LINK_BASE_URL is unset, which is a misconfiguration
   // rather than a user error. Placeholder; see docs/open-questions.md item 22.
   linkNotConfigured: 'Адресу для посилань не налаштовано.',
@@ -1166,7 +1165,6 @@ export const uk = {
    * the three confirmations in the app read alike. Logged.
    */
   confirmRemoveReference: 'Видалити цей референс? Це незворотньо.',
-  copyAddress: 'Копіювати адресу',
   /**
    * The access-details block inside the location card. Same word as the first
    * tab and a different thing, which is why it is a key of its own rather than

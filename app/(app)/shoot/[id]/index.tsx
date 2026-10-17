@@ -14,7 +14,7 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Copy from 'lucide-react-native/icons/copy'
 import FolderOpen from 'lucide-react-native/icons/folder-open'
 import LinkIcon from 'lucide-react-native/icons/link'
-import Navigation from 'lucide-react-native/icons/navigation'
+import Navigation from 'lucide-react-native/icons/navigation-2'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Trash from 'lucide-react-native/icons/trash'
 import UserIcon from 'lucide-react-native/icons/user'
@@ -1149,10 +1149,10 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
             ) : null}
           </View>
           {/*
-            `US-034` — the card's one button, a 44pt icon like the link view's
-            copy button (owner, 2026-10-17). v3 drew the card with none: its
+            `US-034` — the card's one button, a 44pt icon, the same as the
+            link view's (owner, 2026-10-17). v3 drew the card with none: its
             «Маршрут» was a stub that never did anything, and «Копіювати
-            адресу» went on the owner's word. Copy stays in the link view only.
+            адресу» went on the owner's word — in the link views too, since.
           */}
           {route ? (
             <Pressable

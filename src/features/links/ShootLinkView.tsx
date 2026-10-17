@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link } from 'expo-router'
-import * as Clipboard from 'expo-clipboard'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import CalendarIcon from 'lucide-react-native/icons/calendar'
 import Check from 'lucide-react-native/icons/check'
-import Copy from 'lucide-react-native/icons/copy'
-import Navigation from 'lucide-react-native/icons/navigation'
+import Navigation from 'lucide-react-native/icons/navigation-2'
 import X from 'lucide-react-native/icons/x'
 import { Avatar } from '../../components/Avatar'
 import { Badge } from '../../components/ui/badge'
@@ -252,12 +250,12 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
               </View>
 
               {/*
-                The address, and two 44pt icon buttons beside it: «Маршрут» and
-                copy. The 2026-09-03 artboard kept only copy; `US-034` (owner,
-                2026-10-17) brought the route back as an icon of the same shape,
-                because this is the audience least likely to know where they are
-                going. It goes where `routeUrl` says — a pasted map link, or a
-                Google Maps search for the address.
+                The address, and one 44pt «Маршрут» icon button beside it. The
+                2026-09-03 artboard had a copy button here; `US-034` (owner,
+                2026-10-17) replaced it with the route, because this is the
+                audience least likely to know where they are going. It goes where
+                `routeUrl` says — a pasted map link, or a Google Maps search for
+                the address.
 
                 The venue name leads the block since 2026-09-03. It reached the
                 link surface in the same change — `location_name` is now selected
@@ -298,21 +296,6 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
                     >
                       <Icon as={Navigation} size={17} strokeWidth={1.8} className="text-muted-foreground" />
                     </Pressable>
-                  ) : null}
-                  {shoot.locationAddress ? (
-                  <Pressable
-                    className="border-border active:bg-secondary h-11 w-11 shrink-0 items-center justify-center rounded-lg border"
-                    onPress={() => {
-                      void (async () => {
-                        await Clipboard.setStringAsync(shoot.locationAddress ?? '')
-                        setToast(t.addressCopied)
-                      })()
-                    }}
-                    role="button"
-                    accessibilityLabel={t.copyAddress}
-                  >
-                    <Icon as={Copy} size={17} strokeWidth={1.8} className="text-muted-foreground" />
-                  </Pressable>
                   ) : null}
                 </View>
               ) : null}
