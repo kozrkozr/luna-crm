@@ -355,12 +355,13 @@ export function ShootLocationFields({
 
   /*
    * `US-067` AC-2 / AC-3. A street fills «Адреса» only; a venue fills «Адреса»
-   * and, when «Назва» is empty, «Назва» — never over what was typed there.
+   * and replaces «Назва», whatever it held (owner, 2026-10-17 — it filled an
+   * empty «Назва» only, until he tried it on the phone).
    */
   const pickPlace = (place: ResolvedPlace) => {
     setSearching(false)
     onAddressChange(place.address)
-    if (place.isPlace && place.name && !name.trim()) onNameChange(place.name)
+    if (place.isPlace && place.name) onNameChange(place.name)
   }
 
   return (
