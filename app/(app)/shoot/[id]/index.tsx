@@ -118,12 +118,13 @@ export default function ShootDetailScreen() {
   // `US-052` AC-2 — every create, edit and delete here opens the paywall
   // without access. Copying a link is not one of them (AC-4).
   const guard = useGuard()
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, tab: openOn } = useLocalSearchParams<{ id: string; tab?: string }>()
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
   const [state, setState] = useState<State>({ status: 'loading' })
-  const [tab, setTab] = useState<DetailTab>('details')
+  // `US-066` AC-7 — a deadline reminder opens the shoot on «Матеріали».
+  const [tab, setTab] = useState<DetailTab>(openOn === 'materials' ? 'materials' : 'details')
   const [headerHeight, setHeaderHeight] = useState(0)
   const [toast, setToast] = useState<ToastState>(null)
 

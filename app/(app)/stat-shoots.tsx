@@ -51,7 +51,8 @@ type State =
  *   «Проведено», «Заплановано», «В обробці», «Передано» and «Прострочено»
  *
  * One screen with six selections (owner, 2026-10-17: «таку ж сторінку»).
- * Opened as `/stat-shoots?kind=unpaid&period=month&year=2026&month=10`. The list is read again
+ * Opened as `/stat-shoots?kind=unpaid&period=month&year=2026&month=10`; a
+ * deadline reminder (`US-066` AC-7) opens it with `period=all&noPeriod=1`. The list is read again
  * every time the screen comes back into focus (AC-4), so a shoot marked paid
  * on its own screen (`US-060`) is gone on the way back.
  *
@@ -75,6 +76,7 @@ export default function StatShootsScreen() {
     period?: string
     year?: string
     month?: string
+    noPeriod?: string
   }>()
   const kind: StatShootsKind =
     params.kind === 'done' ||
@@ -144,7 +146,9 @@ export default function StatShootsScreen() {
   // `US-062` AC-3: the sum owed; `US-063` AC-2: how many shoots.
   const meta = stats
     ? [
-        periodLine(period, anchor, stats, t),
+        // `US-066` AC-7 — opened from a deadline reminder: every such shoot,
+        // and only «{n} зйомки» under the title.
+        params.noPeriod ? '' : periodLine(period, anchor, stats, t),
         kind === 'unpaid'
           ? formatMoney(stats.unpaid, currency)
           : `${list.length} ${plural(list.length, t.shootCountForms)}`,

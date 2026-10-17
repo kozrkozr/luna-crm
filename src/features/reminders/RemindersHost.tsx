@@ -33,7 +33,8 @@ if (Platform.OS !== 'web') {
  *   the moment a change made elsewhere, or a permission granted in iOS
  *   settings, can be picked up.
  * - **Taps** (AC-11): a «за N годин» reminder opens its shoot; the evening
- *   digest opens the calendar with tomorrow selected.
+ *   digest opens the calendar with tomorrow selected; a deadline reminder
+ *   (`US-066` AC-7) opens its shoot's «Матеріали», or its list.
  */
 export function RemindersHost() {
   const language = useLanguage()
@@ -83,6 +84,20 @@ export function RemindersHost() {
       router.push(`/(app)/shoot/${data.shootId}`)
     } else if (data?.kind === 'digest' && typeof data.date === 'string') {
       router.navigate({ pathname: '/(app)/(tabs)/shoots', params: { date: data.date } })
+    } else if (data?.kind === 'deadline') {
+      // `US-066` AC-7 — one shoot opens on «Матеріали», several open their
+      // `US-063` list over all time, with no period named.
+      if (typeof data.shootId === 'string') {
+        router.push({
+          pathname: '/(app)/shoot/[id]',
+          params: { id: data.shootId, tab: 'materials' },
+        })
+      } else if (data.list === 'editing' || data.list === 'overdue') {
+        router.push({
+          pathname: '/(app)/stat-shoots',
+          params: { kind: data.list, period: 'all', noPeriod: '1' },
+        })
+      }
     }
   }, [response, router])
 

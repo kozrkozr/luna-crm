@@ -509,6 +509,8 @@ export async function setDeliveryDeadline(
         ? { delivery_due: due }
         : { delivery_due: due, delivered_at: deliveredAt }
   const { error } = await supabase.from('shoots').update(patch).eq('id', id)
+  // `US-066` AC-5 — the deadline's reminders follow it.
+  if (!error) shootsChanged()
 
   return !error
 }
@@ -538,6 +540,8 @@ export async function setDelivered(
     .from('shoots')
     .update({ delivered_at: deliveredAt })
     .eq('id', id)
+  // `US-066` AC-5 — delivered files get no more reminders; an undo brings them back.
+  if (!error) shootsChanged()
 
   return error ? undefined : deliveredAt
 }

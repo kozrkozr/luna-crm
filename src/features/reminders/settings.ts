@@ -22,14 +22,20 @@ export type ReminderSettings = {
   /** The reminder N hours before each shoot (AC-4). */
   beforeOn: boolean
   beforeHours: BeforeHours
+  /** `US-066` — the day before a delivery deadline, and the day after a missed one. */
+  deadlineOn: boolean
+  /** Their local wall-clock time, `HH:MM` — one for both (AC-6). */
+  deadlineTime: string
 }
 
-/** AC-2 — both on, the digest at 20:00, N = 2. */
+/** AC-2 — both on, the digest at 20:00, N = 2; `US-066` AC-6 — deadlines on, at 11:00. */
 export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   digestOn: true,
   digestTime: '20:00',
   beforeOn: true,
   beforeHours: 2,
+  deadlineOn: true,
+  deadlineTime: '11:00',
 }
 
 /** AC-9 — the three values N can take. */
@@ -71,13 +77,16 @@ function parse(raw: string): ReminderSettings {
   const d = DEFAULT_REMINDER_SETTINGS
   return {
     digestOn: typeof value.digestOn === 'boolean' ? value.digestOn : d.digestOn,
-    digestTime:
-      typeof value.digestTime === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.digestTime)
-        ? value.digestTime
-        : d.digestTime,
+    digestTime: isTime(value.digestTime) ? value.digestTime : d.digestTime,
     beforeOn: typeof value.beforeOn === 'boolean' ? value.beforeOn : d.beforeOn,
     beforeHours: BEFORE_HOURS_OPTIONS.includes(value.beforeHours as BeforeHours)
       ? (value.beforeHours as BeforeHours)
       : d.beforeHours,
+    deadlineOn: typeof value.deadlineOn === 'boolean' ? value.deadlineOn : d.deadlineOn,
+    deadlineTime: isTime(value.deadlineTime) ? value.deadlineTime : d.deadlineTime,
   }
+}
+
+function isTime(value: unknown): value is string {
+  return typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
 }
