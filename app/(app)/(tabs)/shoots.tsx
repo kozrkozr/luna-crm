@@ -18,6 +18,8 @@ import { failed, tapped } from '../../../src/lib/haptics'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
 import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
 import { StatusPill } from '../../../src/components/StatusPill'
+import { PaidIcon } from '../../../src/components/PaidIcon'
+import { hasPrice, payment } from '../../../src/features/shoots/money'
 import { CalendarDeadline } from '../../../src/components/DeliveryDeadline'
 import { Card } from '../../../src/components/ui/card'
 import {
@@ -714,9 +716,17 @@ function AgendaRow({
               ) : null}
 
               <View className="flex-row items-start justify-between gap-2">
-                <Text className="text-subtitle text-card-foreground flex-1 font-semibold" numberOfLines={1}>
-                  {shoot.clientName}
-                </Text>
+                {/* `US-060` AC-5 — paid or not, right after the name; only for a
+                    shoot with a price (AC-6). The name shrinks, the icon does not. */}
+                <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
+                  <Text
+                    className="text-subtitle text-card-foreground shrink font-semibold"
+                    numberOfLines={1}
+                  >
+                    {shoot.clientName}
+                  </Text>
+                  {hasPrice(shoot) ? <PaidIcon paid={payment(shoot).badge === 'paid'} /> : null}
+                </View>
                 {/* The row is a dark card, so the pill takes its
                     dark-surface pair — deep fill, pale text. */}
                 <StatusPill value={shoot.status} />

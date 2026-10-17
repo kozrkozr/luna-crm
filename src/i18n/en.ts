@@ -655,6 +655,10 @@ export const en: Strings = {
   deadlineDelivered: 'Delivered',
   deadlineSteps: ['Shot', 'Editing', 'Delivered'],
   deadlineMarkDelivered: 'Mark as delivered to client',
+  markPaid: 'Payment received',
+  markedPaid: 'Marked as paid',
+  paidValue: 'Paid',
+  notPaidLabel: 'Not paid',
   deadlineEditorTitle: 'Delivery deadline for files',
   deadlineEditorCaption:
     "Counted from the shoot day. It shows on the finished shoot's card in the calendar.",

@@ -514,6 +514,17 @@ export async function setDeliveryDeadline(
 }
 
 /**
+ * `US-060` AC-2 — record the whole price as received, or (the toast's undo) put
+ * the prepayment back to what it was. Only `prepayment` is written: "paid" is
+ * derived from it and the price, never stored (AC-3).
+ */
+export async function setPrepayment(id: string, prepayment: number | null): Promise<boolean> {
+  const { error } = await supabase.from('shoots').update({ prepayment }).eq('id', id)
+
+  return !error
+}
+
+/**
  * `US-042` AC-6 — mark the files as delivered, or (the toast's undo) take the
  * mark back. Returns the timestamp written, or `undefined` when the write
  * failed — null being a legitimate value for the undo.

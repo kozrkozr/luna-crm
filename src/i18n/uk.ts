@@ -1389,6 +1389,11 @@ export const uk = {
   /** AC-5, in order. */
   deadlineSteps: ['Знято', 'Обробка', 'Передано'],
   deadlineMarkDelivered: 'Позначити як передано клієнту',
+  // US-060 (owner, 2026-10-16).
+  markPaid: 'Оплату отримано',
+  markedPaid: 'Позначено як оплачено',
+  paidValue: 'Оплачено',
+  notPaidLabel: 'Не оплачено',
   deadlineEditorTitle: 'Дедлайн здачі файлів',
   deadlineEditorCaption:
     "Відлік від дня зйомки. Дата з'явиться на картці завершеної зйомки в календарі.",
