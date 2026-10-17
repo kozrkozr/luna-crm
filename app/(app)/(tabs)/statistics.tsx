@@ -1,14 +1,19 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, ScrollView, View } from 'react-native'
-import { useFocusEffect } from 'expo-router'
+import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
+import { useFocusEffect, useRouter } from 'expo-router'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
+import CalendarIcon from 'lucide-react-native/icons/calendar'
 import Camera from 'lucide-react-native/icons/camera'
 import ChartColumn from 'lucide-react-native/icons/chart-column'
 import Clock from 'lucide-react-native/icons/clock'
+import ChevronDown from 'lucide-react-native/icons/chevron-down'
+import ChevronLeft from 'lucide-react-native/icons/chevron-left'
+import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import CreditCard from 'lucide-react-native/icons/credit-card'
 import DollarSign from 'lucide-react-native/icons/dollar-sign'
 import type { LucideIcon } from 'lucide-react-native'
 import { Card } from '../../../src/components/ui/card'
+import { Sheet } from '../../../src/components/ui/sheet'
 import { Icon } from '../../../src/components/ui/icon'
 import { Tabs, type TabItem } from '../../../src/components/ui/tabs'
 import { Text } from '../../../src/components/ui/text'
@@ -19,6 +24,8 @@ import { useStrings } from '../../../src/i18n/LanguageProvider'
 import type { Strings } from '../../../src/i18n'
 import { listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { plural } from '../../../src/features/shoots/home'
+import { formatDayMonth } from '../../../src/features/shoots/date'
+import { tapped } from '../../../src/lib/haptics'
 import {
   currencySymbol,
   formatAmount,
@@ -26,7 +33,12 @@ import {
   symbolLeads,
 } from '../../../src/features/shoots/money'
 import { useCurrency } from '../../../src/features/account/currency'
-import { statistics, type StatsPeriod, type Statistics } from '../../../src/features/shoots/stats'
+import {
+  statistics,
+  type StatsAnchor,
+  type StatsPeriod,
+  type Statistics,
+} from '../../../src/features/shoots/stats'
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'loaded'; shoots: Shoot[] }
 
@@ -57,6 +69,16 @@ export default function StatisticsScreen() {
   const currency = useCurrency()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [period, setPeriod] = useState<StatsPeriod>('month')
+  const router = useRouter()
+  /*
+    `US-061` AC-1 — the month or year on screen. Starts on today's; the arrows
+    step it with no limit either way (owner, 2026-10-17).
+  */
+  const [anchor, setAnchor] = useState<StatsAnchor>(() => {
+    const today = new Date()
+    return { year: today.getFullYear(), month: today.getMonth() + 1 }
+  })
+  const [picking, setPicking] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -78,8 +100,29 @@ export default function StatisticsScreen() {
     are cheap enough to derive on every pass.
   */
   const now = new Date()
-  const stats = state.status === 'loaded' ? statistics(state.shoots, period, now) : null
-  const line = stats ? periodLine(period, stats, now, t) : ''
+  const stats = state.status === 'loaded' ? statistics(state.shoots, period, anchor, now) : null
+  const line = stats ? periodLine(period, anchor, stats, t) : ''
+
+  const step = (by: number) =>
+    setAnchor((current) => {
+      if (period === 'year') return { ...current, year: current.year + by }
+      const index = current.year * 12 + (current.month - 1) + by
+      return { year: Math.floor(index / 12), month: (index % 12) + 1 }
+    })
+
+  /*
+    AC-4 — «Заплановано» opens the calendar: on the month itself, or on the day
+    of the earliest planned shoot for a year or all time.
+  */
+  const openPlanned = (next: string) =>
+    router.navigate(
+      period === 'month'
+        ? {
+            pathname: '/(app)/(tabs)/shoots',
+            params: { month: `${anchor.year}-${String(anchor.month).padStart(2, '0')}` },
+          }
+        : { pathname: '/(app)/(tabs)/shoots', params: { date: next } }
+    )
 
   const periods: TabItem<StatsPeriod>[] = [
     { value: 'month', label: t.statsPeriodMonth },
@@ -97,6 +140,15 @@ export default function StatisticsScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <View className="gap-2.5 px-4 pt-3">
           <Tabs items={periods} value={period} onChange={setPeriod} />
+
+          {period === 'all' ? null : (
+            <PeriodStepper
+              label={line}
+              onPrev={() => step(-1)}
+              onNext={() => step(1)}
+              onOpen={() => setPicking(true)}
+            />
+          )}
 
           {state.status === 'loading' ? (
             <View className="items-center py-8">
@@ -125,34 +177,68 @@ export default function StatisticsScreen() {
                 strong
               />
 
-              {/* «Проведено зйомок» — the count, with its plural noun beside
-                  it («зйомка / зйомки / зйомок») rather than inside the label. */}
-              <HeroCard
-                label={t.statsShootsDone}
-                icon={Camera}
-                tint="bg-chart-5"
-                stripe="bg-info-border"
-                figure={String(stats.shoots)}
-                unit={plural(stats.shoots, t.shootCountForms)}
-                unitClassName="text-body text-muted-foreground"
-                figureClassName="text-info"
-                line={line}
-              />
+              {/* AC-4 — «Проведено» and «Заплановано», side by side. */}
+              <View className="flex-row gap-2.5">
+                <CountCard
+                  label={t.statsShootsDone}
+                  icon={Camera}
+                  tint="bg-chart-5"
+                  stripe="bg-info-border"
+                  figure={stats.done}
+                  figureClassName="text-info"
+                  unit={plural(stats.done, t.shootCountForms)}
+                  line={`${stats.hours} ${plural(stats.hours, t.hourForms)}`}
+                />
+                <CountCard
+                  label={t.statsPlanned}
+                  icon={CalendarIcon}
+                  tint="bg-chart-4"
+                  stripe="bg-chart-4"
+                  figure={stats.planned}
+                  figureClassName="text-foreground"
+                  unit={plural(stats.planned, t.shootCountForms)}
+                  line={
+                    stats.nextPlanned
+                      ? t.statsNextTemplate.replace(
+                          '{date}',
+                          formatDayMonth(stats.nextPlanned, t.monthsGenitive)
+                        )
+                      : t.statsNothingPlanned
+                  }
+                  onPress={
+                    stats.nextPlanned
+                      ? ((next) => () => openPlanned(next))(stats.nextPlanned)
+                      : undefined
+                  }
+                />
+              </View>
 
               <View className="pt-1">
                 <Card variant="flat" className="gap-0 overflow-hidden p-0">
+                  {/* AC-5 — average price of the shoots with one; «—» when none. */}
                   <SecondaryRow
                     label={t.statsAverage}
                     icon={DollarSign}
                     tint="bg-chart-4"
-                    value={formatMoney(stats.average, currency)}
+                    value={stats.average === null ? '—' : formatMoney(stats.average, currency)}
                   />
+                  {/* AC-6 — amber only while something is owed. */}
                   <SecondaryRow
                     label={t.statsUnpaid}
                     icon={Clock}
                     tint="bg-chart-1"
                     value={formatMoney(stats.unpaid, currency)}
-                    valueClassName="text-warn"
+                    valueClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-foreground'}
+                    sub={
+                      stats.unpaidShoots > 0
+                        ? t.statsUnpaidShootsTemplate
+                            .replace('{n}', String(stats.unpaidShoots))
+                            .replace('{noun}', plural(stats.unpaidShoots, t.shootCountForms))
+                        : stats.pricedShoots > 0
+                          ? t.statsAllPaid
+                          : null
+                    }
+                    subClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-success'}
                     divided
                   />
                   <SecondaryRow
@@ -168,6 +254,17 @@ export default function StatisticsScreen() {
           )}
         </View>
       </ScrollView>
+
+      <PeriodSheet
+        open={picking && period !== 'all'}
+        mode={period === 'year' ? 'year' : 'month'}
+        anchor={anchor}
+        onPick={(picked) => {
+          setAnchor(picked)
+          setPicking(false)
+        }}
+        onClose={() => setPicking(false)}
+      />
     </View>
   )
 }
@@ -186,12 +283,12 @@ export default function StatisticsScreen() {
  */
 function periodLine(
   period: StatsPeriod,
+  anchor: StatsAnchor,
   stats: Statistics,
-  now: Date,
   t: Strings
 ): string {
-  if (period === 'month') return `${t.months[now.getMonth()]} ${now.getFullYear()}`
-  if (period === 'year') return `${now.getFullYear()} ${t.statsYearWord}`.trim()
+  if (period === 'month') return `${t.months[anchor.month - 1]} ${anchor.year}`
+  if (period === 'year') return `${anchor.year} ${t.statsYearWord}`.trim()
   if (!stats.firstMonth) return ''
   const { year, month } = stats.firstMonth
   return `${t.statsSincePrefix} ${t.monthsGenitive[month - 1]} ${year}`
@@ -282,6 +379,8 @@ function SecondaryRow({
   tint,
   value,
   valueClassName = 'text-foreground',
+  sub = null,
+  subClassName = 'text-muted-foreground',
   divided = false,
 }: {
   label: string
@@ -289,6 +388,9 @@ function SecondaryRow({
   tint: string
   value: string
   valueClassName?: string
+  /** `US-061` AC-6 — the line under «Очікує оплати». */
+  sub?: string | null
+  subClassName?: string
   divided?: boolean
 }) {
   return (
@@ -300,8 +402,250 @@ function SecondaryRow({
       <View className={`h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg ${tint}`}>
         <Icon as={icon} size={14} strokeWidth={2} className="text-tint-foreground" />
       </View>
-      <Text className="text-body-sm text-muted-foreground min-w-0 flex-1">{label}</Text>
+      <View className="min-w-0 flex-1">
+        <Text className="text-body-sm text-muted-foreground">{label}</Text>
+        {sub ? <Text className={`text-caption mt-[3px] ${subClassName}`}>{sub}</Text> : null}
+      </View>
       <Text className={`text-subtitle shrink-0 font-semibold ${valueClassName}`}>{value}</Text>
     </View>
+  )
+}
+
+/**
+ * `US-061` AC-4 — one of the two half-width cards under «Дохід»: «Проведено»
+ * and «Заплановано». The `HeroCard` shape at a smaller size — 26px chip, 32px
+ * figure, the noun beside it and a line under it, as `Statistics.dc.html`
+ * draws them. `onPress` makes it a button; without one it is inert.
+ */
+function CountCard({
+  label,
+  icon,
+  tint,
+  stripe,
+  figure,
+  figureClassName,
+  unit,
+  line,
+  onPress,
+}: {
+  label: string
+  icon: LucideIcon
+  tint: string
+  stripe: string
+  figure: number
+  figureClassName: string
+  unit: string
+  line: string
+  onPress?: () => void
+}) {
+  const body = (
+    <Card variant="flat" className="flex-1 flex-row gap-0 overflow-hidden p-0">
+      <View className={`w-[3px] shrink-0 ${stripe}`} />
+      <View className="min-w-0 flex-1 px-3.5 pb-[15px] pt-3.5">
+        <View className="flex-row items-center gap-2">
+          <View className={`h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg ${tint}`}>
+            <Icon as={icon} size={15} strokeWidth={1.9} className="text-tint-foreground" />
+          </View>
+          <SectionLabel label={label} />
+        </View>
+        <View className="mt-3 flex-row items-baseline gap-1.5">
+          <Text
+            className={`text-[32px] font-semibold ${figureClassName}`}
+            style={{ lineHeight: 34, letterSpacing: -0.64 }}
+          >
+            {figure}
+          </Text>
+          <Text className="text-body-sm text-muted-foreground">{unit}</Text>
+        </View>
+        <Text className="text-caption text-muted-foreground mt-2" numberOfLines={1}>
+          {line}
+        </Text>
+      </View>
+    </Card>
+  )
+  if (!onPress) return <View className="flex-1">{body}</View>
+  return (
+    <Pressable
+      className="flex-1 active:opacity-80"
+      onPress={() => {
+        tapped()
+        onPress()
+      }}
+      role="button"
+    >
+      {body}
+    </Pressable>
+  )
+}
+
+/** `US-061` AC-1 — ‹ «Жовтень 2026 ▾» ›, under the period tabs. */
+function PeriodStepper({
+  label,
+  onPrev,
+  onNext,
+  onOpen,
+}: {
+  label: string
+  onPrev: () => void
+  onNext: () => void
+  onOpen: () => void
+}) {
+  const t = useStrings()
+  const arrow = (icon: LucideIcon, onPress: () => void, name: string) => (
+    <Pressable
+      className="bg-card border-border h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border active:opacity-70"
+      onPress={() => {
+        tapped()
+        onPress()
+      }}
+      role="button"
+      accessibilityLabel={name}
+    >
+      <Icon as={icon} size={18} strokeWidth={2} className="text-foreground" />
+    </Pressable>
+  )
+  return (
+    <View className="flex-row items-center gap-1.5">
+      {arrow(ChevronLeft, onPrev, t.statsPrevPeriod)}
+      <Pressable
+        className="bg-card border-border h-11 min-w-0 flex-1 flex-row items-center justify-center gap-1.5 rounded-[10px] border active:opacity-70"
+        onPress={onOpen}
+        role="button"
+        accessibilityLabel={t.statsChoosePeriod}
+      >
+        <Text className="text-body text-foreground font-semibold">{label}</Text>
+        <Icon as={ChevronDown} size={15} strokeWidth={2} className="text-muted-foreground" />
+      </Pressable>
+      {arrow(ChevronRight, onNext, t.statsNextPeriod)}
+    </View>
+  )
+}
+
+/**
+ * `US-061` AC-2 — pick a month (a year with ‹ › over twelve months) or a year
+ * (twelve at a time, ‹ › to the next twelve). The chosen cell is filled, the
+ * current one outlined; «Поточний місяць / рік» jumps back to today.
+ */
+function PeriodSheet({
+  open,
+  mode,
+  anchor,
+  onPick,
+  onClose,
+}: {
+  open: boolean
+  mode: 'month' | 'year'
+  anchor: StatsAnchor
+  onPick: (anchor: StatsAnchor) => void
+  onClose: () => void
+}) {
+  const t = useStrings()
+  const today = new Date()
+  const current = { year: today.getFullYear(), month: today.getMonth() + 1 }
+  // The month sheet's year, or the first of the twelve years on show.
+  const [page, setPage] = useState(anchor.year)
+  const [shown, setShown] = useState(false)
+  if (open && !shown) {
+    setShown(true)
+    setPage(mode === 'month' ? anchor.year : anchor.year - 5)
+  } else if (!open && shown) {
+    setShown(false)
+  }
+
+  const cells =
+    mode === 'month'
+      ? t.months.map((name, index) => ({
+          key: String(index),
+          label: name.slice(0, 3),
+          chosen: anchor.year === page && anchor.month === index + 1,
+          isCurrent: current.year === page && current.month === index + 1,
+          pick: () => onPick({ year: page, month: index + 1 }),
+        }))
+      : Array.from({ length: 12 }, (_, index) => {
+          const year = page + index
+          return {
+            key: String(year),
+            label: String(year),
+            chosen: anchor.year === year,
+            isCurrent: current.year === year,
+            pick: () => onPick({ year, month: anchor.month }),
+          }
+        })
+  const pageBy = mode === 'month' ? 1 : 12
+  const pageLabel = mode === 'month' ? String(page) : `${page} – ${page + 11}`
+
+  return (
+    <Sheet open={open} onClose={onClose}>
+      <View className="min-h-9 flex-row items-center justify-between">
+        <Text className="text-subtitle text-foreground font-semibold">
+          {mode === 'month' ? t.statsChooseMonth : t.statsChooseYear}
+        </Text>
+        <Pressable onPress={onClose} role="button" className="min-h-11 justify-center px-0.5">
+          <Text className="text-body text-link font-medium">{t.closeWord}</Text>
+        </Pressable>
+      </View>
+
+      <View className="my-1.5 flex-row items-center justify-between">
+        <Pressable
+          onPress={() => setPage((value) => value - pageBy)}
+          role="button"
+          accessibilityLabel={t.statsPrevPeriod}
+          className="h-11 w-11 items-center justify-center"
+        >
+          <Icon as={ChevronLeft} size={18} strokeWidth={2} className="text-foreground" />
+        </Pressable>
+        <Text className="text-body text-foreground font-semibold">{pageLabel}</Text>
+        <Pressable
+          onPress={() => setPage((value) => value + pageBy)}
+          role="button"
+          accessibilityLabel={t.statsNextPeriod}
+          className="h-11 w-11 items-center justify-center"
+        >
+          <Icon as={ChevronRight} size={18} strokeWidth={2} className="text-foreground" />
+        </Pressable>
+      </View>
+
+      <View className="flex-row flex-wrap gap-2">
+        {cells.map((cell) => (
+          <Pressable
+            key={cell.key}
+            onPress={() => {
+              tapped()
+              cell.pick()
+            }}
+            role="button"
+            className={`h-12 basis-[31%] grow items-center justify-center rounded-[10px] border ${
+              cell.chosen
+                ? 'bg-primary border-primary'
+                : cell.isCurrent
+                  ? 'bg-background border-muted-foreground'
+                  : 'bg-background border-border'
+            }`}
+          >
+            <Text
+              className={`text-body ${
+                cell.chosen
+                  ? 'text-primary-foreground font-semibold'
+                  : cell.isCurrent
+                    ? 'text-foreground font-semibold'
+                    : 'text-foreground font-medium'
+              }`}
+            >
+              {cell.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Pressable
+        onPress={() => onPick(current)}
+        role="button"
+        className="border-border mt-3.5 h-11 items-center justify-center rounded-[10px] border active:opacity-70"
+      >
+        <Text className="text-body text-foreground font-medium">
+          {mode === 'month' ? t.statsThisMonth : t.statsThisYear}
+        </Text>
+      </Pressable>
+    </Sheet>
   )
 }
