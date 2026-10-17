@@ -435,7 +435,17 @@ export const uk = {
    */
   locationNameLabel: 'Назва',
   locationNamePlaceholder: 'Наприклад, Студія KULT',
-  locationAddressPlaceholder: 'Вулиця, будинок, місто',
+  /*
+   * `US-067` — the address field on the iPhone and its search screen (owner,
+   * 2026-10-17, from his screenshot of the location picker). The hint names no
+   * service on purpose; the attribution under Apple's suggestions does.
+   */
+  addressSearchPlaceholder: 'Місце, адреса або будь-який текст',
+  addressSearchHint:
+    'Виберіть місце зі списку або просто напишіть текст — наприклад, «У клієнтки вдома» чи «Біля фонтану на Контрактовій».',
+  yourLocations: 'Ваші локації',
+  noAddress: 'Без адреси',
+  appleMapsAttribution: 'Дані: Apple Maps',
   locationDetails: 'Деталі',
   locationDetailsPlaceholder: 'Поверх, код домофону, вхід, паркування',
   notesSection: 'Нотатки',

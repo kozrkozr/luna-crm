@@ -1,5 +1,6 @@
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
 import Plus from 'lucide-react-native/icons/plus'
+import MapPin from 'lucide-react-native/icons/map-pin'
 import X from 'lucide-react-native/icons/x'
 import { useState } from 'react'
 import { Pressable, View } from 'react-native'
@@ -19,6 +20,7 @@ import {
 } from '../features/shoots/date'
 import { selected as tickSelection, tapped } from '../lib/haptics'
 import type { Shoot } from '../features/shoots/api'
+import type { PastPlace } from '../features/shoots/home'
 import { addressSearch, type ResolvedPlace } from '../../modules/address-search'
 import { AddressSearchScreen } from './AddressSearchScreen'
 
@@ -335,6 +337,7 @@ export function ShootLocationFields({
   details,
   onDetailsChange,
   chips,
+  places,
 }: {
   name: string
   onNameChange: (value: string) => void
@@ -344,6 +347,8 @@ export function ShootLocationFields({
   onDetailsChange: (value: string) => void
   /** Venue names already used, from `pastLocations`. */
   chips: string[]
+  /** «Ваші локації» on the iPhone's address search, from `pastPlaces`. */
+  places: PastPlace[]
 }) {
   const t = useStrings()
   const [searching, setSearching] = useState(false)
@@ -382,33 +387,48 @@ export function ShootLocationFields({
           and it stays the plain field it always was (AC-5). `id` kept from the
           edit screen's own field: `us018-check.mjs` drives `#address` and
           `#location-note` in a browser, and the ids cost nothing.
+
+          The pin and the placeholder are the search screen's own (AC-1), so
+          the field reads as the way into it.
         */}
-        {addressSearch ? (
-          <>
+        <View className="justify-center">
+          {addressSearch ? (
             <Pressable onPress={() => setSearching(true)} role="button" accessibilityLabel={t.address}>
               <View pointerEvents="none">
-                <Input value={address} placeholder={t.locationAddressPlaceholder} />
+                <Input value={address} placeholder={t.addressSearchPlaceholder} className="pl-10" />
               </View>
             </Pressable>
-            <AddressSearchScreen
-              visible={searching}
-              initial={address}
-              onPick={pickPlace}
-              onDone={(text) => {
-                setSearching(false)
-                onAddressChange(text)
-              }}
-              onCancel={() => setSearching(false)}
+          ) : (
+            <Input
+              id="address"
+              value={address}
+              onChangeText={onAddressChange}
+              placeholder={t.addressSearchPlaceholder}
+              className="pl-10"
             />
-          </>
-        ) : (
-          <Input
-            id="address"
-            value={address}
-            onChangeText={onAddressChange}
-            placeholder={t.locationAddressPlaceholder}
+          )}
+          <View className="absolute left-3" pointerEvents="none">
+            <Icon as={MapPin} size={18} strokeWidth={1.8} className="text-muted-foreground" />
+          </View>
+        </View>
+        {addressSearch ? (
+          <AddressSearchScreen
+            visible={searching}
+            initial={address}
+            places={places}
+            onPick={pickPlace}
+            onPickPast={(place) => {
+              setSearching(false)
+              onNameChange(place.name)
+              onAddressChange(place.address)
+            }}
+            onDone={(text) => {
+              setSearching(false)
+              onAddressChange(text)
+            }}
+            onCancel={() => setSearching(false)}
           />
-        )}
+        ) : null}
       </View>
 
       <View className="gap-2">

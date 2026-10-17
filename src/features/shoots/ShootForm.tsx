@@ -34,7 +34,7 @@ import {
   type Shoot,
 } from '../../features/shoots/api'
 import { toIsoDate as isoOf } from '../../features/shoots/date'
-import { overlappingShoots, pastLocations, plural } from '../../features/shoots/home'
+import { overlappingShoots, pastLocations, pastPlaces, plural } from '../../features/shoots/home'
 import { addCrewMember, type AddCrewMemberInput } from '../crew/api'
 import { offerCrewOnForm, takeHeldCrew } from '../crew/draftCrew'
 import { Avatar } from '../../components/Avatar'
@@ -687,6 +687,7 @@ export function ShootForm(props: ShootFormMode) {
   const clashes =
     date && start && end ? overlappingShoots(others, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
+  const places = pastPlaces(existing)
 
   /*
     «Скасувати» asks before discarding (owner, 2026-09-06). It left on the first
@@ -986,6 +987,7 @@ export function ShootForm(props: ShootFormMode) {
             details={locationDetails}
             onDetailsChange={setLocationDetails}
             chips={chips}
+            places={places}
           />
 
           {/*

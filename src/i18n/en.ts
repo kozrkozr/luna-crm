@@ -245,7 +245,12 @@ export const en: Strings = {
   shootWord: 'Shoot',
   locationNameLabel: 'Name',
   locationNamePlaceholder: 'For example, KULT Studio',
-  locationAddressPlaceholder: 'Street, building, city',
+  addressSearchPlaceholder: 'Place, address or any text',
+  addressSearchHint:
+    'Pick a place from the list or just type text — for example, “At the client’s home” or “By the fountain on Kontraktova”.',
+  yourLocations: 'Your locations',
+  noAddress: 'No address',
+  appleMapsAttribution: 'Data: Apple Maps',
   locationDetails: 'Details',
   locationDetailsPlaceholder: 'Floor, door code, entrance, parking',
   notesSection: 'Notes',
