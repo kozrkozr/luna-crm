@@ -14,6 +14,7 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Copy from 'lucide-react-native/icons/copy'
 import FolderOpen from 'lucide-react-native/icons/folder-open'
 import LinkIcon from 'lucide-react-native/icons/link'
+import Navigation from 'lucide-react-native/icons/navigation'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Trash from 'lucide-react-native/icons/trash'
 import UserIcon from 'lucide-react-native/icons/user'
@@ -56,6 +57,7 @@ import { LinkifiedText } from '../../../../src/components/LinkifiedText'
 import { failed, succeeded, tapped } from '../../../../src/lib/haptics'
 import { takePendingToast } from '../../../../src/lib/nextScreenToast'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
+import { routeUrl } from '../../../../src/lib/routeUrl'
 import {
   deleteShoot,
   getShoot,
@@ -1121,38 +1123,49 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
   }
 
   const kind = attachment ? attachmentKind(attachment) : null
+  const route = routeUrl(shoot.locationAddress)
 
   return (
     <Card variant="flat" className="gap-0 p-0">
       <View className="gap-3 p-4">
         <SectionLabel label={t.locationSection} emoji="📍" />
-        {/* The venue leads, the address supports it — which is the order v3
-            draws and the reason the two are separate columns
-            (`location_name`, migration 20260903120000). */}
-        {shoot.locationName ? (
-          <Text className="text-subtitle text-foreground font-semibold">
-            {shoot.locationName}
-          </Text>
+        {shoot.locationName || shoot.locationAddress ? (
+        <View className="flex-row items-start gap-3">
+          <View className="min-w-0 flex-1 gap-3">
+            {/* The venue leads, the address supports it — which is the order v3
+                draws and the reason the two are separate columns
+                (`location_name`, migration 20260903120000). */}
+            {shoot.locationName ? (
+              <Text className="text-subtitle text-foreground font-semibold">
+                {shoot.locationName}
+              </Text>
+            ) : null}
+            {/* A creator pastes a maps pin into the address as often as a street:
+                any URL inside it is tappable since 2026-09-06. See `linkify`. */}
+            {shoot.locationAddress ? (
+              <LinkifiedText className="text-body-sm text-muted-foreground leading-5">
+                {shoot.locationAddress}
+              </LinkifiedText>
+            ) : null}
+          </View>
+          {/*
+            `US-034` — the card's one button, a 44pt icon like the link view's
+            copy button (owner, 2026-10-17). v3 drew the card with none: its
+            «Маршрут» was a stub that never did anything, and «Копіювати
+            адресу» went on the owner's word. Copy stays in the link view only.
+          */}
+          {route ? (
+            <Pressable
+              className="border-border active:bg-secondary h-11 w-11 shrink-0 items-center justify-center rounded-lg border"
+              onPress={() => void openExternalUrl(route)}
+              role="button"
+              accessibilityLabel={t.route}
+            >
+              <Icon as={Navigation} size={17} strokeWidth={1.8} className="text-muted-foreground" />
+            </Pressable>
+          ) : null}
+        </View>
         ) : null}
-        {/* A creator pastes a maps pin into the address as often as a street:
-            any URL inside it is tappable since 2026-09-06. See `linkify`. */}
-        {shoot.locationAddress ? (
-          <LinkifiedText className="text-body-sm text-muted-foreground leading-5">
-            {shoot.locationAddress}
-          </LinkifiedText>
-        ) : null}
-        {/*
-          **The card has no buttons**, as v3 draws it. «Маршрут» went first — it
-          was a stub the owner asked for on 2026-08-30 and never did anything
-          when tapped — and «Копіювати адресу» followed on the owner's word,
-          though it worked. Which map app, and what a `maps:` URL does on the
-          static web export, remain the unanswered questions behind «Маршрут»
-          (S-4).
-
-          The address is still copyable where a reader without the app needs it:
-          the link view draws its own «Копіювати адресу» (`uk.copyAddress`), and
-          that one is untouched.
-        */}
       </View>
 
       {shoot.locationNote ? (

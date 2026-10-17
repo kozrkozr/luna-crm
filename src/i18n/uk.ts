@@ -1148,9 +1148,10 @@ export const uk = {
   confirmedOfTemplate: '{done} з {total} підтвердили',
 
   /*
-   * The location card's two buttons. «Маршрут» is a **stub** — see the note in
-   * app/(app)/shoot/[id]/index.tsx. The word ships; nothing is behind it yet.
+   * `US-034` AC-4 — the route button's accessibility label, an icon with no
+   * visible text (AC-1). On the creator's location card and in both link views.
    */
+  route: 'Маршрут',
   /*
    * The bare verb, for controls whose subject is obvious from where they sit —
    * the ✕ on the location attachment's thumbnail. Same word as

@@ -547,6 +547,7 @@ export const en: Strings = {
   confirmedOfTemplate: '{done} of {total} confirmed',
   remove: 'Remove',
   confirmRemoveReference: 'Remove this reference? This cannot be undone.',
+  route: 'Directions',
   copyAddress: 'Copy address',
   accessDetailsLabel: 'Details',
   allFilter: 'All',
