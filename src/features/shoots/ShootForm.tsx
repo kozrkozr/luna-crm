@@ -41,7 +41,7 @@ import { Avatar } from '../../components/Avatar'
 import { Card } from '../../components/ui/card'
 import { Icon } from '../../components/ui/icon'
 import { roleWithEmoji } from '../../i18n/vocabulary'
-import Minus from 'lucide-react-native/icons/minus'
+import Trash from 'lucide-react-native/icons/trash'
 import Plus from 'lucide-react-native/icons/plus'
 import {
   createClient,
@@ -1095,9 +1095,11 @@ export function ShootForm(props: ShootFormMode) {
                           .join(' · ')}
                       </Text>
                     </View>
-                    {/* AC-3 — at once, without a question: nothing is saved yet. */}
+                    {/* AC-3 — at once, without a question: nothing is saved yet.
+                        The bin, not the artboard's «−» (owner, 2026-10-17): the same
+                        icon as «Видалити» on the shoot's «Команда» tab. */}
                     <Pressable
-                      className="active:bg-secondary h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      className="active:bg-destructive/10 h-10 w-10 shrink-0 items-center justify-center rounded-full"
                       onPress={() => {
                         tapped()
                         setCrew((current) => current.filter((draft) => draft.id !== id))
@@ -1108,7 +1110,7 @@ export function ShootForm(props: ShootFormMode) {
                         person.name.trim()
                       )}
                     >
-                      <Icon as={Minus} size={16} strokeWidth={1.8} className="text-muted-foreground" />
+                      <Icon as={Trash} size={16} strokeWidth={1.8} className="text-destructive" />
                     </Pressable>
                   </View>
                 ))}
