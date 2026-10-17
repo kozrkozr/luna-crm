@@ -426,9 +426,21 @@ function filterContacts(
     : contacts
 
   return [
-    ...matched.filter((person) => onShoot.has(person.key)),
-    ...matched.filter((person) => !onShoot.has(person.key)),
+    ...matched.filter((person) => onShoot.has(identityOf(person))),
+    ...matched.filter((person) => !onShoot.has(identityOf(person))),
   ]
+}
+
+/**
+ * The key `onShoot` holds for this contact.
+ *
+ * **Not `person.key`.** That was the same string until 2026-09-04, when
+ * «Мої контакти» became a table and `key` became the contact's id — after which
+ * nobody was ever marked «У команді» and someone already on the shoot could be
+ * added again.
+ */
+function identityOf(person: PastCrewMember): string {
+  return crewIdentity(person.name, person.phone, person.email)
 }
 
 /* ───────────────────────────── «Мої контакти» ──────────────────────────── */
@@ -495,7 +507,7 @@ function ContactsTab({
                 key={person.key}
                 person={person}
                 divided={index > 0}
-                inCrew={onShoot.has(person.key)}
+                inCrew={onShoot.has(identityOf(person))}
                 checked={picked.has(person.key)}
                 onToggle={() => onToggle(person.key)}
               />
