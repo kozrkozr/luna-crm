@@ -55,10 +55,11 @@ future, with a price and something outstanding; paid shown on the card and on th
 - **Given** a shoot with a price, in the calendar's list
 - **Then** a banknote icon sits right after the client's name:
   - **paid** — in colour, with a green check badge; labelled «Оплачено»
-  - **not paid** (nothing or only part of it received, past or future) — dimmed, with an amber
-    «!» badge; labelled «Не оплачено»
-- The banknote is a **drawn vector icon**, not the 💵 emoji the mockup uses: React Native cannot
-  grey out an emoji, and a vector icon can be dimmed (owner, 2026-10-16)
+  - **not paid** (nothing or only part of it received, past or future) — translucent, with an
+    amber «!» badge; labelled «Не оплачено»
+- The banknote is the 💵 emoji, as the mockup draws it, in both states. The mockup also greys the
+  unpaid one; React Native cannot grey an emoji, so it is only translucent (owner, 2026-10-17 —
+  a drawn vector icon was tried first and looked unlike the mockup)
 
 ### AC-6 — No price, nothing to say *(edge)*
 - **Given** a shoot without a price
