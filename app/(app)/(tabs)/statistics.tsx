@@ -12,6 +12,7 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import CreditCard from 'lucide-react-native/icons/credit-card'
 import DollarSign from 'lucide-react-native/icons/dollar-sign'
 import FileClock from 'lucide-react-native/icons/file-clock'
+import TriangleAlert from 'lucide-react-native/icons/triangle-alert'
 import type { LucideIcon } from 'lucide-react-native'
 import { Card } from '../../../src/components/ui/card'
 import { Sheet } from '../../../src/components/ui/sheet'
@@ -218,24 +219,28 @@ export default function StatisticsScreen() {
                     tint="bg-chart-4"
                     value={stats.average === null ? '—' : formatMoney(stats.average, currency)}
                   />
-                  {/* AC-6 — amber only while something is owed. */}
+                  {/*
+                    `US-061` AC-6 as amended by `US-063` AC-1b — the number of
+                    unpaid shoots on the right, «На суму …» under the label;
+                    amber only while something is owed.
+                  */}
                   <SecondaryRow
                     label={t.statsUnpaid}
                     icon={Clock}
                     tint="bg-chart-1"
-                    value={formatMoney(stats.unpaid, currency)}
+                    value={String(stats.unpaidShoots)}
                     valueClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-foreground'}
                     sub={
                       stats.unpaidShoots > 0
-                        ? t.statsUnpaidShootsTemplate
-                            .replace('{n}', String(stats.unpaidShoots))
-                            .replace('{noun}', plural(stats.unpaidShoots, t.shootCountForms))
+                        ? t.statsUnpaidSumTemplate.replace(
+                            '{sum}',
+                            formatMoney(stats.unpaid, currency)
+                          )
                         : stats.pricedShoots > 0
                           ? t.statsAllPaid
                           : null
                     }
                     subClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-success'}
-                    // `US-062` AC-1 — only while there is something to list.
                     onPress={stats.unpaidShoots > 0 ? () => openList('unpaid') : undefined}
                     divided
                   />
@@ -246,6 +251,17 @@ export default function StatisticsScreen() {
                     tint="bg-chart-5"
                     value={String(stats.editing)}
                     onPress={stats.editing > 0 ? () => openList('editing') : undefined}
+                    divided
+                  />
+                  {/* `US-063` AC-1a — under «В обробці»; red while above zero, as
+                      the card's «Прострочено» chip. */}
+                  <SecondaryRow
+                    label={t.deadlineOverdue}
+                    icon={TriangleAlert}
+                    tint="bg-chart-2"
+                    value={String(stats.overdue)}
+                    valueClassName={stats.overdue > 0 ? 'text-danger-soft' : 'text-foreground'}
+                    onPress={stats.overdue > 0 ? () => openList('overdue') : undefined}
                     divided
                   />
                   <SecondaryRow

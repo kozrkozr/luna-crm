@@ -28,6 +28,21 @@ changed here.
   «Знято · Обробка · Передано» steps (`US-042` AC-5, AC-10) (owner, 2026-10-17).
 - No line under the label.
 
+### AC-1a — «Прострочено» *(owner, 2026-10-17)*
+- A row **right under «В обробці»**: «Прострочено», with the number of shoots on the right —
+  **red** while above zero, the ordinary colour at zero.
+- It counts the shoots in the period that are **finished, have a delivery deadline that has
+  passed and are not marked delivered** — exactly the shoots whose calendar card shows
+  «Прострочено» (`US-042` AC-4). Every one of them is also «В обробці».
+- No line under the label.
+
+### AC-1b — «Очікує оплати» shows a count, and the sum under it *(owner, 2026-10-17)*
+- On the right, **the number of unpaid shoots** instead of the sum — amber while above zero.
+- Under the label, **«На суму {sum}»**, amber, instead of «{n} зйомок без оплати».
+- When every shoot with a price is paid: «0» on the right and «Усі зйомки оплачені», green,
+  under the label — as before. With no priced shoot in the period: «0», nothing under it.
+- Amends `US-061` AC-6. The list's title line keeps the sum (`US-062` AC-3).
+
 ### AC-2 — Which counts open a list
 | Tapped | The list | Under the title |
 |---|---|---|
@@ -35,6 +50,7 @@ changed here.
 | «Заплановано» | planned shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
 | «Очікує оплати» (`US-062`) | unpaid shoots in the period | {period} · {sum} — unchanged |
 | «В обробці» | AC-1's shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
+| «Прострочено» | AC-1a's shoots in the period | {period} · {n} {зйомка / зйомки / зйомок} |
 
 - Each is the same list as `US-062`'s: the calendar's cards under date headings,
   **chronological, earliest first**, read again on coming back.
@@ -50,6 +66,7 @@ changed here.
   - «Проведено» — «Немає проведених зйомок»
   - «Заплановано» — «Немає запланованих» (as `US-061`)
   - «В обробці» — «Усе передано клієнтам»
+  - «Прострочено» — «Немає прострочених»
 
 ### AC-5 — Who sees it *(required)*
 - As `US-062` AC-6: creator only, their own shoots, never a link payload.
@@ -63,9 +80,12 @@ changed here.
 | Under a title | {period} · {n} зйомка / зйомки / зйомок | {period} · {n} shoot / shoots |
 | Empty, done | Немає проведених зйомок | No shoots done |
 | Empty, editing | Усе передано клієнтам | Everything delivered |
+| Row, and its list's title | Прострочено *(as `US-042`)* | Overdue *(as `US-042`)* |
+| Empty, overdue | Немає прострочених | Nothing overdue |
+| Under «Очікує оплати» | На суму {sum} | Totalling {sum} |
 
 ## Out of scope
-- An overdue count or any other line under «В обробці».
+- A line under «В обробці» or «Прострочено».
 - Marking a shoot delivered from the list — it is done on the shoot (`US-042`).
 - «Дохід», «Середній чек» and «Годин на зйомках» opening anything.
 

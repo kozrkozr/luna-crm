@@ -1,6 +1,7 @@
 import type { Shoot } from './api'
 import { payment } from './money'
 import { statusOf } from './status'
+import { daysUntil } from './home'
 
 /**
  * «Статистика» — what a period of shoots came to.
@@ -46,9 +47,9 @@ export const STATS_PERIODS = ['month', 'year', 'all'] as const
 
 /**
  * `US-062` / `US-063` — which shoots a list opened from «Статистика» shows:
- * «Без оплати», «Проведено», «Заплановано», «В обробці».
+ * «Без оплати», «Проведено», «Заплановано», «В обробці», «Прострочено».
  */
-export type StatShootsKind = 'unpaid' | 'done' | 'planned' | 'editing'
+export type StatShootsKind = 'unpaid' | 'done' | 'planned' | 'editing' | 'overdue'
 
 /**
  * `US-061` AC-1 — which month or year the screen is on. `month` is 1-based and
@@ -89,6 +90,8 @@ export type Statistics = {
   pricedShoots: number
   /** `US-063` AC-1 — «В обробці»: finished, with a deadline, not delivered. */
   editing: number
+  /** `US-063` AC-1a — «Прострочено»: «В обробці» whose deadline has passed. */
+  overdue: number
   /**
    * The month the earliest counted shoot falls in, 1-based, for the «Весь час»
    * line («З березня 2023»). Null when the period counted nothing.
@@ -158,6 +161,14 @@ export function isEditing(shoot: StatsShoot, now: Date = new Date()): boolean {
   return statusOf(shoot, now) === 'finished' && !!shoot.deliveryDue && !shoot.deliveredAt
 }
 
+/**
+ * `US-063` AC-1a — «Прострочено»: «В обробці» with its deadline already
+ * behind today — the calendar card's red «Прострочено» chip (`US-042` AC-4).
+ */
+export function isOverdue(shoot: StatsShoot, now: Date = new Date()): boolean {
+  return isEditing(shoot, now) && daysUntil(shoot.deliveryDue as string, now) < 0
+}
+
 /** Earlier date first; on one day, the earlier start (a missing one first). */
 function earlier(a: StatsShoot, b: StatsShoot): boolean {
   return a.date < b.date || (a.date === b.date && (a.startTime ?? '') < (b.startTime ?? ''))
@@ -186,6 +197,7 @@ export function statistics(
   let unpaid = 0
   let unpaidShoots = 0
   let editing = 0
+  let overdue = 0
   let first: { year: number; month: number } | null = null
 
   for (const shoot of shoots) {
@@ -206,6 +218,7 @@ export function statistics(
       done += 1
       minutes += shootMinutes(shoot)
       if (isEditing(shoot, now)) editing += 1
+      if (isOverdue(shoot, now)) overdue += 1
     } else {
       planned += 1
       if (!next || earlier(shoot, next)) next = shoot
@@ -228,6 +241,7 @@ export function statistics(
     unpaidShoots,
     pricedShoots,
     editing,
+    overdue,
     firstMonth: first,
   }
 }

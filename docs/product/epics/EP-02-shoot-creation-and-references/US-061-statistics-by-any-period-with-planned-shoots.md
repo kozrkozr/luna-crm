@@ -71,6 +71,8 @@ its date.
   without a price are left out. «—» when there are none.
 
 ### AC-6 — «Очікує оплати»
+- *Amended by `US-063` AC-1b (owner, 2026-10-17): the count on the right, «На суму {sum}» under
+  the label.*
 - The balance — price less prepayment — summed over every shoot in the period that has a price,
   finished or planned.
 - Under the label:

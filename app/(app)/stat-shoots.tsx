@@ -19,6 +19,7 @@ import { periodLine } from '../../src/features/shoots/periodLine'
 import {
   inPeriod,
   isEditing,
+  isOverdue,
   isUnpaid,
   statistics,
   type StatShootsKind,
@@ -37,8 +38,8 @@ type State =
  * The shoots behind a figure on «Статистика», for the period it was on:
  *
  * - `unpaid` — `US-062`, «Без оплати», from «{n} зйомок без оплати»
- * - `done`, `planned`, `editing` — `US-063`, from «Проведено», «Заплановано»
- *   and «В обробці»
+ * - `done`, `planned`, `editing`, `overdue` — `US-063`, from «Проведено»,
+ *   «Заплановано», «В обробці» and «Прострочено»
  *
  * One screen with four selections (owner, 2026-10-17: «таку ж сторінку»).
  * Opened as `/stat-shoots?kind=unpaid&period=month&year=2026&month=10`. The list is read again
@@ -66,7 +67,10 @@ export default function StatShootsScreen() {
     month?: string
   }>()
   const kind: StatShootsKind =
-    params.kind === 'done' || params.kind === 'planned' || params.kind === 'editing'
+    params.kind === 'done' ||
+    params.kind === 'planned' ||
+    params.kind === 'editing' ||
+    params.kind === 'overdue'
       ? params.kind
       : 'unpaid'
 
@@ -110,6 +114,8 @@ export default function StatShootsScreen() {
         return statusOf(shoot, now) !== 'finished'
       case 'editing':
         return isEditing(shoot, now)
+      case 'overdue':
+        return isOverdue(shoot, now)
     }
   }
   const list = loaded
@@ -138,6 +144,7 @@ export default function StatShootsScreen() {
     done: t.statsShootsDone,
     planned: t.statsPlanned,
     editing: t.statsEditing,
+    overdue: t.deadlineOverdue,
   }[kind]
   // `US-062` AC-5, `US-063` AC-4 — a list emptied while it was open.
   const empty = {
@@ -145,6 +152,7 @@ export default function StatShootsScreen() {
     done: t.statsNoneDone,
     planned: t.statsNothingPlanned,
     editing: t.statsAllDelivered,
+    overdue: t.statsNoneOverdue,
   }[kind]
 
   return (
@@ -194,7 +202,9 @@ export default function StatShootsScreen() {
           <View className="border-border items-center rounded-xl border px-4 py-7">
             <Text
               className={`text-body text-center ${
-                kind === 'unpaid' || kind === 'editing' ? 'text-success' : 'text-muted-foreground'
+                kind === 'unpaid' || kind === 'editing' || kind === 'overdue'
+                  ? 'text-success'
+                  : 'text-muted-foreground'
               }`}
             >
               {empty}
