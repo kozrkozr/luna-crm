@@ -43,8 +43,9 @@ form there is no shoot yet, so the people are held on the form and saved togethe
 - **Given** at least one person added
 - **Then** «Команда» shows on the form **after «Оплата» and before «Нотатки для команди»**, with:
   - in its heading, the count («2 учасники») and a × like the other optional sections
-  - one row per person — initials, name, role and phone — with a «−» that removes that person
-    **at once, without a question**
+  - one row per person — initials, name, role and phone — with a bin icon (the one «Видалити»
+    uses on the shoot's «Команда» tab; owner, 2026-10-17 — not the mockup's «−») that removes
+    that person **at once, without a question**
   - «Додати учасника» at the foot of the list, opening the same screen again
 - **No hint under the section** — the mockup's «Після створення зйомки зможете надіслати команді
   запрошення…» line is not built
@@ -87,7 +88,7 @@ Existing strings are reused: «Команда» / Crew, «Додати учас�
 | UK | EN |
 |---|---|
 | Прибрати команду *(the section's × accessibility label)* | Remove crew |
-| Прибрати {name} *(a row's «−» accessibility label)* | Remove {name} |
+| Прибрати {name} *(a row's bin accessibility label)* | Remove {name} |
 
 ## Out of scope
 - Crew on the edit form — AC-8.
