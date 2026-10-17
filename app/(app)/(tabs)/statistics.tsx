@@ -11,6 +11,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import CreditCard from 'lucide-react-native/icons/credit-card'
 import DollarSign from 'lucide-react-native/icons/dollar-sign'
+import FileCheck from 'lucide-react-native/icons/file-check'
 import FileClock from 'lucide-react-native/icons/file-clock'
 import TriangleAlert from 'lucide-react-native/icons/triangle-alert'
 import type { LucideIcon } from 'lucide-react-native'
@@ -250,7 +251,16 @@ export default function StatisticsScreen() {
                     onPress={() => openList('editing')}
                     divided
                   />
-                  {/* `US-063` AC-1a — under «В обробці»; red while above zero, as
+                  {/* `US-063` AC-1c — under «В обробці». */}
+                  <SecondaryRow
+                    label={t.deadlineDelivered}
+                    icon={FileCheck}
+                    tint="bg-chart-3"
+                    value={String(stats.delivered)}
+                    onPress={() => openList('delivered')}
+                    divided
+                  />
+                  {/* `US-063` AC-1a — under «Передано»; red while above zero, as
                       the card's «Прострочено» chip. */}
                   <SecondaryRow
                     label={t.deadlineOverdue}

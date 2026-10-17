@@ -623,6 +623,8 @@ export const en: Strings = {
   emptyUnpaidBody: 'Every shoot is paid. No one needs a reminder.',
   emptyEditingTitle: 'Nothing left to edit',
   emptyEditingBody: 'All photos are with your clients. Take a breath, or start a new shoot.',
+  emptyDeliveredTitle: 'Nothing delivered yet',
+  emptyDeliveredBody: 'Once you send a client their finished files, the shoot will appear here.',
   emptyOverdueTitle: 'No missed deadlines',
   emptyOverdueBody: 'Every client got their files on time. Keep it up.',
   statsPrevPeriod: 'Previous period',

@@ -9,6 +9,7 @@ import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import Clock from 'lucide-react-native/icons/clock'
 import CreditCard from 'lucide-react-native/icons/credit-card'
 import Plus from 'lucide-react-native/icons/plus'
+import Send from 'lucide-react-native/icons/send'
 import SquareCheck from 'lucide-react-native/icons/square-check'
 import { Icon } from '../../src/components/ui/icon'
 import { Text } from '../../src/components/ui/text'
@@ -24,6 +25,7 @@ import { useCurrency } from '../../src/features/account/currency'
 import { periodLine } from '../../src/features/shoots/periodLine'
 import {
   inPeriod,
+  isDelivered,
   isEditing,
   isOverdue,
   isUnpaid,
@@ -45,10 +47,10 @@ type State =
  * The shoots behind a figure on «Статистика», for the period it was on:
  *
  * - `unpaid` — `US-062`, «Без оплати», from «{n} зйомок без оплати»
- * - `done`, `planned`, `editing`, `overdue` — `US-063`, from «Проведено»,
- *   «Заплановано», «В обробці» and «Прострочено»
+ * - `done`, `planned`, `editing`, `delivered`, `overdue` — `US-063`, from
+ *   «Проведено», «Заплановано», «В обробці», «Передано» and «Прострочено»
  *
- * One screen with four selections (owner, 2026-10-17: «таку ж сторінку»).
+ * One screen with six selections (owner, 2026-10-17: «таку ж сторінку»).
  * Opened as `/stat-shoots?kind=unpaid&period=month&year=2026&month=10`. The list is read again
  * every time the screen comes back into focus (AC-4), so a shoot marked paid
  * on its own screen (`US-060`) is gone on the way back.
@@ -78,6 +80,7 @@ export default function StatShootsScreen() {
     params.kind === 'done' ||
     params.kind === 'planned' ||
     params.kind === 'editing' ||
+    params.kind === 'delivered' ||
     params.kind === 'overdue'
       ? params.kind
       : 'unpaid'
@@ -122,6 +125,8 @@ export default function StatShootsScreen() {
         return statusOf(shoot, now) !== 'finished'
       case 'editing':
         return isEditing(shoot, now)
+      case 'delivered':
+        return isDelivered(shoot)
       case 'overdue':
         return isOverdue(shoot, now)
     }
@@ -152,6 +157,7 @@ export default function StatShootsScreen() {
     done: t.statsShootsDone,
     planned: t.statsPlanned,
     editing: t.statsEditing,
+    delivered: t.deadlineDelivered,
     overdue: t.deadlineOverdue,
   }[kind]
   // `US-063` AC-4 — the empty list, as `Statistics Empty States.dc.html` draws it.
@@ -168,6 +174,12 @@ export default function StatShootsScreen() {
       icon: SquareCheck,
       title: t.emptyEditingTitle,
       body: t.emptyEditingBody,
+      add: false,
+    },
+    delivered: {
+      icon: Send,
+      title: t.emptyDeliveredTitle,
+      body: t.emptyDeliveredBody,
       add: false,
     },
     overdue: { icon: Clock, title: t.emptyOverdueTitle, body: t.emptyOverdueBody, add: false },

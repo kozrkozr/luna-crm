@@ -1354,6 +1354,8 @@ export const uk = {
   emptyUnpaidBody: 'Кожна зйомка оплачена. Нікому не треба нагадувати.',
   emptyEditingTitle: 'Черга обробки порожня',
   emptyEditingBody: 'Усі фото вже в клієнтів. Можна видихнути або взятися за нову зйомку.',
+  emptyDeliveredTitle: 'Ще нічого не передано',
+  emptyDeliveredBody: 'Коли надішлете клієнту готові файли, зйомка з’явиться тут.',
   emptyOverdueTitle: 'Жодного зірваного дедлайну',
   emptyOverdueBody: 'Усі файли клієнти отримали вчасно. Так тримати.',
   statsPrevPeriod: 'Попередній період',
