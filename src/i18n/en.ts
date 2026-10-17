@@ -679,6 +679,31 @@ export const en: Strings = {
   reminderHourForms: ['hour', 'hours'],
   reminderMore: 'and {count} more',
   reminderAt: 'at {time}',
+  // US-066 — owner, 2026-10-17.
+  reminderDeadlineToggle: 'Delivery deadline',
+  reminderDeadlineCaption: 'A reminder the day before, and again if the files are late',
+  deadlineReminderSoonTitles1: [
+    "Delivery's tomorrow ⏳ Final push",
+    'One more day, then the files go to the client 📤',
+    "Deadline tomorrow. Let's wrap it up 💪",
+  ],
+  deadlineReminderSoonTitlesMany: [
+    'A few deliveries tomorrow. Keep the pace 🔥',
+    'Deadlines on the horizon 🏁',
+    "Delivery day tomorrow. Let's go 📤",
+  ],
+  deadlineReminderLateTitles1: [
+    'Oops, a delivery is overdue 😬',
+    'The client is still waiting for the files 👀',
+    'The deadline passed yesterday 🫠',
+  ],
+  deadlineReminderLateTitlesMany: [
+    'A few deliveries are overdue 😬',
+    'Clients are waiting for their files 👀',
+    'The deadlines flew by yesterday 🫠',
+  ],
+  deadlineReminderLine: '{client}, shoot on {date}',
+  deadlineReminderLineNoClient: 'Shoot on {date}',
   // US-042 — owner, 2026-10-06.
   deadlineAdd: 'Add delivery deadline',
   deadlineAddCaption: 'Optional · appears in the calendar after the shoot',

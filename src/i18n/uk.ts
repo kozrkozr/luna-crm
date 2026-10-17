@@ -1421,6 +1421,35 @@ export const uk = {
   reminderHourForms: ['годину', 'години', 'годин'],
   reminderMore: 'і ще {count}',
   reminderAt: 'о {time}',
+  /* ── US-066 — delivery deadline reminders. Copy approved by the owner, chat 2026-10-17. ── */
+  reminderDeadlineToggle: 'Дедлайн здачі',
+  reminderDeadlineCaption:
+    'Нагадування за день до дедлайну, і ще раз, якщо файли не передано вчасно',
+  /** AC-1 — the day before; one of three, picked at random, by one shoot or several. */
+  deadlineReminderSoonTitles1: [
+    'Завтра здача ⏳ Фінальний ривок',
+    'Ще день — і файли мають бути в клієнта 📤',
+    'Завтра дедлайн. Дотискаємо 💪',
+  ],
+  deadlineReminderSoonTitlesMany: [
+    'Завтра кілька здач. Тримаємо темп 🔥',
+    'Дедлайни на горизонті 🏁',
+    'Завтра день здачі. Поїхали 📤',
+  ],
+  /** AC-2 — the day after a missed deadline. */
+  deadlineReminderLateTitles1: [
+    'Ой, здача прострочена 😬',
+    'Клієнт ще чекає на файли 👀',
+    'Дедлайн учора минув 🫠',
+  ],
+  deadlineReminderLateTitlesMany: [
+    'Кілька здач прострочено 😬',
+    'Клієнти чекають на файли 👀',
+    'Дедлайни вчора пролетіли 🫠',
+  ],
+  /** AC-3 — `{date}` is `formatDayMonth`, the shoot's own date. */
+  deadlineReminderLine: '{client}, зйомка {date}',
+  deadlineReminderLineNoClient: 'Зйомка {date}',
   /* ── US-042 — delivery deadline. Copy from `Shoot Detail v3.dc.html`. ── */
   deadlineAdd: 'Додати дедлайн здачі',
   deadlineAddCaption: "Необов'язково · з'явиться в календарі після зйомки",
