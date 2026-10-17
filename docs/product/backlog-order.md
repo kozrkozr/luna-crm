@@ -50,7 +50,7 @@ Derived from the design system's own §10 plan (`ADR-017`), amended in one place
 | 7 | Client records | `US-029` → `US-028` | The `clients` table and its migration (`ADR-018`). `US-029` first: a client row must exist and be attachable before a profile can show one |
 | 8 | Reference categories | `US-032` | Independent of everything above; held until after the gate because it changes a section the mockups redesign |
 | 9 | Location photos | `US-033` | Widens `risks.md` R-5's file surface from one object per shoot to several |
-| — | Directions to the location | `US-034` | **Held, not ordered.** Its open question 1 may merge it into `US-033`; building it first risks building the wrong schema |
+| — | Route to the location | `US-034` | Held until 2026-10-17, then rewritten (owner): built from the address, no schema change, independent of `US-033`. Not ordered — the owner picks when |
 
 **Note — why the theme pass moved ahead of the gate.** This table originally put
 Ilona's device review before the remaining screens, reasoning that a review is
