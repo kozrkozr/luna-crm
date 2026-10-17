@@ -79,6 +79,7 @@ import {
 } from '../../../../src/features/shoots/locationMedia'
 import { Starfield } from '../../../../src/components/Starfield'
 import { useGuard } from '../../../../src/features/subscription/access'
+import { MoneyBurst } from '../../../../src/components/MoneyBurst'
 
 type State =
   | { status: 'loading' }
@@ -964,6 +965,10 @@ function PaymentCard({
   const guard = useGuard()
   const [busy, setBusy] = useState(false)
   const pay = payment(shoot)
+  const button = useRef<View>(null)
+  /** `US-060` AC-2a — where the banknotes start, while they fly. */
+  const [celebration, setCelebration] = useState<{ x: number; y: number } | null>(null)
+  const endCelebration = useCallback(() => setCelebration(null), [])
 
   /*
     `US-060` AC-2 — the whole price received. The toast's undo puts back the
@@ -971,6 +976,13 @@ function PaymentCard({
   */
   const markPaid = async () => {
     const before = shoot.prepayment
+    // Measured now: once the shoot is paid the button is gone (AC-4).
+    const origin = await new Promise<{ x: number; y: number } | null>((resolve) => {
+      if (!button.current) return resolve(null)
+      button.current.measureInWindow((x, y, width, height) =>
+        resolve({ x: x + width / 2, y: y + height / 2 })
+      )
+    })
     setBusy(true)
     const saved = await setPrepayment(shoot.id, pay.price)
     setBusy(false)
@@ -979,6 +991,7 @@ function PaymentCard({
       return onToast(t.somethingWentWrong)
     }
     succeeded()
+    if (origin) setCelebration(origin)
     onChanged(pay.price)
     onToast(t.markedPaid, () => {
       void setPrepayment(shoot.id, before).then((undone) => undone && onChanged(before))
@@ -1061,6 +1074,7 @@ function PaymentCard({
       */}
       {canMarkPaid(pay) ? (
         <Pressable
+          ref={button}
           className="border-border min-h-11 flex-row items-center justify-center gap-[7px] border-t p-2 active:bg-secondary"
           disabled={busy}
           onPress={guard(() => {
@@ -1072,6 +1086,10 @@ function PaymentCard({
           <Icon as={Check} size={14} strokeWidth={1.8} className="text-muted-foreground" />
           <Text className="text-label text-foreground font-semibold">{t.markPaid}</Text>
         </Pressable>
+      ) : null}
+
+      {celebration ? (
+        <MoneyBurst origin={celebration} onDone={endCelebration} />
       ) : null}
     </Card>
   )

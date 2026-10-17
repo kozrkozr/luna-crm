@@ -40,6 +40,15 @@ future, with a price and something outstanding; paid shown on the card and on th
   (AC-4), the calendar (AC-5) and «Статистика», which counts it as income and no longer as owed
 - **And** a toast says so, with «Скасувати», which puts the prepayment back to what it was
 
+### AC-2a — Banknotes across the screen *(owner, 2026-10-17)*
+- **When** the shoot has been marked paid
+- **Then** about two dozen 💵 are thrown up from the button across the whole screen, spinning, and
+  fall back and fade within about two seconds
+- **And** they do not block a tap — the toast's «Скасувати» works underneath them
+- **Given** the phone asks for reduced motion
+- **Then** there are no banknotes; the haptic and the toast still say it
+- A rain of notes from the top edge was tried beside this on a device and not kept.
+
 ### AC-3 — Becoming unpaid again *(edge)*
 - **Given** a paid shoot
 - **When** its price is raised or its prepayment lowered on the edit form
