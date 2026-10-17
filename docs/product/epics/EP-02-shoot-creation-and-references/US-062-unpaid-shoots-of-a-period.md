@@ -25,6 +25,8 @@ cards.
 - **Then** «Без оплати» opens for the same period — the month, the year or all time on screen
 - **Given** the row says «Усі зйомки оплачені», or nothing
 - **Then** it does not respond to a tap
+- *Superseded by `US-063` AC-2 (owner, 2026-10-17): the row always opens the list; with nothing
+  unpaid it shows AC-5's «Усі зйомки оплачені».*
 
 ### AC-2 — Which shoots
 - Exactly the ones counted in `US-061` AC-6: shoots **in the period** with a **price** and a

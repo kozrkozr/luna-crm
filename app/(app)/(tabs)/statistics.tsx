@@ -115,7 +115,8 @@ export default function StatisticsScreen() {
 
   /*
     `US-062` / `US-063` — a figure opens the shoots behind it, for the period
-    on screen. A zero opens nothing: the callers pass no handler then.
+    on screen. A zero opens it too, and the list says it is empty (`US-063`
+    AC-2, owner 2026-10-17).
   */
   const openList = (kind: StatShootsKind) =>
     router.push({
@@ -187,7 +188,7 @@ export default function StatisticsScreen() {
                   figureClassName="text-info"
                   unit={plural(stats.done, t.shootCountForms)}
                   line={`${stats.hours} ${plural(stats.hours, t.hourForms)}`}
-                  onPress={stats.done > 0 ? () => openList('done') : undefined}
+                  onPress={() => openList('done')}
                 />
                 <CountCard
                   label={t.statsPlanned}
@@ -206,19 +207,16 @@ export default function StatisticsScreen() {
                       : t.statsNothingPlanned
                   }
                   // `US-063` AC-3 — its list, no longer «Календар».
-                  onPress={stats.planned > 0 ? () => openList('planned') : undefined}
+                  onPress={() => openList('planned')}
                 />
               </View>
 
+              {/*
+                `US-063` AC-2b — two cards: the three rows that open a list, then
+                the two plain figures under them (owner, 2026-10-17).
+              */}
               <View className="pt-1">
                 <Card variant="flat" className="gap-0 overflow-hidden p-0">
-                  {/* AC-5 — average price of the shoots with one; «—» when none. */}
-                  <SecondaryRow
-                    label={t.statsAverage}
-                    icon={DollarSign}
-                    tint="bg-chart-4"
-                    value={stats.average === null ? '—' : formatMoney(stats.average, currency)}
-                  />
                   {/*
                     `US-061` AC-6 as amended by `US-063` AC-1b — the number of
                     unpaid shoots on the right, «На суму …» under the label;
@@ -241,8 +239,7 @@ export default function StatisticsScreen() {
                           : null
                     }
                     subClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-success'}
-                    onPress={stats.unpaidShoots > 0 ? () => openList('unpaid') : undefined}
-                    divided
+                    onPress={() => openList('unpaid')}
                   />
                   {/* `US-063` AC-1 — right under «Очікує оплати». */}
                   <SecondaryRow
@@ -250,7 +247,7 @@ export default function StatisticsScreen() {
                     icon={FileClock}
                     tint="bg-chart-5"
                     value={String(stats.editing)}
-                    onPress={stats.editing > 0 ? () => openList('editing') : undefined}
+                    onPress={() => openList('editing')}
                     divided
                   />
                   {/* `US-063` AC-1a — under «В обробці»; red while above zero, as
@@ -261,8 +258,18 @@ export default function StatisticsScreen() {
                     tint="bg-chart-2"
                     value={String(stats.overdue)}
                     valueClassName={stats.overdue > 0 ? 'text-danger-soft' : 'text-foreground'}
-                    onPress={stats.overdue > 0 ? () => openList('overdue') : undefined}
+                    onPress={() => openList('overdue')}
                     divided
+                  />
+                </Card>
+              </View>
+              <Card variant="flat" className="gap-0 overflow-hidden p-0">
+                  {/* AC-5 — average price of the shoots with one; «—» when none. */}
+                  <SecondaryRow
+                    label={t.statsAverage}
+                    icon={DollarSign}
+                    tint="bg-chart-4"
+                    value={stats.average === null ? '—' : formatMoney(stats.average, currency)}
                   />
                   <SecondaryRow
                     label={t.statsHours}
@@ -271,8 +278,7 @@ export default function StatisticsScreen() {
                     value={String(stats.hours)}
                     divided
                   />
-                </Card>
-              </View>
+              </Card>
             </>
           )}
         </View>
@@ -415,6 +421,15 @@ function SecondaryRow({
         {sub ? <Text className={`text-caption mt-[3px] ${subClassName}`}>{sub}</Text> : null}
       </View>
       <Text className={`text-subtitle shrink-0 font-semibold ${valueClassName}`}>{value}</Text>
+      {/* `US-063` AC-2a — the profile rows' chevron, so the row reads as one. */}
+      {onPress ? (
+        <Icon
+          as={ChevronRight}
+          size={15}
+          strokeWidth={2}
+          className="text-muted-foreground -ml-1 shrink-0"
+        />
+      ) : null}
     </Pressable>
   )
 }
@@ -457,7 +472,18 @@ function CountCard({
           <View className={`h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg ${tint}`}>
             <Icon as={icon} size={15} strokeWidth={1.9} className="text-tint-foreground" />
           </View>
-          <SectionLabel label={label} />
+          <View className="min-w-0 flex-1">
+            <SectionLabel label={label} />
+          </View>
+          {/* `US-063` AC-2a — top right, level with the label. */}
+          {onPress ? (
+            <Icon
+              as={ChevronRight}
+              size={15}
+              strokeWidth={2}
+              className="text-muted-foreground shrink-0"
+            />
+          ) : null}
         </View>
         <View className="mt-3 flex-row items-baseline gap-1.5">
           <Text
