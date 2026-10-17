@@ -8,6 +8,7 @@ import * as Clipboard from 'expo-clipboard'
  * Deep per-icon imports, never the `lucide-react-native` barrel — Metro does not
  * tree-shake it and it doubled the web bundle once (S-2 F-5). See select.tsx.
  */
+import Check from 'lucide-react-native/icons/check'
 import ChevronDown from 'lucide-react-native/icons/chevron-down'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Copy from 'lucide-react-native/icons/copy'
@@ -31,7 +32,7 @@ import { ImageViewer } from '../../../../src/components/ImageViewer'
 // and `removePerson` still take.
 import { type SheetPerson } from '../../../../src/components/PersonSheet'
 import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
-import { formatMoney, payment } from '../../../../src/features/shoots/money'
+import { canMarkPaid, formatMoney, payment } from '../../../../src/features/shoots/money'
 import { useCurrency } from '../../../../src/features/account/currency'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
@@ -58,6 +59,7 @@ import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
 import {
   deleteShoot,
   getShoot,
+  setPrepayment,
   updateShootLink,
   type Shoot,
   type ShootLinkField,
@@ -371,6 +373,14 @@ export default function ShootDetailScreen() {
               shoot={shoot}
               countdown={countdown}
               crew={crew}
+              onToast={showToast}
+              onPaymentChanged={(prepayment) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? { ...current, shoot: { ...current.shoot, prepayment } }
+                    : current
+                )
+              }
               onCopyClientLink={() =>
                 void copyLinkFor({
                   id: shoot.clientId,
@@ -539,11 +549,15 @@ function DetailsTab({
   countdown,
   crew,
   onCopyClientLink,
+  onToast,
+  onPaymentChanged,
 }: {
   shoot: Shoot
   countdown: string | null
   crew: CrewMember[]
   onCopyClientLink: () => void
+  onToast: (message: string, undo?: () => void) => void
+  onPaymentChanged: (prepayment: number | null) => void
 }) {
   const t = useStrings()
   const duration = formatDuration(shoot.startTime, shoot.endTime, {
@@ -711,7 +725,7 @@ function DetailsTab({
 
       <LocationCard shoot={shoot} />
 
-      <PaymentCard shoot={shoot} />
+      <PaymentCard shoot={shoot} onToast={onToast} onChanged={onPaymentChanged} />
 
       {/*
         The «Нотатки для команди» card, restored 2026-08-30 and renamed
@@ -936,10 +950,40 @@ function ContactRow({
  * below (`ADR-013`, CLAUDE.md rule 2) — so no badge is needed here: nobody but
  * the creator can reach this screen at all.
  */
-function PaymentCard({ shoot }: { shoot: Shoot }) {
+function PaymentCard({
+  shoot,
+  onToast,
+  onChanged,
+}: {
+  shoot: Shoot
+  onToast: (message: string, undo?: () => void) => void
+  onChanged: (prepayment: number | null) => void
+}) {
   const currency = useCurrency()
   const t = useStrings()
+  const guard = useGuard()
+  const [busy, setBusy] = useState(false)
   const pay = payment(shoot)
+
+  /*
+    `US-060` AC-2 — the whole price received. The toast's undo puts back the
+    prepayment that was there, null included, rather than a zero.
+  */
+  const markPaid = async () => {
+    const before = shoot.prepayment
+    setBusy(true)
+    const saved = await setPrepayment(shoot.id, pay.price)
+    setBusy(false)
+    if (!saved) {
+      failed()
+      return onToast(t.somethingWentWrong)
+    }
+    succeeded()
+    onChanged(pay.price)
+    onToast(t.markedPaid, () => {
+      void setPrepayment(shoot.id, before).then((undone) => undone && onChanged(before))
+    })
+  }
 
   /*
     ── The «Оплачено» / «Часткова оплата» / «Без передплати» chip is gone ─────
@@ -997,15 +1041,38 @@ function PaymentCard({ shoot }: { shoot: Shoot }) {
             note this is NOT what the form does with the same number, which
             leaves it plain until it reaches zero. Both are as drawn; logged.
           */}
-          <Text
-            className={`text-subtitle mt-1 font-semibold ${
-              pay.badge === 'paid' ? 'text-success' : 'text-warn'
-            }`}
-          >
-            {formatMoney(pay.balance, currency)}
-          </Text>
+          {/* `US-060` AC-4 — a paid shoot says so instead of «0 ₴». */}
+          {pay.badge === 'paid' ? (
+            <View className="mt-1 flex-row items-center gap-1.5">
+              <Icon as={Check} size={16} strokeWidth={2.4} className="text-success" />
+              <Text className="text-subtitle text-success font-semibold">{t.paidValue}</Text>
+            </View>
+          ) : (
+            <Text className="text-subtitle text-warn mt-1 font-semibold">
+              {formatMoney(pay.balance, currency)}
+            </Text>
+          )}
         </View>
       </View>
+
+      {/*
+        `US-060` AC-1 — shaped like «Позначити як передано клієнту» at the foot
+        of the deadline card (`US-042`): a single action closing a card.
+      */}
+      {canMarkPaid(pay) ? (
+        <Pressable
+          className="border-border min-h-11 flex-row items-center justify-center gap-[7px] border-t p-2 active:bg-secondary"
+          disabled={busy}
+          onPress={guard(() => {
+            tapped()
+            void markPaid()
+          })}
+          role="button"
+        >
+          <Icon as={Check} size={14} strokeWidth={1.8} className="text-muted-foreground" />
+          <Text className="text-label text-foreground font-semibold">{t.markPaid}</Text>
+        </Pressable>
+      ) : null}
     </Card>
   )
 }

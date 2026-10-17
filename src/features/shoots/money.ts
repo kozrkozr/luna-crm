@@ -155,6 +155,19 @@ export function payment(input: {
 }
 
 /**
+ * `US-060` — whether a shoot has a price at all, and so anything to be paid or
+ * owed. Without one there is no button and no calendar icon (AC-6).
+ */
+export function hasPrice(input: { price: number | null }): boolean {
+  return (input.price ?? 0) > 0
+}
+
+/** `US-060` AC-1 — a price, and something of it still outstanding. */
+export function canMarkPaid(pay: Payment): boolean {
+  return pay.price > 0 && pay.balance > 0
+}
+
+/**
  * The «Без передплати · 30% · 50% · 100%» chips.
  *
  * Percentages of the price, rounded — the artboard's
