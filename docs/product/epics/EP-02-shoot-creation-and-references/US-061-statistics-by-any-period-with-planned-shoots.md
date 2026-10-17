@@ -58,6 +58,7 @@ its date.
   («зйомка / зйомки / зйомок»), and under it their hours («54 години»).
 - **«Заплановано»** — the number of **planned** shoots in the period, its noun beside it, and under
   it «Найближча {date}», the earliest of them, or «Немає запланованих». A past period has none.
+- *Superseded by `US-063` AC-3 (owner, 2026-10-17): the tap now opens the planned shoots' list.*
 - **When** the creator taps «Заплановано»
 - **Then** «Календар» opens:
   - for «Місяць» — on that month, no day selected
