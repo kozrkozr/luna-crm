@@ -1215,6 +1215,29 @@ export const uk = {
   newReferenceLink: 'Нове посилання',
   newReferenceLinkPlaceholder: 'pinterest.com/…',
   addReferenceLinkAction: 'Додати',
+  /*
+   * ── `US-068` — «Матеріали»: photos and links apart, photos marked «Знято» ──
+   *
+   * `Materials-Refs.dc.html` and `Materials-Empty.dc.html` (owner, 2026-10-18).
+   * The English is Claude's, awaiting the owner's review (US-068 AC-12).
+   */
+  shotMark: 'Знято',
+  shotSectionTemplate: 'Знято · {n}',
+  toShootTemplate: '{n} фото до зйомки',
+  allShot: 'усе знято',
+  allPhotoReferencesShot: 'Усі фото-референси відзнято',
+  shotHint: 'Тапніть «Знято» ще раз, щоб повернути нагору.',
+  linksSection: 'Посилання',
+  addLink: 'Додати посилання',
+  addLinkHint: 'Pinterest, Instagram, Notion, Google Диск…',
+  noReferencesTitle: 'Референсів поки немає',
+  noReferencesBody:
+    'Додайте фото, які треба повторити на зйомці. На знімальному майданчику відмічайте їх «Знято».',
+  addPhotos: 'Додати фото',
+  shotSaveFailed: 'Не вдалося зберегти відмітку. Спробуйте ще раз.',
+  /** Accessibility labels; « — {category}» is appended when there is one. */
+  markShotLabel: 'Відмітити «Знято»',
+  unmarkShotLabel: 'Повернути до зйомки',
   copyWord: 'Копіювати',
 
   /*
