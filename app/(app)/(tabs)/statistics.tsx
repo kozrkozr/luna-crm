@@ -29,8 +29,7 @@ import { formatDayMonth } from '../../../src/features/shoots/date'
 import { tapped } from '../../../src/lib/haptics'
 import {
   currencySymbol,
-  formatAmount,
-  symbolLeads,
+  formatAmountStats,
   type Currency,
 } from '../../../src/features/shoots/money'
 import { useCurrency } from '../../../src/features/account/currency'
@@ -299,7 +298,6 @@ function HeroCard({
   stripe,
   figure,
   unit,
-  unitFirst = false,
   unitClassName,
   figureClassName,
   line,
@@ -311,8 +309,6 @@ function HeroCard({
   stripe: string
   figure: string
   unit: string
-  /** `US-047` AC-6 — «$12,000»: the dollar sign leads. */
-  unitFirst?: boolean
   unitClassName: string
   figureClassName: string
   line: string
@@ -332,7 +328,6 @@ function HeroCard({
           <SectionLabel label={label} />
         </View>
         <View className="mt-3 flex-row items-baseline gap-1.5">
-          {unitFirst ? <Text className={unitClassName}>{unit}</Text> : null}
           <Text
             className={`text-[38px] font-semibold ${figureClassName}`}
             // Absolute, like every line height in the scale: the figure is one
@@ -343,7 +338,7 @@ function HeroCard({
           </Text>
           {/* The unit carries its own colour: `₴` is the figure's green, while
               «зйомок» is dim — the artboard tints one and not the other. */}
-          {unitFirst ? null : <Text className={unitClassName}>{unit}</Text>}
+          <Text className={unitClassName}>{unit}</Text>
         </View>
         {line ? <Text className="text-body-sm text-muted-foreground mt-2">{line}</Text> : null}
       </View>
@@ -355,8 +350,9 @@ function HeroCard({
 type CurrencyTally = { currency: Currency } & MoneyTally
 
 /**
- * An amount and its symbol, the dollar's leading (`US-047` AC-6) — the symbol a
- * step smaller than the figure, in the same colour, as the mockup draws them.
+ * An amount and its symbol after it — the dollar's too (`US-071` AC-7a) — the
+ * symbol a step smaller than the figure, in the same colour, as the mockup
+ * draws them.
  */
 function Amount({
   value,
@@ -371,15 +367,12 @@ function Amount({
   unitClassName: string
   figureStyle?: { lineHeight: number; letterSpacing: number }
 }) {
-  const leads = symbolLeads(currency)
-  const unit = <Text className={unitClassName}>{currencySymbol(currency)}</Text>
   return (
     <View className="min-w-0 flex-1 flex-row items-baseline gap-[5px]">
-      {leads ? unit : null}
       <Text className={figureClassName} style={figureStyle} numberOfLines={1}>
-        {formatAmount(value, currency)}
+        {formatAmountStats(value)}
       </Text>
-      {leads ? null : unit}
+      <Text className={unitClassName}>{currencySymbol(currency)}</Text>
     </View>
   )
 }
@@ -440,9 +433,9 @@ function IncomeCard({
         icon={CreditCard}
         tint="bg-chart-3"
         stripe="bg-success"
-        figure={formatAmount(only?.sum ?? 0, only?.currency ?? currency)}
+        // `US-071` AC-7a — «12 000 $», as everywhere on this screen.
+        figure={formatAmountStats(only?.sum ?? 0)}
         unit={currencySymbol(only?.currency ?? currency)}
-        unitFirst={symbolLeads(only?.currency ?? currency)}
         unitClassName="text-title-lg text-success font-medium"
         figureClassName="text-success"
         line={line}
