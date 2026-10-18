@@ -50,6 +50,12 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
   the preview shows the next photo — or the previous one if it was the last — and closes when none
   is left
 
+### AC-7 — Swipe down to close
+- **When** the creator drags the photo down
+- **Then** it follows the finger and the black around it fades; let go far or fast enough and the
+  preview closes, otherwise the photo returns to its place (owner, 2026-10-18 — as Photos on iOS)
+- A sideways swipe still moves between photos; the ✕ still closes.
+
 ### AC-5 — View mode
 - **Given** an account without access (`US-052`)
 - **When** the creator taps either button in the preview
