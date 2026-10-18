@@ -101,7 +101,6 @@ export function ShootWhenFields({
   date,
   onDateChange,
   dateInvalid,
-  allowPastDates = false,
   start,
   end,
   onRangeChange,
@@ -111,7 +110,6 @@ export function ShootWhenFields({
   date: Date | null
   onDateChange: (date: Date) => void
   dateInvalid: boolean
-  allowPastDates?: boolean
   /** Both nullable: `US-030` AC-6 allows a shoot created before that story. */
   start: string | null
   end: string | null
@@ -181,7 +179,6 @@ export function ShootWhenFields({
       <MonthPicker
         value={date}
         invalid={dateInvalid}
-        allowPast={allowPastDates}
         onChange={onDateChange}
       />
       {dateInvalid ? <Text className="text-destructive text-sm">{t.pickDateError}</Text> : null}

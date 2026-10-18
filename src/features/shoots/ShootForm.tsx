@@ -100,9 +100,8 @@ import {
  * broken.
  */
 /**
- * `mode` is the only thing that differs, and it differs in four places: what
- * loads, whether the past is pickable, which API the save calls, and the two
- * words on the header and the CTA. Everything between them is one form.
+ * `mode` is the only thing that differs, and it differs in three places: what
+ * loads, which API the save calls, and the two words on the header and the CTA. Everything between them is one form.
  */
 export type ShootFormMode = { mode: 'create' } | { mode: 'edit'; id: string }
 
@@ -954,13 +953,6 @@ export function ShootForm(props: ShootFormMode) {
 
           {/* ── Дата й час ── Shared with the edit screen (owner, 2026-08-30). */}
           <ShootWhenFields
-            /*
-              The past is pickable only when editing. A shoot that has already
-              happened is still editable, and with the past locked its own date
-              would render dimmed and untappable — the field would look broken
-              on exactly the records most likely to need a correction.
-            */
-            allowPastDates={isEdit}
             date={date}
             onDateChange={(picked) => {
               setDate(picked)
