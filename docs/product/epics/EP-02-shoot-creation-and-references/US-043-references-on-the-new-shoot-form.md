@@ -37,6 +37,9 @@ the form and saved together with it.
 ### AC-2 — The same as «Матеріали»
 - **Then** the open section is the «Матеріали» tab's «Референси» block: the same filter chips, grid,
   «+» tile, image-or-link choice, link card, category rule and error messages (`US-003` AC-2)
+- **Amended 2026-10-18 by `US-068`:** «Матеріали» now splits photos from links and marks photos
+  «Знято». **This form keeps the block as it was** — one grid, the «+» tile's image-or-link
+  choice, no «Знято» (owner, 2026-10-18).
 
 ### AC-3 — Nothing is saved until the shoot is
 - **Given** references added on the form
