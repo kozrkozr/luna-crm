@@ -34,7 +34,7 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 
 ### AC-3 — «Знято» in the preview
 - **Then** the bottom of the preview shows two full-width buttons, one above the other; the upper
-  one is white, «✓ Позначити як відзняте» — green, «✓ Відзнято», once the photo is marked
+  one is «✓ Позначити як відзняте» in the colour of «+ Нова зйомка» (the app's CTA) — green, «✓ Відзнято», once the photo is marked
 - **When** the creator taps it
 - **Then** the mark is saved — or cleared, from «✓ Відзнято» — at once (`US-068` AC-3, AC-5) and
   the button changes
