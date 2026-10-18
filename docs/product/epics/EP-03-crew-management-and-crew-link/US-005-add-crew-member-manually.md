@@ -33,7 +33,23 @@ implementation choice for 04-tech, not decided here.
   enough)
 - **Then** saving is blocked and the creator is asked for a phone number or email
 
+### AC-3 — No crew yet *(edge)* — `Shoot Detail v3.dc.html`, `emptyCopy` «Порожня команда» (owner, 2026-10-18)
+- **Given** a shoot with no crew member (none added, or every one removed — `US-022`)
+- **Then** the shoot's «Команда» tab keeps its «Команда» heading without the «N з M підтвердили»
+  count, and shows a card in place of the list: a two-people icon, «У команді поки нікого», and
+  «Тут буде список усіх, хто працює на цій зйомці, з їхніми ролями й контактами.»
+- The card has no button; «+ Додати учасника» stays where it is, pinned under the tab.
+- The tab's count reads «0».
+
+### AC-4 — Language
+| UK | EN |
+|---|---|
+| У команді поки нікого | No one on the crew yet |
+| Тут буде список усіх, хто працює на цій зйомці, з їхніми ролями й контактами. | Everyone working on this shoot will be listed here, with their roles and contacts. |
+
 ## Out of scope
+- An empty «Команда» in the link views — the mockup's client-view copy («Команду ще формують») is
+  not part of this AC.
 - Searching a directory of previously-added or self-registered crew to add them faster —
   that's the deferred crew directory (`decisions/ADR-003-*.md`).
 - The actual matching logic that reconciles a manual entry with a later self-registered
@@ -48,4 +64,4 @@ implementation choice for 04-tech, not decided here.
 US-002 — a shoot must exist to add crew to it.
 
 ## Open questions
-None.
+None. AC-4's English copy was proposed by Claude and awaits the owner's review.
