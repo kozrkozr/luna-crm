@@ -33,6 +33,12 @@ export type Reference = {
    * adding a group a schema change. See the migration for the full reasoning.
    */
   category: string | null
+  /**
+   * `US-068` — when the creator marked this photo «Знято» on set; null while it
+   * is still to shoot. Only an image is ever marked (a check constraint says so).
+   * Creator only: the link gateway does not select it.
+   */
+  shotAt: string | null
 }
 
 /**
@@ -89,17 +95,19 @@ function toReference(row: {
   kind: string
   url_or_path: string
   category: string | null
+  shot_at: string | null
 }): Reference {
   return {
     id: row.id,
     kind: row.kind as ReferenceKind,
     urlOrPath: row.url_or_path,
     category: row.category,
+    shotAt: row.shot_at,
   }
 }
 
 /** The one column list, so the three queries below cannot drift apart. */
-const REFERENCE_COLUMNS = 'id, kind, url_or_path, category'
+const REFERENCE_COLUMNS = 'id, kind, url_or_path, category, shot_at'
 
 /**
  * References on a shoot, oldest first.
@@ -240,4 +248,25 @@ export async function signedReferenceUrl(path: string): Promise<string | null> {
 export async function removeReference(id: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('soft_remove_reference', { reference_id: id })
   return !error && data === true
+}
+
+/**
+ * `US-068` AC-3, AC-5 — mark a photo «Знято», or clear the mark.
+ *
+ * A plain UPDATE: the owner policy and `shoot_references_update_needs_access`
+ * already decide who may (the latter is AC-11's view mode). The timestamp is the
+ * phone's: it only orders one creator's own marks on one shoot (AC-4).
+ *
+ * Null when the write failed — AC-10 leaves the photo where it was.
+ */
+export async function setReferenceShot(id: string, shot: boolean): Promise<Reference | null> {
+  const { data, error } = await supabase
+    .from('shoot_references')
+    .update({ shot_at: shot ? new Date().toISOString() : null })
+    .eq('id', id)
+    .select(REFERENCE_COLUMNS)
+    .single()
+
+  if (error || !data) return null
+  return toReference(data)
 }

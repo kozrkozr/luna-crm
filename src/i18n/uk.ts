@@ -1215,6 +1215,33 @@ export const uk = {
   newReferenceLink: 'Нове посилання',
   newReferenceLinkPlaceholder: 'pinterest.com/…',
   addReferenceLinkAction: 'Додати',
+  /*
+   * ── `US-068` — «Матеріали»: photos and links apart, photos marked «Знято» ──
+   *
+   * `Materials-Refs.dc.html` and `Materials-Empty.dc.html` (owner, 2026-10-18).
+   * The English is Claude's, awaiting the owner's review (US-068 AC-12).
+   */
+  shotMark: 'Знято',
+  shotSectionTemplate: 'Знято · {n}',
+  toShootTemplate: '{n} фото до зйомки',
+  allShot: 'усе знято',
+  shotHint: 'Тапніть «Знято» ще раз, щоб повернути нагору.',
+  linksSection: 'Посилання',
+  addLink: 'Додати посилання',
+  addLinkHint: 'Pinterest, Instagram, Notion, Google Диск…',
+  noReferencesTitle: 'Референсів поки немає',
+  noReferencesBody:
+    'Додайте фото, які треба повторити на зйомці. На знімальному майданчику відмічайте їх «Знято».',
+  addPhotos: 'Додати фото',
+  shotSaveFailed: 'Не вдалося зберегти відмітку. Спробуйте ще раз.',
+  /** Accessibility labels; « — {category}» is appended when there is one. */
+  markShotLabel: 'Відмітити «Знято»',
+  unmarkShotLabel: 'Повернути до зйомки',
+  /** `US-069` — the photo preview's title: «Світло · 3 з 6», or «3 з 6» on «Всі». */
+  viewerCounterTemplate: '{n} з {total}',
+  viewerMarkShot: 'Позначити як відзняте',
+  /** After the check icon — «✓ Відзнято». */
+  viewerShot: 'Відзнято',
   copyWord: 'Копіювати',
 
   /*

@@ -37,7 +37,7 @@ import { canMarkPaid, formatMoney, payment } from '../../../../src/features/shoo
 import { useCurrency } from '../../../../src/features/account/currency'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
-import { ReferencesEditor } from '../../../../src/components/ReferencesEditor'
+import { MaterialsReferences } from '../../../../src/components/MaterialsReferences'
 import { ResponsePill } from '../../../../src/components/ResponsePill'
 import { ShootDetailHeader, type DetailTab } from '../../../../src/components/ShootDetailHeader'
 import { StatusPill } from '../../../../src/components/StatusPill'
@@ -66,13 +66,7 @@ import {
   type Shoot,
   type ShootLinkField,
 } from '../../../../src/features/shoots/api'
-import {
-  addImageReference,
-  addLinkReference,
-  listReferences,
-  removeReference,
-  type Reference,
-} from '../../../../src/features/references/api'
+import { listReferences, type Reference } from '../../../../src/features/references/api'
 import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
 import { clientLinkToken, crewLinkToken, linkUrl } from '../../../../src/features/crew/links'
 import {
@@ -425,6 +419,18 @@ export default function ShootDetailScreen() {
                     ? {
                         ...current,
                         references: current.references.filter((r) => r.id !== id),
+                      }
+                    : current
+                )
+              }
+              onChanged={(reference) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? {
+                        ...current,
+                        references: current.references.map((r) =>
+                          r.id === reference.id ? reference : r
+                        ),
                       }
                     : current
                 )
@@ -1582,6 +1588,7 @@ function MaterialsTab({
   references,
   onAdded,
   onRemoved,
+  onChanged,
   onCopied,
   onToast,
   onDeadlineChanged,
@@ -1591,6 +1598,8 @@ function MaterialsTab({
   references: Reference[]
   onAdded: (reference: Reference) => void
   onRemoved: (id: string) => void
+  /** `US-068` — a reference's «Знято» mark was written. */
+  onChanged: (reference: Reference) => void
   onCopied: (message: string) => void
   /** The screen's toast, with an optional undo — `US-042`'s needs one. */
   onToast: (message: string, undo?: () => void) => void
@@ -1605,8 +1614,6 @@ function MaterialsTab({
   // sit on top of each other and a second open editor would push the first
   // off-screen mid-paste.
   const [editingLink, setEditingLink] = useState<ShootLinkField | null>(null)
-  const photos = references.filter((reference) => reference.kind === 'image').length
-  const links = references.length - photos
 
   /*
     Both slots, always — `US-024` and `US-025` are two fixed places, not a list
@@ -1675,37 +1682,19 @@ function MaterialsTab({
       </View>
 
       {/*
-        ── «Референси» ──
+        ── «Референси» and «Посилання» — `US-068` ──
 
-        **The sticky «Додати референс або файл» CTA is gone** (owner,
-        2026-09-05). It opened the gallery picker — exactly what the `+` tile at
-        the end of the grid below already does. One action had two controls, and
-        the button named files it could not add: it reached the image picker
-        only, where «Файли» above are pasted links (`US-024`, `US-025`).
-
-        Adding a reference is the `+` tile now, and nothing else about it
-        changed. `t.addReferenceOrFile` survives as that tile's
-        `accessibilityLabel`, which is the one place the phrase was ever true of
-        what the control did.
+        Photos and links apart, and a photo marked «Знято» on set. The block is
+        no longer `ReferencesEditor`, which stays on the «Нова зйомка» form as it
+        was (`US-043`, amended).
       */}
-      <View className="gap-2.5">
-        <View className="flex-row items-baseline justify-between">
-          <SectionLabel label={t.references} />
-          <Text className="text-label text-muted-foreground">
-            {`${photos} ${t.photosWord} · ${links} ${plural(links, t.linkForms)}`}
-          </Text>
-        </View>
-
-        <ReferencesEditor
-          references={references}
-          addImage={(asset, category) => addImageReference(shoot.id, asset, category)}
-          addLink={(link, category) => addLinkReference(shoot.id, link, category)}
-          onAdded={onAdded}
-          remove={(reference) => removeReference(reference.id)}
-          onRemoved={onRemoved}
-          confirmRemove
-        />
-      </View>
+      <MaterialsReferences
+        shootId={shoot.id}
+        references={references}
+        onAdded={onAdded}
+        onRemoved={onRemoved}
+        onChanged={onChanged}
+      />
     </>
   )
 }

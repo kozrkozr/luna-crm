@@ -774,11 +774,11 @@ export function ShootForm(props: ShootFormMode) {
   const holdImage = (asset: ImagePickerAsset, category: string | null): AddReferenceResult => {
     const problem = imageAssetProblem(asset)
     if (problem) return { ok: false, reason: problem }
-    return hold({ kind: 'image', urlOrPath: asset.uri, category }, asset)
+    return hold({ kind: 'image', urlOrPath: asset.uri, category, shotAt: null }, asset)
   }
   const holdLink = (link: string, category: string | null): AddReferenceResult => {
     if (!isValidReferenceLink(link)) return { ok: false, reason: 'invalidLink' }
-    return hold({ kind: 'link', urlOrPath: link.trim(), category }, null)
+    return hold({ kind: 'link', urlOrPath: link.trim(), category, shotAt: null }, null)
   }
 
   /**
