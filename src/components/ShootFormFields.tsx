@@ -394,7 +394,12 @@ export function ShootLocationFields({
         */}
         <View className="justify-center">
           {addressSearch ? (
-            <Pressable onPress={() => setSearching(true)} role="button" accessibilityLabel={t.address}>
+            <Pressable
+              onPress={() => setSearching(true)}
+              role="button"
+              // The label hides the field's text from VoiceOver, so it carries it.
+              accessibilityLabel={address.trim() ? `${t.address}, ${address.trim()}` : t.address}
+            >
               <View pointerEvents="none">
                 <Input value={address} placeholder={t.addressSearchPlaceholder} className="pl-10" />
               </View>
