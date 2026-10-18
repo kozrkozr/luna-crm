@@ -179,7 +179,7 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
     <View className={`bg-card overflow-hidden rounded-xl border ${style.card}`}>
       <View className="flex-row items-start gap-[11px] pl-3.5 pr-2 pt-3">
         <View className="min-w-0 flex-1">
-          <Text className="text-label text-muted-foreground">{t.deadlineLabel}</Text>
+          <Text className="text-label text-muted-foreground">{`⏳ ${t.deadlineLabel}`}</Text>
           <View className="mt-[3px] flex-row flex-wrap items-center gap-2">
             <Text className="text-subtitle text-foreground font-semibold">
               {t.deadlineByTemplate.replace('{date}', dayMonth(due))}

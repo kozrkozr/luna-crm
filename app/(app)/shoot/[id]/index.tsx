@@ -760,7 +760,7 @@ function DetailsTab({
       */}
       {shoot.notes ? (
         <Card variant="flat" className="gap-2.5">
-          <SectionLabel label={t.teamNotesSection} />
+          <SectionLabel label={t.teamNotesSection} emoji="📝" />
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.notes}</Text>
         </Card>
       ) : null}
@@ -783,7 +783,7 @@ function DetailsTab({
       */}
       {shoot.clientNotes ? (
         <Card variant="flat" className="gap-2.5">
-          <SectionLabel label={t.clientNotesSection} />
+          <SectionLabel label={t.clientNotesSection} emoji="📝" />
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.clientNotes}</Text>
         </Card>
       ) : null}
