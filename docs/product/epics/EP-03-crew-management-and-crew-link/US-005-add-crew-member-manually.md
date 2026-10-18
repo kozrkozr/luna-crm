@@ -64,4 +64,4 @@ implementation choice for 04-tech, not decided here.
 US-002 — a shoot must exist to add crew to it.
 
 ## Open questions
-None. AC-4's English copy was proposed by Claude and awaits the owner's review.
+None. AC-4's English copy was proposed by Claude and confirmed by the owner (2026-10-18).
