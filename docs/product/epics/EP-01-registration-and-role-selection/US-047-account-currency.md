@@ -61,6 +61,8 @@ form, the shoot's «Оплата» card and «Статистика».
 | Under the list | Суми не перераховуються — змінюється лише символ. | Amounts are not converted — only the symbol changes. |
 
 ### AC-6 — How an amount is written
+- *Amended by `US-071` AC-7a (owner, 2026-10-18): on «Статистика» and «Без оплати» the dollar is
+  written like the rest — «12 000 $».*
 | Currency | Written |
 |---|---|
 | UAH | 12 000 ₴ |

@@ -52,7 +52,14 @@ screen with one to five currencies. Amends `US-061` AC-3, AC-5, AC-6, `US-062` A
 
 ### AC-6 — «Без оплати» *(amends `US-062` AC-3)*
 - The line under the title gives the sum owed **per currency**, in AC-1's order, joined by « · »:
-  «Жовтень 2026 · 9 000 ₴ · $400» (owner, 2026-10-18).
+  «Жовтень 2026 · 9 000 ₴ · 400 $» (AC-7a) (owner, 2026-10-18).
+
+### AC-7a — The symbol always follows the amount *(amends `US-047` AC-6 here)*
+- Every amount on «Статистика» and in «Без оплати»'s line is written number first, symbol after,
+  thousands grouped by a space — **the dollar too**: «12 000 $», not «$12,000» (owner, 2026-10-18:
+  one dollar sign on the left among symbols on the right is hard on the eye).
+- Everywhere, whether one currency is shown or several.
+- The shoot form and the shoot's «Оплата» card keep `US-047` AC-6 — «$12,000».
 
 ### AC-7 — Who sees it *(required)*
 - Creator only, as `US-061` AC-8.

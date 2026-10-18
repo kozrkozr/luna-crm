@@ -2,6 +2,7 @@ import { supabase } from '../../lib/supabase/client'
 import { isValidReferenceLink } from '../references/api'
 import { shootStatus } from './status'
 import { shootsChanged } from './changes'
+import type { Currency } from './money'
 
 /**
  * `US-020`'s two values. **Derived, never stored** since 2026-09-04 — see
@@ -102,6 +103,13 @@ export type Shoot = {
   price: number | null
   prepayment: number | null
   /**
+   * `US-070` — what `price` and `prepayment` are in (`ADR-027`). Every shoot
+   * has one: existing rows took their account's currency when the column
+   * arrived (`20261018180000_shoot_currency.sql`), and a new one starts in the
+   * account's. Creator-only, like the amounts it labels.
+   */
+  currency: Currency
+  /**
    * `US-042` — the day the finished files are owed by, ISO `YYYY-MM-DD`. Null
    * means no deadline. Never before `date`, and moved with it by the same
    * number of days — both enforced by the database
@@ -152,6 +160,8 @@ export type UpdateShootInput = {
   /** «Оплата» — see `Shoot`. Both written together, never one alone. */
   price: number | null
   prepayment: number | null
+  /** `US-070` AC-4 — changeable on edit; the numbers stay as they are. */
+  currency: Currency
 }
 
 /** Every column the app reads for a Shoot, in one place so the two queries agree. */
@@ -161,7 +171,7 @@ export type UpdateShootInput = {
  * subject to the same RLS as a direct read of `clients`.
  */
 const SHOOT_COLUMNS =
-  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, client_notes, raw_files_url, finished_photos_url, price, prepayment, delivery_due, delivered_at'
+  'id, client_id, clients(name, phone, instagram, telegram), date, start_time, end_time, location_name, location_address, location_note, location_attachment, notes, client_notes, raw_files_url, finished_photos_url, price, prepayment, currency, delivery_due, delivered_at'
 
 export type CreateShootInput = {
   /**
@@ -204,6 +214,8 @@ export type CreateShootInput = {
    */
   price: number | null
   prepayment: number | null
+  /** `US-070` AC-2, AC-3 — the account's currency unless the form changed it. */
+  currency: Currency
 }
 
 export type CreateShootResult = { ok: true; id: string } | { ok: false }
@@ -239,6 +251,7 @@ export async function createShoot(input: CreateShootInput): Promise<CreateShootR
       // above a price, so a partial write is the one way to trip it.
       price: input.price,
       prepayment: input.prepayment,
+      currency: input.currency,
     })
     .select('id')
     .single()
@@ -303,6 +316,7 @@ type ShootRow = {
   finished_photos_url: string | null
   price: number | null
   prepayment: number | null
+  currency: Currency
   delivery_due: string | null
   delivered_at: string | null
 }
@@ -346,6 +360,7 @@ function toShoot(row: ShootRow): Shoot {
     finishedPhotosUrl: row.finished_photos_url,
     price: row.price,
     prepayment: row.prepayment,
+    currency: row.currency,
     deliveryDue: row.delivery_due,
     deliveredAt: row.delivered_at,
   }
@@ -410,6 +425,7 @@ export async function updateShoot(id: string, input: UpdateShootInput): Promise<
       client_notes: input.clientNotes?.trim() || null,
       price: input.price,
       prepayment: input.prepayment,
+      currency: input.currency,
       // AC-3 — stored only if it is a link at all. The screen rejects a
       // malformed one with a message first (US-003 AC-2's rule, reused rather
       // than restated); this is the second guard, so a bad value cannot reach

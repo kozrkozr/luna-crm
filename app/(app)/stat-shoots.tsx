@@ -20,7 +20,7 @@ import { listShoots, type Shoot } from '../../src/features/shoots/api'
 import { listCrewNamesForShoots } from '../../src/features/crew/api'
 import { formatDayMonth, toIsoDate } from '../../src/features/shoots/date'
 import { plural } from '../../src/features/shoots/home'
-import { formatMoney } from '../../src/features/shoots/money'
+import { formatMoneyStats } from '../../src/features/shoots/money'
 import { useCurrency } from '../../src/features/account/currency'
 import { periodLine } from '../../src/features/shoots/periodLine'
 import {
@@ -28,6 +28,7 @@ import {
   isDelivered,
   isEditing,
   isOverdue,
+  inOrder,
   isUnpaid,
   statistics,
   type StatShootsKind,
@@ -69,6 +70,7 @@ export default function StatShootsScreen() {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  // `US-071` AC-1 — the account's currency leads the sums, and stands in for «0».
   const currency = useCurrency()
   const guard = useGuard()
   const params = useLocalSearchParams<{
@@ -150,7 +152,11 @@ export default function StatShootsScreen() {
         // and only «{n} зйомки» under the title.
         params.noPeriod ? '' : periodLine(period, anchor, stats, t),
         kind === 'unpaid'
-          ? formatMoney(stats.unpaid, currency)
+          ? // `US-071` AC-6 — the sum owed per currency, the account's first;
+            // «0 ₴» in the account's when nothing is owed. AC-7a — «400 $».
+            inOrder(stats.unpaid, currency)
+              .map((owed) => formatMoneyStats(owed.sum, owed.currency))
+              .join(' · ') || formatMoneyStats(0, currency)
           : `${list.length} ${plural(list.length, t.shootCountForms)}`,
       ]
         .filter(Boolean)

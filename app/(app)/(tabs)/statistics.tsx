@@ -10,7 +10,6 @@ import ChevronDown from 'lucide-react-native/icons/chevron-down'
 import ChevronLeft from 'lucide-react-native/icons/chevron-left'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import CreditCard from 'lucide-react-native/icons/credit-card'
-import DollarSign from 'lucide-react-native/icons/dollar-sign'
 import FileCheck from 'lucide-react-native/icons/file-check'
 import FileClock from 'lucide-react-native/icons/file-clock'
 import TriangleAlert from 'lucide-react-native/icons/triangle-alert'
@@ -30,14 +29,15 @@ import { formatDayMonth } from '../../../src/features/shoots/date'
 import { tapped } from '../../../src/lib/haptics'
 import {
   currencySymbol,
-  formatAmount,
-  formatMoney,
-  symbolLeads,
+  formatAmountStats,
+  type Currency,
 } from '../../../src/features/shoots/money'
 import { useCurrency } from '../../../src/features/account/currency'
 import { periodLine } from '../../../src/features/shoots/periodLine'
 import {
+  inOrder,
   statistics,
+  type MoneyTally,
   type StatShootsKind,
   type StatsAnchor,
   type StatsPeriod,
@@ -69,7 +69,8 @@ type State = { status: 'loading' } | { status: 'error' } | { status: 'loaded'; s
  */
 export default function StatisticsScreen() {
   const t = useStrings()
-  // `US-047` — every figure here is in the account's currency.
+  // `US-071` AC-1 — the account's currency leads every money figure, and is
+  // the one «Дохід» shows its zero in.
   const currency = useCurrency()
   const [state, setState] = useState<State>({ status: 'loading' })
   const [period, setPeriod] = useState<StatsPeriod>('month')
@@ -164,18 +165,18 @@ export default function StatisticsScreen() {
                 instead of `--border` — it is the screen's headline, and the
                 stronger edge is how the drawing says so.
               */}
-              <HeroCard
-                label={t.statsIncome}
-                icon={CreditCard}
-                tint="bg-chart-3"
-                stripe="bg-success"
-                figure={formatAmount(stats.income, currency)}
-                unit={currencySymbol(currency)}
-                unitFirst={symbolLeads(currency)}
-                unitClassName="text-title-lg text-success font-medium"
-                figureClassName="text-success"
+              <IncomeCard
+                income={inOrder(stats.income, currency)}
+                currency={currency}
                 line={line}
-                strong
+              />
+
+              {/* `US-071` AC-3 — its own card, between «Дохід» and the counts. */}
+              <UnpaidCard
+                unpaid={inOrder(stats.unpaid, currency)}
+                count={stats.unpaidShoots}
+                allPaid={stats.pricedShoots > 0}
+                onPress={() => openList('unpaid')}
               />
 
               {/* AC-4 — «Проведено» and «Заплановано», side by side. */}
@@ -218,38 +219,13 @@ export default function StatisticsScreen() {
               */}
               <View className="pt-1">
                 <Card variant="flat" className="gap-0 overflow-hidden p-0">
-                  {/*
-                    `US-061` AC-6 as amended by `US-063` AC-1b — the number of
-                    unpaid shoots on the right, «На суму …» under the label;
-                    amber only while something is owed.
-                  */}
-                  <SecondaryRow
-                    label={t.statsUnpaid}
-                    icon={Clock}
-                    tint="bg-chart-1"
-                    value={String(stats.unpaidShoots)}
-                    valueClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-foreground'}
-                    sub={
-                      stats.unpaidShoots > 0
-                        ? t.statsUnpaidSumTemplate.replace(
-                            '{sum}',
-                            formatMoney(stats.unpaid, currency)
-                          )
-                        : stats.pricedShoots > 0
-                          ? t.statsAllPaid
-                          : null
-                    }
-                    subClassName={stats.unpaidShoots > 0 ? 'text-warn' : 'text-success'}
-                    onPress={() => openList('unpaid')}
-                  />
-                  {/* `US-063` AC-1 — right under «Очікує оплати». */}
+                  {/* `US-063` AC-1 — first, now «Очікує оплати» has a card of its own. */}
                   <SecondaryRow
                     label={t.statsEditing}
                     icon={FileClock}
                     tint="bg-chart-5"
                     value={String(stats.editing)}
                     onPress={() => openList('editing')}
-                    divided
                   />
                   {/* `US-063` AC-1c — under «В обробці». */}
                   <SecondaryRow
@@ -273,20 +249,13 @@ export default function StatisticsScreen() {
                   />
                 </Card>
               </View>
+              {/* `US-071` AC-4 — «Середній чек» is gone; the hours stand alone. */}
               <Card variant="flat" className="gap-0 overflow-hidden p-0">
-                  {/* AC-5 — average price of the shoots with one; «—» when none. */}
-                  <SecondaryRow
-                    label={t.statsAverage}
-                    icon={DollarSign}
-                    tint="bg-chart-4"
-                    value={stats.average === null ? '—' : formatMoney(stats.average, currency)}
-                  />
                   <SecondaryRow
                     label={t.statsHours}
                     icon={ChartColumn}
                     tint="bg-chart-2"
                     value={String(stats.hours)}
-                    divided
                   />
               </Card>
             </>
@@ -329,7 +298,6 @@ function HeroCard({
   stripe,
   figure,
   unit,
-  unitFirst = false,
   unitClassName,
   figureClassName,
   line,
@@ -341,8 +309,6 @@ function HeroCard({
   stripe: string
   figure: string
   unit: string
-  /** `US-047` AC-6 — «$12,000»: the dollar sign leads. */
-  unitFirst?: boolean
   unitClassName: string
   figureClassName: string
   line: string
@@ -362,7 +328,6 @@ function HeroCard({
           <SectionLabel label={label} />
         </View>
         <View className="mt-3 flex-row items-baseline gap-1.5">
-          {unitFirst ? <Text className={unitClassName}>{unit}</Text> : null}
           <Text
             className={`text-[38px] font-semibold ${figureClassName}`}
             // Absolute, like every line height in the scale: the figure is one
@@ -373,7 +338,7 @@ function HeroCard({
           </Text>
           {/* The unit carries its own colour: `₴` is the figure's green, while
               «зйомок» is dim — the artboard tints one and not the other. */}
-          {unitFirst ? null : <Text className={unitClassName}>{unit}</Text>}
+          <Text className={unitClassName}>{unit}</Text>
         </View>
         {line ? <Text className="text-body-sm text-muted-foreground mt-2">{line}</Text> : null}
       </View>
@@ -381,8 +346,201 @@ function HeroCard({
   )
 }
 
+/** One currency's sum for the screen, its share of a figure (`US-071`). */
+type CurrencyTally = { currency: Currency } & MoneyTally
+
 /**
- * One row of the second card: «Середній чек», «Очікує оплати», «Годин на
+ * An amount and its symbol after it — the dollar's too (`US-071` AC-7a) — the
+ * symbol a step smaller than the figure, in the same colour, as the mockup
+ * draws them.
+ */
+function Amount({
+  value,
+  currency,
+  figureClassName,
+  unitClassName,
+  figureStyle,
+}: {
+  value: number
+  currency: Currency
+  figureClassName: string
+  unitClassName: string
+  figureStyle?: { lineHeight: number; letterSpacing: number }
+}) {
+  return (
+    <View className="min-w-0 flex-1 flex-row items-baseline gap-[5px]">
+      <Text className={figureClassName} style={figureStyle} numberOfLines={1}>
+        {formatAmountStats(value)}
+      </Text>
+      <Text className={unitClassName}>{currencySymbol(currency)}</Text>
+    </View>
+  )
+}
+
+/**
+ * One currency's row under a money card's label: the sum on the left, «{n}
+ * зйомок» on the right, a hairline under every row but the last
+ * (`Statistics Currency Variants.dc.html`).
+ */
+function CurrencyRows({ rows, tone }: { rows: CurrencyTally[]; tone: 'success' | 'warn' }) {
+  const t = useStrings()
+  const colour = tone === 'success' ? 'text-success' : 'text-warn'
+  return (
+    <View>
+      {rows.map((row, index) => (
+        <View
+          key={row.currency}
+          className={`min-h-[46px] flex-row items-center gap-2 ${
+            index < rows.length - 1 ? 'border-border border-b' : ''
+          }`}
+        >
+          <Amount
+            value={row.sum}
+            currency={row.currency}
+            figureClassName={`text-[21px] font-semibold ${colour}`}
+            figureStyle={{ lineHeight: 26, letterSpacing: -0.21 }}
+            unitClassName={`text-body font-medium ${colour}`}
+          />
+          <Text className="text-label text-muted-foreground shrink-0">
+            {`${row.shoots} ${plural(row.shoots, t.shootCountForms)}`}
+          </Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
+/**
+ * «Дохід» — `US-061` AC-3 as amended by `US-071` AC-2. One currency, or none:
+ * the 38px figure as before, «0» in the account's currency. Two or more: a row
+ * per currency, each with the shoots whose prepayment is in it.
+ */
+function IncomeCard({
+  income,
+  currency,
+  line,
+}: {
+  income: CurrencyTally[]
+  currency: Currency
+  line: string
+}) {
+  const t = useStrings()
+  if (income.length < 2) {
+    const only = income[0]
+    return (
+      <HeroCard
+        label={t.statsIncome}
+        icon={CreditCard}
+        tint="bg-chart-3"
+        stripe="bg-success"
+        // `US-071` AC-7a — «12 000 $», as everywhere on this screen.
+        figure={formatAmountStats(only?.sum ?? 0)}
+        unit={currencySymbol(only?.currency ?? currency)}
+        unitClassName="text-title-lg text-success font-medium"
+        figureClassName="text-success"
+        line={line}
+        strong
+      />
+    )
+  }
+  return (
+    <Card variant="flat" className="border-border-strong flex-row gap-0 overflow-hidden p-0">
+      <View className="bg-success w-[3px] shrink-0" />
+      <View className="min-w-0 flex-1 px-[18px] pb-1 pt-4">
+        <View className="flex-row items-center gap-2.5">
+          <View className="bg-chart-3 h-7 w-7 shrink-0 items-center justify-center rounded-[9px]">
+            <Icon as={CreditCard} size={16} strokeWidth={1.9} className="text-tint-foreground" />
+          </View>
+          <SectionLabel label={t.statsIncome} />
+        </View>
+        <View className="mt-1.5">
+          <CurrencyRows rows={income} tone="success" />
+        </View>
+      </View>
+    </Card>
+  )
+}
+
+/**
+ * «Очікує оплати» — `US-061` AC-6, `US-063` AC-1b as amended by `US-071` AC-3:
+ * a card of its own with the unpaid shoots over every currency on the right,
+ * and under the label the sum — or a row per currency with its own count.
+ * Amber while something is owed; «Усі зйомки оплачені» in green once every
+ * priced shoot is paid; nothing under the label when no shoot has a price.
+ */
+function UnpaidCard({
+  unpaid,
+  count,
+  allPaid,
+  onPress,
+}: {
+  unpaid: CurrencyTally[]
+  count: number
+  allPaid: boolean
+  onPress: () => void
+}) {
+  const t = useStrings()
+  const owed = count > 0
+  return (
+    <Pressable
+      className="active:opacity-80"
+      onPress={() => {
+        tapped()
+        onPress()
+      }}
+      role="button"
+    >
+      <Card variant="flat" className="flex-row gap-0 overflow-hidden p-0">
+        <View className={`w-[3px] shrink-0 ${owed ? 'bg-warn' : 'bg-success'}`} />
+        <View className="min-w-0 flex-1 pb-1 pl-3.5 pr-3 pt-3.5">
+          <View className="flex-row items-center gap-2">
+            <View className="bg-chart-1 h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg">
+              <Icon as={Clock} size={15} strokeWidth={1.9} className="text-tint-foreground" />
+            </View>
+            <View className="min-w-0 flex-1">
+              <SectionLabel label={t.statsUnpaid} />
+            </View>
+            <Text
+              className={`text-body-sm shrink-0 font-semibold ${
+                owed ? 'text-warn' : 'text-muted-foreground'
+              }`}
+            >
+              {owed ? `${count} ${plural(count, t.shootCountForms)}` : '0'}
+            </Text>
+            <Icon
+              as={ChevronRight}
+              size={16}
+              strokeWidth={2}
+              className="text-muted-foreground shrink-0"
+            />
+          </View>
+          {owed && unpaid.length === 1 ? (
+            <View className="mb-2.5 mt-3">
+              <Amount
+                value={unpaid[0].sum}
+                currency={unpaid[0].currency}
+                figureClassName="text-warn text-[20px] font-semibold"
+                figureStyle={{ lineHeight: 23, letterSpacing: -0.2 }}
+                unitClassName="text-body-sm text-warn font-medium"
+              />
+            </View>
+          ) : owed ? (
+            <View className="mb-1 mr-1 mt-1.5">
+              <CurrencyRows rows={unpaid} tone="warn" />
+            </View>
+          ) : allPaid ? (
+            <Text className="text-body-sm text-success my-2.5">{t.statsAllPaid}</Text>
+          ) : (
+            <View className="h-2.5" />
+          )}
+        </View>
+      </Card>
+    </Pressable>
+  )
+}
+
+/**
+ * One row of the lower cards: «В обробці», «Передано», «Прострочено», «Годин на
  * зйомках» — a 26px tinted chip, the label, and the value hard right.
  *
  * 54px as drawn, and `divided` puts the hairline on every row but the first,

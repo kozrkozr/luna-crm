@@ -43,6 +43,9 @@ import { Icon } from '../../components/ui/icon'
 import { roleWithEmoji } from '../../i18n/vocabulary'
 import Trash from 'lucide-react-native/icons/trash'
 import Plus from 'lucide-react-native/icons/plus'
+import X from 'lucide-react-native/icons/x'
+import ChevronDown from 'lucide-react-native/icons/chevron-down'
+import { Sheet } from '../../components/ui/sheet'
 import {
   createClient,
   digitsOf,
@@ -57,6 +60,7 @@ import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import { RoleChip } from '../../components/RoleChip'
 import { ClientField } from '../../components/ClientField'
 import {
+  CURRENCIES,
   PREPAYMENT_STEPS,
   currencySymbol,
   symbolLeads,
@@ -185,6 +189,8 @@ function fingerprint(values: {
   clientNotes: string
   price: string
   prepayment: string
+  /** `US-070` — empty while a new shoot keeps the account's currency. */
+  currency: string
   /** `US-043` AC-3 — the drafts' ids, so adding or removing one is a change. */
   references: string
   /** `US-064` AC-5 — the same, for the crew held on the form. */
@@ -205,6 +211,7 @@ function fingerprint(values: {
     values.clientNotes.trim(),
     values.price.trim(),
     values.prepayment.trim(),
+    values.currency,
     values.references,
     values.crew,
   ].join('\u0000')
@@ -236,6 +243,7 @@ const EMPTY_FINGERPRINT = fingerprint({
   clientNotes: '',
   price: '',
   prepayment: '',
+  currency: '',
   references: '',
   crew: '',
 })
@@ -256,8 +264,8 @@ function openSections(
 
 export function ShootForm(props: ShootFormMode) {
   const t = useStrings()
-  /** `US-047` — prices are typed and grouped in the account's currency. */
-  const currency = useCurrency()
+  /** `US-070` AC-2 — what a new shoot starts in (`US-047`). */
+  const accountCurrency = useCurrency()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const isEdit = props.mode === 'edit'
@@ -297,6 +305,14 @@ export function ShootForm(props: ShootFormMode) {
   */
   const [price, setPrice] = useState('')
   const [prepayment, setPrepayment] = useState('')
+  /*
+    `US-070` — the shoot's currency, or null while a new shoot follows the
+    account's. Not seeded from `useCurrency()`: the account's arrives after the
+    first render (it starts as UAH), and a copy taken then would be stale.
+  */
+  const [pickedCurrency, setPickedCurrency] = useState<Currency | null>(null)
+  const currency = pickedCurrency ?? accountCurrency
+  const [choosingCurrency, setChoosingCurrency] = useState(false)
   /** `US-043` — references added here, saved after the shoot is created. */
   const [drafts, setDrafts] = useState<DraftReference[]>([])
   const draftSeq = useRef(0)
@@ -430,8 +446,11 @@ export function ShootForm(props: ShootFormMode) {
         setClientNotes(shoot.clientNotes ?? '')
         // Null renders as an EMPTY field, not «0» — the form must not look like
         // somebody priced this shoot at nothing when nobody priced it at all.
-        setPrice(shoot.price === null ? '' : formatAmount(shoot.price, currency))
-        setPrepayment(shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency))
+        setPickedCurrency(shoot.currency)
+        setPrice(shoot.price === null ? '' : formatAmount(shoot.price, shoot.currency))
+        setPrepayment(
+          shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, shoot.currency)
+        )
         /*
           The baseline «Скасувати» compares against. Built from the same values
           just set, not read back out of state — these setters have not applied
@@ -451,8 +470,10 @@ export function ShootForm(props: ShootFormMode) {
             locationDetails: shoot.locationNote ?? '',
             notes: shoot.notes ?? '',
             clientNotes: shoot.clientNotes ?? '',
-            price: shoot.price === null ? '' : formatAmount(shoot.price, currency),
-            prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency),
+            price: shoot.price === null ? '' : formatAmount(shoot.price, shoot.currency),
+            prepayment:
+              shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, shoot.currency),
+            currency: shoot.currency,
             references: '',
             crew: '',
           })
@@ -584,6 +605,7 @@ export function ShootForm(props: ShootFormMode) {
       clientNotes: clientNotes.trim() || null,
       price: priceValue,
       prepayment: prepaymentValue,
+      currency,
     }
 
     if (shootId) {
@@ -713,6 +735,8 @@ export function ShootForm(props: ShootFormMode) {
     clientNotes,
     price,
     prepayment,
+    // A new shoot left in the account's currency is still an untouched form.
+    currency: isEdit ? currency : currency === accountCurrency ? '' : currency,
     references: drafts.map((draft) => draft.reference.id).join(','),
     crew: crew.map((draft) => draft.id).join(','),
   })
@@ -1014,6 +1038,10 @@ export function ShootForm(props: ShootFormMode) {
                   currency={currency}
                   label={t.priceLabel}
                   value={price}
+                  onChooseCurrency={() => {
+                    tapped()
+                    setChoosingCurrency(true)
+                  }}
                   onChangeText={(text) => {
                     const next = parseAmount(text)
                     setPrice(next === null ? '' : formatAmount(next, currency))
@@ -1329,8 +1357,97 @@ export function ShootForm(props: ShootFormMode) {
 
       {discardDialog}
 
+      <CurrencySheet
+        open={choosingCurrency}
+        current={currency}
+        onPick={(next) => {
+          setChoosingCurrency(false)
+          if (next === currency) return
+          selectedTick()
+          setPickedCurrency(next)
+          // `US-070` AC-4 — the numbers stay; only their grouping follows the
+          // new currency («12 000» ↔ «12,000», `US-047` AC-6).
+          if (priceValue !== null) setPrice(formatAmount(priceValue, next))
+          if (prepaymentValue !== null) setPrepayment(formatAmount(prepaymentValue, next))
+        }}
+        onClose={() => setChoosingCurrency(false)}
+      />
+
       <Toast message={toast} onDone={() => setToast(null)} />
     </View>
+  )
+}
+
+/**
+ * `US-070` AC-3 — the sheet behind «Ціна»'s currency button, as
+ * `New Shoot.dc.html` draws it («У полі ціни», 2026-10-18): a title and a line
+ * under it, ✕ on the right, the five currencies as rows with a radio, and where
+ * new shoots take theirs from. The artboard's «Запамʼятаємо вибір…» is not
+ * drawn — a new shoot always starts in the account's currency (AC-2).
+ */
+function CurrencySheet({
+  open,
+  current,
+  onPick,
+  onClose,
+}: {
+  open: boolean
+  current: Currency
+  onPick: (next: Currency) => void
+  onClose: () => void
+}) {
+  const t = useStrings()
+  return (
+    <Sheet open={open} onClose={onClose} className="px-2">
+      <View className="flex-row items-center pb-1.5 pl-2.5">
+        <View className="flex-1">
+          <Text className="text-subtitle text-foreground font-semibold">{t.currencyTitle}</Text>
+          <Text className="text-label text-muted-foreground mt-0.5">
+            {t.shootCurrencySubtitle}
+          </Text>
+        </View>
+        <Pressable
+          onPress={onClose}
+          role="button"
+          accessibilityLabel={t.closeWord}
+          className="active:bg-secondary h-10 w-10 items-center justify-center rounded-full"
+        >
+          <Icon as={X} size={16} strokeWidth={2} className="text-muted-foreground" />
+        </Pressable>
+      </View>
+      {CURRENCIES.map((code, index) => {
+        const on = code === current
+        return (
+          <Pressable
+            key={code}
+            onPress={() => onPick(code)}
+            role="radio"
+            accessibilityState={{ selected: on }}
+            className={`active:bg-secondary min-h-[54px] flex-row items-center gap-3 rounded-[10px] px-2.5 ${
+              on ? 'bg-secondary' : ''
+            }`}
+          >
+            <View className="bg-secondary border-border h-9 w-9 items-center justify-center rounded-full border">
+              <Text className="text-body text-muted-foreground font-semibold">
+                {currencySymbol(code)}
+              </Text>
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text className="text-body text-foreground font-medium">{t.currencyNames[index]}</Text>
+              <Text className="text-label text-muted-foreground mt-0.5">{code}</Text>
+            </View>
+            <View
+              className={`h-5 w-5 items-center justify-center rounded-full border-[1.6px] ${
+                on ? 'border-primary' : 'border-border-strong'
+              }`}
+            >
+              {on ? <View className="bg-primary h-2.5 w-2.5 rounded-full" /> : null}
+            </View>
+          </Pressable>
+        )
+      })}
+      <Text className="text-label text-muted-foreground px-2.5 pt-2.5">{t.shootCurrencyNote}</Text>
+    </Sheet>
   )
 }
 
@@ -1353,6 +1470,7 @@ function AmountField({
   label,
   value,
   onChangeText,
+  onChooseCurrency,
   invalid = false,
 }: {
   /** `US-047` — whose symbol is pinned, and on which side (AC-6). */
@@ -1360,10 +1478,41 @@ function AmountField({
   label: string
   value: string
   onChangeText: (text: string) => void
+  /**
+   * `US-070` AC-3 — «Ціна» only: the symbol gives way to a button with the
+   * currency's code and a chevron, set off by a divider, that opens the sheet.
+   */
+  onChooseCurrency?: () => void
   invalid?: boolean
 }) {
   const t = useStrings()
   const leads = symbolLeads(currency)
+  if (onChooseCurrency) {
+    return (
+      <View className="min-w-0 flex-1 gap-[7px]">
+        <Text className="text-body-sm text-foreground font-medium">{label}</Text>
+        <View className="justify-center">
+          <Input
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={t.amountPlaceholder}
+            keyboardType="number-pad"
+            // Room for «UAH ▾» — three letters, a chevron and the divider.
+            className={`pr-[76px] ${invalid ? 'border-destructive' : ''}`}
+          />
+          <Pressable
+            onPress={onChooseCurrency}
+            role="button"
+            accessibilityLabel={t.changeCurrencyLabel}
+            className="border-border active:bg-secondary absolute bottom-px right-px top-px flex-row items-center gap-1.5 rounded-r-lg border-l pl-[11px] pr-2.5"
+          >
+            <Text className="text-body-sm text-muted-foreground font-semibold">{currency}</Text>
+            <Icon as={ChevronDown} size={14} strokeWidth={2} className="text-muted-foreground" />
+          </Pressable>
+        </View>
+      </View>
+    )
+  }
   return (
     <View className="min-w-0 flex-1 gap-[7px]">
       <Text className="text-body-sm text-foreground font-medium">{label}</Text>

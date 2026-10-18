@@ -59,7 +59,10 @@ export function isCurrency(value: unknown): value is Currency {
 export function formatAmount(value: number, currency: Currency = 'UAH'): string {
   // `US-047` AC-6 — a comma between a dollar amount's thousands, as in the US;
   // the non-breaking space everywhere else.
-  const separator = currency === 'USD' ? ',' : '\u00A0'
+  return groupDigits(value, currency === 'USD' ? ',' : '\u00A0')
+}
+
+function groupDigits(value: number, separator: string): string {
   const whole = Math.trunc(Math.abs(value))
   const digits = String(whole)
   let grouped = ''
@@ -83,6 +86,20 @@ export function formatAmount(value: number, currency: Currency = 'UAH'): string 
 export function formatMoney(value: number, currency: Currency): string {
   const amount = formatAmount(value, currency)
   return symbolLeads(currency) ? `${SYMBOL[currency]}${amount}` : `${amount}\u00A0${SYMBOL[currency]}`
+}
+
+/**
+ * `US-071` AC-7a — «Статистика»'s way: every currency, the dollar included,
+ * written number first and grouped by a non-breaking space — «12 000 $». Among
+ * several currencies one sign on the left was hard on the eye (owner,
+ * 2026-10-18). The form and the shoot's «Оплата» card keep `formatMoney`.
+ */
+export function formatAmountStats(value: number): string {
+  return groupDigits(value, '\u00A0')
+}
+
+export function formatMoneyStats(value: number, currency: Currency): string {
+  return `${formatAmountStats(value)}\u00A0${SYMBOL[currency]}`
 }
 
 /**
