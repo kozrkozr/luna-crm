@@ -28,6 +28,7 @@ import {
   isDelivered,
   isEditing,
   isOverdue,
+  inOrder,
   isUnpaid,
   statistics,
   type StatShootsKind,
@@ -69,6 +70,7 @@ export default function StatShootsScreen() {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  // `US-071` AC-1 — the account's currency leads the sums, and stands in for «0».
   const currency = useCurrency()
   const guard = useGuard()
   const params = useLocalSearchParams<{
@@ -150,7 +152,11 @@ export default function StatShootsScreen() {
         // and only «{n} зйомки» under the title.
         params.noPeriod ? '' : periodLine(period, anchor, stats, t),
         kind === 'unpaid'
-          ? formatMoney(stats.unpaid, currency)
+          ? // `US-071` AC-6 — the sum owed per currency, the account's first;
+            // «0 ₴» in the account's when nothing is owed.
+            inOrder(stats.unpaid, currency)
+              .map((owed) => formatMoney(owed.sum, owed.currency))
+              .join(' · ') || formatMoney(0, currency)
           : `${list.length} ${plural(list.length, t.shootCountForms)}`,
       ]
         .filter(Boolean)

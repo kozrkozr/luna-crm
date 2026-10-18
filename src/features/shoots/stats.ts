@@ -1,5 +1,5 @@
 import type { Shoot } from './api'
-import { payment } from './money'
+import { CURRENCIES, payment, type Currency } from './money'
 import { statusOf } from './status'
 import { daysUntil } from './home'
 
@@ -29,12 +29,19 @@ import { daysUntil } from './home'
  *
  * 1. **«Дохід» is money RECEIVED — the sum of `prepayment`**, not of `price`.
  * 2. **Money is counted over every shoot in the period, finished or planned**
- *    — «Дохід», «Очікує оплати» and «Середній чек». A prepayment banked for
+ *    — «Дохід» and «Очікує оплати». A prepayment banked for
  *    next week's shoot is income now, and «Дохід» and «Очікує оплати» divide
  *    the same shoots between them without overlap. **Work — «Проведено» and
  *    the hours — is counted over finished shoots only.**
  * 3. **Any month or year**, chosen by the anchor the screen passes; «Весь час»
  *    ignores it.
+ *
+ * ── Per currency (`US-071`, `ADR-027`, owner 2026-10-18) ─────────────────────
+ *
+ * Each shoot carries its own currency (`US-070`), and no figure ever adds two
+ * currencies together: «Дохід» and «Очікує оплати» are a sum per currency, each
+ * with the number of shoots behind it. Counts of shoots and hours stay single.
+ * «Середній чек» is gone.
  *
  * What is still nobody's decision is in docs/open-questions.md: the zero state,
  * and how a shoot that ends before it starts should be read (see `shootHours`).
@@ -66,12 +73,41 @@ export type StatsAnchor = { year: number; month: number }
  */
 export type StatsShoot = Pick<
   Shoot,
-  'date' | 'startTime' | 'endTime' | 'price' | 'prepayment' | 'deliveryDue' | 'deliveredAt'
+  'date' | 'startTime' | 'endTime' | 'price' | 'prepayment' | 'currency' | 'deliveryDue' | 'deliveredAt'
 >
 
+/** One currency's share of a money figure: the sum, and how many shoots make it. */
+export type MoneyTally = { sum: number; shoots: number }
+
+/** A money figure, kept apart per currency — only the currencies with something in it. */
+export type MoneyByCurrency = Partial<Record<Currency, MoneyTally>>
+
+/**
+ * `US-071` AC-1 — a figure's currencies in the order the screen lists them: the
+ * account's first, then the rest in `US-047` AC-1's order.
+ */
+export function inOrder(
+  money: MoneyByCurrency,
+  first: Currency
+): ({ currency: Currency } & MoneyTally)[] {
+  const order = [first, ...CURRENCIES.filter((code) => code !== first)]
+  return order.flatMap((currency) => {
+    const tally = money[currency]
+    return tally ? [{ currency, ...tally }] : []
+  })
+}
+
+function add(money: MoneyByCurrency, currency: Currency, sum: number) {
+  const tally = money[currency] ?? { sum: 0, shoots: 0 }
+  money[currency] = { sum: tally.sum + sum, shoots: tally.shoots + 1 }
+}
+
 export type Statistics = {
-  /** «Дохід» — received in the period, finished and planned shoots alike. */
-  income: number
+  /**
+   * «Дохід» — received in the period, finished and planned shoots alike, per
+   * currency; `shoots` counts those with a prepayment above zero (`US-071` AC-2).
+   */
+  income: MoneyByCurrency
   /** «Проведено» — finished shoots. */
   done: number
   /** «Годин на зйомках», and the line under «Проведено» — finished shoots, whole hours. */
@@ -80,11 +116,12 @@ export type Statistics = {
   planned: number
   /** «Найближча» — the earliest planned shoot's date, or null when none. */
   nextPlanned: string | null
-  /** «Середній чек» — average price of the shoots with one; null when none has. */
-  average: number | null
-  /** «Очікує оплати» — balances of the shoots with a price. */
-  unpaid: number
-  /** «{n} зйомок без оплати» — shoots with a price and a balance above zero. */
+  /**
+   * «Очікує оплати» — balances of the shoots with a price, per currency;
+   * `shoots` counts that currency's unpaid ones (`US-071` AC-3).
+   */
+  unpaid: MoneyByCurrency
+  /** The number on the right of «Очікує оплати» — unpaid shoots over every currency. */
   unpaidShoots: number
   /** Shoots with a price — zero means «Очікує оплати» has nothing to say under it. */
   pricedShoots: number
@@ -197,14 +234,13 @@ export function statistics(
   anchor: StatsAnchor,
   now: Date = new Date()
 ): Statistics {
-  let income = 0
+  const income: MoneyByCurrency = {}
   let done = 0
   let minutes = 0
   let planned = 0
   let next: StatsShoot | null = null
-  let priceSum = 0
   let pricedShoots = 0
-  let unpaid = 0
+  const unpaid: MoneyByCurrency = {}
   let unpaidShoots = 0
   let editing = 0
   let delivered = 0
@@ -215,13 +251,16 @@ export function statistics(
     if (!inPeriod(shoot.date, period, anchor)) continue
     const money = payment(shoot)
 
-    // Money — every shoot in the period (AC-3, AC-5, AC-6).
-    income += money.prepayment
+    // Money — every shoot in the period (AC-3, AC-6), in its own currency
+    // (`US-071`): a shoot adds to its currency's sum and count only when it
+    // adds money, so a currency with nothing in a figure is absent from it.
+    if (money.prepayment > 0) add(income, shoot.currency, money.prepayment)
     if (money.price > 0) {
       pricedShoots += 1
-      priceSum += money.price
-      unpaid += money.balance
-      if (isUnpaid(shoot)) unpaidShoots += 1
+      if (isUnpaid(shoot)) {
+        unpaidShoots += 1
+        add(unpaid, shoot.currency, money.balance)
+      }
     }
 
     // `US-063` AC-1c — as the card: delivered whatever the date says now.
@@ -250,7 +289,6 @@ export function statistics(
     hours: Math.round(minutes / 60),
     planned,
     nextPlanned: next ? next.date : null,
-    average: pricedShoots > 0 ? Math.round(priceSum / pricedShoots) : null,
     unpaid,
     unpaidShoots,
     pricedShoots,

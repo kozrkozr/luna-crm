@@ -1387,7 +1387,6 @@ export const uk = {
   statsIncome: 'Дохід',
   // US-061 (owner, 2026-10-17) — was «Проведено зйомок».
   statsShootsDone: 'Проведено',
-  statsAverage: 'Середній чек',
   statsUnpaid: 'Очікує оплати',
   statsHours: 'Годин на зйомках',
   // US-061 (owner, 2026-10-17).
@@ -1396,8 +1395,6 @@ export const uk = {
   statsNextTemplate: 'Найближча {date}',
   statsNothingPlanned: 'Немає запланованих',
   /** «2 зйомки без оплати» — {noun} from `shootCountForms`. */
-  /** «На суму 9 000 ₴» — under «Очікує оплати» (US-063 AC-1b). */
-  statsUnpaidSumTemplate: 'На суму {sum}',
   statsAllPaid: 'Усі зйомки оплачені',
   // US-062 (owner, 2026-10-17).
   unpaidTitle: 'Без оплати',
