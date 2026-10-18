@@ -230,6 +230,33 @@ export function pastLocations(shoots: Shoot[], limit = 6): string[] {
   return out
 }
 
+/** One of «Ваші локації» — a past shoot's location, both halves. */
+export type PastPlace = { name: string; address: string }
+
+/**
+ * `US-067` AC-1a — «Ваші локації» on the address search screen.
+ *
+ * `pastLocations`' rule, owner's word (2026-10-17): the creator's own shoots,
+ * most recent first, no repeats, at most six. It keeps the address as well as
+ * the name, because a tap fills both fields. A repeat is the same name AND the
+ * same address — the same studio at a new address is a different place.
+ */
+export function pastPlaces(shoots: Shoot[], limit = 6): PastPlace[] {
+  const seen = new Set<string>()
+  const out: PastPlace[] = []
+  for (let i = shoots.length - 1; i >= 0; i--) {
+    const name = shoots[i].locationName?.trim() ?? ''
+    const address = shoots[i].locationAddress?.trim() ?? ''
+    if (!name && !address) continue
+    const key = `${name.toLowerCase()}\n${address.toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push({ name, address })
+    if (out.length === limit) break
+  }
+  return out
+}
+
 /**
  * Shoots on `isoDate` whose time range overlaps `[startTime, endTime)`.
  *
