@@ -1155,6 +1155,9 @@ export const uk = {
   timeLabel: 'Час',
   /** «2 з 4 підтвердили», on the shoot card's Команда row and the People tab. */
   confirmedOfTemplate: '{done} з {total} підтвердили',
+  /** `US-005` AC-3 — the «Команда» tab with nobody on it, `Shoot Detail v3.dc.html`. */
+  emptyCrewTitle: 'У команді поки нікого',
+  emptyCrewText: 'Тут буде список усіх, хто працює на цій зйомці, з їхніми ролями й контактами.',
 
   /*
    * `US-034` AC-4 — the route button's accessibility label, an icon with no

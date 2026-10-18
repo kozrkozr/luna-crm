@@ -549,6 +549,8 @@ export const en: Strings = {
   clientShootLabel: 'Client shoot',
   timeLabel: 'Time',
   confirmedOfTemplate: '{done} of {total} confirmed',
+  emptyCrewTitle: 'No one on the crew yet',
+  emptyCrewText: 'Everyone working on this shoot will be listed here, with their roles and contacts.',
   remove: 'Remove',
   confirmRemoveReference: 'Remove this reference? This cannot be undone.',
   route: 'Directions',
