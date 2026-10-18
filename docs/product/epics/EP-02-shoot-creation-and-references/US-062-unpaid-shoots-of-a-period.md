@@ -33,6 +33,7 @@ cards.
   **balance above zero** — finished or planned. Deleted shoots never (`ADR-014`).
 
 ### AC-3 — The screen
+- *Amended by `US-071` AC-6 (owner, 2026-10-18): the sum owed per currency, joined by « · ».*
 - A pushed screen with a back chevron; the title «Без оплати», and under it the period as
   «Статистика» names it, with the sum still owed: «Жовтень 2026 · 9 000 ₴» (owner, 2026-10-17).
 - The shoots grouped by date under date headings, **as «Календар» draws them** — the same card:

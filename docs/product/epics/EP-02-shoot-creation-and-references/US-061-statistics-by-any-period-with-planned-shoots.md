@@ -51,6 +51,7 @@ its date.
 - **Then** it is chosen and the sheet closes
 
 ### AC-3 — «Дохід»
+- *Amended by `US-071` AC-2 (owner, 2026-10-18): one sum per currency when shoots differ.*
 - Full width, as today: the prepayments of **every shoot in the period** — finished and planned.
 
 ### AC-4 — «Проведено» and «Заплановано», side by side
@@ -67,10 +68,12 @@ its date.
 - **Then** «Заплановано» does not respond to a tap
 
 ### AC-5 — «Середній чек»
+- *Superseded by `US-071` AC-4 (owner, 2026-10-18): «Середній чек» is removed.*
 - The average **price** of every shoot in the period that has one, finished or planned. Shoots
   without a price are left out. «—» when there are none.
 
 ### AC-6 — «Очікує оплати»
+- *Amended by `US-071` AC-3 (owner, 2026-10-18): its own card, one sum per currency.*
 - *Amended by `US-063` AC-1b (owner, 2026-10-17): the count on the right, «На суму {sum}» under
   the label.*
 - The balance — price less prepayment — summed over every shoot in the period that has a price,

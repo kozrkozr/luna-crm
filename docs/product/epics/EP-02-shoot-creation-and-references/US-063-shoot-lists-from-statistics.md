@@ -44,6 +44,7 @@ changed here.
 - No line under the label.
 
 ### AC-1b — «Очікує оплати» shows a count, and the sum under it *(owner, 2026-10-17)*
+- *Amended by `US-071` AC-3 (owner, 2026-10-18): the sum, or one per currency, drawn large under the label.*
 - On the right, **the number of unpaid shoots** instead of the sum — amber while above zero.
 - Under the label, **«На суму {sum}»**, amber, instead of «{n} зйомок без оплати».
 - When every shoot with a price is paid: «0» on the right and «Усі зйомки оплачені», green,
@@ -72,6 +73,7 @@ changed here.
   size and muted colour.
 
 ### AC-2b — Two cards under «Проведено» and «Заплановано» *(owner, 2026-10-17)*
+- *Amended by `US-071` AC-3, AC-4 (owner, 2026-10-18): «Очікує оплати» moves to its own card above «Проведено»; «Середній чек» is gone.*
 - First, the rows that open a list: «Очікує оплати», «В обробці», «Передано», «Прострочено».
 - Under it, a second card with the plain figures: «Середній чек», «Годин на зйомках».
 

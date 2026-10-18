@@ -29,6 +29,7 @@ form, the shoot's «Оплата» card and «Статистика».
 - **Then** its currency is UAH
 
 ### AC-4 — Changing it
+- *Amended by `US-070` AC-6 (`ADR-027`, owner, 2026-10-18): a shoot keeps its own currency; changing the account's changes only what new shoots start in.*
 - **Given** the profile's «Налаштування» section
 - **Then** a «Валюта» row sits right under «Мова застосунку», showing the current currency on the
   right («₴ UAH») and a chevron, drawn like the «Сповіщення» row
@@ -48,6 +49,7 @@ form, the shoot's «Оплата» card and «Статистика».
 - Link views show no money (unchanged).
 
 ### AC-5a — Copy (owner, 2026-10-06)
+- *The «Under the list» line is replaced by `US-070`'s (owner, 2026-10-18).*
 | Where | UK | EN |
 |---|---|---|
 | Profile row and screen title | Валюта | Currency |
@@ -70,7 +72,7 @@ form, the shoot's «Оплата» card and «Статистика».
 (owner, 2026-10-06)
 
 ## Out of scope
-- A currency per shoot; converting between currencies.
+- Converting between currencies. *(A currency per shoot was out of scope here; it is `US-070`, `ADR-027`.)*
 
 ## Dependencies
 `US-016`, `US-045`.
