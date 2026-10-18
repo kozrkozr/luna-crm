@@ -8,8 +8,8 @@ import { ShootForm } from '../../src/features/shoots/ShootForm'
  * editing: the two had been drifting field by field, and every alignment pass
  * had to be applied twice.
  *
- * What create mode means, in full: nothing is loaded, past dates are refused,
- * the save calls `createShoot`, and the header and CTA read «Нова зйомка» /
+ * What create mode means, in full: nothing is loaded, the save calls
+ * `createShoot`, and the header and CTA read «Нова зйомка» /
  * «Створити зйомку». Everything else — the client search, `US-029`'s phone
  * match, the date and time, the location, the notes — is the same code the edit
  * screen runs.

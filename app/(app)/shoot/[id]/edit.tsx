@@ -6,8 +6,7 @@ import { ShootForm } from '../../../../src/features/shoots/ShootForm'
  *
  * The screen is `ShootForm` in edit mode (owner, 2026-09-03: "reuse New Shoot
  * for Edit Shoot… all fields exactly as on New Shoot Form"). Edit mode loads
- * the shoot, allows a past date, calls `updateShoot`, and reads «Редагувати» /
- * «Зберегти зміни».
+ * the shoot, calls `updateShoot`, and reads «Редагувати» / «Зберегти зміни».
  *
  * ── Three sections went with the merge, and two of them took a feature ───────
  *
