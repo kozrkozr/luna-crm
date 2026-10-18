@@ -35,7 +35,6 @@ import { ImageViewer } from '../../../../src/components/ImageViewer'
 import { type SheetPerson } from '../../../../src/components/PersonSheet'
 import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
 import { canMarkPaid, formatMoney, payment } from '../../../../src/features/shoots/money'
-import { useCurrency } from '../../../../src/features/account/currency'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { MaterialsReferences } from '../../../../src/components/MaterialsReferences'
@@ -970,7 +969,8 @@ function PaymentCard({
   onToast: (message: string, undo?: () => void) => void
   onChanged: (prepayment: number | null) => void
 }) {
-  const currency = useCurrency()
+  // `US-070` AC-7 — the shoot's own currency, not the account's.
+  const currency = shoot.currency
   const t = useStrings()
   const guard = useGuard()
   const [busy, setBusy] = useState(false)

@@ -84,7 +84,13 @@ export const uk = {
   currencyTitle: 'Валюта',
   /** In `CURRENCIES` order: UAH, USD, EUR, PLN, CZK. */
   currencyNames: ['Гривня', 'Долар США', 'Євро', 'Польський злотий', 'Чеська крона'],
-  currencyHint: 'Суми не перераховуються — змінюється лише символ.',
+  /** `US-070` — the account's currency is only what a new shoot starts in (`ADR-027`). */
+  currencyHint:
+    'Нові зйомки створюються в цій валюті — у кожній її можна змінити в «Оплаті». Створені раніше зйомки зберігають свою.',
+  /** `US-070` AC-3 — the button at the end of «Ціна», and the sheet it opens. */
+  changeCurrencyLabel: 'Змінити валюту',
+  shootCurrencySubtitle: 'Для ціни, передплати й залишку',
+  shootCurrencyNote: 'Нові зйомки створюються у валюті з профілю. Змінити її можна в профілі → «Валюта».',
   contactSupport: 'Написати в підтримку',
   /** «LUNA CRM · версія 0.1.0» — the number comes from `expo-constants`. */
   versionTemplate: 'LUNA CRM · версія {version}',

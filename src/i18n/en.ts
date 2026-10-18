@@ -76,7 +76,11 @@ export const en: Strings = {
   // US-047 — owner, 2026-10-06.
   currencyTitle: 'Currency',
   currencyNames: ['Ukrainian hryvnia', 'US dollar', 'Euro', 'Polish złoty', 'Czech koruna'],
-  currencyHint: 'Amounts are not converted — only the symbol changes.',
+  currencyHint:
+    'New shoots start in this currency — you can change it on each shoot under “Payment”. Earlier shoots keep theirs.',
+  changeCurrencyLabel: 'Change currency',
+  shootCurrencySubtitle: 'For the price, prepayment and balance',
+  shootCurrencyNote: "New shoots start in your profile's currency. You can change it in Profile → Currency.",
   contactSupport: 'Contact support',
   versionTemplate: 'LUNA CRM · version {version}',
   phoneFormatInvalid: 'Check the phone number',
