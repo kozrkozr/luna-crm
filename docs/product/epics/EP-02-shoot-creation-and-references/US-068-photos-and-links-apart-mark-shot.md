@@ -58,7 +58,9 @@ Today the «Матеріали» tab's «Референси» block is one grid 
 
 ### AC-6 — Everything shot
 - **Given** photos exist (in the active chip) and every one is marked
-- **Then** «Референси» shows only its «+» tile and, under the grid, «Усі фото-референси відзнято»
+- **Then** «Референси» shows only its «+» tile, and its counter reads «усе знято»
+- No separate «Усі фото-референси відзнято» note under the grid — the counter already says it
+  (owner, 2026-10-18).
 
 ### AC-7 — «Посилання»
 - **Then** «Посилання» holds link references, in the order they were added, one row each: a link
@@ -103,7 +105,6 @@ Today the «Матеріали» tab's «Референси» block is one grid 
 | N фото до зйомки | N to shoot |
 | усе знято | all shot |
 | 0 фото | 0 photos |
-| Усі фото-референси відзнято | Every photo reference is shot |
 | Тапніть «Знято» ще раз, щоб повернути нагору. | Tap "Shot" again to move a photo back up. |
 | Посилання *(section)* | Links |
 | Додати посилання | Add link |
