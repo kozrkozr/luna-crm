@@ -568,7 +568,6 @@ export const en: Strings = {
   shotSectionTemplate: 'Shot · {n}',
   toShootTemplate: '{n} to shoot',
   allShot: 'all shot',
-  allPhotoReferencesShot: 'Every photo reference is shot',
   shotHint: 'Tap "Shot" again to move a photo back up.',
   linksSection: 'Links',
   addLink: 'Add link',

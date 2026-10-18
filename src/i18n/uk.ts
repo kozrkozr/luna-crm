@@ -1225,7 +1225,6 @@ export const uk = {
   shotSectionTemplate: 'Знято · {n}',
   toShootTemplate: '{n} фото до зйомки',
   allShot: 'усе знято',
-  allPhotoReferencesShot: 'Усі фото-референси відзнято',
   shotHint: 'Тапніть «Знято» ще раз, щоб повернути нагору.',
   linksSection: 'Посилання',
   addLink: 'Додати посилання',

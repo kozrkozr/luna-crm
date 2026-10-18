@@ -239,7 +239,12 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
         ))}
       </View>
 
-      {/* ── «Референси» — the photos still to shoot (AC-2, AC-6, AC-9) ── */}
+      {/*
+        ── «Референси» — the photos still to shoot (AC-2, AC-6, AC-9) ──
+
+        With every photo shot, only the «+» is left and the counter reads «усе
+        знято» — no note under the grid saying it twice (owner, 2026-10-18).
+      */}
       <View className="gap-2.5">
         <SectionHeader label={t.references} counter={photosCounter} />
         {photos.length === 0 ? (
@@ -259,34 +264,25 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
             </Button>
           </View>
         ) : (
-          <>
-            <ReferenceGrid
-              references={toShoot}
-              onRemove={guard(askToRemove)}
-              footer={shotButton}
-              trailing={
-                <Pressable
-                  className="border-border-strong aspect-square w-full items-center justify-center rounded-[10px] border border-dashed active:bg-secondary"
-                  disabled={busy}
-                  onPress={guard(() => {
-                    tapped()
-                    void pickFromGallery()
-                  })}
-                  role="button"
-                  accessibilityLabel={t.addPhotos}
-                >
-                  <Icon as={Plus} size={20} strokeWidth={2} className="text-muted-foreground" />
-                </Pressable>
-              }
-            />
-            {toShoot.length === 0 ? (
-              <View className="border-border-strong rounded-xl border border-dashed px-3.5 py-3">
-                <Text className="text-muted-foreground text-center text-xs">
-                  {t.allPhotoReferencesShot}
-                </Text>
-              </View>
-            ) : null}
-          </>
+          <ReferenceGrid
+            references={toShoot}
+            onRemove={guard(askToRemove)}
+            footer={shotButton}
+            trailing={
+              <Pressable
+                className="border-border-strong aspect-square w-full items-center justify-center rounded-[10px] border border-dashed active:bg-secondary"
+                disabled={busy}
+                onPress={guard(() => {
+                  tapped()
+                  void pickFromGallery()
+                })}
+                role="button"
+                accessibilityLabel={t.addPhotos}
+              >
+                <Icon as={Plus} size={20} strokeWidth={2} className="text-muted-foreground" />
+              </Pressable>
+            }
+          />
         )}
       </View>
 
