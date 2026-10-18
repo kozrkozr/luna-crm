@@ -1239,6 +1239,9 @@ export const uk = {
   unmarkShotLabel: 'Повернути до зйомки',
   /** `US-069` — the photo preview's title: «Світло · 3 з 6», or «3 з 6» on «Всі». */
   viewerCounterTemplate: '{n} з {total}',
+  viewerMarkShot: 'Позначити як відзняте',
+  /** After the check icon — «✓ Відзнято». */
+  viewerShot: 'Відзнято',
   copyWord: 'Копіювати',
 
   /*

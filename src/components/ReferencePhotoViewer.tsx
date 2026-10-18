@@ -108,12 +108,17 @@ export function ReferencePhotoViewer({
           />
         ) : null}
 
-        {/* AC-2 — the round ✕ at the left, the title in the middle. */}
+        {/* AC-2 — the title in the middle, the round ✕ at the right. */}
         <View
           className="absolute left-0 right-0 flex-row items-center px-4"
           style={{ top: insets.top + 8 }}
           pointerEvents="box-none"
         >
+          {/* The ✕'s width again, so the title centres on the screen. */}
+          <View className="w-9" />
+          <Text className="flex-1 text-center text-base font-semibold text-white" numberOfLines={1}>
+            {title}
+          </Text>
           <Pressable
             className="h-9 w-9 items-center justify-center rounded-full bg-white/20 active:opacity-70"
             onPress={onClose}
@@ -123,14 +128,13 @@ export function ReferencePhotoViewer({
           >
             <Icon as={X} size={18} strokeWidth={2.4} className="text-white" />
           </Pressable>
-          <Text className="flex-1 text-center text-base font-semibold text-white" numberOfLines={1}>
-            {title}
-          </Text>
-          {/* The ✕'s width again, so the title centres on the screen. */}
-          <View className="w-9" />
         </View>
 
-        {/* AC-3, AC-4 — «Знято» in the middle, the bin at the right. */}
+        {/*
+          AC-3, AC-4 — two full-width buttons, one above the other: white «Позначити
+          як відзняте» (green «✓ Відзнято» once marked), and a red outlined
+          «Видалити» under it.
+        */}
         {current ? (
           <View
             className="absolute left-0 right-0 gap-3 px-4"
@@ -138,41 +142,33 @@ export function ReferencePhotoViewer({
             pointerEvents="box-none"
           >
             {error ? <Text className="text-destructive text-center text-sm">{error}</Text> : null}
-            <View className="flex-row items-center">
-              <View className="w-11" />
-              <View className="flex-1 items-center">
-                <Pressable
-                  className={`h-11 flex-row items-center justify-center gap-2 rounded-full px-6 ${
-                    shot ? 'bg-success' : 'bg-white/20 active:opacity-70'
-                  }`}
-                  disabled={marking.has(current.id)}
-                  onPress={() => onToggleShot(current)}
-                  role="button"
-                  accessibilityState={{ selected: shot }}
-                  accessibilityLabel={shotLabel(current)}
-                >
-                  <Icon
-                    as={Check}
-                    size={16}
-                    strokeWidth={3}
-                    className={shot ? 'text-success-foreground' : 'text-white'}
-                  />
-                  <Text
-                    className={`text-body-sm font-semibold ${shot ? 'text-success-foreground' : 'text-white'}`}
-                  >
-                    {t.shotMark}
-                  </Text>
-                </Pressable>
-              </View>
-              <Pressable
-                className="h-11 w-11 items-center justify-center rounded-full bg-white/20 active:opacity-70"
-                onPress={() => onRemove(current)}
-                role="button"
-                accessibilityLabel={t.remove}
+            <Pressable
+              className={`h-12 flex-row items-center justify-center gap-2 rounded-full active:opacity-80 ${
+                shot ? 'bg-success' : 'bg-white'
+              }`}
+              disabled={marking.has(current.id)}
+              onPress={() => onToggleShot(current)}
+              role="button"
+              accessibilityState={{ selected: shot }}
+              accessibilityLabel={shotLabel(current)}
+            >
+              {shot ? (
+                <Icon as={Check} size={16} strokeWidth={3} className="text-success-foreground" />
+              ) : null}
+              <Text
+                className={`text-base font-semibold ${shot ? 'text-success-foreground' : 'text-black'}`}
               >
-                <Icon as={Trash} size={18} strokeWidth={2} className="text-white" />
-              </Pressable>
-            </View>
+                {shot ? t.viewerShot : t.viewerMarkShot}
+              </Text>
+            </Pressable>
+            <Pressable
+              className="border-destructive h-12 flex-row items-center justify-center gap-2 rounded-full border active:opacity-70"
+              onPress={() => onRemove(current)}
+              role="button"
+            >
+              <Icon as={Trash} size={16} strokeWidth={2} className="text-destructive" />
+              <Text className="text-destructive text-base font-semibold">{t.remove}</Text>
+            </Pressable>
           </View>
         ) : null}
 

@@ -579,6 +579,8 @@ export const en: Strings = {
   markShotLabel: 'Mark "Shot"',
   unmarkShotLabel: 'Move back to shoot',
   viewerCounterTemplate: '{n} of {total}',
+  viewerMarkShot: 'Mark as shot',
+  viewerShot: 'Shot',
   copyWord: 'Copy',
   instagramLabel: 'Instagram',
   writeTo: 'Message',
