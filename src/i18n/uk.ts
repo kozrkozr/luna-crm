@@ -1237,6 +1237,8 @@ export const uk = {
   /** Accessibility labels; « — {category}» is appended when there is one. */
   markShotLabel: 'Відмітити «Знято»',
   unmarkShotLabel: 'Повернути до зйомки',
+  /** `US-069` — the photo preview's title: «Світло · 3 з 6», or «3 з 6» on «Всі». */
+  viewerCounterTemplate: '{n} з {total}',
   copyWord: 'Копіювати',
 
   /*

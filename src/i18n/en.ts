@@ -578,6 +578,7 @@ export const en: Strings = {
   shotSaveFailed: 'Could not save the mark. Please try again.',
   markShotLabel: 'Mark "Shot"',
   unmarkShotLabel: 'Move back to shoot',
+  viewerCounterTemplate: '{n} of {total}',
   copyWord: 'Copy',
   instagramLabel: 'Instagram',
   writeTo: 'Message',

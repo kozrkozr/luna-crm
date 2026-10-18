@@ -44,6 +44,7 @@ export function ReferenceGrid({
   resolveImage = signedImage,
   footer,
   dimmed = false,
+  onOpen,
 }: {
   references: Reference[]
   /**
@@ -76,6 +77,11 @@ export function ReferenceGrid({
   footer?: (reference: Reference) => React.ReactNode
   /** Draw the images faded with a green edge — `US-068`'s «Знято» section. */
   dimmed?: boolean
+  /**
+   * Open an image tile somewhere else instead of the plain full-screen viewer —
+   * `US-069`'s swipeable preview on «Матеріали».
+   */
+  onOpen?: (reference: Reference) => void
 }) {
   const [viewing, setViewing] = useState<string | null>(null)
 
@@ -102,6 +108,7 @@ export function ReferenceGrid({
               onRemove={onRemove}
               resolveImage={resolveImage}
               dimmed={dimmed}
+              onOpen={onOpen}
             />
             {footer ? <View className="mt-1.5">{footer(reference)}</View> : null}
           </View>
@@ -127,12 +134,14 @@ function ReferenceThumb({
   onRemove,
   resolveImage,
   dimmed,
+  onOpen,
 }: {
   reference: Reference
   onOpenImage: (uri: string) => void
   onRemove?: (reference: Reference) => void
   resolveImage: (reference: Reference) => Promise<string | null>
   dimmed: boolean
+  onOpen?: (reference: Reference) => void
 }) {
   const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
@@ -160,7 +169,7 @@ function ReferenceThumb({
         // Not tappable until the URL is signed: there would be nothing to show,
         // and the thumbnail is blank at that point anyway.
         disabled={!uri}
-        onPress={() => uri && onOpenImage(uri)}
+        onPress={() => (onOpen ? onOpen(reference) : uri && onOpenImage(uri))}
         // Pressable alone renders an unlabelled div on web. RNR's own controls
         // set a role; these are hand-composed, and ADR-016 made the
         // accessibility of those this project's problem rather than a library's.

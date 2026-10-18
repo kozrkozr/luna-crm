@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, Platform, Pressable, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import Check from 'lucide-react-native/icons/check'
@@ -11,13 +11,14 @@ import { Input } from './ui/input'
 import { Text } from './ui/text'
 import { ReferenceGrid, hostOf } from './ReferenceGrid'
 import { FilterChip } from './ReferencesEditor'
+import { ReferencePhotoViewer } from './ReferencePhotoViewer'
 import { SectionLabel } from './ShootFormFields'
 import { useDestructiveConfirm } from './DestructiveAction'
 import { useStrings } from '../i18n/LanguageProvider'
 import { CATEGORY_KEYS, categoryKeyOf, categoryLabel } from '../i18n/vocabulary'
 import { openExternalUrl } from '../lib/openExternalUrl'
 import { succeeded, tapped } from '../lib/haptics'
-import { useGuard } from '../features/subscription/access'
+import { useAccess, useGuard } from '../features/subscription/access'
 import {
   addImageReference,
   addLinkReference,
@@ -59,6 +60,13 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
   const [linkDraft, setLinkDraft] = useState<string | null>(null)
   // Photos whose mark is being written, so a second tap cannot race the first.
   const [marking, setMarking] = useState<ReadonlySet<string>>(new Set())
+  /*
+    `US-069` — the preview. The order is taken when it opens and held while it
+    is open (AC-3): a photo marked there stays on its page, and the tab re-sorts
+    once it closes. Only a removal changes what is in it (AC-4).
+  */
+  const [viewer, setViewer] = useState<{ ids: string[]; index: number } | null>(null)
+  const { hasAccess } = useAccess()
 
   const shown =
     category === null
@@ -72,6 +80,29 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
     .filter((r) => r.shotAt)
     .sort((a, b) => (a.shotAt! < b.shotAt! ? -1 : a.shotAt! > b.shotAt! ? 1 : 0))
   const links = shown.filter((r) => r.kind === 'link')
+
+  const viewerPhotos = viewer
+    ? viewer.ids.flatMap((id) => references.filter((r) => r.id === id))
+    : []
+  // AC-4 — after a removal: the next photo, the previous one if it was the
+  // last, and nothing left closes the preview.
+  useEffect(() => {
+    if (!viewer) return
+    if (viewerPhotos.length === 0) setViewer(null)
+    else if (viewer.index > viewerPhotos.length - 1)
+      setViewer({ ...viewer, index: viewerPhotos.length - 1 })
+  }, [viewer, viewerPhotos.length])
+  // AC-1 — every photo of the active chip, in the tab's order.
+  const openViewer = (reference: Reference) => {
+    const ids = [...toShoot, ...shot].map((r) => r.id)
+    setError(null)
+    setViewer({ ids, index: Math.max(0, ids.indexOf(reference.id)) })
+  }
+  // AC-5 — without access the paywall is a screen, and the modal would sit on it.
+  const fromViewer = (action: (reference: Reference) => void) => (reference: Reference) => {
+    if (hasAccess === false) setViewer(null)
+    guard(action)(reference)
+  }
 
   const photosCounter =
     photos.length === 0
@@ -190,6 +221,9 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
     return key ? ` — ${categoryLabel(key, t)}` : ''
   }
 
+  const shotLabel = (reference: Reference) =>
+    `${reference.shotAt ? t.unmarkShotLabel : t.markShotLabel}${categoryClause(reference)}`
+
   const shotButton = (reference: Reference) => {
     const on = !!reference.shotAt
     return (
@@ -201,7 +235,7 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
         onPress={guard(() => void toggleShot(reference))}
         role="button"
         accessibilityState={{ selected: on }}
-        accessibilityLabel={`${on ? t.unmarkShotLabel : t.markShotLabel}${categoryClause(reference)}`}
+        accessibilityLabel={shotLabel(reference)}
       >
         <Icon
           as={Check}
@@ -267,6 +301,7 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
           <ReferenceGrid
             references={toShoot}
             onRemove={guard(askToRemove)}
+            onOpen={openViewer}
             footer={shotButton}
             trailing={
               <Pressable
@@ -419,6 +454,7 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
           <ReferenceGrid
             references={shot}
             onRemove={guard(askToRemove)}
+            onOpen={openViewer}
             footer={shotButton}
             dimmed
           />
@@ -426,7 +462,22 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
         </View>
       ) : null}
 
-      {removeDialog}
+      <ReferencePhotoViewer
+        photos={viewerPhotos}
+        index={viewer ? viewer.index : null}
+        onIndexChange={(index) => setViewer((current) => (current ? { ...current, index } : current))}
+        onClose={() => setViewer(null)}
+        chipLabel={category ? categoryLabel(category, t) : null}
+        onToggleShot={fromViewer((reference) => void toggleShot(reference))}
+        shotLabel={shotLabel}
+        onRemove={fromViewer(askToRemove)}
+        marking={marking}
+        error={error}
+      >
+        {/* The web confirmation renders in the tree; inside the modal while it is open. */}
+        {viewer ? removeDialog : null}
+      </ReferencePhotoViewer>
+      {viewer ? null : removeDialog}
     </>
   )
 }
