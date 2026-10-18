@@ -59,6 +59,7 @@ export function ReferencePhotoViewer({
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const list = useRef<FlatList<Reference>>(null)
+  const [pageHeight, setPageHeight] = useState(0)
   const open = index !== null && photos.length > 0
   const current = open ? photos[Math.min(index, photos.length - 1)] : null
 
@@ -84,36 +85,8 @@ export function ReferencePhotoViewer({
   return (
     <Modal visible={open} animationType="fade" onRequestClose={onClose} supportedOrientations={['portrait']}>
       <View className="flex-1 bg-black">
-        {open ? (
-          <FlatList
-            ref={list}
-            data={photos}
-            keyExtractor={(photo) => photo.id}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            initialScrollIndex={index}
-            getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
-            onMomentumScrollEnd={(event) =>
-              onIndexChange(Math.round(event.nativeEvent.contentOffset.x / width))
-            }
-            // Web has no momentum event for a snap, so the page is read when the
-            // drag ends there. Not on iOS: mid-fling, that offset is not the page.
-            onScrollEndDrag={
-              Platform.OS === 'web'
-                ? (event) => onIndexChange(Math.round(event.nativeEvent.contentOffset.x / width))
-                : undefined
-            }
-            renderItem={({ item }) => <Page photo={item} width={width} />}
-          />
-        ) : null}
-
         {/* AC-2 — the title in the middle, the round ✕ at the right. */}
-        <View
-          className="absolute left-0 right-0 flex-row items-center px-4"
-          style={{ top: insets.top + 8 }}
-          pointerEvents="box-none"
-        >
+        <View className="flex-row items-center px-4 pb-3" style={{ paddingTop: insets.top + 8 }}>
           {/* The ✕'s width again, so the title centres on the screen. */}
           <View className="w-9" />
           <Text className="flex-1 text-center text-base font-semibold text-white" numberOfLines={1}>
@@ -131,16 +104,45 @@ export function ReferencePhotoViewer({
         </View>
 
         {/*
-          AC-3, AC-4 — two full-width buttons, one above the other: white «Позначити
+          AC-1 — the photo only between the header and the buttons, never under
+          them: the white controls were lost against a light photo (owner,
+          2026-10-18). The list's height is measured, so each page fills it.
+        */}
+        <View className="flex-1" onLayout={(event) => setPageHeight(event.nativeEvent.layout.height)}>
+          {/* Not before the height is known: pages would be drawn 0pt tall, and
+              FlatList does not re-render its rows when only that changes. */}
+          {open && pageHeight > 0 ? (
+            <FlatList
+              ref={list}
+              data={photos}
+              keyExtractor={(photo) => photo.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={index}
+              getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+              onMomentumScrollEnd={(event) =>
+                onIndexChange(Math.round(event.nativeEvent.contentOffset.x / width))
+              }
+              // Web has no momentum event for a snap, so the page is read when the
+              // drag ends there. Not on iOS: mid-fling, that offset is not the page.
+              onScrollEndDrag={
+                Platform.OS === 'web'
+                  ? (event) => onIndexChange(Math.round(event.nativeEvent.contentOffset.x / width))
+                  : undefined
+              }
+              renderItem={({ item }) => <Page photo={item} width={width} height={pageHeight} />}
+            />
+          ) : null}
+        </View>
+
+        {/*
+          AC-3, AC-4 — two full-width buttons, one above the other: white «✓ Позначити
           як відзняте» (green «✓ Відзнято» once marked), and a red outlined
           «Видалити» under it.
         */}
         {current ? (
-          <View
-            className="absolute left-0 right-0 gap-3 px-4"
-            style={{ bottom: insets.bottom + 16 }}
-            pointerEvents="box-none"
-          >
+          <View className="gap-3 px-4 pt-3" style={{ paddingBottom: insets.bottom + 16 }}>
             {error ? <Text className="text-destructive text-center text-sm">{error}</Text> : null}
             <Pressable
               className={`h-12 flex-row items-center justify-center gap-2 rounded-full active:opacity-80 ${
@@ -152,9 +154,12 @@ export function ReferencePhotoViewer({
               accessibilityState={{ selected: shot }}
               accessibilityLabel={shotLabel(current)}
             >
-              {shot ? (
-                <Icon as={Check} size={16} strokeWidth={3} className="text-success-foreground" />
-              ) : null}
+              <Icon
+                as={Check}
+                size={16}
+                strokeWidth={3}
+                className={shot ? 'text-success-foreground' : 'text-black'}
+              />
               <Text
                 className={`text-base font-semibold ${shot ? 'text-success-foreground' : 'text-black'}`}
               >
@@ -179,7 +184,7 @@ export function ReferencePhotoViewer({
 }
 
 /** One photo, signed when it is first drawn — the bucket is private. */
-function Page({ photo, width }: { photo: Reference; width: number }) {
+function Page({ photo, width, height }: { photo: Reference; width: number; height: number }) {
   const [uri, setUri] = useState<string | null>(null)
   useEffect(() => {
     let active = true
@@ -191,7 +196,7 @@ function Page({ photo, width }: { photo: Reference; width: number }) {
     }
   }, [photo.urlOrPath])
   return (
-    <View style={{ width }} className="h-full items-center justify-center">
+    <View style={{ width, height }} className="items-center justify-center">
       {uri ? <Image source={{ uri }} className="h-full w-full" resizeMode="contain" /> : null}
     </View>
   )
