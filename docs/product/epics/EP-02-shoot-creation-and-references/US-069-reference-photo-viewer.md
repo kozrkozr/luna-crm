@@ -25,6 +25,8 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 - **Then** the preview opens on that photo, and swiping left and right moves through **every photo
   of the active chip**, in the tab's order: «Референси» first, then «Знято»
 - Tapping the photo itself does nothing. There is no zoom.
+- The photo fills the space between the header and the buttons, never under them (owner,
+  2026-10-18 — the controls were lost against it).
 
 ### AC-2 — The header
 - **Then** the top of the preview shows a title and, at the right, a round ✕ that closes it:
@@ -32,7 +34,7 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 
 ### AC-3 — «Знято» in the preview
 - **Then** the bottom of the preview shows two full-width buttons, one above the other; the upper
-  one is white, «Позначити як відзняте» — green, «✓ Відзнято», once the photo is marked
+  one is white, «✓ Позначити як відзняте» — green, «✓ Відзнято», once the photo is marked
 - **When** the creator taps it
 - **Then** the mark is saved — or cleared, from «✓ Відзнято» — at once (`US-068` AC-3, AC-5) and
   the button changes
@@ -58,7 +60,7 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 |---|---|
 | ‹чип› · N з M | ‹chip› · N of M |
 | N з M | N of M |
-| Позначити як відзняте | Mark as shot |
+| ✓ Позначити як відзняте | ✓ Mark as shot |
 | ✓ Відзнято | ✓ Shot |
 | Видалити | Remove |
 | Закрити *(✕, accessibility)* | Close |
