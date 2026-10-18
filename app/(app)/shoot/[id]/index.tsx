@@ -18,6 +18,7 @@ import Navigation from 'lucide-react-native/icons/navigation-2'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Trash from 'lucide-react-native/icons/trash'
 import UserIcon from 'lucide-react-native/icons/user'
+import Users from 'lucide-react-native/icons/users'
 import { FormScrollView } from '../../../../src/components/ui/form-scroll-view'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
@@ -1318,33 +1319,50 @@ function PeopleTab({
         ) : null}
       </View>
 
-      <Card variant="flat" className="gap-0 p-0">
-        {crew.map((member, index) => (
-          <PersonRow
-            key={member.id}
-            divided={index > 0}
-            member={member}
-            open={expanded === member.id}
-            onToggle={() => setExpanded((current) => (current === member.id ? null : member.id))}
-            onCopyLink={() =>
-              onCopyLink({
-                id: member.id,
-                name: member.name,
-                role: member.role,
-                phone: member.phone,
-                instagram: member.instagram,
-                telegram: member.telegram,
-                badge: null,
-                removable: true,
-              })
-            }
-            onRemove={guard(() => {
-              setExpanded(null)
-              askRemove(member)
-            })}
-          />
-        ))}
-      </Card>
+      {/*
+        `US-005` AC-3 — nobody on the crew: a card in place of the list, and no
+        button in it. «+ Додати учасника» is already pinned under the tab.
+      */}
+      {crew.length === 0 ? (
+        <Card variant="flat" className="items-center px-6 pb-7 pt-8">
+          <Icon as={Users} size={44} strokeWidth={1.3} className="text-muted-foreground" />
+          <Text className="text-body text-foreground mt-4 font-semibold">{t.emptyCrewTitle}</Text>
+          <Text
+            className="text-body-sm text-muted-foreground mt-1.5 text-center leading-5"
+            style={{ maxWidth: 270 }}
+          >
+            {t.emptyCrewText}
+          </Text>
+        </Card>
+      ) : (
+        <Card variant="flat" className="gap-0 p-0">
+          {crew.map((member, index) => (
+            <PersonRow
+              key={member.id}
+              divided={index > 0}
+              member={member}
+              open={expanded === member.id}
+              onToggle={() => setExpanded((current) => (current === member.id ? null : member.id))}
+              onCopyLink={() =>
+                onCopyLink({
+                  id: member.id,
+                  name: member.name,
+                  role: member.role,
+                  phone: member.phone,
+                  instagram: member.instagram,
+                  telegram: member.telegram,
+                  badge: null,
+                  removable: true,
+                })
+              }
+              onRemove={guard(() => {
+                setExpanded(null)
+                askRemove(member)
+              })}
+            />
+          ))}
+        </Card>
+      )}
 
       {removeDialog}
     </View>
