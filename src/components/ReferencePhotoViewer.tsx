@@ -137,8 +137,8 @@ export function ReferencePhotoViewer({
         </View>
 
         {/*
-          AC-3, AC-4 — two full-width buttons, one above the other: white «✓ Позначити
-          як відзняте» (green «✓ Відзнято» once marked), and a red outlined
+          AC-3, AC-4 — two full-width buttons, one above the other: «✓ Позначити як
+          відзняте» in the «+ Нова зйомка» colour (green «✓ Відзнято» once marked), and a red outlined
           «Видалити» under it.
         */}
         {current ? (
@@ -146,7 +146,7 @@ export function ReferencePhotoViewer({
             {error ? <Text className="text-destructive text-center text-sm">{error}</Text> : null}
             <Pressable
               className={`h-12 flex-row items-center justify-center gap-2 rounded-full active:opacity-80 ${
-                shot ? 'bg-success' : 'bg-white'
+                shot ? 'bg-success' : 'bg-primary'
               }`}
               disabled={marking.has(current.id)}
               onPress={() => onToggleShot(current)}
@@ -158,10 +158,10 @@ export function ReferencePhotoViewer({
                 as={Check}
                 size={16}
                 strokeWidth={3}
-                className={shot ? 'text-success-foreground' : 'text-black'}
+                className={shot ? 'text-success-foreground' : 'text-primary-foreground'}
               />
               <Text
-                className={`text-base font-semibold ${shot ? 'text-success-foreground' : 'text-black'}`}
+                className={`text-base font-semibold ${shot ? 'text-success-foreground' : 'text-primary-foreground'}`}
               >
                 {shot ? t.viewerShot : t.viewerMarkShot}
               </Text>
