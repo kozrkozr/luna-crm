@@ -27,20 +27,22 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 - Tapping the photo itself does nothing. There is no zoom.
 
 ### AC-2 — The header
-- **Then** the top of the preview shows a round ✕ at the left, which closes it, and a title:
+- **Then** the top of the preview shows a title and, at the right, a round ✕ that closes it:
   «‹чип› · N з M» — e.g. «Світло · 3 з 6»; with «Всі» active, only «N з M»
 
 ### AC-3 — «Знято» in the preview
-- **Then** the bottom of the preview shows the «Знято» button as on the tile — grey, green once marked
+- **Then** the bottom of the preview shows two full-width buttons, one above the other; the upper
+  one is white, «Позначити як відзняте» — green, «✓ Відзнято», once the photo is marked
 - **When** the creator taps it
-- **Then** the mark is saved at once (`US-068` AC-3, AC-5) and the button changes colour
+- **Then** the mark is saved — or cleared, from «✓ Відзнято» — at once (`US-068` AC-3, AC-5) and
+  the button changes
 - The photo stays where it is in the preview, and N and M do not change: the tab re-orders once the
   preview is closed.
 - A failed save says «Не вдалося зберегти відмітку. Спробуйте ще раз.» in the preview
   (`US-068` AC-10).
 
 ### AC-4 — Removing from the preview
-- **Then** a bin icon sits at the bottom right
+- **Then** the lower button is red, outlined, «Видалити» with a bin icon
 - **When** the creator taps it
 - **Then** it asks «Видалити цей референс? Це незворотньо.», as the tile's ✕ does; once removed,
   the preview shows the next photo — or the previous one if it was the last — and closes when none
@@ -48,7 +50,7 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 
 ### AC-5 — View mode
 - **Given** an account without access (`US-052`)
-- **When** the creator taps «Знято» or the bin in the preview
+- **When** the creator taps either button in the preview
 - **Then** the preview closes and the paywall opens
 
 ### AC-6 — Language
@@ -56,8 +58,10 @@ photos, the «Нова зйомка» form, the all-references page — keeps to
 |---|---|
 | ‹чип› · N з M | ‹chip› · N of M |
 | N з M | N of M |
+| Позначити як відзняте | Mark as shot |
+| ✓ Відзнято | ✓ Shot |
+| Видалити | Remove |
 | Закрити *(✕, accessibility)* | Close |
-| Видалити *(bin, accessibility)* | Remove |
 
 ## Out of scope
 - Zoom — owner, 2026-10-18: not now. It competes with the swipe for the same gesture.
