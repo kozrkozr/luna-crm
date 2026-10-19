@@ -21,6 +21,7 @@ import { createContact, updateContact } from './api'
 import { PhoneContactCard } from './PhoneContactCard'
 import { createClient, updateClientProfile } from '../clients/api'
 import { Starfield } from '../../components/Starfield'
+import { useDesktop } from '../../lib/desktop'
 
 /** What the form starts from: empty for «Новий контакт», a row for an edit. */
 export type ContactDraft = {
@@ -90,6 +91,12 @@ export function ContactForm({
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's form: a 600 px column,
+    «Скасувати» over the title, the phone and Instagram side by side, and
+    «Скасувати» and the save at its foot instead of pinned. Always false on iOS.
+  */
+  const desktop = useDesktop()
 
   const [draft, setDraft] = useState<ContactDraft>(initial)
   /*
@@ -191,6 +198,21 @@ export function ContactForm({
     router.back()
   }
 
+  const saveButton = (
+    <Button
+      variant={nameOk ? 'cta' : 'secondary'}
+      size={desktop ? undefined : 'cta'}
+      className={desktop ? 'h-11 rounded-full px-6' : undefined}
+      disabled={busy}
+      onPress={() => void save()}
+      accessibilityState={{ disabled: !nameOk || busy }}
+    >
+      <Text className={nameOk ? undefined : 'text-muted-foreground'}>
+        {!nameOk ? t.nameRequired : mode === 'create' ? t.saveContact : t.saveChanges}
+      </Text>
+    </Button>
+  )
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -207,32 +229,51 @@ export function ContactForm({
         get the width with it. The spacer opposite moves with it or the title
         stops being centred — it exists only to balance this control.
       */}
-      <View
-        className="bg-background border-border flex-row items-center border-b px-3 pb-2.5"
-        style={{ paddingTop: insets.top }}
-      >
-        <Pressable
-          className="active:bg-secondary min-h-11 w-24 shrink-0 justify-center rounded-lg px-1"
-          onPress={() => {
-            tapped()
-            askLeave()
-          }}
-          role="button"
+      {desktop ? null : (
+        <View
+          className="bg-background border-border flex-row items-center border-b px-3 pb-2.5"
+          style={{ paddingTop: insets.top }}
         >
-          <Text className="text-body text-muted-foreground" numberOfLines={1}>
-            {t.cancel}
+          <Pressable
+            className="active:bg-secondary min-h-11 w-24 shrink-0 justify-center rounded-lg px-1"
+            onPress={() => {
+              tapped()
+              askLeave()
+            }}
+            role="button"
+          >
+            <Text className="text-body text-muted-foreground" numberOfLines={1}>
+              {t.cancel}
+            </Text>
+          </Pressable>
+          <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
+            {mode === 'create' ? t.newContactTitle : t.editContactTitle}
           </Text>
-        </Pressable>
-        <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
-          {mode === 'create' ? t.newContactTitle : t.editContactTitle}
-        </Text>
-        <View className="w-24 shrink-0" />
-      </View>
+          <View className="w-24 shrink-0" />
+        </View>
+      )}
 
       <FormScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 104 }}
+        contentContainerStyle={{ paddingBottom: desktop ? 48 : insets.bottom + 104 }}
       >
-        <View className="gap-3.5 p-4">
+        <View className={desktop ? 'w-full max-w-[600px] gap-3.5 self-center px-10 pt-7' : 'gap-3.5 p-4'}>
+          {desktop ? (
+            <View className="mb-1 gap-1.5">
+              <Pressable
+                className="self-start active:opacity-60"
+                onPress={() => {
+                  tapped()
+                  askLeave()
+                }}
+                role="button"
+              >
+                <Text className="text-body-sm text-muted-foreground">{t.cancel}</Text>
+              </Pressable>
+              <Text className="text-title-sm text-foreground font-semibold">
+                {mode === 'create' ? t.newContactTitle : t.editContactTitle}
+              </Text>
+            </View>
+          ) : null}
           {/* `US-065` — create only (AC-7); a pick replaces «Імʼя» and «Телефон». */}
           {mode === 'create' ? (
             <PhoneContactCard
@@ -277,7 +318,8 @@ export function ContactForm({
             />
           </View>
 
-          <View className="gap-2">
+          <View className={desktop ? 'flex-row flex-wrap gap-3' : 'gap-3.5'}>
+          <View className={desktop ? 'min-w-[220px] flex-1 gap-2' : 'gap-2'}>
             <FieldLabel label={t.phoneField} optional />
             <Input
               id="contact-phone"
@@ -288,7 +330,7 @@ export function ContactForm({
             />
           </View>
 
-          <View className="gap-2">
+          <View className={desktop ? 'min-w-[220px] flex-1 gap-2' : 'gap-2'}>
             <FieldLabel label={t.instagramLabel} optional />
             <Input
               id="contact-insta"
@@ -298,6 +340,7 @@ export function ContactForm({
               autoCapitalize="none"
               autoCorrect={false}
             />
+          </View>
           </View>
 
           {/* ── Роль на зйомці ── crew only, exactly as the artboard gates it. */}
@@ -348,6 +391,21 @@ export function ContactForm({
           </Text>
 
           {failed ? <Text className="text-destructive text-sm">{t.somethingWentWrong}</Text> : null}
+          {desktop ? (
+            <View className="flex-row justify-end gap-3 pt-1">
+              <Button
+                variant="outline"
+                className="h-11 rounded-full px-5"
+                onPress={() => {
+                  tapped()
+                  askLeave()
+                }}
+              >
+                <Text className="text-body-sm">{t.cancel}</Text>
+              </Button>
+              {saveButton}
+            </View>
+          ) : null}
         </View>
       </FormScrollView>
 
@@ -357,22 +415,14 @@ export function ContactForm({
         would not, with «Вкажіть імʼя» standing in for the label until a name is
         typed.
       */}
-      <View
-        className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-2.5"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        <Button
-          variant={nameOk ? 'cta' : 'secondary'}
-          size="cta"
-          disabled={busy}
-          onPress={() => void save()}
-          accessibilityState={{ disabled: !nameOk || busy }}
+      {desktop ? null : (
+        <View
+          className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-2.5"
+          style={{ paddingBottom: insets.bottom + 12 }}
         >
-          <Text className={nameOk ? undefined : 'text-muted-foreground'}>
-            {!nameOk ? t.nameRequired : mode === 'create' ? t.saveContact : t.saveChanges}
-          </Text>
-        </Button>
-      </View>
+          {saveButton}
+        </View>
+      )}
 
       {discardDialog}
     </View>
