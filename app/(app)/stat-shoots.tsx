@@ -38,6 +38,7 @@ import {
 import { statusOf } from '../../src/features/shoots/status'
 import { tapped } from '../../src/lib/haptics'
 import { useGuard } from '../../src/features/subscription/access'
+import { useDesktop } from '../../src/lib/desktop'
 
 type State =
   | { status: 'loading' }
@@ -70,6 +71,12 @@ export default function StatShootsScreen() {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's list: a back chevron
+    with the title and its line beside it, and the cards in a 640 px column.
+    Always false on iOS.
+  */
+  const desktop = useDesktop()
   // `US-071` AC-1 — the account's currency leads the sums, and stands in for «0».
   const currency = useCurrency()
   const guard = useGuard()
@@ -195,6 +202,12 @@ export default function StatShootsScreen() {
     overdue: { icon: Clock, title: t.emptyOverdueTitle, body: t.emptyOverdueBody, add: false },
   }[kind]
 
+  const goBack = () => {
+    tapped()
+    if (router.canGoBack()) router.back()
+    else router.replace('/(app)/(tabs)/statistics')
+  }
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -202,36 +215,59 @@ export default function StatShootsScreen() {
 
       {/* «‹ Статистика · Без оплати», the period and the sum or count under the
           title — the «Сповіщення» header, with a second line. */}
-      <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
-        <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
+      {desktop ? (
+        <View className="bg-background border-border flex-row items-center gap-2 border-b px-10 pb-4 pt-7">
           <Pressable
-            className="active:bg-secondary min-h-11 w-[104px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
-            onPress={() => {
-              tapped()
-              if (router.canGoBack()) router.back()
-              else router.replace('/(app)/(tabs)/statistics')
-            }}
+            className="active:bg-secondary -ml-3 h-11 w-11 items-center justify-center rounded-lg"
+            onPress={goBack}
             role="button"
             accessibilityLabel={t.statsTitle}
           >
-            <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
-            <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
-              {t.statsTitle}
-            </Text>
+            <Icon as={ChevronLeft} size={22} strokeWidth={1.9} className="text-foreground" />
           </Pressable>
-          <View className="min-w-0 flex-1 items-center">
-            <Text className="text-subtitle text-foreground font-semibold">{title}</Text>
+          <View className="min-w-0 flex-1">
+            <Text className="text-title-sm text-foreground font-semibold">{title}</Text>
             {meta ? (
-              <Text className="text-caption text-muted-foreground mt-px" numberOfLines={1}>
+              <Text className="text-body-sm text-muted-foreground mt-0.5" numberOfLines={1}>
                 {meta}
               </Text>
             ) : null}
           </View>
-          <View className="w-[104px] shrink-0" />
         </View>
-      </View>
+      ) : (
+        <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
+          <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
+            <Pressable
+              className="active:bg-secondary min-h-11 w-[104px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
+              onPress={goBack}
+              role="button"
+              accessibilityLabel={t.statsTitle}
+            >
+              <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
+              <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
+                {t.statsTitle}
+              </Text>
+            </Pressable>
+            <View className="min-w-0 flex-1 items-center">
+              <Text className="text-subtitle text-foreground font-semibold">{title}</Text>
+              {meta ? (
+                <Text className="text-caption text-muted-foreground mt-px" numberOfLines={1}>
+                  {meta}
+                </Text>
+              ) : null}
+            </View>
+            <View className="w-[104px] shrink-0" />
+          </View>
+        </View>
+      )}
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}>
+      <ScrollView
+        contentContainerStyle={
+          desktop
+            ? { paddingHorizontal: 40, paddingTop: 28, paddingBottom: 48, width: '100%', maxWidth: 640 + 80 }
+            : { padding: 16, paddingBottom: insets.bottom + 40 }
+        }
+      >
         {state.status === 'loading' ? (
           <View className="items-center py-8">
             <ActivityIndicator size="large" />
