@@ -33,6 +33,7 @@ import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
 import { Starfield } from '../../components/Starfield'
 import { FormScrollView } from '../../components/ui/form-scroll-view'
+import { useDesktop } from '../../lib/desktop'
 
 /**
  * `login` and `register` are the two the routes map onto; `forgot` and `sent`
@@ -98,6 +99,13 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
   const [recoveryEmail, setRecoveryEmail] = useState('')
   /** The address the confirmation email went to — named on the screen (AC-1). */
   const [confirmEmail, setConfirmEmail] = useState('')
+  /*
+    `US-057` — on a desktop browser, the draft canvas's sign-in: the intro over
+    a card — 420 px, 520 for the longer registration — centred in the window,
+    and the registration's paired fields side by side. Always false on iOS.
+  */
+  const desktop = useDesktop()
+  const width = mode === 'register' ? 520 : 420
 
   return (
     /*
@@ -111,13 +119,29 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
       <Starfield />
       <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={
+          desktop
+            ? { flexGrow: 1, justifyContent: mode === 'register' ? 'flex-start' : 'center', paddingVertical: 48 }
+            : undefined
+        }
       >
-        <View className="px-4 pb-16">
+        <View
+          className={desktop ? 'w-full self-center px-4' : 'px-4 pb-16'}
+          style={desktop ? { maxWidth: width + 32 } : undefined}
+        >
           {/* The intro and the tabs belong to the two AUTH modes. The recovery
               screens replace them with their own heading, as drawn. */}
           {mode === 'login' || mode === 'register' ? (
             <>
               <Intro />
+            </>
+          ) : null}
+
+          <View
+            className={desktop ? 'bg-card border-border rounded-[20px] border p-6' : undefined}
+          >
+          {mode === 'login' || mode === 'register' ? (
+            <>
               <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
                 <SegmentTab
                   label={t.loginBtn}
@@ -143,6 +167,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
           ) : null}
           {mode === 'register' ? (
             <RegisterForm
+              desktop={desktop}
               onNeedsConfirmation={(email) => {
                 setConfirmEmail(email)
                 setMode('confirmSent')
@@ -168,6 +193,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
           {mode === 'confirmSent' ? (
             <ConfirmSent email={confirmEmail} onBack={() => setMode('login')} />
           ) : null}
+          </View>
 
           {/* «Потрібна допомога? Напишіть нам» — on the auth modes only. */}
           {mode === 'login' || mode === 'register' ? (
@@ -446,7 +472,14 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
 }
 
 /** `US-001` — register an account and select a professional role. */
-function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: string) => void }) {
+function RegisterForm({
+  onNeedsConfirmation,
+  desktop,
+}: {
+  onNeedsConfirmation: (email: string) => void
+  /** `US-057` — email beside phone, Instagram beside Telegram. */
+  desktop: boolean
+}) {
   const t = useStrings()
   const language = useLanguage()
   const router = useRouter()
@@ -553,7 +586,8 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
         <FieldError message={errors.name ?? null} />
       </View>
 
-      <View className="gap-2">
+      <View className={desktop ? 'flex-row flex-wrap gap-3' : 'gap-3.5'}>
+      <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
         {/* «Email», not «Email або телефон» — see the note on the login form. */}
         <Label htmlFor="email">{t.email}</Label>
         <Input
@@ -571,7 +605,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
         <FieldError message={errors.email ?? null} />
       </View>
 
-      <View className="gap-2">
+      <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
         {/*
           **Optional, and the only field here that is not for its owner to read
           back.** `users.phone` is the second crew-matching key
@@ -607,6 +641,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
           placeholder={phoneExample()}
         />
         <FieldError message={errors.phone ?? null} />
+      </View>
       </View>
 
       <View className="gap-2">
@@ -664,7 +699,8 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             {` ${t.optionalSuffix}`}
           </Text>
         </Text>
-        <View className="gap-2">
+        <View className={desktop ? 'flex-row flex-wrap gap-3' : 'gap-2.5'}>
+        <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
           <Text className="text-label text-muted-foreground">{t.instagramLabel}</Text>
           <Input
             value={instagram}
@@ -676,7 +712,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
         </View>
         {/* Telegram is new — `users.telegram`, migration 20260831100000. No
             story defines it; the design draws it. */}
-        <View className="gap-2">
+        <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
           <Text className="text-label text-muted-foreground">{t.telegramLabel}</Text>
           <Input
             value={telegram}
@@ -685,6 +721,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             autoCorrect={false}
             placeholder={t.telegramPlaceholder}
           />
+        </View>
         </View>
         <Text className="text-label text-muted-foreground">{t.socialHint}</Text>
       </View>
@@ -925,6 +962,8 @@ function ForgotForm({
   onBack: () => void
   onSent: () => void
 }) {
+  // `US-057` — inside the desktop card, which supplies its own padding.
+  const desktop = useDesktop()
   const t = useStrings()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -948,7 +987,7 @@ function ForgotForm({
   }
 
   return (
-    <View className="pt-6">
+    <View className={desktop ? undefined : 'pt-6'}>
       <Pressable
         className="active:bg-secondary -ml-2 mb-3.5 min-h-11 flex-row items-center gap-2 self-start rounded-lg px-2"
         onPress={onBack}
@@ -1006,6 +1045,8 @@ function ResetSent({
   onBack: () => void
   onChangeAddress: () => void
 }) {
+  // `US-057` — inside the desktop card, which supplies its own padding.
+  const desktop = useDesktop()
   const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(30)
   const [toast, setToast] = useState<string | null>(null)
@@ -1017,7 +1058,7 @@ function ResetSent({
   }, [secondsLeft])
 
   return (
-    <View className="items-center pt-12">
+    <View className={desktop ? 'items-center' : 'items-center pt-12'}>
       <View className="border-border-strong bg-secondary mb-5 h-14 w-14 items-center justify-center rounded-full">
         <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
       </View>
@@ -1073,6 +1114,8 @@ function ResetSent({
  * and Supabase would refuse a second one inside its interval.
  */
 function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
+  // `US-057` — inside the desktop card, which supplies its own padding.
+  const desktop = useDesktop()
   const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN_SECONDS)
   const [toast, setToast] = useState<string | null>(null)
@@ -1092,7 +1135,7 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
   }
 
   return (
-    <View className="items-center pt-12">
+    <View className={desktop ? 'items-center' : 'items-center pt-12'}>
       <View className="border-border-strong bg-secondary mb-5 h-14 w-14 items-center justify-center rounded-full">
         <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
       </View>

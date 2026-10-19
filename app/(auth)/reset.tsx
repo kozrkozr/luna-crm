@@ -12,6 +12,7 @@ import { MIN_PASSWORD_LENGTH, withMinLength } from '../../src/features/auth/pass
 import { setNewPassword } from '../../src/features/auth/passwordReset'
 import { useLinkSession } from '../../src/features/auth/authLink'
 import { Starfield } from '../../src/components/Starfield'
+import { useDesktop } from '../../src/lib/desktop'
 
 /**
  * Where the recovery email lands — `lunashoots://reset` on a device, `/reset` on
@@ -26,6 +27,8 @@ import { Starfield } from '../../src/components/Starfield'
  */
 export default function ResetPasswordScreen() {
   const t = useStrings()
+  // `US-057` — the draft canvas's 420 px card in the middle of the window.
+  const desktop = useDesktop()
   const router = useRouter()
   const ready = useLinkSession('recovery')
   const [password, setPassword] = useState('')
@@ -75,8 +78,11 @@ export default function ResetPasswordScreen() {
       <Starfield />
       <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={
+          desktop ? { flexGrow: 1, justifyContent: 'center', padding: 16 } : undefined
+        }
       >
-        <View className="gap-2 p-4 pt-8">
+        <View className={desktop ? 'gap-2 bg-card border-border w-full max-w-[420px] self-center rounded-[20px] border p-6' : 'gap-2 p-4 pt-8'}>
           <Text className="text-title text-foreground font-semibold">{t.newPasswordTitle}</Text>
 
           {ready === 'invalid' ? (
