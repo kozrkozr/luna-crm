@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -16,6 +17,7 @@ import { Text } from './ui/text'
 import { Tabs, type TabItem } from './ui/tabs'
 import { useStrings } from '../i18n/LanguageProvider'
 import { tapped } from '../lib/haptics'
+import { useDesktop } from '../lib/desktop'
 
 export type DetailTab = 'details' | 'people' | 'materials'
 
@@ -61,21 +63,52 @@ export function ShootDetailHeader({
   onTabChange,
   tabCounts,
   onHeight,
+  actions,
 }: {
   tab: DetailTab
   onTabChange: (tab: DetailTab) => void
   tabCounts: { people: string; materials: string }
   onHeight: (height: number) => void
+  /**
+   * `US-057` — the tab's own actions, drawn at the right of the desktop row
+   * (owner, 2026-10-19: «Редагувати» and the bin beside the tabs). The phone
+   * pins them under the tab instead, so this is ignored there.
+   */
+  actions?: ReactNode
 }) {
   const t = useStrings()
-  const router = useRouter()
   const insets = useSafeAreaInsets()
+  const desktop = useDesktop()
 
   const items: TabItem<DetailTab>[] = [
     { value: 'details', label: t.tabDetails },
     { value: 'people', label: t.tabPeople, count: tabCounts.people },
     { value: 'materials', label: t.tabMaterials, count: tabCounts.materials },
   ]
+
+  /*
+    `US-057` — on a desktop browser, the draft canvas's one row: back, the
+    title, then the tabs and the tab's actions at the right, in the content's
+    40 px gutter. Wraps under the title where the window is too narrow for it.
+  */
+  if (desktop)
+    return (
+      <View
+        className="bg-background border-border absolute inset-x-0 top-0 z-10 border-b"
+        onLayout={(event) => onHeight(event.nativeEvent.layout.height)}
+      >
+        <View className="flex-row flex-wrap items-center gap-x-4 gap-y-3 px-10 pb-4 pt-7">
+          <View className="min-w-0 flex-1 flex-row items-center gap-1.5" style={{ marginLeft: -10 }}>
+            <BackButton />
+            <Text className="text-title-sm text-foreground font-semibold" numberOfLines={1}>
+              {t.shootDetailTitle}
+            </Text>
+          </View>
+          <Tabs items={items} value={tab} onChange={onTabChange} className="w-[420px]" />
+          {actions}
+        </View>
+      </View>
+    )
 
   return (
     <View
@@ -84,20 +117,7 @@ export function ShootDetailHeader({
       onLayout={(event) => onHeight(event.nativeEvent.layout.height)}
     >
       <View className="flex-row items-center gap-1.5 px-2.5 pb-2 pt-1">
-        <Pressable
-          className="h-10 w-10 shrink-0 items-center justify-center rounded-lg active:bg-secondary"
-          onPress={() => {
-            tapped()
-            // `canGoBack` first: arriving here from a deep link leaves an empty
-            // stack, where `back` does nothing and the control looks broken.
-            if (router.canGoBack()) router.back()
-            else router.replace('/(app)/(tabs)/shoots')
-          }}
-          role="button"
-          accessibilityLabel={t.cancel}
-        >
-          <Icon as={ChevronLeft} size={22} strokeWidth={1.9} className="text-foreground" />
-        </Pressable>
+        <BackButton />
 
         {/* Left of centre, in a `flex:1` slot — v3 has no second button for a
             centred title to balance against. */}
@@ -114,5 +134,28 @@ export function ShootDetailHeader({
       </View>
 
     </View>
+  )
+}
+
+/** The header's back chevron — to the previous screen, or the calendar from a deep link. */
+function BackButton() {
+  const t = useStrings()
+  const router = useRouter()
+
+  return (
+    <Pressable
+      className="h-10 w-10 shrink-0 items-center justify-center rounded-lg active:bg-secondary"
+      onPress={() => {
+        tapped()
+        // `canGoBack` first: arriving here from a deep link leaves an empty
+        // stack, where `back` does nothing and the control looks broken.
+        if (router.canGoBack()) router.back()
+        else router.replace('/(app)/(tabs)/shoots')
+      }}
+      role="button"
+      accessibilityLabel={t.cancel}
+    >
+      <Icon as={ChevronLeft} size={22} strokeWidth={1.9} className="text-foreground" />
+    </Pressable>
   )
 }

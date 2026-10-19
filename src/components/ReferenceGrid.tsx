@@ -45,6 +45,7 @@ export function ReferenceGrid({
   footer,
   dimmed = false,
   onOpen,
+  columns = 3,
 }: {
   references: Reference[]
   /**
@@ -82,6 +83,8 @@ export function ReferenceGrid({
    * `US-069`'s swipeable preview on «Матеріали».
    */
   onOpen?: (reference: Reference) => void
+  /** `US-057` — four on a desktop browser's «Матеріали», as the draft canvas draws it. */
+  columns?: 3 | 4
 }) {
   const [viewing, setViewing] = useState<string | null>(null)
 
@@ -101,7 +104,7 @@ export function ReferenceGrid({
       */}
       <View className="-m-1 flex-row flex-wrap items-start">
         {references.map((reference) => (
-          <View key={reference.id} className="w-1/3 p-1">
+          <View key={reference.id} className={`${columns === 4 ? 'w-1/4' : 'w-1/3'} p-1`}>
             <ReferenceThumb
               reference={reference}
               onOpenImage={setViewing}
@@ -113,7 +116,9 @@ export function ReferenceGrid({
             {footer ? <View className="mt-1.5">{footer(reference)}</View> : null}
           </View>
         ))}
-        {trailing ? <View className="w-1/3 p-1">{trailing}</View> : null}
+        {trailing ? (
+          <View className={`${columns === 4 ? 'w-1/4' : 'w-1/3'} p-1`}>{trailing}</View>
+        ) : null}
       </View>
       <ImageViewer uri={viewing} onClose={() => setViewing(null)} />
     </>
