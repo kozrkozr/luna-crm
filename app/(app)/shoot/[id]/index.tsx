@@ -358,12 +358,24 @@ export default function ShootDetailScreen() {
         }}
         onHeight={setHeaderHeight}
         actions={
-          desktop && tab === 'details' ? (
+          !desktop ? undefined : tab === 'details' ? (
             <DetailsActions
               compact
               onEdit={guard(() => router.push(`/(app)/shoot/${shoot.id}/edit`))}
               onCancelShoot={guard(() => askCancelShoot(null))}
             />
+          ) : tab === 'people' ? (
+            /* Where «Редагувати зйомку» is on «Деталі» (owner, 2026-10-19). */
+            <Button
+              variant="cta"
+              className="h-10 rounded-full px-5"
+              onPress={guard(() => {
+                tapped()
+                router.push(`/(app)/shoot/${shoot.id}/crew/add`)
+              })}
+            >
+              <Text className="text-body-sm font-semibold">{`+ ${t.addCrewMember}`}</Text>
+            </Button>
           ) : undefined
         }
       />
@@ -413,14 +425,7 @@ export default function ShootDetailScreen() {
 
           {tab === 'people' ? (
             <PeopleTab
-              onAdd={
-                desktop
-                  ? guard(() => {
-                      tapped()
-                      router.push(`/(app)/shoot/${shoot.id}/crew/add`)
-                    })
-                  : undefined
-              }
+              desktop={desktop}
               crew={crew}
               onCopyLink={(person) => void copyLinkFor(person)}
               onRemove={removePerson}
@@ -1305,13 +1310,10 @@ function PeopleTab({
   crew,
   onCopyLink,
   onRemove,
-  onAdd,
+  desktop,
 }: {
-  /**
-   * `US-057` — given on a desktop browser, where «+ Додати учасника» sits at
-   * the right of the «Команда» heading instead of pinned under the tab.
-   */
-  onAdd?: () => void
+  /** `US-057` — the canvas's 820 px column, so a row is not a screen wide. */
+  desktop: boolean
   crew: CrewMember[]
   onCopyLink: (person: SheetPerson) => void
   onRemove: (person: SheetPerson) => void
@@ -1364,24 +1366,11 @@ function PeopleTab({
     ) : null
 
   return (
-    /* Desktop: the canvas's 820 px column, so a row is not a screen wide. */
-    <View className={onAdd ? 'w-full max-w-[820px] gap-3' : 'gap-2'}>
-      {onAdd ? (
-        <View className="flex-row items-center justify-between gap-3">
-          <View className="flex-row items-baseline gap-3.5">
-            <SectionLabel label={t.crew} />
-            {count}
-          </View>
-          <Button variant="cta" className="h-10 rounded-full px-[18px]" onPress={onAdd}>
-            <Text className="text-body-sm font-semibold">{`+ ${t.addCrewMember}`}</Text>
-          </Button>
-        </View>
-      ) : (
-        <View className="flex-row items-baseline justify-between px-0.5">
-          <SectionLabel label={t.crew} />
-          {count}
-        </View>
-      )}
+    <View className={desktop ? 'w-full max-w-[820px] gap-2' : 'gap-2'}>
+      <View className="flex-row items-baseline justify-between px-0.5">
+        <SectionLabel label={t.crew} />
+        {count}
+      </View>
 
       {/*
         `US-005` AC-3 — nobody on the crew: a card in place of the list, and no
