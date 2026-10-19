@@ -50,6 +50,8 @@ the home screen, found while checking build 5. Two prod migrations went first (`
 - Contacts already on the shoot read «У команді» again in the add-crew list (`US-005`).
 - A contact picked from the phone gets its name from the given and family name (`US-065`).
 - «Проведено» and «Заплановано» no longer collapse on «Весь час» (`US-061`).
+- The number pad closes before the currency sheet opens, instead of covering it (`US-070`,
+  build 6).
 
 ## 1.0.1 (build 4) — minutes in a shoot's time
 
