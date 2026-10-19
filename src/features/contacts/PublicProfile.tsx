@@ -22,6 +22,7 @@ import type { AvatarTint } from '../auth/avatar'
 import { tapped } from '../../lib/haptics'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { Starfield } from '../../components/Starfield'
+import { useDesktop } from '../../lib/desktop'
 
 /**
  * «Публічний профіль» — `Public Profile.dc.html` (owner, 2026-09-04).
@@ -153,6 +154,25 @@ export function PublicProfile({
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's profile: a 600 px
+    column, «‹ back», the title and its subline at the top with the actions
+    beside them, nothing pinned at the foot. Always false on iOS.
+  */
+  const desktop = useDesktop()
+  const goBack = () => {
+    tapped()
+    // A caller-owned destination wins: see `onBack`.
+    if (onBack) return onBack()
+    if (router.canGoBack()) router.back()
+    else router.replace('/(app)/(tabs)/profile')
+  }
+  const subline =
+    view.kind === 'self'
+      ? t.publicProfileSelfSubline
+      : view.kind === 'client'
+        ? t.publicProfileClientSubline
+        : t.publicProfileOtherSubline
 
   /*
     `url` since 2026-09-05 — the rows open the service rather than asking to be
@@ -203,6 +223,54 @@ export function PublicProfile({
   ]
   const contacts = rows.filter((row): row is Row => row !== null)
 
+  /*
+    «Редагувати контакт» · «Видалити контакт» — pinned under the phone's
+    scroll, beside the title on a desktop browser (`US-057`).
+  */
+  const actions =
+    onEdit || onDelete ? (
+      <View className="flex-row items-center gap-2.5">
+      {/*
+        `onDelete` without `onEdit` cannot happen — the route sets `onEdit`
+        whenever there is a subject and `onDelete` only when that subject
+        is `deletable`. The pill is `flex-1`, so an edit-only profile still
+        fills the row.
+      */}
+      {onEdit ? (
+        <Pressable
+          className={`bg-primary active:bg-primary/90 ${desktop ? 'h-11 px-5' : 'h-12 flex-1'} flex-row items-center justify-center gap-2 rounded-full`}
+          onPress={() => {
+            tapped()
+            onEdit()
+          }}
+          role="button"
+        >
+          <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
+          <Text className="text-body-sm text-primary-foreground font-semibold">
+            {/* «Редагувати профіль» on your own, «Редагувати контакт» on
+                somebody else's — the same control, and the word that is
+                true of what it opens. */}
+            {view.kind === 'self' ? t.editProfileAction : t.editContactTitle}
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {onDelete ? (
+        <Pressable
+          className={`border-danger-border bg-danger-bg ${desktop ? 'h-11 w-11' : 'h-12 w-12'} shrink-0 items-center justify-center rounded-full border active:opacity-80`}
+          onPress={() => {
+            tapped()
+            onDelete()
+          }}
+          role="button"
+          accessibilityLabel={t.deleteContactAction}
+        >
+          <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
+        </Pressable>
+        ) : null}
+      </View>
+    ) : null
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -211,47 +279,39 @@ export function PublicProfile({
         looking at. The right-hand spacer matches the back control's width so the
         title is centred on the screen rather than on what is left of it.
       */}
-      <View
-        className="bg-background border-border border-b"
-        style={{ paddingTop: insets.top }}
-      >
-        <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
-          {/* The spacer stays when the control does not, so the title is centred
-              on the SCREEN either way rather than on what is left beside it. */}
-          {view.backLabel === null ? (
-            <View className="min-h-11 w-[88px] shrink-0" />
-          ) : (
-          <Pressable
-            className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
-            onPress={() => {
-              tapped()
-              // A caller-owned destination wins: see `onBack`.
-              if (onBack) return onBack()
-              if (router.canGoBack()) router.back()
-              else router.replace('/(app)/(tabs)/profile')
-            }}
-            role="button"
-            accessibilityLabel={view.backLabel}
-          >
-            <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
-            <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
-              {view.backLabel}
+      {desktop ? null : (
+        <View
+          className="bg-background border-border border-b"
+          style={{ paddingTop: insets.top }}
+        >
+          <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
+            {/* The spacer stays when the control does not, so the title is centred
+                on the SCREEN either way rather than on what is left beside it. */}
+            {view.backLabel === null ? (
+              <View className="min-h-11 w-[88px] shrink-0" />
+            ) : (
+            <Pressable
+              className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
+              onPress={goBack}
+              role="button"
+              accessibilityLabel={view.backLabel}
+            >
+              <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
+              <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
+                {view.backLabel}
+              </Text>
+            </Pressable>
+            )}
+            <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
+              {t.publicProfileTitle}
             </Text>
-          </Pressable>
-          )}
-          <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
-            {t.publicProfileTitle}
+            <View className="w-[88px] shrink-0" />
+          </View>
+          <Text className="text-caption text-muted-foreground px-4 pb-2.5 text-center">
+            {subline}
           </Text>
-          <View className="w-[88px] shrink-0" />
         </View>
-        <Text className="text-caption text-muted-foreground px-4 pb-2.5 text-center">
-          {view.kind === 'self'
-            ? t.publicProfileSelfSubline
-            : view.kind === 'client'
-              ? t.publicProfileClientSubline
-              : t.publicProfileOtherSubline}
-        </Text>
-      </View>
+      )}
 
       {/*
         Room for the pinned actions when there are any — 96 clears the 48pt row
@@ -260,10 +320,24 @@ export function PublicProfile({
       */}
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: (aboveTabBar ? 0 : insets.bottom) + (onEdit || onDelete ? 96 : 32),
+          paddingBottom: desktop ? 48 : (aboveTabBar ? 0 : insets.bottom) + (onEdit || onDelete ? 96 : 32),
         }}
       >
-        <View className="gap-5 p-4">
+        <View className={desktop ? 'w-full max-w-[600px] gap-5 self-center px-10 pt-7' : 'gap-5 p-4'}>
+        {desktop ? (
+          <View className="flex-row flex-wrap items-end justify-between gap-3">
+            <View className="gap-1.5">
+              {view.backLabel === null ? null : (
+                <Pressable className="active:opacity-60" onPress={goBack} role="button">
+                  <Text className="text-body-sm text-muted-foreground">{`‹ ${view.backLabel}`}</Text>
+                </Pressable>
+              )}
+              <Text className="text-title-sm text-foreground font-semibold">{t.publicProfileTitle}</Text>
+              <Text className="text-body-sm text-muted-foreground">{subline}</Text>
+            </View>
+            {actions}
+          </View>
+        ) : null}
         {/* ── Identity ── */}
         <Card variant="flat" className="items-center px-4 pb-[18px] pt-[22px]">
           {view.avatarUri ? (
@@ -447,53 +521,14 @@ export function PublicProfile({
         text now, and this is the only place the words exist before the
         confirmation the route puts up.
       */}
-      {onEdit || onDelete ? (
+      {!desktop && actions ? (
         <View
           className={`bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 ${
             aboveTabBar ? 'py-2.5' : 'pt-2.5'
           }`}
           style={aboveTabBar ? undefined : { paddingBottom: insets.bottom + 10 }}
         >
-          <View className="flex-row items-center gap-2.5">
-          {/*
-            `onDelete` without `onEdit` cannot happen — the route sets `onEdit`
-            whenever there is a subject and `onDelete` only when that subject
-            is `deletable`. The pill is `flex-1`, so an edit-only profile still
-            fills the row.
-          */}
-          {onEdit ? (
-            <Pressable
-              className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
-              onPress={() => {
-                tapped()
-                onEdit()
-              }}
-              role="button"
-            >
-              <Icon as={Pencil} size={16} strokeWidth={1.9} className="text-primary-foreground" />
-              <Text className="text-body-sm text-primary-foreground font-semibold">
-                {/* «Редагувати профіль» on your own, «Редагувати контакт» on
-                    somebody else's — the same control, and the word that is
-                    true of what it opens. */}
-                {view.kind === 'self' ? t.editProfileAction : t.editContactTitle}
-              </Text>
-            </Pressable>
-          ) : null}
-
-          {onDelete ? (
-            <Pressable
-              className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
-              onPress={() => {
-                tapped()
-                onDelete()
-              }}
-              role="button"
-              accessibilityLabel={t.deleteContactAction}
-            >
-              <Icon as={Trash} size={18} strokeWidth={1.9} className="text-danger-soft" />
-            </Pressable>
-            ) : null}
-          </View>
+          {actions}
         </View>
       ) : null}
     </View>
