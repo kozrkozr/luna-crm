@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState, type RefObject } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { useFocusEffect, useRouter } from 'expo-router'
 // Deep per-icon imports — see the note in src/components/ui/select.tsx.
@@ -43,6 +43,7 @@ import {
   type StatsPeriod,
   type Statistics,
 } from '../../../src/features/shoots/stats'
+import { useDesktop } from '../../../src/lib/desktop'
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'loaded'; shoots: Shoot[] }
 
@@ -84,6 +85,14 @@ export default function StatisticsScreen() {
     return { year: today.getFullYear(), month: today.getMonth() + 1 }
   })
   const [picking, setPicking] = useState(false)
+  /*
+    `US-057` — on a desktop browser, the draft canvas's «Статистика»: the
+    period switch in the header, the figures in an 880 px column, the stepper
+    as wide as its label, and the month or year picked from a popover under
+    it. Always false on iOS.
+  */
+  const desktop = useDesktop()
+  const periodButton = useRef<View>(null)
 
   useFocusEffect(
     useCallback(() => {
@@ -137,14 +146,24 @@ export default function StatisticsScreen() {
       <Starfield />
       {/* The shared tab header (2026-09-07). This screen's own was the block
           the other three were measured against, so it moved wholesale. */}
-      <TabHeader title={t.statsTitle} meta={line} />
+      <TabHeader
+        title={t.statsTitle}
+        meta={line}
+        right={
+          desktop ? (
+            <Tabs items={periods} value={period} onChange={setPeriod} className="w-[360px]" />
+          ) : undefined
+        }
+      />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <View className="gap-2.5 px-4 pt-3">
-          <Tabs items={periods} value={period} onChange={setPeriod} />
+      <ScrollView contentContainerStyle={{ paddingBottom: desktop ? 48 : 24 }}>
+        <View className={desktop ? 'w-full max-w-[880px] gap-2.5 px-10 pt-7' : 'gap-2.5 px-4 pt-3'}>
+          {desktop ? null : <Tabs items={periods} value={period} onChange={setPeriod} />}
 
           {period === 'all' ? null : (
             <PeriodStepper
+              compact={desktop}
+              labelRef={periodButton}
               label={line}
               onPrev={() => step(-1)}
               onNext={() => step(1)}
@@ -264,6 +283,7 @@ export default function StatisticsScreen() {
       </ScrollView>
 
       <PeriodSheet
+        popoverAnchor={periodButton}
         open={picking && period !== 'all'}
         mode={period === 'year' ? 'year' : 'month'}
         anchor={anchor}
@@ -689,7 +709,13 @@ function PeriodStepper({
   onPrev,
   onNext,
   onOpen,
+  compact,
+  labelRef,
 }: {
+  /** `US-057` — on the desktop, as wide as the label rather than the row. */
+  compact?: boolean
+  /** Where the desktop's period popover opens. */
+  labelRef?: RefObject<View | null>
   label: string
   onPrev: () => void
   onNext: () => void
@@ -713,7 +739,10 @@ function PeriodStepper({
     <View className="flex-row items-center gap-1.5">
       {arrow(ChevronLeft, onPrev, t.statsPrevPeriod)}
       <Pressable
-        className="bg-card border-border h-11 min-w-0 flex-1 flex-row items-center justify-center gap-1.5 rounded-[10px] border active:opacity-70"
+        ref={labelRef}
+        className={`bg-card border-border h-11 min-w-0 ${
+          compact ? 'px-4' : 'flex-1'
+        } flex-row items-center justify-center gap-1.5 rounded-[10px] border active:opacity-70`}
         onPress={onOpen}
         role="button"
         accessibilityLabel={t.statsChoosePeriod}
@@ -737,7 +766,10 @@ function PeriodSheet({
   anchor,
   onPick,
   onClose,
+  popoverAnchor,
 }: {
+  /** `US-057` — the period button, which the desktop's popover opens under. */
+  popoverAnchor?: RefObject<View | null>
   open: boolean
   mode: 'month' | 'year'
   anchor: StatsAnchor
@@ -780,7 +812,7 @@ function PeriodSheet({
   const pageLabel = mode === 'month' ? String(page) : `${page} – ${page + 11}`
 
   return (
-    <Sheet open={open} onClose={onClose}>
+    <Sheet open={open} onClose={onClose} anchor={popoverAnchor}>
       <View className="min-h-9 flex-row items-center justify-between">
         <Text className="text-subtitle text-foreground font-semibold">
           {mode === 'month' ? t.statsChooseMonth : t.statsChooseYear}
