@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react'
 import { Platform, useWindowDimensions } from 'react-native'
 
 /**
@@ -15,4 +16,16 @@ export const DESKTOP_MIN_WIDTH = 1024
 export function useDesktop(): boolean {
   const { width } = useWindowDimensions()
   return Platform.OS === 'web' && width >= DESKTOP_MIN_WIDTH
+}
+
+/**
+ * True inside the creator's app laid out for a desktop — set by
+ * `AppShell.web.tsx` around the signed-in stack. The link views (`/s/...`)
+ * share components with it but are not part of `US-057`, so a component
+ * those views also use (`Sheet`) asks this rather than the window's width.
+ */
+export const DesktopShellContext = createContext(false)
+
+export function useDesktopShell(): boolean {
+  return useContext(DesktopShellContext)
 }
