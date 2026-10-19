@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, View } from 'react-native'
+import { ActivityIndicator, Keyboard, Pressable, View } from 'react-native'
 import { Stack, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '../../components/ui/button'
@@ -1501,7 +1501,12 @@ function AmountField({
             className={`pr-[76px] ${invalid ? 'border-destructive' : ''}`}
           />
           <Pressable
-            onPress={onChooseCurrency}
+            // The number pad stays up when the price field is focused and
+            // would cover the currency sheet — close it first (owner, 2026-10-19).
+            onPress={() => {
+              Keyboard.dismiss()
+              onChooseCurrency()
+            }}
             role="button"
             accessibilityLabel={t.changeCurrencyLabel}
             className="border-border active:bg-secondary absolute bottom-px right-px top-px flex-row items-center gap-1.5 rounded-r-lg border-l pl-[11px] pr-2.5"
