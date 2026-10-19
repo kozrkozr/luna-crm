@@ -16,7 +16,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <View className="bg-background flex-1 flex-row">
       <Sidebar />
-      <View className="min-w-0 flex-1">{children}</View>
+      {/* `overflow-hidden`: a screen's `Starfield` is drawn at the WINDOW's
+          width, and beside the sidebar it ran 260 px past the edge — the page
+          grew wider than the window, and full-screen modals (the photo
+          preview) stretched to match. */}
+      <View className="min-w-0 flex-1 overflow-hidden">{children}</View>
     </View>
   )
 }
