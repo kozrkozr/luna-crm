@@ -10,6 +10,7 @@ import { Icon } from './ui/icon'
 import { NativeOnlyAnimatedView } from './ui/native-only-animated-view'
 import { Text } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
+import { useDesktop } from '../lib/desktop'
 import { formatDayMonth } from '../features/shoots/date'
 import { relativeTime } from '../features/notifications/time'
 import type { ShootNotification } from '../features/notifications/api'
@@ -63,6 +64,12 @@ export function NotificationsPopover({
   const t = useStrings()
   const insets = useSafeAreaInsets()
   const now = new Date()
+  /*
+    `US-057` — on a desktop browser the bell is the header's last control, 40 px
+    in and 32 px down (`TabHeader`), and the avatar is in the sidebar: the caret
+    moves under the bell's centre, 58 px from the window's edge.
+  */
+  const desktop = useDesktop()
 
   return (
     <Portal name="notifications-popover">
@@ -83,8 +90,8 @@ export function NotificationsPopover({
           accessibilityLabel={t.cancel}
         />
         <View
-          className="absolute right-3.5 w-[306px]"
-          style={{ top: insets.top + 10 + 40 + 8 }}
+          className={`absolute w-[306px] ${desktop ? 'right-[33px]' : 'right-3.5'}`}
+          style={{ top: desktop ? 32 + 36 + 8 : insets.top + 10 + 40 + 8 }}
           pointerEvents="box-none"
         >
           {/* The caret. A rotated square with two borders, which is how the

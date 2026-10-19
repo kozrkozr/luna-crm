@@ -61,6 +61,7 @@ import { Starfield } from '../../../src/components/Starfield'
 import { ViewModeBanner } from '../../../src/features/subscription/ViewModeBanner'
 import { TrialBanner } from '../../../src/features/subscription/TrialBanner'
 import { useGuard } from '../../../src/features/subscription/access'
+import { useDesktop } from '../../../src/lib/desktop'
 
 type State =
   | { status: 'loading' }
@@ -270,6 +271,13 @@ export default function HomeScreen() {
   // `US-052` AC-2 — without access, a swipe's «Видалити» opens the paywall.
   const guard = useGuard()
   const askDelete = guard(askDeleteUnguarded)
+  /*
+    `US-057` — on a desktop browser the sidebar holds «+ Нова зйомка» and the
+    profile, so the pinned button and the header avatar go, and the next shoot
+    and «Наступні зйомки» sit side by side, as the draft canvas's «Головна»
+    lays them out. Always false on iOS.
+  */
+  const desktop = useDesktop()
 
   return (
     <View className="bg-background flex-1">
@@ -285,6 +293,7 @@ export default function HomeScreen() {
           hasShoots={state.status === 'loaded' ? state.hasAny : false}
           unread={state.status === 'loaded' ? state.unread : 0}
           onOpenBell={() => void openBell()}
+          showAvatar={!desktop}
         />
         <ScrollView contentInsetAdjustmentBehavior="automatic">
           {/*
@@ -310,7 +319,17 @@ export default function HomeScreen() {
             what «Календар», «Мої контакти» and «Статистика» already use, so the
             four tabs now begin at the same height as well as ending at one.
           */}
-          <View className="gap-3 px-4 pb-24 pt-3">
+          {/*
+            Desktop: the canvas's `padding: 32px 40px 48px`, and its
+            `repeat(auto-fit, minmax(340px, 1fr))` grid as a wrapping row — two
+            columns where both fit at 340, one under the other where they do
+            not. No room for a pinned button, which the desktop does not draw.
+          */}
+          <View
+            className={
+              desktop ? 'flex-row flex-wrap items-start gap-6 px-10 pb-12 pt-7' : 'gap-3 px-4 pb-24 pt-3'
+            }
+          >
             {/*
               `Home.dc.html`'s order, and it is a reversal: the next shoot comes
               FIRST and the two buttons sit under it. They used to lead the screen.
@@ -322,7 +341,7 @@ export default function HomeScreen() {
             {state.status === 'error' ? (
               <Text className="text-body text-muted-foreground">{t.somethingWentWrong}</Text>
             ) : state.status === 'loaded' && state.next ? (
-              <View>
+              <View className={desktop ? 'min-w-[340px] flex-1 basis-[340px]' : undefined}>
                 {daysUntil(state.next.date) <= 0 ? (
                   /*
                     The «Сьогодні» state. It was amber, then monochrome-white for
@@ -367,7 +386,10 @@ export default function HomeScreen() {
                 the same shape of sentence — a different voice would imply a
                 different kind of absence.
               */
-              <Card variant="flat" className="items-center px-5 py-[30px]">
+              <Card
+                variant="flat"
+                className={`items-center px-5 py-[30px] ${desktop ? 'min-w-[340px] flex-1 basis-[340px]' : ''}`}
+              >
                 <EmptyCalendarGlyph />
                 <Text className="text-body text-foreground font-semibold">
                   {state.hasAny ? t.noUpcomingTitle : t.emptyNextTitle}
@@ -393,7 +415,7 @@ export default function HomeScreen() {
               `upcomingShoots`, and the prototype bug it does not copy).
             */}
             {state.status === 'loaded' && state.upcoming.length > 0 ? (
-              <View className="mt-2.5">
+              <View className={desktop ? 'min-w-[340px] flex-1 basis-[340px]' : 'mt-2.5'}>
                 <View className="mb-2 flex-row items-baseline justify-between px-0.5">
                   <SectionLabel label={t.upcomingShootsLabel} />
                   <Link href="/(app)/(tabs)/shoots" asChild>
@@ -436,6 +458,7 @@ export default function HomeScreen() {
           `py-2.5` is the calendar's own padding, so the two tabs put their
           button in the same place to the pixel.
         */}
+        {desktop ? null : (
         <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
           {/*
             Bare `cta`/`cta`, with no height override and ONE space after the
@@ -454,6 +477,7 @@ export default function HomeScreen() {
             <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
           </Button>
         </View>
+        )}
       </SwipeDismissBoundary>
       {deleteDialog}
 
@@ -607,11 +631,14 @@ function HomeHeader({
   hasShoots,
   unread,
   onOpenBell,
+  showAvatar,
 }: {
   hasShoots: boolean
   unread: number
   /** Opens the popover, which the SCREEN owns — see the note there. */
   onOpenBell: () => void
+  /** False on a desktop browser, whose sidebar shows the profile (`US-057`). */
+  showAvatar: boolean
 }) {
   const t = useStrings()
   const profile = useProfile()
@@ -727,6 +754,7 @@ function HomeHeader({
         </Pressable>
         ) : null}
 
+        {showAvatar ? (
         <Link href="/(app)/(tabs)/profile" asChild>
           {/* A plain 40pt avatar. The chevron beside it is gone with the pill
               it sat in — the design draws the avatar alone. */}
@@ -751,6 +779,7 @@ function HomeHeader({
             )}
           </Pressable>
         </Link>
+        ) : null}
       </View>
       }
     >
