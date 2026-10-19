@@ -15,6 +15,7 @@ import { Badge } from '../../../src/components/ui/badge'
 import { Button } from '../../../src/components/ui/button'
 import { Card } from '../../../src/components/ui/card'
 import { StatusPill } from '../../../src/components/StatusPill'
+import { PaidIcon } from '../../../src/components/PaidIcon'
 import { Text } from '../../../src/components/ui/text'
 import { Avatar } from '../../../src/components/Avatar'
 import { TabHeader } from '../../../src/components/TabHeader'
@@ -34,6 +35,7 @@ import { failed, tapped } from '../../../src/lib/haptics'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
 import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
 import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
+import { hasPrice, payment } from '../../../src/features/shoots/money'
 import { listCrew } from '../../../src/features/crew/api'
 import {
   dayOfMonth,
@@ -577,9 +579,13 @@ function UpcomingRow({ shoot }: { shoot: Shoot }) {
         <View className="bg-border w-px self-stretch" />
 
         <View className="min-w-0 flex-1">
-          <Text className="text-body-sm text-foreground font-semibold" numberOfLines={1}>
-            {shoot.clientName}
-          </Text>
+          {/* `US-060` AC-5 — paid or not, as on a calendar card. */}
+          <View className="flex-row items-center gap-1.5">
+            <Text className="text-body-sm text-foreground shrink font-semibold" numberOfLines={1}>
+              {shoot.clientName}
+            </Text>
+            {hasPrice(shoot) ? <PaidIcon paid={payment(shoot).badge === 'paid'} /> : null}
+          </View>
           <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
             {[range, shoot.locationAddress].filter(Boolean).join(' · ')}
           </Text>
@@ -915,9 +921,13 @@ function NextShootCard({
               <Badge variant="success" label={distanceLabel(days, t)} />
             </View>
 
-            <Text className="text-title-sm text-foreground mt-2.5 font-semibold" numberOfLines={1}>
-              {shoot.clientName}
-            </Text>
+            {/* `US-060` AC-5 — paid or not, as on a calendar card. */}
+            <View className="mt-2.5 flex-row items-center gap-1.5">
+              <Text className="text-title-sm text-foreground shrink font-semibold" numberOfLines={1}>
+                {shoot.clientName}
+              </Text>
+              {hasPrice(shoot) ? <PaidIcon paid={payment(shoot).badge === 'paid'} /> : null}
+            </View>
 
             <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
               {[

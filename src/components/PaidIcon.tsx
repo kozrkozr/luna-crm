@@ -6,7 +6,8 @@ import { Text } from './ui/text'
 import { useStrings } from '../i18n/LanguageProvider'
 
 /**
- * `US-060` AC-5 — the banknote after the client's name on a calendar card.
+ * `US-060` AC-5 — the banknote after the client's name on a calendar card, and
+ * on the home screen's cards (owner, 2026-10-19).
  *
  * `Calendar.dc.html`, `paidView` = «Іконка оплати з галочкою»: the 💵 emoji
  * with a green check when paid, and with an amber «!» when not. **The unpaid
