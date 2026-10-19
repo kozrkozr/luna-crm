@@ -9,16 +9,17 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 - Each entry names its story, so `git log --grep=US-0xx` finds the code.
 - How a build is shipped: `docs/releases/`.
 
-## 1.1.0 (build 5) — a big update from the photographers' feedback
+## 1.1.0 (build 6) — a big update from the photographers' feedback
 
 Checklist: [`docs/releases/1.1.0-build-5.md`](docs/releases/1.1.0-build-5.md).
-Since build 4 (`v1.0.1-build.4`). Two prod migrations went first (`shot_at`, `currency`,
+Since build 4 (`v1.0.1-build.4`). Build 5 went to TestFlight only; build 6 adds the paid mark on
+the home screen, found while checking build 5. Two prod migrations went first (`shot_at`, `currency`,
 2026-10-19), and the link surface was deployed before the build; new native code (`expo-contacts`,
 `modules/address-search`).
 
 ### Added
 - **Mark a shoot as paid** in one tap; a 💵 on the calendar and the shoot card says which shoots are
-  paid, and banknotes fall when one is (`US-060`).
+  paid — the home screen's cards too since build 6 — and banknotes fall when one is (`US-060`).
 - **Statistics for any month, year or all time**, planned shoots included (`US-061`); every count
   opens its shoots — «Без оплати», «Проведено», «Заплановано», «В обробці», «Передано»,
   «Прострочено» (`US-062`, `US-063`).
