@@ -60,8 +60,10 @@ future, with a price and something outstanding; paid shown on the card and on th
 - **Then** the «Залишок» figure on the «Оплата» card reads «Оплачено» with a check, in green,
   instead of «0 ₴», and there is no button
 
-### AC-5 — The calendar says it
-- **Given** a shoot with a price, in the calendar's list
+### AC-5 — The calendar and the home screen say it
+- **Given** a shoot with a price, in the calendar's list — or on the home screen, on the
+  «Сьогодні» / «Наступна зйомка» card and in «Наступні зйомки» (owner, 2026-10-19: found while
+  checking 1.1.0, the home cards were the only shoot cards without it)
 - **Then** a banknote icon sits right after the client's name:
   - **paid** — in colour, with a green check badge; labelled «Оплачено»
   - **not paid** (nothing or only part of it received, past or future) — translucent, with an
