@@ -21,6 +21,7 @@ import { requestPasswordReset } from '../../src/features/auth/passwordReset'
 import { useProfile } from '../../src/features/auth/useProfile'
 import { PasswordStrength } from '../../src/features/auth/PasswordStrength'
 import { canChangePassword } from '../../src/features/auth/passwordRules'
+import { useDesktop } from '../../src/lib/desktop'
 
 /**
  * «Зміна пароля» — where the profile's «Пароль · Змінити ›» row leads.
@@ -51,6 +52,12 @@ export default function ChangePasswordScreen() {
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's 520 px column:
+    «‹ Профіль» over the title instead of the bar, and «Скасувати» with
+    «Оновити пароль» at the foot. Always false on iOS.
+  */
+  const desktop = useDesktop()
   const profile = useProfile()
 
   const [current, setCurrent] = useState('')
@@ -132,47 +139,64 @@ export default function ChangePasswordScreen() {
         when the form is valid and `--muted` otherwise, which is the only thing
         marking it disabled: the artboard gives it no other state.
       */}
-      <View
-        className="bg-background border-border border-b"
-        style={{ paddingTop: insets.top + 4 }}
-      >
-        <View className="flex-row items-center gap-1.5 px-2 pb-2">
-          <Pressable
-            className="active:bg-secondary min-h-11 shrink-0 justify-center rounded-lg px-2.5"
-            onPress={() => {
-              tapped()
-              router.back()
-            }}
-            role="button"
-          >
-            <Text className="text-body-sm text-muted-foreground font-medium">{t.cancel}</Text>
-          </Pressable>
-          <Text
-            className="text-subtitle text-foreground min-w-0 flex-1 text-center font-semibold"
-            numberOfLines={1}
-          >
-            {t.passwordChangeTitle}
-          </Text>
-          <Pressable
-            className="min-h-11 shrink-0 justify-center rounded-lg px-2.5"
-            disabled={!valid || busy}
-            onPress={() => void submit()}
-            role="button"
-          >
-            <Text
-              className={`text-body-sm font-semibold ${
-                valid && !busy ? 'text-link' : 'text-muted-foreground'
-              }`}
+      {desktop ? null : (
+        <View
+          className="bg-background border-border border-b"
+          style={{ paddingTop: insets.top + 4 }}
+        >
+          <View className="flex-row items-center gap-1.5 px-2 pb-2">
+            <Pressable
+              className="active:bg-secondary min-h-11 shrink-0 justify-center rounded-lg px-2.5"
+              onPress={() => {
+                tapped()
+                router.back()
+              }}
+              role="button"
             >
-              {busy ? t.savingWord : t.save}
+              <Text className="text-body-sm text-muted-foreground font-medium">{t.cancel}</Text>
+            </Pressable>
+            <Text
+              className="text-subtitle text-foreground min-w-0 flex-1 text-center font-semibold"
+              numberOfLines={1}
+            >
+              {t.passwordChangeTitle}
             </Text>
-          </Pressable>
+            <Pressable
+              className="min-h-11 shrink-0 justify-center rounded-lg px-2.5"
+              disabled={!valid || busy}
+              onPress={() => void submit()}
+              role="button"
+            >
+              <Text
+                className={`text-body-sm font-semibold ${
+                  valid && !busy ? 'text-link' : 'text-muted-foreground'
+                }`}
+              >
+                {busy ? t.savingWord : t.save}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      )}
 
       <FormScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 34, gap: 18 }}
+        contentContainerStyle={
+          desktop
+            ? { paddingHorizontal: 40, paddingTop: 28, paddingBottom: 48, gap: 18, width: '100%', maxWidth: 520 + 80, alignSelf: 'center' }
+            : { padding: 16, paddingBottom: insets.bottom + 34, gap: 18 }
+        }
       >
+        {desktop ? (
+          <View className="mb-1 gap-1.5">
+            <Pressable className="self-start active:opacity-60" onPress={() => {
+                tapped()
+                router.back()
+              }} role="button">
+              <Text className="text-body-sm text-muted-foreground">{`‹ ${t.profileTitle}`}</Text>
+            </Pressable>
+            <Text className="text-title-sm text-foreground font-semibold">{t.passwordChangeTitle}</Text>
+          </View>
+        ) : null}
         {/* ── Поточний пароль ── */}
         <View>
           <View className="mb-2 px-0.5">
@@ -248,17 +272,42 @@ export default function ChangePasswordScreen() {
         {/* The artboard repeats the action as a full-width CTA below the rules,
             beside «Зберегти» in the header. Both submit; the header is reachable
             without scrolling and this one is where the eye ends up. */}
-        <Button
-          variant="cta"
-          size="cta"
-          className="h-[52px] justify-center py-0"
-          disabled={!valid || busy}
-          onPress={() => void submit()}
-        >
-          <Text className="text-subtitle font-semibold">
-            {busy ? t.savingWord : t.updatePassword}
-          </Text>
-        </Button>
+        {desktop ? (
+          <View className="flex-row justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="h-11 rounded-full px-5"
+              onPress={() => {
+                tapped()
+                router.back()
+              }}
+            >
+              <Text className="text-body-sm">{t.cancel}</Text>
+            </Button>
+            <Button
+              variant="cta"
+              className={`h-11 rounded-full px-6 ${valid && !busy ? '' : 'opacity-50'}`}
+              disabled={!valid || busy}
+              onPress={() => void submit()}
+            >
+              <Text className="text-body-sm font-semibold">
+                {busy ? t.savingWord : t.updatePassword}
+              </Text>
+            </Button>
+          </View>
+        ) : (
+          <Button
+            variant="cta"
+            size="cta"
+            className="h-[52px] justify-center py-0"
+            disabled={!valid || busy}
+            onPress={() => void submit()}
+          >
+            <Text className="text-subtitle font-semibold">
+              {busy ? t.savingWord : t.updatePassword}
+            </Text>
+          </Button>
+        )}
       </FormScrollView>
 
       <Toast message={toast} onDone={() => setToast(null)} />

@@ -11,6 +11,7 @@ import { useStrings } from '../../src/i18n/LanguageProvider'
 import { failed, selected, tapped } from '../../src/lib/haptics'
 import { useCurrencySwitch } from '../../src/features/account/currency'
 import { CURRENCIES, currencySymbol } from '../../src/features/shoots/money'
+import { useDesktop } from '../../src/lib/desktop'
 
 /**
  * `US-047` AC-4 — «Валюта», pushed from the profile like «Сповіщення» and
@@ -26,37 +27,59 @@ export default function CurrencyScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const currencySwitch = useCurrencySwitch()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's 560 px column with
+    «‹ Профіль» over the title instead of the bar. Always false on iOS.
+  */
+  const desktop = useDesktop()
+  const goBack = () => {
+    tapped()
+    if (router.canGoBack()) router.back()
+    else router.replace('/(app)/(tabs)/profile')
+  }
 
   return (
     <View className="bg-background flex-1">
       <Starfield />
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
-        <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
-          <Pressable
-            className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
-            onPress={() => {
-              tapped()
-              if (router.canGoBack()) router.back()
-              else router.replace('/(app)/(tabs)/profile')
-            }}
-            role="button"
-            accessibilityLabel={t.profileTitle}
-          >
-            <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
-            <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
-              {t.profileTitle}
+      {desktop ? null : (
+        <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
+          <View className="flex-row items-center gap-1.5 px-2 pb-2 pt-1">
+            <Pressable
+              className="active:bg-secondary min-h-11 w-[88px] shrink-0 flex-row items-center gap-1.5 rounded-lg px-2"
+              onPress={goBack}
+              role="button"
+              accessibilityLabel={t.profileTitle}
+            >
+              <Icon as={ChevronLeft} size={16} strokeWidth={1.9} className="text-muted-foreground" />
+              <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
+                {t.profileTitle}
+              </Text>
+            </Pressable>
+            <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
+              {t.currencyTitle}
             </Text>
-          </Pressable>
-          <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
-            {t.currencyTitle}
-          </Text>
-          <View className="w-[88px] shrink-0" />
+            <View className="w-[88px] shrink-0" />
+          </View>
         </View>
-      </View>
+      )}
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40, gap: 10 }}>
+      <ScrollView
+        contentContainerStyle={
+          desktop
+            ? { paddingHorizontal: 40, paddingTop: 28, paddingBottom: 48, gap: 10, width: '100%', maxWidth: 560 + 80, alignSelf: 'center' }
+            : { padding: 16, paddingBottom: insets.bottom + 40, gap: 10 }
+        }
+      >
+        {desktop ? (
+          <View className="mb-1 gap-1.5">
+            <Pressable className="self-start active:opacity-60" onPress={goBack} role="button">
+              <Text className="text-body-sm text-muted-foreground">{`‹ ${t.profileTitle}`}</Text>
+            </Pressable>
+            <Text className="text-title-sm text-foreground font-semibold">{t.currencyTitle}</Text>
+          </View>
+        ) : null}
         <View className="bg-card border-border overflow-hidden rounded-xl border">
           {CURRENCIES.map((code, index) => {
             const active = currencySwitch?.currency === code
