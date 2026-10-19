@@ -22,7 +22,7 @@ export default function ConfirmEmailScreen() {
   const t = useStrings()
   const router = useRouter()
   const state = useLinkSession('email')
-  // `US-057` — the draft canvas's 420 px card in the middle of the window.
+  // `US-057` — a 420 px column in the middle of the window, no card (owner).
   const desktop = useDesktop()
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function ConfirmEmailScreen() {
   return (
     <View className={`bg-background flex-1 ${desktop ? 'justify-center p-4' : ''}`}>
       <Starfield />
-      <View className={desktop ? 'gap-2 bg-card border-border w-full max-w-[420px] self-center rounded-[20px] border p-6' : 'gap-2 p-4 pt-16'}>
+      <View className={desktop ? 'gap-2 w-full max-w-[420px] self-center px-4' : 'gap-2 p-4 pt-16'}>
         <Text className="text-body-sm text-destructive leading-5">{t.confirmLinkInvalid}</Text>
         <Button size="cta" className="mt-5" onPress={() => router.replace('/(auth)/login')}>
           <Text className="text-subtitle font-semibold">{t.returnToLogin}</Text>

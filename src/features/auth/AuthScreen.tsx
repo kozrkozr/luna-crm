@@ -101,8 +101,9 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
   const [confirmEmail, setConfirmEmail] = useState('')
   /*
     `US-057` — on a desktop browser, the draft canvas's sign-in: the intro over
-    a card — 420 px, 520 for the longer registration — centred in the window,
-    and the registration's paired fields side by side. Always false on iOS.
+    the form, 420 px wide (520 for the longer registration) and centred in the
+    window — on the page, without the canvas's card (owner, 2026-10-19) — and
+    the registration's paired fields side by side. Always false on iOS.
   */
   const desktop = useDesktop()
   const width = mode === 'register' ? 520 : 420
@@ -137,9 +138,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
             </>
           ) : null}
 
-          <View
-            className={desktop ? 'bg-card border-border rounded-[20px] border p-6' : undefined}
-          >
+          <View>
           {mode === 'login' || mode === 'register' ? (
             <>
               <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
@@ -962,7 +961,7 @@ function ForgotForm({
   onBack: () => void
   onSent: () => void
 }) {
-  // `US-057` — inside the desktop card, which supplies its own padding.
+  // `US-057` — centred in the window on a desktop, so no top padding of its own.
   const desktop = useDesktop()
   const t = useStrings()
   const [error, setError] = useState<string | null>(null)
@@ -1045,7 +1044,7 @@ function ResetSent({
   onBack: () => void
   onChangeAddress: () => void
 }) {
-  // `US-057` — inside the desktop card, which supplies its own padding.
+  // `US-057` — centred in the window on a desktop, so no top padding of its own.
   const desktop = useDesktop()
   const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(30)
@@ -1114,7 +1113,7 @@ function ResetSent({
  * and Supabase would refuse a second one inside its interval.
  */
 function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
-  // `US-057` — inside the desktop card, which supplies its own padding.
+  // `US-057` — centred in the window on a desktop, so no top padding of its own.
   const desktop = useDesktop()
   const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN_SECONDS)

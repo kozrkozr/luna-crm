@@ -27,7 +27,7 @@ import { useDesktop } from '../../src/lib/desktop'
  */
 export default function ResetPasswordScreen() {
   const t = useStrings()
-  // `US-057` — the draft canvas's 420 px card in the middle of the window.
+  // `US-057` — a 420 px column in the middle of the window, no card (owner).
   const desktop = useDesktop()
   const router = useRouter()
   const ready = useLinkSession('recovery')
@@ -82,7 +82,7 @@ export default function ResetPasswordScreen() {
           desktop ? { flexGrow: 1, justifyContent: 'center', padding: 16 } : undefined
         }
       >
-        <View className={desktop ? 'gap-2 bg-card border-border w-full max-w-[420px] self-center rounded-[20px] border p-6' : 'gap-2 p-4 pt-8'}>
+        <View className={desktop ? 'gap-2 w-full max-w-[420px] self-center px-4' : 'gap-2 p-4 pt-8'}>
           <Text className="text-title text-foreground font-semibold">{t.newPasswordTitle}</Text>
 
           {ready === 'invalid' ? (
