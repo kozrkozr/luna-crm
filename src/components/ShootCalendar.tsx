@@ -56,6 +56,12 @@ type Props = {
   /** The month, or the week, currently on screen. Also owned by the screen. */
   focus: Date
   onFocusChange: (focus: Date) => void
+  /**
+   * `US-057` AC-3 — a desktop browser's cells: each day's shoots as «17:00
+   * Марія Литвин» lines, keyed by ISO date. Given, the grid draws the draft
+   * canvas's taller cells; absent (iOS, a narrow window), the dots.
+   */
+  labels?: Record<string, string[]>
 }
 
 /**
@@ -75,6 +81,7 @@ export function ShootCalendar({
   mode,
   focus,
   onFocusChange,
+  labels,
 }: Props) {
   const t = useStrings()
   const marked = new Set(shootDates)
@@ -143,6 +150,7 @@ export function ShootCalendar({
             selected={selected}
             today={today}
             onSelect={onSelect}
+            labels={labels}
           />
         ) : (
           <WeekStrip
@@ -151,6 +159,7 @@ export function ShootCalendar({
             selected={selected}
             today={today}
             onSelect={onSelect}
+            labels={labels}
           />
         )}
       </View>
@@ -165,6 +174,7 @@ function MonthGrid({
   selected,
   today,
   onSelect,
+  labels,
 }: {
   year: number
   month: number
@@ -172,6 +182,7 @@ function MonthGrid({
   selected: string | null
   today: string
   onSelect: (iso: string) => void
+  labels?: Record<string, string[]>
 }) {
   // `(getDay() + 6) % 7` shifts JavaScript's Sunday-first week to Monday-first.
   const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7
@@ -196,7 +207,10 @@ function MonthGrid({
             // An absent day is an empty cell of the SAME size, never nothing:
             // the design system's §5.12 warns that `display:none` here (a
             // missing View, in RN) collapses the grid.
-            if (day === null) return <View key={dayIndex} className="aspect-square flex-1" />
+            if (day === null)
+              return (
+                <View key={dayIndex} className={`flex-1 ${labels ? 'min-h-[84px] min-w-0 basis-0 border border-transparent px-2.5' : 'aspect-square'}`} />
+              )
             // toIsoDate rather than a hand-built string: it is the one place
             // that turns a local calendar day into the YYYY-MM-DD the rows use.
             const iso = toIsoDate(new Date(year, month, day))
@@ -211,6 +225,7 @@ function MonthGrid({
                 isToday={iso === today}
                 isPast={iso < today}
                 onSelect={onSelect}
+                lines={labels ? (labels[iso] ?? []) : undefined}
               />
             )
           })}
@@ -226,12 +241,14 @@ function WeekStrip({
   selected,
   today,
   onSelect,
+  labels,
 }: {
   anchor: Date
   marked: Set<string>
   selected: string | null
   today: string
   onSelect: (iso: string) => void
+  labels?: Record<string, string[]>
 }) {
   const start = startOfWeek(anchor)
   return (
@@ -251,6 +268,7 @@ function WeekStrip({
             isToday={iso === today}
             isPast={iso < today}
             onSelect={onSelect}
+            lines={labels ? (labels[iso] ?? []) : undefined}
           />
         )
       })}
@@ -286,6 +304,7 @@ function DayCell({
   isToday,
   isPast,
   onSelect,
+  lines,
 }: {
   iso: string
   day: number
@@ -296,7 +315,22 @@ function DayCell({
   /** Strictly before today. Today is not past, however late in the day it is. */
   isPast: boolean
   onSelect: (iso: string) => void
+  /** The desktop's lines for this day — see `RoomyDayCell`. */
+  lines?: string[]
 }) {
+  if (lines)
+    return (
+      <RoomyDayCell
+        iso={iso}
+        day={day}
+        lines={lines}
+        hasShoot={hasShoot}
+        isSelected={isSelected}
+        isToday={isToday}
+        isPast={isPast}
+        onSelect={onSelect}
+      />
+    )
   return (
     <Pressable
       // `rounded-lg` is the artboard's 8px — see the `--radius` note in
@@ -377,6 +411,83 @@ function DayCell({
  * agenda below is listing. The dot repeated what the fill and the list had both
  * said, and a dark speck on a bright cell read as a smudge rather than a mark.
  */
+/**
+ * `US-057` AC-3 — a day on a desktop browser, as the draft canvas draws it:
+ * the number top left, then one «17:00 Марія Литвин» line per shoot, each cut
+ * to one line. A day with shoots sits on `accent` (the canvas's #18191A) with a 3px stripe at its
+ * left edge in the dot's colours — `info` ahead, `danger-soft` past — which
+ * takes the dot's place. Selected and today keep the phone cell's fill and
+ * border, so the three states read as they do there.
+ *
+ * Every shoot gets its line, the day growing to hold them: AC-3 names the
+ * day's shoots, not the first of them. A `US-009` commitment has neither a time
+ * nor a client to show, so it marks the day without a line.
+ */
+function RoomyDayCell({
+  iso,
+  day,
+  lines,
+  hasShoot,
+  isSelected,
+  isToday,
+  isPast,
+  onSelect,
+}: {
+  iso: string
+  day: number
+  lines: string[]
+  hasShoot: boolean
+  isSelected: boolean
+  isToday: boolean
+  isPast: boolean
+  onSelect: (iso: string) => void
+}) {
+  return (
+    <Pressable
+      className={`min-h-[84px] min-w-0 flex-1 basis-0 overflow-hidden rounded-lg border px-2.5 py-2 active:opacity-70 ${
+        isSelected
+          ? 'bg-primary border-primary'
+          : `${hasShoot ? 'bg-accent' : ''} ${isToday ? 'border-border-strong' : 'border-transparent'}`
+      }`}
+      onPress={() => {
+        tickSelection()
+        onSelect(iso)
+      }}
+      role="button"
+      accessibilityLabel={iso}
+      accessibilityState={{ selected: isSelected }}
+    >
+      {hasShoot && !isSelected ? (
+        <View
+          className={`absolute bottom-0 left-0 top-0 w-[3px] ${isPast ? 'bg-danger-soft' : 'bg-info'}`}
+        />
+      ) : null}
+      <Text
+        className={`text-body-sm ${
+          isSelected
+            ? 'text-primary-foreground font-semibold'
+            : `${hasShoot || isToday ? 'text-foreground' : 'text-muted-foreground'} ${
+                isToday ? 'font-semibold' : ''
+              }`
+        }`}
+      >
+        {day}
+      </Text>
+      {lines.map((line, index) => (
+        <Text
+          key={index}
+          numberOfLines={1}
+          className={`text-caption mt-1 ${
+            isSelected ? 'text-primary-foreground' : 'text-muted-foreground'
+          }`}
+        >
+          {line}
+        </Text>
+      ))}
+    </Pressable>
+  )
+}
+
 function Dot({ state }: { state: 'marked' | 'past' | 'none' }) {
   const tone =
     state === 'marked' ? 'bg-info' : state === 'past' ? 'bg-danger-soft' : 'bg-transparent'
