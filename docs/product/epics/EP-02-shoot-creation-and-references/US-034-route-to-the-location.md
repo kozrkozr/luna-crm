@@ -1,4 +1,4 @@
-# US-034 — A shoot carries directions to the location
+# US-034 — Open a route to the location from its address
 
 - **Parent epic:** [EP-02 — Shoot creation and references](EP-02.md)
 - **Subproject:** 001-luna-crm
@@ -6,66 +6,66 @@
 - **Size:** S
 
 ## Story
-As a **shoot creator**,
-I want **to attach a map link or a pin to the location**,
-so that **nobody arrives late because a loft address on Хрещатик is ambiguous**.
+As a **shoot creator**, and as a **crew member** or **client** opening a link,
+I want **one tap from the shoot's address to a route in Google Maps**,
+so that **nobody arrives late because they had to copy the address into a map app by hand**.
 
 ## Context
-`US-018` gives a shoot a `location_address` and a free-text `location_note`, and the note already
-covers written access instructions («Заїзд через шлагбаум — код 4521»). What it has no field for
-is a **link to the place on a map**. The mockups show one: the detail screen puts a «Маршрут»
-[route] action under the address, and the edit screen has a field «Маршрут до локації» holding a
-chip labelled «Google Maps».
+**Rewritten 2026-10-17** (owner, chat). The first version asked for a separate map link pasted by
+the creator, shown as a «Google Maps» chip, and its AC-3 forbade turning the address itself into a
+route. The owner reversed that: the route is built from the address, and there is no separate
+field. Nothing of the first version was built — the schema has no map-link column — so no shoot
+on production changes.
 
-**This story is held at draft — its shape is genuinely unclear in the mockups, and the ambiguity
-is not cosmetic.** See Open questions. The AC below covers only what both mockups agree on.
+What exists today, and what this story restores:
+- The link view (`US-007`, `US-010`) once had a working «Маршрут» that opened Google Maps on the
+  address. The 2026-09-03 artboard dropped it, leaving one copy button beside the address — which
+  this story now replaces.
+- The creator's location card has no buttons since the v3 design; its «Маршрут» was a stub.
+- Creators already paste map links into the address, and `linkify` makes them tappable
+  (2026-09-06). AC-2 keeps those shoots working.
+
+`ADR-013` is unaffected: the route uses only `location_address`, which both audiences already get.
 
 ## Acceptance criteria
 
-### AC-1 — A map link can be attached
-- **Given** a shoot creator editing a shoot (`US-018`)
-- **When** they paste a link to the location on a map service
-- **Then** it is saved on the shoot and shown as a labelled chip on the edit form
+### AC-1 — The route button
+- **Given** a shoot whose address is not empty
+- **Then** a «Маршрут» button is shown beside the address in three places: the creator's location
+  card on the shoot screen, the crew link view and the client link view
+- It is a 44pt icon button (`navigation-2`), with «Маршрут» as its accessibility label (owner,
+  2026-10-17). It is the location's only button in all three places: the link views' «Копіювати
+  адресу» button is removed (owner, 2026-10-17, after testing in a browser)
 
-### AC-2 — Opening the route from the shoot
-- **Given** a shoot with a map link
-- **When** the creator taps «Маршрут» on the detail screen
-- **Then** the link opens outside the app, in whatever handles it on the device
+### AC-2 — What it opens
+- **When** the button is tapped
+- **Then**, if the address contains a link, that link opens — the first one, if there are several
+- **Otherwise** Google Maps opens a search for the address:
+  `https://www.google.com/maps/search/?api=1&query=<address>`, on every device and in every browser
+- It opens outside the app, or in a new tab in a browser; the Google Maps app takes it if it is
+  installed
 
-### AC-3 — Absent when not set
-- **Given** a shoot with no map link
-- **When** the shoot is viewed
-- **Then** no route action is shown — the address alone is not turned into a link
+### AC-3 — No address *(required)*
+- **Given** a shoot with no address, even if it has a name
+- **Then** no «Маршрут» button is shown anywhere
 
-### AC-4 — Crew and clients get the route
-- **Given** a crew member or client opening their link
-- **When** they view the shoot
-- **Then** they can open the same route, if one is set
+### AC-4 — Language
+| UK | EN |
+|---|---|
+| Маршрут | Directions |
+
+Confirmed by the owner, 2026-10-17. Link views use the reader's language (`ADR-022`).
 
 ## Out of scope
-- Generating a route from `location_address` without a saved link (AC-3 says the opposite).
-- Turn-by-turn navigation, embedded maps, or travel-time estimates.
-- Written access instructions — already `location_note` (`US-018`).
+- A separate map-link field, a «Google Maps» chip, a dropped pin or saved coordinates — all of the
+  first version's ideas, dropped.
+- Apple Maps, or a choice of map app.
+- Embedded maps, turn-by-turn navigation, travel time.
+- Using the venue name in the search.
 
 ## Dependencies
-`US-018` — the edit form and the location section it owns.
+`US-018` (the address), `US-007`, `US-010`.
 
 ## Open questions
-**1. Is this one collection or three fields?** The two mockups disagree in a way that changes the
-schema. The edit screen shows a *single* strip labelled «Маршрут до локації» whose add-tile
-popover offers three things — «Додати фото», «Додати посилання», «Додати геолокацію» [photo,
-link, geolocation]. The detail screen shows those same contents *split*: photos under a separate
-«Фото локації» heading, and the link as the «Маршрут» action. So either one mixed collection is
-rendered in two places, or there are two collections that the edit screen happens to group under
-one label. `US-033` assumes the second reading for photos; if the first is right, `US-033` and
-this story are one story.
-
-**2. What is «Додати геолокацію»?** A dropped pin, i.e. coordinates, is a third data type
-alongside a file and a URL, and nothing specifies where it comes from — the device's current
-position, a map picker, or pasted coordinates. Not built until answered.
-
-**3. Where does the chip's label come from?** The mockup hardcodes «Google Maps». Derived from
-the URL's host, typed by the creator, or a fixed string for every link — undecided.
-
-**Both 1 and 2 are Ilona's call, and 1 blocks the schema.** This story should not be built before
-`US-033`, and answering 1 may merge them.
+None — the button's look (AC-1) and the English (AC-4) were confirmed by the owner, chat
+2026-10-17.

@@ -9,10 +9,55 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 - Each entry names its story, so `git log --grep=US-0xx` finds the code.
 - How a build is shipped: `docs/releases/`.
 
+## 1.1.0 (build 6) — a big update from the photographers' feedback
+
+Checklist: [`docs/releases/1.1.0-build-5.md`](docs/releases/1.1.0-build-5.md).
+Since build 4 (`v1.0.1-build.4`). Build 5 went to TestFlight only; build 6 adds the paid mark on
+the home screen, found while checking build 5. Two prod migrations went first (`shot_at`, `currency`,
+2026-10-19), and the link surface was deployed before the build; new native code (`expo-contacts`,
+`modules/address-search`).
+
+### Added
+- **Mark a shoot as paid** in one tap; a 💵 on the calendar and the shoot card says which shoots are
+  paid — the home screen's cards too since build 6 — and banknotes fall when one is (`US-060`).
+- **Statistics for any month, year or all time**, planned shoots included (`US-061`); every count
+  opens its shoots — «Без оплати», «Проведено», «Заплановано», «В обробці», «Передано»,
+  «Прострочено» (`US-062`, `US-063`).
+- **A currency on each shoot**, chosen from the price field and filled from the account; statistics
+  add up income per currency (`US-070`, `US-071`, `ADR-027`).
+- **The crew on the «Нова зйомка» form**, saved with the shoot (`US-064`).
+- **A new contact from the phone's contacts** — the system picker fills the name and the phone
+  (`US-065`).
+- **Delivery deadline reminders** — the day before, and the day after if the files are late; their
+  own block on «Сповіщення» (`US-066`).
+- **Address search** on a screen of its own: Apple Maps suggestions and «Ваші локації» from past
+  shoots; a picked venue fills the location name (`US-067`, `ADR-026`).
+- **«Маршрут»** beside the address, on the creator's card and both link views, in place of the
+  link view's copy button (`US-034`).
+- **Reference photos apart from links**, each marked «Знято» on set (`US-068`); a full-screen
+  preview to swipe through them, mark or remove one (`US-069`).
+- **Confetti** when the files are marked delivered (`US-042`).
+
+### Changed
+- **The client search is back** on the shoot form (`US-029`).
+- **A past date** can be picked on the new-shoot form (`US-002`).
+- **The crew tab with nobody on it** shows an empty state (`US-005`).
+- **An emoji** beside the delivery deadline and both shoot notes (`ADR-017`).
+- **The privacy policy** names the Apple Maps suggestions, the contact picker and «Маршрут»
+  (`US-067`).
+
+### Fixed
+- Contacts already on the shoot read «У команді» again in the add-crew list (`US-005`).
+- A contact picked from the phone gets its name from the given and family name (`US-065`).
+- «Проведено» and «Заплановано» no longer collapse on «Весь час» (`US-061`).
+- The number pad closes before the currency sheet opens, instead of covering it (`US-070`,
+  build 6).
+
 ## 1.0.1 (build 4) — minutes in a shoot's time
 
 Checklist: [`docs/releases/1.0.1-build-4.md`](docs/releases/1.0.1-build-4.md).
-Since build 3 (`v1.0.0-build.3`). The first update after the launch; app-only — no migration,
+Since build 3 (`v1.0.0-build.3`). Released on the App Store 2026-10-16, approved and released
+automatically the same day. The first update after the launch; app-only — no migration,
 no Edge Function, no change to the link surface.
 
 ### Changed

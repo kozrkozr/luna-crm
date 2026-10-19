@@ -58,7 +58,7 @@ const config: ExpoConfig = {
   scheme: IS_PROD ? 'lunashoots' : 'lunashoots-dev',
   // What a person sees on the store page. `ios.buildNumber` is what App Store
   // Connect checks for uniqueness.
-  version: '1.0.1',
+  version: '1.1.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   /*
@@ -107,6 +107,20 @@ const config: ExpoConfig = {
         // permission nothing uses.
         cameraPermission: false,
         microphonePermission: false,
+      },
+    ],
+    [
+      'expo-contacts',
+      {
+        /*
+         * `US-065` — the contacts text, should iOS ever show it. The picker the
+         * app uses asks no permission (see src/features/contacts/phoneContact.ts),
+         * but the module links the Contacts framework and the plugin writes this
+         * key regardless. As with photos above: the build's English fallback;
+         * the phone shows the `locales` text.
+         */
+        contactsPermission:
+          'Luna Shoots needs access to your contacts to fill in the name and phone of the person you choose.',
       },
     ],
     /*
@@ -159,7 +173,7 @@ const config: ExpoConfig = {
      * Connect rejects a duplicate build number outright
      * (docs/release-appstore.md 1.6).
      */
-    buildNumber: '4',
+    buildNumber: '6',
     config: {
       // HTTPS only, which is exempt. Without this App Store Connect asks the
       // export-compliance question on every upload and holds the build.

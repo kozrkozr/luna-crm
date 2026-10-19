@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, View } from 'react-native'
+import { ActivityIndicator, Keyboard, Pressable, View } from 'react-native'
 import { Stack, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '../../components/ui/button'
@@ -34,7 +34,18 @@ import {
   type Shoot,
 } from '../../features/shoots/api'
 import { toIsoDate as isoOf } from '../../features/shoots/date'
-import { overlappingShoots, pastLocations } from '../../features/shoots/home'
+import { overlappingShoots, pastLocations, pastPlaces, plural } from '../../features/shoots/home'
+import { addCrewMember, type AddCrewMemberInput } from '../crew/api'
+import { offerCrewOnForm, takeHeldCrew } from '../crew/draftCrew'
+import { Avatar } from '../../components/Avatar'
+import { Card } from '../../components/ui/card'
+import { Icon } from '../../components/ui/icon'
+import { roleWithEmoji } from '../../i18n/vocabulary'
+import Trash from 'lucide-react-native/icons/trash'
+import Plus from 'lucide-react-native/icons/plus'
+import X from 'lucide-react-native/icons/x'
+import ChevronDown from 'lucide-react-native/icons/chevron-down'
+import { Sheet } from '../../components/ui/sheet'
 import {
   createClient,
   digitsOf,
@@ -47,7 +58,9 @@ import { toIsoDate, toTimeValue } from '../../features/shoots/date'
 import { failed, selected as selectedTick, succeeded, tapped } from '../../lib/haptics'
 import { toastOnNextScreen } from '../../lib/nextScreenToast'
 import { RoleChip } from '../../components/RoleChip'
+import { ClientField } from '../../components/ClientField'
 import {
+  CURRENCIES,
   PREPAYMENT_STEPS,
   currencySymbol,
   symbolLeads,
@@ -91,9 +104,8 @@ import {
  * broken.
  */
 /**
- * `mode` is the only thing that differs, and it differs in four places: what
- * loads, whether the past is pickable, which API the save calls, and the two
- * words on the header and the CTA. Everything between them is one form.
+ * `mode` is the only thing that differs, and it differs in three places: what
+ * loads, which API the save calls, and the two words on the header and the CTA. Everything between them is one form.
  */
 export type ShootFormMode = { mode: 'create' } | { mode: 'edit'; id: string }
 
@@ -108,6 +120,11 @@ export type ShootFormMode = { mode: 'create' } | { mode: 'edit'; id: string }
  */
 const SECTIONS = [
   { key: 'pay', label: 'paymentSection', remove: 'removePaymentLabel' },
+  /*
+    `US-064` — second, as `New Shoot.dc.html` lists it. Create form only (AC-8),
+    and its pill opens the add screen rather than an empty section (AC-1).
+  */
+  { key: 'crew', label: 'crew', remove: 'removeCrewLabel' },
   { key: 'notes', label: 'teamNotesSection', remove: 'removeTeamNotesLabel' },
   { key: 'clientNotes', label: 'clientNotesSection', remove: 'removeClientNotesLabel' },
   /* `US-043` — the fourth, and the only one the edit form never offers (AC-8). */
@@ -121,6 +138,9 @@ const SECTIONS = [
  * null for a link.
  */
 type DraftReference = { reference: Reference; asset: ImagePickerAsset | null }
+
+/** `US-064` — a person held on the new-shoot form, saved after the shoot. */
+type DraftCrewMember = { id: string; person: AddCrewMemberInput }
 
 /** The grid's picture for a draft image: the local file, not a signed URL. */
 const localImage = async (reference: Reference) => reference.urlOrPath
@@ -169,8 +189,12 @@ function fingerprint(values: {
   clientNotes: string
   price: string
   prepayment: string
+  /** `US-070` — empty while a new shoot keeps the account's currency. */
+  currency: string
   /** `US-043` AC-3 — the drafts' ids, so adding or removing one is a change. */
   references: string
+  /** `US-064` AC-5 — the same, for the crew held on the form. */
+  crew: string
 }): string {
   return [
     values.typedName.trim(),
@@ -187,7 +211,9 @@ function fingerprint(values: {
     values.clientNotes.trim(),
     values.price.trim(),
     values.prepayment.trim(),
+    values.currency,
     values.references,
+    values.crew,
   ].join('\u0000')
 }
 
@@ -217,7 +243,9 @@ const EMPTY_FINGERPRINT = fingerprint({
   clientNotes: '',
   price: '',
   prepayment: '',
+  currency: '',
   references: '',
+  crew: '',
 })
 
 function openSections(
@@ -226,6 +254,8 @@ function openSections(
 ): Record<SectionKey, boolean> {
   return {
     pay: filled.pay || added.pay,
+    // Never `added`: the section exists only while it holds someone (`US-064` AC-3).
+    crew: filled.crew,
     notes: filled.notes || added.notes,
     clientNotes: filled.clientNotes || added.clientNotes,
     refs: filled.refs || added.refs,
@@ -234,8 +264,8 @@ function openSections(
 
 export function ShootForm(props: ShootFormMode) {
   const t = useStrings()
-  /** `US-047` — prices are typed and grouped in the account's currency. */
-  const currency = useCurrency()
+  /** `US-070` AC-2 — what a new shoot starts in (`US-047`). */
+  const accountCurrency = useCurrency()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const isEdit = props.mode === 'edit'
@@ -275,9 +305,21 @@ export function ShootForm(props: ShootFormMode) {
   */
   const [price, setPrice] = useState('')
   const [prepayment, setPrepayment] = useState('')
+  /*
+    `US-070` — the shoot's currency, or null while a new shoot follows the
+    account's. Not seeded from `useCurrency()`: the account's arrives after the
+    first render (it starts as UAH), and a copy taken then would be stale.
+  */
+  const [pickedCurrency, setPickedCurrency] = useState<Currency | null>(null)
+  const currency = pickedCurrency ?? accountCurrency
+  const [choosingCurrency, setChoosingCurrency] = useState(false)
   /** `US-043` — references added here, saved after the shoot is created. */
   const [drafts, setDrafts] = useState<DraftReference[]>([])
   const draftSeq = useRef(0)
+  /** `US-064` — crew added here, saved after the shoot is created. */
+  const [crew, setCrew] = useState<DraftCrewMember[]>([])
+  /** `US-064` AC-6 — the shoot exists and its crew is being saved. */
+  const [savingCrew, setSavingCrew] = useState(false)
   /** `US-043` AC-6 — the shoot exists and its references are uploading. */
   const [savingReferences, setSavingReferences] = useState(false)
   /** Every shoot, for the location chips and the overlap warning. */
@@ -291,6 +333,7 @@ export function ShootForm(props: ShootFormMode) {
    */
   const [added, setAdded] = useState<Record<SectionKey, boolean>>({
     pay: false,
+    crew: false,
     notes: false,
     clientNotes: false,
     refs: false,
@@ -329,6 +372,30 @@ export function ShootForm(props: ShootFormMode) {
       }
     }, [])
   )
+
+  /*
+    `US-064` — whoever was picked on the add screen, back on the form. Taken on
+    focus, as the toast handoff is, because the add screen is a route of its own.
+  */
+  useFocusEffect(
+    useCallback(() => {
+      const people = takeHeldCrew()
+      if (people.length === 0) return
+      setCrew((current) => [
+        ...current,
+        ...people.map((person) => {
+          draftSeq.current += 1
+          return { id: `crew-${draftSeq.current}`, person }
+        }),
+      ])
+    }, [])
+  )
+
+  /** `US-064` AC-1, AC-3 — the add screen, told who is already on the form. */
+  const openCrew = () => {
+    offerCrewOnForm(crew.map((draft) => draft.person))
+    router.push('/(app)/new-shoot-crew')
+  }
 
   /*
     Edit only: load the shoot into the same fields the create mode starts empty.
@@ -379,8 +446,11 @@ export function ShootForm(props: ShootFormMode) {
         setClientNotes(shoot.clientNotes ?? '')
         // Null renders as an EMPTY field, not «0» — the form must not look like
         // somebody priced this shoot at nothing when nobody priced it at all.
-        setPrice(shoot.price === null ? '' : formatAmount(shoot.price, currency))
-        setPrepayment(shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency))
+        setPickedCurrency(shoot.currency)
+        setPrice(shoot.price === null ? '' : formatAmount(shoot.price, shoot.currency))
+        setPrepayment(
+          shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, shoot.currency)
+        )
         /*
           The baseline «Скасувати» compares against. Built from the same values
           just set, not read back out of state — these setters have not applied
@@ -400,9 +470,12 @@ export function ShootForm(props: ShootFormMode) {
             locationDetails: shoot.locationNote ?? '',
             notes: shoot.notes ?? '',
             clientNotes: shoot.clientNotes ?? '',
-            price: shoot.price === null ? '' : formatAmount(shoot.price, currency),
-            prepayment: shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, currency),
+            price: shoot.price === null ? '' : formatAmount(shoot.price, shoot.currency),
+            prepayment:
+              shoot.prepayment === null ? '' : formatAmount(shoot.prepayment, shoot.currency),
+            currency: shoot.currency,
             references: '',
+            crew: '',
           })
         )
         setLoading(false)
@@ -498,8 +571,9 @@ export function ShootForm(props: ShootFormMode) {
       the name **moves the shoot to another client** and never renames one — a
       name is shared by every shoot that client is on, and rewriting it here
       would silently rewrite their history. That was the edit screen's rule
-      before the merge and it is unchanged; what is new is that creating a shoot
-      now takes this path every time, because nothing links by name any more.
+      before the merge and it is unchanged. A picked client replaces the field
+      with its chip (`ClientField`), so the name can only drift from a phone
+      match, never from a pick.
     */
     const keepsClient = !!client && client.name.trim() === typedName.trim()
     const target = keepsClient
@@ -531,6 +605,7 @@ export function ShootForm(props: ShootFormMode) {
       clientNotes: clientNotes.trim() || null,
       price: priceValue,
       prepayment: prepaymentValue,
+      currency,
     }
 
     if (shootId) {
@@ -565,6 +640,18 @@ export function ShootForm(props: ShootFormMode) {
       setSubmitting(false)
       setFormError(t.shootCreateFailed)
       return
+    }
+
+    /*
+      `US-064` AC-6 — the crew first, in the order they were added, each saved
+      as `US-005` saves one. AC-7 — a failure is ignored (owner, 2026-10-17);
+      the shoot opens with whoever was saved. The button reads «Зберігаємо
+      команду…» meanwhile (owner, 2026-10-17).
+    */
+    if (crew.length > 0) {
+      setSavingCrew(true)
+      for (const { person } of crew) await addCrewMember(result.id, person)
+      setSavingCrew(false)
     }
 
     /*
@@ -621,6 +708,7 @@ export function ShootForm(props: ShootFormMode) {
   const clashes =
     date && start && end ? overlappingShoots(others, isoOf(date), start, end) : []
   const chips = pastLocations(existing)
+  const places = pastPlaces(existing)
 
   /*
     «Скасувати» asks before discarding (owner, 2026-09-06). It left on the first
@@ -647,7 +735,10 @@ export function ShootForm(props: ShootFormMode) {
     clientNotes,
     price,
     prepayment,
+    // A new shoot left in the account's currency is still an untouched form.
+    currency: isEdit ? currency : currency === accountCurrency ? '' : currency,
     references: drafts.map((draft) => draft.reference.id).join(','),
+    crew: crew.map((draft) => draft.id).join(','),
   })
   const { ask: askLeave, dialog: discardDialog } = useDiscardGuard({
     dirty: current !== snapshot,
@@ -662,13 +753,17 @@ export function ShootForm(props: ShootFormMode) {
   */
   const filled: Record<SectionKey, boolean> = {
     pay: price.trim() !== '' || prepayment.trim() !== '',
+    crew: crew.length > 0,
     notes: notes.trim() !== '',
     clientNotes: clientNotes.trim() !== '',
     refs: drafts.length > 0,
   }
   const open = openSections(filled, added)
   // `US-043` AC-8 — the edit form keeps references on «Матеріали» alone.
-  const offered = SECTIONS.filter((section) => !isEdit || section.key !== 'refs')
+  // `US-064` AC-8 — and its crew on its «Команда» tab alone.
+  const offered = SECTIONS.filter(
+    (section) => !isEdit || (section.key !== 'refs' && section.key !== 'crew')
+  )
   const closed = offered.filter((section) => !open[section.key])
 
   /** Empty the section and close it. Both halves, always — see `openSections`. */
@@ -680,6 +775,8 @@ export function ShootForm(props: ShootFormMode) {
       setNotes('')
     } else if (key === 'refs') {
       setDrafts([])
+    } else if (key === 'crew') {
+      setCrew([])
     } else {
       setClientNotes('')
     }
@@ -700,11 +797,11 @@ export function ShootForm(props: ShootFormMode) {
   const holdImage = (asset: ImagePickerAsset, category: string | null): AddReferenceResult => {
     const problem = imageAssetProblem(asset)
     if (problem) return { ok: false, reason: problem }
-    return hold({ kind: 'image', urlOrPath: asset.uri, category }, asset)
+    return hold({ kind: 'image', urlOrPath: asset.uri, category, shotAt: null }, asset)
   }
   const holdLink = (link: string, category: string | null): AddReferenceResult => {
     if (!isValidReferenceLink(link)) return { ok: false, reason: 'invalidLink' }
-    return hold({ kind: 'link', urlOrPath: link.trim(), category }, null)
+    return hold({ kind: 'link', urlOrPath: link.trim(), category, shotAt: null }, null)
   }
 
   /**
@@ -802,27 +899,30 @@ export function ShootForm(props: ShootFormMode) {
             <SectionLabel label={t.clientField} />
 
             {/*
-              **A plain input** (owner, 2026-09-03). It was `ClientField` —
-              `US-029`'s search over existing clients, with the suggestion list
-              and the row that fills the form.
+              `US-029`'s search over existing clients, back (owner, 2026-10-16).
+              It was a plain input from 2026-09-03, and every new shoot made a
+              new client row — a name typed twice was two clients, and a regular
+              client's handles had to be retyped each time (feedback #13).
 
-              What that costs is on `target` in `submit`: with no search, a name
-              typed twice is two client rows. `ADR-018` made the client a row so
-              that a client has an identity across shoots, and the only thing
-              still joining them is the phone match below.
+              Unlinking clears what `link` filled in, so the next client picked
+              or typed does not inherit the previous one's contacts.
             */}
             <View className="gap-2">
-              <Input
-                id="client-name"
-                value={typedName}
-                onChangeText={(name) => {
+              <ClientField
+                value={client}
+                invalid={!!errors.client}
+                onLink={link}
+                onUnlink={() => {
+                  setClient(null)
+                  setPhone('')
+                  setInstagram('')
+                  setTelegram('')
+                }}
+                typedName={typedName}
+                onTypedNameChange={(name) => {
                   setTypedName(name)
                   setErrors((current) => ({ ...current, client: false }))
                 }}
-                autoCapitalize="words"
-                autoComplete="off"
-                placeholder={t.clientNameSearchPlaceholder}
-                className={errors.client ? 'border-destructive/60' : undefined}
               />
               <FieldError show={!!errors.client} message={t.clientRequiredShort} />
             </View>
@@ -877,13 +977,6 @@ export function ShootForm(props: ShootFormMode) {
 
           {/* ── Дата й час ── Shared with the edit screen (owner, 2026-08-30). */}
           <ShootWhenFields
-            /*
-              The past is pickable only when editing. A shoot that has already
-              happened is still editable, and with the past locked its own date
-              would render dimmed and untappable — the field would look broken
-              on exactly the records most likely to need a correction.
-            */
-            allowPastDates={isEdit}
             date={date}
             onDateChange={(picked) => {
               setDate(picked)
@@ -910,6 +1003,7 @@ export function ShootForm(props: ShootFormMode) {
             details={locationDetails}
             onDetailsChange={setLocationDetails}
             chips={chips}
+            places={places}
           />
 
           {/*
@@ -944,6 +1038,10 @@ export function ShootForm(props: ShootFormMode) {
                   currency={currency}
                   label={t.priceLabel}
                   value={price}
+                  onChooseCurrency={() => {
+                    tapped()
+                    setChoosingCurrency(true)
+                  }}
                   onChangeText={(text) => {
                     const next = parseAmount(text)
                     setPrice(next === null ? '' : formatAmount(next, currency))
@@ -991,6 +1089,73 @@ export function ShootForm(props: ShootFormMode) {
                   {t.prepaymentOverPrice}
                 </Text>
               ) : null}
+            </View>
+          ) : null}
+
+          {/*
+            ── Команда ── `US-064`: after «Оплата», as `New Shoot.dc.html` draws
+            it. Open only while it holds someone — the pill goes straight to the
+            add screen, and removing the last person closes it (AC-1, AC-3). No
+            hint under it (owner, 2026-10-17).
+          */}
+          {open.crew && !isEdit ? (
+            <View className="gap-2">
+              <OptionalSectionHeader
+                label={t.crew}
+                meta={`${crew.length} ${plural(crew.length, t.participantForms)}`}
+                removeLabel={t.removeCrewLabel}
+                onRemove={() => removeSection('crew')}
+              />
+              <Card variant="flat" className="gap-0 overflow-hidden p-0">
+                {crew.map(({ id, person }) => (
+                  <View
+                    key={id}
+                    className="border-border min-h-[60px] flex-row items-center gap-3 border-b py-2.5 pl-3.5 pr-2"
+                  >
+                    <Avatar name={person.name} size={36} />
+                    <View className="min-w-0 flex-1 gap-0.5">
+                      <Text className="text-body text-foreground font-semibold" numberOfLines={1}>
+                        {person.name.trim()}
+                      </Text>
+                      <Text className="text-label text-muted-foreground" numberOfLines={1}>
+                        {[roleWithEmoji(person.role, t), person.contact.trim()]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                    </View>
+                    {/* AC-3 — at once, without a question: nothing is saved yet.
+                        The bin, not the artboard's «−» (owner, 2026-10-17): the same
+                        icon as «Видалити» on the shoot's «Команда» tab. */}
+                    <Pressable
+                      className="active:bg-destructive/10 h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                      onPress={() => {
+                        tapped()
+                        setCrew((current) => current.filter((draft) => draft.id !== id))
+                      }}
+                      role="button"
+                      accessibilityLabel={t.removeCrewMemberTemplate.replace(
+                        '{name}',
+                        person.name.trim()
+                      )}
+                    >
+                      <Icon as={Trash} size={16} strokeWidth={1.8} className="text-destructive" />
+                    </Pressable>
+                  </View>
+                ))}
+                <Pressable
+                  className="active:bg-secondary min-h-12 flex-row items-center justify-center gap-2"
+                  onPress={() => {
+                    tapped()
+                    openCrew()
+                  }}
+                  role="button"
+                >
+                  <Icon as={Plus} size={14} strokeWidth={2} className="text-muted-foreground" />
+                  <Text className="text-body-sm text-muted-foreground font-medium">
+                    {t.addCrewMember}
+                  </Text>
+                </Pressable>
+              </Card>
             </View>
           ) : null}
 
@@ -1097,7 +1262,10 @@ export function ShootForm(props: ShootFormMode) {
             sections={closed.map((section) => ({
               key: section.key,
               label: t[section.label],
-              add: () => setAdded((current) => ({ ...current, [section.key]: true })),
+              add: () =>
+                section.key === 'crew'
+                  ? openCrew()
+                  : setAdded((current) => ({ ...current, [section.key]: true })),
             }))}
           />
 
@@ -1117,7 +1285,9 @@ export function ShootForm(props: ShootFormMode) {
           onPress={() => void submit()}
         >
           <Text className={valid ? undefined : 'text-muted-foreground'}>
-            {savingReferences
+            {savingCrew
+              ? t.savingCrew
+              : savingReferences
               ? t.savingReferences
               : valid
                 ? isEdit
@@ -1187,8 +1357,97 @@ export function ShootForm(props: ShootFormMode) {
 
       {discardDialog}
 
+      <CurrencySheet
+        open={choosingCurrency}
+        current={currency}
+        onPick={(next) => {
+          setChoosingCurrency(false)
+          if (next === currency) return
+          selectedTick()
+          setPickedCurrency(next)
+          // `US-070` AC-4 — the numbers stay; only their grouping follows the
+          // new currency («12 000» ↔ «12,000», `US-047` AC-6).
+          if (priceValue !== null) setPrice(formatAmount(priceValue, next))
+          if (prepaymentValue !== null) setPrepayment(formatAmount(prepaymentValue, next))
+        }}
+        onClose={() => setChoosingCurrency(false)}
+      />
+
       <Toast message={toast} onDone={() => setToast(null)} />
     </View>
+  )
+}
+
+/**
+ * `US-070` AC-3 — the sheet behind «Ціна»'s currency button, as
+ * `New Shoot.dc.html` draws it («У полі ціни», 2026-10-18): a title and a line
+ * under it, ✕ on the right, the five currencies as rows with a radio, and where
+ * new shoots take theirs from. The artboard's «Запамʼятаємо вибір…» is not
+ * drawn — a new shoot always starts in the account's currency (AC-2).
+ */
+function CurrencySheet({
+  open,
+  current,
+  onPick,
+  onClose,
+}: {
+  open: boolean
+  current: Currency
+  onPick: (next: Currency) => void
+  onClose: () => void
+}) {
+  const t = useStrings()
+  return (
+    <Sheet open={open} onClose={onClose} className="px-2">
+      <View className="flex-row items-center pb-1.5 pl-2.5">
+        <View className="flex-1">
+          <Text className="text-subtitle text-foreground font-semibold">{t.currencyTitle}</Text>
+          <Text className="text-label text-muted-foreground mt-0.5">
+            {t.shootCurrencySubtitle}
+          </Text>
+        </View>
+        <Pressable
+          onPress={onClose}
+          role="button"
+          accessibilityLabel={t.closeWord}
+          className="active:bg-secondary h-10 w-10 items-center justify-center rounded-full"
+        >
+          <Icon as={X} size={16} strokeWidth={2} className="text-muted-foreground" />
+        </Pressable>
+      </View>
+      {CURRENCIES.map((code, index) => {
+        const on = code === current
+        return (
+          <Pressable
+            key={code}
+            onPress={() => onPick(code)}
+            role="radio"
+            accessibilityState={{ selected: on }}
+            className={`active:bg-secondary min-h-[54px] flex-row items-center gap-3 rounded-[10px] px-2.5 ${
+              on ? 'bg-secondary' : ''
+            }`}
+          >
+            <View className="bg-secondary border-border h-9 w-9 items-center justify-center rounded-full border">
+              <Text className="text-body text-muted-foreground font-semibold">
+                {currencySymbol(code)}
+              </Text>
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text className="text-body text-foreground font-medium">{t.currencyNames[index]}</Text>
+              <Text className="text-label text-muted-foreground mt-0.5">{code}</Text>
+            </View>
+            <View
+              className={`h-5 w-5 items-center justify-center rounded-full border-[1.6px] ${
+                on ? 'border-primary' : 'border-border-strong'
+              }`}
+            >
+              {on ? <View className="bg-primary h-2.5 w-2.5 rounded-full" /> : null}
+            </View>
+          </Pressable>
+        )
+      })}
+      <Text className="text-label text-muted-foreground px-2.5 pt-2.5">{t.shootCurrencyNote}</Text>
+    </Sheet>
   )
 }
 
@@ -1211,6 +1470,7 @@ function AmountField({
   label,
   value,
   onChangeText,
+  onChooseCurrency,
   invalid = false,
 }: {
   /** `US-047` — whose symbol is pinned, and on which side (AC-6). */
@@ -1218,10 +1478,46 @@ function AmountField({
   label: string
   value: string
   onChangeText: (text: string) => void
+  /**
+   * `US-070` AC-3 — «Ціна» only: the symbol gives way to a button with the
+   * currency's code and a chevron, set off by a divider, that opens the sheet.
+   */
+  onChooseCurrency?: () => void
   invalid?: boolean
 }) {
   const t = useStrings()
   const leads = symbolLeads(currency)
+  if (onChooseCurrency) {
+    return (
+      <View className="min-w-0 flex-1 gap-[7px]">
+        <Text className="text-body-sm text-foreground font-medium">{label}</Text>
+        <View className="justify-center">
+          <Input
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={t.amountPlaceholder}
+            keyboardType="number-pad"
+            // Room for «UAH ▾» — three letters, a chevron and the divider.
+            className={`pr-[76px] ${invalid ? 'border-destructive' : ''}`}
+          />
+          <Pressable
+            // The number pad stays up when the price field is focused and
+            // would cover the currency sheet — close it first (owner, 2026-10-19).
+            onPress={() => {
+              Keyboard.dismiss()
+              onChooseCurrency()
+            }}
+            role="button"
+            accessibilityLabel={t.changeCurrencyLabel}
+            className="border-border active:bg-secondary absolute bottom-px right-px top-px flex-row items-center gap-1.5 rounded-r-lg border-l pl-[11px] pr-2.5"
+          >
+            <Text className="text-body-sm text-muted-foreground font-semibold">{currency}</Text>
+            <Icon as={ChevronDown} size={14} strokeWidth={2} className="text-muted-foreground" />
+          </Pressable>
+        </View>
+      </View>
+    )
+  }
   return (
     <View className="min-w-0 flex-1 gap-[7px]">
       <Text className="text-body-sm text-foreground font-medium">{label}</Text>

@@ -1,11 +1,14 @@
 import type { Strings } from '../../i18n'
 import type { Shoot } from '../shoots/api'
-import { toIsoDate, formatTimeRange } from '../shoots/date'
+import { toIsoDate, formatDayMonth, formatTimeRange } from '../shoots/date'
+import { addDaysIso } from '../shoots/deadline'
 import { plural } from '../shoots/home'
+import { statusOf } from '../shoots/status'
 import type { ReminderSettings } from './settings'
 
 /**
- * `US-041` — which notifications the phone should hold, and what they say.
+ * `US-041` — which notifications the phone should hold, and what they say;
+ * `US-066` adds the delivery deadlines.
  *
  * Pure: shoots, settings and a clock in, a list out. Nothing here touches
  * `expo-notifications`, so every criterion below can be checked without a
@@ -24,6 +27,11 @@ export type PlannedReminder = {
 export type ReminderData =
   | { kind: 'digest'; date: string }
   | { kind: 'before'; shootId: string }
+  /**
+   * `US-066` AC-7 — one shoot opens on «Матеріали»; several open the `US-063`
+   * list for their notification, without a period.
+   */
+  | { kind: 'deadline'; list: 'editing' | 'overdue'; shootId: string | null }
   /** `US-054` — the free trial ends in two days. */
   | { kind: 'trial' }
   /** `US-055` — a picked beta tester's access ends in two days. */
@@ -40,6 +48,7 @@ export const MAX_PENDING = 64
 /**
  * AC-3 — how many shoots the digest names before «і ще N». Two, because a
  * collapsed notification on iOS 26 shows the title and two lines of body.
+ * `US-066` AC-3 lists deadlines the same way.
  */
 const DIGEST_LISTED = 2
 
@@ -100,7 +109,87 @@ export function planReminders(
     }
   }
 
+  if (settings.deadlineOn) {
+    planned.push(...planDeadlines(shoots, settings.deadlineTime, now, t, random))
+  }
+
   return planned.sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_PENDING)
+}
+
+/**
+ * `US-066` — per morning, one «Завтра здача» for the deadlines due the next day
+ * (AC-1) and one «Прострочено» for those due the day before (AC-2): two
+ * notifications, never merged.
+ *
+ * Unlike the shoot reminders above, these are about **finished** shoots, so
+ * they read the whole list rather than `live`. A shoot counts only if it has
+ * finished by the reminder's own moment (AC-4) — a deadline on the shoot day,
+ * or the day after it, gets no «Завтра здача». Deleted shoots never arrive
+ * here (`listShoots`, `ADR-014`), and a delivered one is skipped.
+ */
+function planDeadlines(
+  shoots: readonly Shoot[],
+  time: string,
+  now: Date,
+  t: Strings,
+  random: () => number
+): PlannedReminder[] {
+  const groups = new Map<string, { list: 'editing' | 'overdue'; at: Date; shoots: Shoot[] }>()
+  for (const shoot of shoots) {
+    if (!shoot.deliveryDue || shoot.deliveredAt) continue
+    for (const [list, offset] of [['editing', -1], ['overdue', 1]] as const) {
+      const day = addDaysIso(shoot.deliveryDue, offset)
+      const at = atLocal(day, time)
+      // AC-5 — a moment already passed is not shown at all, as `US-041` AC-6.
+      if (at.getTime() <= now.getTime()) continue
+      if (statusOf(shoot, at) !== 'finished') continue
+      const key = `${list}-${day}`
+      const group = groups.get(key) ?? { list, at, shoots: [] }
+      group.shoots.push(shoot)
+      groups.set(key, group)
+    }
+  }
+  return [...groups].map(([key, group]) => {
+    const single = group.shoots.length === 1
+    const titles =
+      group.list === 'editing'
+        ? single
+          ? t.deadlineReminderSoonTitles1
+          : t.deadlineReminderSoonTitlesMany
+        : single
+          ? t.deadlineReminderLateTitles1
+          : t.deadlineReminderLateTitlesMany
+    return {
+      id: `deadline-${key}`,
+      at: group.at,
+      title: titles[Math.floor(random() * titles.length) % titles.length],
+      body: deadlineBody(group.shoots, t),
+      data: { kind: 'deadline', list: group.list, shootId: single ? group.shoots[0].id : null },
+    }
+  })
+}
+
+/**
+ * `US-066` AC-3 — «• Papaya, зйомка 12 жовтня», by the shoot's date, earliest
+ * first; past the second, the rest counted as the digest counts them. Without
+ * a client, «• Зйомка 12 жовтня».
+ */
+function deadlineBody(shoots: readonly Shoot[], t: Strings): string {
+  const ordered = [...shoots].sort((a, b) => a.date.localeCompare(b.date))
+  const lines = ordered.slice(0, DIGEST_LISTED).map((shoot) => {
+    const date = formatDayMonth(shoot.date, t.monthsGenitive)
+    const client = shoot.clientName.trim()
+    return `• ${
+      client
+        ? t.deadlineReminderLine.replace('{client}', client).replace('{date}', date)
+        : t.deadlineReminderLineNoClient.replace('{date}', date)
+    }`
+  })
+  const rest = ordered.length - DIGEST_LISTED
+  if (rest > 0) {
+    lines[lines.length - 1] += `${SEPARATOR}${t.reminderMore.replace('{count}', String(rest))}`
+  }
+  return lines.join('\n')
 }
 
 /**

@@ -49,7 +49,8 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
   const [settings, setSettings] = useState<ReminderSettings | null>(null)
   const [permission, setPermission] = useState<ReminderPermission | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
+  /** Which time wheel is open — at most one at a time. */
+  const [pickerOpen, setPickerOpen] = useState<'digest' | 'deadline' | null>(null)
 
   useEffect(() => {
     void loadReminderSettings().then(setSettings)
@@ -148,55 +149,18 @@ export default function NotificationsScreen() {
                 caption={t.reminderDigestCaption}
                 checked={settings.digestOn}
                 onChange={(digestOn) => {
-                  setPickerOpen(false)
+                  setPickerOpen(null)
                   update({ digestOn })
                 }}
               />
               {settings.digestOn ? (
-                <>
-                  <Pressable
-                    className="active:bg-secondary border-border min-h-[52px] flex-row items-center gap-3 border-t px-4"
-                    onPress={() => {
-                      tapped()
-                      setPickerOpen((open) => !open)
-                    }}
-                    role="button"
-                    aria-expanded={pickerOpen}
-                  >
-                    <Text className="text-body-sm text-muted-foreground flex-1">
-                      {t.reminderTimeLabel}
-                    </Text>
-                    <View
-                      className={`h-8 min-w-16 items-center justify-center rounded-md px-2.5 ${
-                        pickerOpen ? 'bg-link/15' : 'bg-secondary'
-                      }`}
-                    >
-                      <Text
-                        className={`text-subtitle font-medium tabular-nums ${
-                          pickerOpen ? 'text-link' : 'text-foreground'
-                        }`}
-                      >
-                        {settings.digestTime}
-                      </Text>
-                    </View>
-                  </Pressable>
-                  {pickerOpen ? (
-                    <View className="border-border border-t" style={{ height: PICKER_HEIGHT }}>
-                      {/* `themeVariant` for the reason DateField gives: the
-                          wheel draws its own text and would come out black. */}
-                      <DateTimePicker
-                        value={fromTimeValue(settings.digestTime)}
-                        mode="time"
-                        display="spinner"
-                        themeVariant="dark"
-                        style={{ flex: 1, height: PICKER_HEIGHT }}
-                        onValueChange={(_event, selected) =>
-                          update({ digestTime: toTimeValue(selected) })
-                        }
-                      />
-                    </View>
-                  ) : null}
-                </>
+                <TimeRow
+                  label={t.reminderTimeLabel}
+                  value={settings.digestTime}
+                  open={pickerOpen === 'digest'}
+                  onToggle={() => setPickerOpen((open) => (open === 'digest' ? null : 'digest'))}
+                  onChange={(digestTime) => update({ digestTime })}
+                />
               ) : null}
             </View>
 
@@ -237,6 +201,30 @@ export default function NotificationsScreen() {
                     )
                   })}
                 </View>
+              ) : null}
+            </View>
+
+            {/* ── Дедлайн здачі — `US-066` AC-6, the digest's block repeated ── */}
+            <View className="bg-card border-border overflow-hidden rounded-xl border">
+              <ToggleRow
+                title={t.reminderDeadlineToggle}
+                caption={t.reminderDeadlineCaption}
+                checked={settings.deadlineOn}
+                onChange={(deadlineOn) => {
+                  setPickerOpen(null)
+                  update({ deadlineOn })
+                }}
+              />
+              {settings.deadlineOn ? (
+                <TimeRow
+                  label={t.reminderTimeLabel}
+                  value={settings.deadlineTime}
+                  open={pickerOpen === 'deadline'}
+                  onToggle={() =>
+                    setPickerOpen((open) => (open === 'deadline' ? null : 'deadline'))
+                  }
+                  onChange={(deadlineTime) => update({ deadlineTime })}
+                />
               ) : null}
             </View>
           </View>
@@ -281,5 +269,66 @@ function ToggleRow({
         accessibilityLabel={title}
       />
     </Pressable>
+  )
+}
+
+/**
+ * «Час · 20:00», and under it, while open, the wheel that changes it. Shared by
+ * the evening digest and `US-066`'s deadlines.
+ */
+function TimeRow({
+  label,
+  value,
+  open,
+  onToggle,
+  onChange,
+}: {
+  label: string
+  value: string
+  open: boolean
+  onToggle: () => void
+  onChange: (time: string) => void
+}) {
+  return (
+    <>
+      <Pressable
+        className="active:bg-secondary border-border min-h-[52px] flex-row items-center gap-3 border-t px-4"
+        onPress={() => {
+          tapped()
+          onToggle()
+        }}
+        role="button"
+        aria-expanded={open}
+      >
+        <Text className="text-body-sm text-muted-foreground flex-1">{label}</Text>
+        <View
+          className={`h-8 min-w-16 items-center justify-center rounded-md px-2.5 ${
+            open ? 'bg-link/15' : 'bg-secondary'
+          }`}
+        >
+          <Text
+            className={`text-subtitle font-medium tabular-nums ${
+              open ? 'text-link' : 'text-foreground'
+            }`}
+          >
+            {value}
+          </Text>
+        </View>
+      </Pressable>
+      {open ? (
+        <View className="border-border border-t" style={{ height: PICKER_HEIGHT }}>
+          {/* `themeVariant` for the reason DateField gives: the wheel draws its
+              own text and would come out black. */}
+          <DateTimePicker
+            value={fromTimeValue(value)}
+            mode="time"
+            display="spinner"
+            themeVariant="dark"
+            style={{ flex: 1, height: PICKER_HEIGHT }}
+            onValueChange={(_event, selected) => onChange(toTimeValue(selected))}
+          />
+        </View>
+      ) : null}
+    </>
   )
 }

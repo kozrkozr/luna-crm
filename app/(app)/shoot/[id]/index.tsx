@@ -8,14 +8,17 @@ import * as Clipboard from 'expo-clipboard'
  * Deep per-icon imports, never the `lucide-react-native` barrel — Metro does not
  * tree-shake it and it doubled the web bundle once (S-2 F-5). See select.tsx.
  */
+import Check from 'lucide-react-native/icons/check'
 import ChevronDown from 'lucide-react-native/icons/chevron-down'
 import ChevronRight from 'lucide-react-native/icons/chevron-right'
 import Copy from 'lucide-react-native/icons/copy'
 import FolderOpen from 'lucide-react-native/icons/folder-open'
 import LinkIcon from 'lucide-react-native/icons/link'
+import Navigation from 'lucide-react-native/icons/navigation-2'
 import Pencil from 'lucide-react-native/icons/pencil'
 import Trash from 'lucide-react-native/icons/trash'
 import UserIcon from 'lucide-react-native/icons/user'
+import Users from 'lucide-react-native/icons/users'
 import { FormScrollView } from '../../../../src/components/ui/form-scroll-view'
 import { Button } from '../../../../src/components/ui/button'
 import { Input } from '../../../../src/components/ui/input'
@@ -31,11 +34,10 @@ import { ImageViewer } from '../../../../src/components/ImageViewer'
 // and `removePerson` still take.
 import { type SheetPerson } from '../../../../src/components/PersonSheet'
 import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
-import { formatMoney, payment } from '../../../../src/features/shoots/money'
-import { useCurrency } from '../../../../src/features/account/currency'
+import { canMarkPaid, formatMoney, payment } from '../../../../src/features/shoots/money'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
-import { ReferencesEditor } from '../../../../src/components/ReferencesEditor'
+import { MaterialsReferences } from '../../../../src/components/MaterialsReferences'
 import { ResponsePill } from '../../../../src/components/ResponsePill'
 import { ShootDetailHeader, type DetailTab } from '../../../../src/components/ShootDetailHeader'
 import { StatusPill } from '../../../../src/components/StatusPill'
@@ -55,20 +57,16 @@ import { LinkifiedText } from '../../../../src/components/LinkifiedText'
 import { failed, succeeded, tapped } from '../../../../src/lib/haptics'
 import { takePendingToast } from '../../../../src/lib/nextScreenToast'
 import { openExternalUrl } from '../../../../src/lib/openExternalUrl'
+import { routeUrl } from '../../../../src/lib/routeUrl'
 import {
   deleteShoot,
   getShoot,
+  setPrepayment,
   updateShootLink,
   type Shoot,
   type ShootLinkField,
 } from '../../../../src/features/shoots/api'
-import {
-  addImageReference,
-  addLinkReference,
-  listReferences,
-  removeReference,
-  type Reference,
-} from '../../../../src/features/references/api'
+import { listReferences, type Reference } from '../../../../src/features/references/api'
 import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
 import { clientLinkToken, crewLinkToken, linkUrl } from '../../../../src/features/crew/links'
 import {
@@ -77,6 +75,7 @@ import {
 } from '../../../../src/features/shoots/locationMedia'
 import { Starfield } from '../../../../src/components/Starfield'
 import { useGuard } from '../../../../src/features/subscription/access'
+import { MoneyBurst } from '../../../../src/components/MoneyBurst'
 
 type State =
   | { status: 'loading' }
@@ -115,12 +114,13 @@ export default function ShootDetailScreen() {
   // `US-052` AC-2 — every create, edit and delete here opens the paywall
   // without access. Copying a link is not one of them (AC-4).
   const guard = useGuard()
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id, tab: openOn } = useLocalSearchParams<{ id: string; tab?: string }>()
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
   const [state, setState] = useState<State>({ status: 'loading' })
-  const [tab, setTab] = useState<DetailTab>('details')
+  // `US-066` AC-7 — a deadline reminder opens the shoot on «Матеріали».
+  const [tab, setTab] = useState<DetailTab>(openOn === 'materials' ? 'materials' : 'details')
   const [headerHeight, setHeaderHeight] = useState(0)
   const [toast, setToast] = useState<ToastState>(null)
 
@@ -371,6 +371,14 @@ export default function ShootDetailScreen() {
               shoot={shoot}
               countdown={countdown}
               crew={crew}
+              onToast={showToast}
+              onPaymentChanged={(prepayment) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? { ...current, shoot: { ...current.shoot, prepayment } }
+                    : current
+                )
+              }
               onCopyClientLink={() =>
                 void copyLinkFor({
                   id: shoot.clientId,
@@ -411,6 +419,18 @@ export default function ShootDetailScreen() {
                     ? {
                         ...current,
                         references: current.references.filter((r) => r.id !== id),
+                      }
+                    : current
+                )
+              }
+              onChanged={(reference) =>
+                setState((current) =>
+                  current.status === 'loaded'
+                    ? {
+                        ...current,
+                        references: current.references.map((r) =>
+                          r.id === reference.id ? reference : r
+                        ),
                       }
                     : current
                 )
@@ -539,11 +559,15 @@ function DetailsTab({
   countdown,
   crew,
   onCopyClientLink,
+  onToast,
+  onPaymentChanged,
 }: {
   shoot: Shoot
   countdown: string | null
   crew: CrewMember[]
   onCopyClientLink: () => void
+  onToast: (message: string, undo?: () => void) => void
+  onPaymentChanged: (prepayment: number | null) => void
 }) {
   const t = useStrings()
   const duration = formatDuration(shoot.startTime, shoot.endTime, {
@@ -711,7 +735,7 @@ function DetailsTab({
 
       <LocationCard shoot={shoot} />
 
-      <PaymentCard shoot={shoot} />
+      <PaymentCard shoot={shoot} onToast={onToast} onChanged={onPaymentChanged} />
 
       {/*
         The «Нотатки для команди» card, restored 2026-08-30 and renamed
@@ -735,7 +759,7 @@ function DetailsTab({
       */}
       {shoot.notes ? (
         <Card variant="flat" className="gap-2.5">
-          <SectionLabel label={t.teamNotesSection} />
+          <SectionLabel label={t.teamNotesSection} emoji="📝" />
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.notes}</Text>
         </Card>
       ) : null}
@@ -758,7 +782,7 @@ function DetailsTab({
       */}
       {shoot.clientNotes ? (
         <Card variant="flat" className="gap-2.5">
-          <SectionLabel label={t.clientNotesSection} />
+          <SectionLabel label={t.clientNotesSection} emoji="📝" />
           <Text className="text-body-sm text-foreground/90 leading-5">{shoot.clientNotes}</Text>
         </Card>
       ) : null}
@@ -936,10 +960,53 @@ function ContactRow({
  * below (`ADR-013`, CLAUDE.md rule 2) — so no badge is needed here: nobody but
  * the creator can reach this screen at all.
  */
-function PaymentCard({ shoot }: { shoot: Shoot }) {
-  const currency = useCurrency()
+function PaymentCard({
+  shoot,
+  onToast,
+  onChanged,
+}: {
+  shoot: Shoot
+  onToast: (message: string, undo?: () => void) => void
+  onChanged: (prepayment: number | null) => void
+}) {
+  // `US-070` AC-7 — the shoot's own currency, not the account's.
+  const currency = shoot.currency
   const t = useStrings()
+  const guard = useGuard()
+  const [busy, setBusy] = useState(false)
   const pay = payment(shoot)
+  const button = useRef<View>(null)
+  /** `US-060` AC-2a — where the banknotes start, while they fly. */
+  const [celebration, setCelebration] = useState<{ x: number; y: number } | null>(null)
+  const endCelebration = useCallback(() => setCelebration(null), [])
+
+  /*
+    `US-060` AC-2 — the whole price received. The toast's undo puts back the
+    prepayment that was there, null included, rather than a zero.
+  */
+  const markPaid = async () => {
+    const before = shoot.prepayment
+    // Measured now: once the shoot is paid the button is gone (AC-4).
+    const origin = await new Promise<{ x: number; y: number } | null>((resolve) => {
+      if (!button.current) return resolve(null)
+      button.current.measureInWindow((x, y, width, height) =>
+        resolve({ x: x + width / 2, y: y + height / 2 })
+      )
+    })
+    setBusy(true)
+    const saved = await setPrepayment(shoot.id, pay.price)
+    setBusy(false)
+    if (!saved) {
+      failed()
+      return onToast(t.somethingWentWrong)
+    }
+    succeeded()
+    if (origin) setCelebration(origin)
+    onChanged(pay.price)
+    onToast(t.markedPaid, () => {
+      void setPrepayment(shoot.id, before).then((undone) => undone && onChanged(before))
+    })
+  }
 
   /*
     ── The «Оплачено» / «Часткова оплата» / «Без передплати» chip is gone ─────
@@ -997,15 +1064,43 @@ function PaymentCard({ shoot }: { shoot: Shoot }) {
             note this is NOT what the form does with the same number, which
             leaves it plain until it reaches zero. Both are as drawn; logged.
           */}
-          <Text
-            className={`text-subtitle mt-1 font-semibold ${
-              pay.badge === 'paid' ? 'text-success' : 'text-warn'
-            }`}
-          >
-            {formatMoney(pay.balance, currency)}
-          </Text>
+          {/* `US-060` AC-4 — a paid shoot says so instead of «0 ₴». */}
+          {pay.badge === 'paid' ? (
+            <View className="mt-1 flex-row items-center gap-1.5">
+              <Icon as={Check} size={16} strokeWidth={2.4} className="text-success" />
+              <Text className="text-subtitle text-success font-semibold">{t.paidValue}</Text>
+            </View>
+          ) : (
+            <Text className="text-subtitle text-warn mt-1 font-semibold">
+              {formatMoney(pay.balance, currency)}
+            </Text>
+          )}
         </View>
       </View>
+
+      {/*
+        `US-060` AC-1 — shaped like «Позначити як передано клієнту» at the foot
+        of the deadline card (`US-042`): a single action closing a card.
+      */}
+      {canMarkPaid(pay) ? (
+        <Pressable
+          ref={button}
+          className="border-border min-h-11 flex-row items-center justify-center gap-[7px] border-t p-2 active:bg-secondary"
+          disabled={busy}
+          onPress={guard(() => {
+            tapped()
+            void markPaid()
+          })}
+          role="button"
+        >
+          <Icon as={Check} size={14} strokeWidth={1.8} className="text-muted-foreground" />
+          <Text className="text-label text-foreground font-semibold">{t.markPaid}</Text>
+        </Pressable>
+      ) : null}
+
+      {celebration ? (
+        <MoneyBurst origin={celebration} onDone={endCelebration} />
+      ) : null}
     </Card>
   )
 }
@@ -1035,38 +1130,49 @@ function LocationCard({ shoot }: { shoot: Shoot }) {
   }
 
   const kind = attachment ? attachmentKind(attachment) : null
+  const route = routeUrl(shoot.locationAddress)
 
   return (
     <Card variant="flat" className="gap-0 p-0">
       <View className="gap-3 p-4">
         <SectionLabel label={t.locationSection} emoji="📍" />
-        {/* The venue leads, the address supports it — which is the order v3
-            draws and the reason the two are separate columns
-            (`location_name`, migration 20260903120000). */}
-        {shoot.locationName ? (
-          <Text className="text-subtitle text-foreground font-semibold">
-            {shoot.locationName}
-          </Text>
+        {shoot.locationName || shoot.locationAddress ? (
+        <View className="flex-row items-start gap-3">
+          <View className="min-w-0 flex-1 gap-3">
+            {/* The venue leads, the address supports it — which is the order v3
+                draws and the reason the two are separate columns
+                (`location_name`, migration 20260903120000). */}
+            {shoot.locationName ? (
+              <Text className="text-subtitle text-foreground font-semibold">
+                {shoot.locationName}
+              </Text>
+            ) : null}
+            {/* A creator pastes a maps pin into the address as often as a street:
+                any URL inside it is tappable since 2026-09-06. See `linkify`. */}
+            {shoot.locationAddress ? (
+              <LinkifiedText className="text-body-sm text-muted-foreground leading-5">
+                {shoot.locationAddress}
+              </LinkifiedText>
+            ) : null}
+          </View>
+          {/*
+            `US-034` — the card's one button, a 44pt icon, the same as the
+            link view's (owner, 2026-10-17). v3 drew the card with none: its
+            «Маршрут» was a stub that never did anything, and «Копіювати
+            адресу» went on the owner's word — in the link views too, since.
+          */}
+          {route ? (
+            <Pressable
+              className="border-border active:bg-secondary h-11 w-11 shrink-0 items-center justify-center rounded-lg border"
+              onPress={() => void openExternalUrl(route)}
+              role="button"
+              accessibilityLabel={t.route}
+            >
+              <Icon as={Navigation} size={17} strokeWidth={1.8} className="text-muted-foreground" />
+            </Pressable>
+          ) : null}
+        </View>
         ) : null}
-        {/* A creator pastes a maps pin into the address as often as a street:
-            any URL inside it is tappable since 2026-09-06. See `linkify`. */}
-        {shoot.locationAddress ? (
-          <LinkifiedText className="text-body-sm text-muted-foreground leading-5">
-            {shoot.locationAddress}
-          </LinkifiedText>
-        ) : null}
-        {/*
-          **The card has no buttons**, as v3 draws it. «Маршрут» went first — it
-          was a stub the owner asked for on 2026-08-30 and never did anything
-          when tapped — and «Копіювати адресу» followed on the owner's word,
-          though it worked. Which map app, and what a `maps:` URL does on the
-          static web export, remain the unanswered questions behind «Маршрут»
-          (S-4).
-
-          The address is still copyable where a reader without the app needs it:
-          the link view draws its own «Копіювати адресу» (`uk.copyAddress`), and
-          that one is untouched.
-        */}
       </View>
 
       {shoot.locationNote ? (
@@ -1213,33 +1319,50 @@ function PeopleTab({
         ) : null}
       </View>
 
-      <Card variant="flat" className="gap-0 p-0">
-        {crew.map((member, index) => (
-          <PersonRow
-            key={member.id}
-            divided={index > 0}
-            member={member}
-            open={expanded === member.id}
-            onToggle={() => setExpanded((current) => (current === member.id ? null : member.id))}
-            onCopyLink={() =>
-              onCopyLink({
-                id: member.id,
-                name: member.name,
-                role: member.role,
-                phone: member.phone,
-                instagram: member.instagram,
-                telegram: member.telegram,
-                badge: null,
-                removable: true,
-              })
-            }
-            onRemove={guard(() => {
-              setExpanded(null)
-              askRemove(member)
-            })}
-          />
-        ))}
-      </Card>
+      {/*
+        `US-005` AC-3 — nobody on the crew: a card in place of the list, and no
+        button in it. «+ Додати учасника» is already pinned under the tab.
+      */}
+      {crew.length === 0 ? (
+        <Card variant="flat" className="items-center px-6 pb-7 pt-8">
+          <Icon as={Users} size={44} strokeWidth={1.3} className="text-muted-foreground" />
+          <Text className="text-body text-foreground mt-4 font-semibold">{t.emptyCrewTitle}</Text>
+          <Text
+            className="text-body-sm text-muted-foreground mt-1.5 text-center leading-5"
+            style={{ maxWidth: 270 }}
+          >
+            {t.emptyCrewText}
+          </Text>
+        </Card>
+      ) : (
+        <Card variant="flat" className="gap-0 p-0">
+          {crew.map((member, index) => (
+            <PersonRow
+              key={member.id}
+              divided={index > 0}
+              member={member}
+              open={expanded === member.id}
+              onToggle={() => setExpanded((current) => (current === member.id ? null : member.id))}
+              onCopyLink={() =>
+                onCopyLink({
+                  id: member.id,
+                  name: member.name,
+                  role: member.role,
+                  phone: member.phone,
+                  instagram: member.instagram,
+                  telegram: member.telegram,
+                  badge: null,
+                  removable: true,
+                })
+              }
+              onRemove={guard(() => {
+                setExpanded(null)
+                askRemove(member)
+              })}
+            />
+          ))}
+        </Card>
+      )}
 
       {removeDialog}
     </View>
@@ -1483,6 +1606,7 @@ function MaterialsTab({
   references,
   onAdded,
   onRemoved,
+  onChanged,
   onCopied,
   onToast,
   onDeadlineChanged,
@@ -1492,6 +1616,8 @@ function MaterialsTab({
   references: Reference[]
   onAdded: (reference: Reference) => void
   onRemoved: (id: string) => void
+  /** `US-068` — a reference's «Знято» mark was written. */
+  onChanged: (reference: Reference) => void
   onCopied: (message: string) => void
   /** The screen's toast, with an optional undo — `US-042`'s needs one. */
   onToast: (message: string, undo?: () => void) => void
@@ -1506,8 +1632,6 @@ function MaterialsTab({
   // sit on top of each other and a second open editor would push the first
   // off-screen mid-paste.
   const [editingLink, setEditingLink] = useState<ShootLinkField | null>(null)
-  const photos = references.filter((reference) => reference.kind === 'image').length
-  const links = references.length - photos
 
   /*
     Both slots, always — `US-024` and `US-025` are two fixed places, not a list
@@ -1576,37 +1700,19 @@ function MaterialsTab({
       </View>
 
       {/*
-        ── «Референси» ──
+        ── «Референси» and «Посилання» — `US-068` ──
 
-        **The sticky «Додати референс або файл» CTA is gone** (owner,
-        2026-09-05). It opened the gallery picker — exactly what the `+` tile at
-        the end of the grid below already does. One action had two controls, and
-        the button named files it could not add: it reached the image picker
-        only, where «Файли» above are pasted links (`US-024`, `US-025`).
-
-        Adding a reference is the `+` tile now, and nothing else about it
-        changed. `t.addReferenceOrFile` survives as that tile's
-        `accessibilityLabel`, which is the one place the phrase was ever true of
-        what the control did.
+        Photos and links apart, and a photo marked «Знято» on set. The block is
+        no longer `ReferencesEditor`, which stays on the «Нова зйомка» form as it
+        was (`US-043`, amended).
       */}
-      <View className="gap-2.5">
-        <View className="flex-row items-baseline justify-between">
-          <SectionLabel label={t.references} />
-          <Text className="text-label text-muted-foreground">
-            {`${photos} ${t.photosWord} · ${links} ${plural(links, t.linkForms)}`}
-          </Text>
-        </View>
-
-        <ReferencesEditor
-          references={references}
-          addImage={(asset, category) => addImageReference(shoot.id, asset, category)}
-          addLink={(link, category) => addLinkReference(shoot.id, link, category)}
-          onAdded={onAdded}
-          remove={(reference) => removeReference(reference.id)}
-          onRemoved={onRemoved}
-          confirmRemove
-        />
-      </View>
+      <MaterialsReferences
+        shootId={shoot.id}
+        references={references}
+        onAdded={onAdded}
+        onRemoved={onRemoved}
+        onChanged={onChanged}
+      />
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import CalendarIcon from 'lucide-react-native/icons/calendar'
 import Check from 'lucide-react-native/icons/check'
@@ -28,6 +28,7 @@ import {
   type DeadlineTone,
 } from '../features/shoots/deadline'
 import { useGuard } from '../features/subscription/access'
+import { Celebration } from './Celebration'
 
 /** The two columns this section owns, as the screen holds them. */
 export type DeadlinePatch = Pick<Shoot, 'deliveryDue' | 'deliveredAt'>
@@ -57,6 +58,10 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
   // The editor's draft, or null while it is closed.
   const [draft, setDraft] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const button = useRef<View>(null)
+  /** `US-042` AC-6a — where the confetti starts, while it flies. */
+  const [celebration, setCelebration] = useState<{ x: number; y: number } | null>(null)
+  const endCelebration = useCallback(() => setCelebration(null), [])
 
   const due = shoot.deliveryDue
   const dayMonth = (iso: string) => formatDayMonth(iso, t.monthsGenitive)
@@ -102,6 +107,13 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
 
   // AC-6 — the toast's undo is the only way back (owner, 2026-10-06).
   const markDelivered = async () => {
+    // Measured now: once delivered the button is gone.
+    const origin = await new Promise<{ x: number; y: number } | null>((resolve) => {
+      if (!button.current) return resolve(null)
+      button.current.measureInWindow((x, y, width, height) =>
+        resolve({ x: x + width / 2, y: y + height / 2 })
+      )
+    })
     setBusy(true)
     const deliveredAt = await setDelivered(shoot.id, true)
     setBusy(false)
@@ -110,6 +122,7 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
       return onToast(t.somethingWentWrong)
     }
     succeeded()
+    if (origin) setCelebration(origin)
     onChanged({ deliveryDue: due, deliveredAt })
     onToast(t.deadlineMarkedDelivered, () => {
       void setDelivered(shoot.id, false).then(
@@ -166,7 +179,7 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
     <View className={`bg-card overflow-hidden rounded-xl border ${style.card}`}>
       <View className="flex-row items-start gap-[11px] pl-3.5 pr-2 pt-3">
         <View className="min-w-0 flex-1">
-          <Text className="text-label text-muted-foreground">{t.deadlineLabel}</Text>
+          <Text className="text-label text-muted-foreground">{`⏳ ${t.deadlineLabel}`}</Text>
           <View className="mt-[3px] flex-row flex-wrap items-center gap-2">
             <Text className="text-subtitle text-foreground font-semibold">
               {t.deadlineByTemplate.replace('{date}', dayMonth(due))}
@@ -199,6 +212,7 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
 
       {canMarkDelivered(shoot) ? (
         <Pressable
+          ref={button}
           // Centred, and shaped like «Запрошення на зйомку» at the foot of the
           // client's card on «Деталі» (owner, 2026-10-06) — the same kind of
           // single action closing a card.
@@ -215,6 +229,10 @@ export function DeliveryDeadline({ shoot, onChanged, onToast }: Props) {
             {t.deadlineMarkDelivered}
           </Text>
         </Pressable>
+      ) : null}
+
+      {celebration ? (
+        <Celebration origin={celebration} onDone={endCelebration} />
       ) : null}
     </View>
   )

@@ -27,8 +27,9 @@ the form and saved together with it.
 
 ### AC-1 — An optional section, last
 - **Given** the «Нова зйомка» form
-- **Then** «Референси» is closed, and offered as the **fourth** dashed pill at the foot of the
-  form, after «Оплата», «Нотатки для команди» and «Нотатки для клієнта»
+- **Then** «Референси» is closed, and offered as the **last** dashed pill at the foot of the
+  form, after «Оплата», «Команда» (`US-064`, 2026-10-17), «Нотатки для команди» and «Нотатки для
+  клієнта»
 - **When** the creator taps it
 - **Then** the section opens **last** on the form, below «Нотатки для клієнта», with a × in its
   heading like the other optional sections
@@ -36,6 +37,9 @@ the form and saved together with it.
 ### AC-2 — The same as «Матеріали»
 - **Then** the open section is the «Матеріали» tab's «Референси» block: the same filter chips, grid,
   «+» tile, image-or-link choice, link card, category rule and error messages (`US-003` AC-2)
+- **Amended 2026-10-18 by `US-068`:** «Матеріали» now splits photos from links and marks photos
+  «Знято». **This form keeps the block as it was** — one grid, the «+» tile's image-or-link
+  choice, no «Знято» (owner, 2026-10-18).
 
 ### AC-3 — Nothing is saved until the shoot is
 - **Given** references added on the form
@@ -82,7 +86,7 @@ the form and saved together with it.
 ## Out of scope
 - References on the edit form — AC-8.
 - Reporting a reference that failed to save — AC-7.
-- Crew or files on the creation form.
+- Files on the creation form. Crew — `US-064` (2026-10-17).
 
 ## Dependencies
 `US-002`, `US-003`, `US-032`.

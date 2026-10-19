@@ -47,6 +47,7 @@ Only registered users have a language preference — link views are Ukrainian-on
 | `id`, `shoot_id` → Shoot | |
 | `kind` | `link` \| `image` (`US-003`) |
 | `url_or_path` | external URL, or a Storage path for a gallery image |
+| `shot_at` | nullable; when the creator marked an image «Знято» on set, null until then (`US-068`). Creator only — never in a link payload |
 
 No per-role tagging and no reaction table. Every crew member sees every reference —
 **[answered]** item 5. Client reactions were removed outright (`ADR-009`), so `US-011`'s

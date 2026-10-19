@@ -35,7 +35,8 @@ const PASSWORD = 'lunademo123'
 const day = (offset) => {
   const d = new Date()
   d.setDate(d.getDate() + offset)
-  return d.toISOString().slice(0, 10)
+  // The local date: toISOString() is UTC's, a day behind after midnight in Kyiv.
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 const DATA = {
@@ -50,9 +51,9 @@ const DATA = {
       { client: 'Бренд «Лляна»', phone: '+380 93 115 00 87', date: 6, start: '09:00', end: '15:00', place: 'Студія KULT', address: 'вул. Кирилівська, 41, Київ', notes: 'Лукбук осінньої колекції, 24 образи.', clientNotes: 'Потрібні вертикальні кадри для сторіз.', prepay: 6000, crew: [['Гліб Лозовий', 'gaffer', 'confirmed'], ['Катерина Бондар', 'stylist', 'confirmed'], ['Софія Ткач', 'model', 'declined'], ['Максим Руденко', 'assistant', 'confirmed']] },
       { client: 'Анна Коваль', phone: '+380 66 402 19 73', date: 12, start: '16:00', end: '18:00', place: 'Парк Шевченка', address: 'вул. Володимирська, 57, Київ', notes: '', clientNotes: '', prepay: 0, crew: [['Олена Савчук', 'hair_stylist', 'pending']] },
       { client: 'Олена Бойко', phone: '+380 67 501 22 40', date: -9, start: '12:00', end: '14:00', place: 'Андріївський узвіз', address: 'Андріївський узвіз, 2, Київ', notes: '', clientNotes: '', price: 5000, prepay: 5000, due: true, delivered: true, crew: [] },
-      { client: 'Тетяна і Максим', phone: '+380 50 300 41 18', date: -7, start: '15:00', end: '20:00', place: 'Ресторан «Тераса»', address: 'вул. Набережно-Хрещатицька, 9, Київ', notes: 'Весілля, камерне.', clientNotes: '', price: 18000, prepay: 18000, crew: [['Андрій Шевцов', 'videographer', 'confirmed']] },
-      { client: 'Кафе «Зерно»', phone: '+380 93 220 15 06', date: -2, start: '08:00', end: '10:00', place: 'Кафе «Зерно»', address: 'вул. Саксаганського, 70, Київ', notes: 'Зйомка меню.', clientNotes: '', price: 7000, prepay: 3500, crew: [] },
-      { client: 'Вікторія Мороз', phone: '+380 66 780 30 92', date: 1, start: '18:00', end: '19:30', place: 'Студія «Світло»', address: 'вул. Велика Васильківська, 100, Київ', notes: '', clientNotes: '', price: 4500, prepay: 1500, crew: [['Ілона Козер', 'makeup_artist', 'confirmed']] },
+      { client: 'Тетяна і Максим', phone: '+380 50 300 41 18', date: -7, start: '15:00', end: '20:00', place: 'Ресторан «Тераса»', address: 'вул. Набережно-Хрещатицька, 9, Київ', notes: 'Весілля, камерне.', clientNotes: '', currency: 'EUR', price: 600, prepay: 600, crew: [['Андрій Шевцов', 'videographer', 'confirmed']] },
+      { client: 'Кафе «Зерно»', phone: '+380 93 220 15 06', date: -2, start: '08:00', end: '10:00', place: 'Кафе «Зерно»', address: 'вул. Саксаганського, 70, Київ', notes: 'Зйомка меню.', clientNotes: '', price: 7000, prepay: 3500, dueIn: 1, crew: [] },
+      { client: 'Вікторія Мороз', phone: '+380 66 780 30 92', date: 1, start: '18:00', end: '19:30', place: 'Студія «Світло»', address: 'вул. Велика Васильківська, 100, Київ', notes: '', clientNotes: '', price: 4500, prepay: 4500, crew: [['Ілона Козер', 'makeup_artist', 'confirmed']] },
       { client: 'Родина Петренків', phone: '+380 97 115 63 20', date: 8, start: '11:00', end: '13:00', place: 'Маріїнський парк', address: 'вул. Грушевського, 5, Київ', notes: 'Сімейна зйомка, двоє дітей.', clientNotes: '', price: 6000, prepay: 0, crew: [] },
       { client: 'Дмитро Савченко', phone: '+380 63 902 47 15', date: 15, start: '14:00', end: '16:00', place: 'Студія KULT', address: 'вул. Кирилівська, 41, Київ', notes: 'Портфоліо для актора.', clientNotes: '', price: 5000, prepay: 2000, crew: [['Гліб Лозовий', 'gaffer', 'pending']] },
       { client: 'Ірина Ткаченко', phone: '+380 68 444 90 31', date: 19, start: '10:00', end: '12:00', place: 'Лофт «Артель»', address: 'вул. Глибочицька, 13, Київ', notes: '', clientNotes: '', price: 4500, prepay: 0, crew: [] },
@@ -70,9 +71,9 @@ const DATA = {
       { client: 'Linen & Co', phone: '+1 415 555 0190', date: 6, start: '09:00', end: '15:00', place: 'Studio KULT', address: '41 Folsom St, San Francisco', notes: 'Fall collection lookbook, 24 looks.', clientNotes: 'Needs vertical frames for stories.', prepay: 450, crew: [['Liam Brooks', 'gaffer', 'confirmed'], ['Chloe Grant', 'stylist', 'confirmed'], ['Mia Turner', 'model', 'declined'], ['Ethan Cole', 'assistant', 'confirmed']] },
       { client: 'Anna Foster', phone: '+1 415 555 0123', date: 12, start: '16:00', end: '18:00', place: 'Golden Gate Park', address: '501 Stanyan St, San Francisco', notes: '', clientNotes: '', prepay: 0, crew: [['Olivia Reed', 'hair_stylist', 'pending']] },
       { client: 'Ellen Brooks', phone: '+1 415 555 0101', date: -9, start: '12:00', end: '14:00', place: 'Lombard Street', address: '1000 Lombard St, San Francisco', notes: '', clientNotes: '', price: 380, prepay: 380, due: true, delivered: true, crew: [] },
-      { client: 'Tanya & Max', phone: '+1 415 555 0112', date: -7, start: '15:00', end: '20:00', place: 'The Terrace', address: '9 Embarcadero, San Francisco', notes: 'Intimate wedding.', clientNotes: '', price: 1400, prepay: 1400, crew: [['Noah Hayes', 'videographer', 'confirmed']] },
-      { client: 'Grain Café', phone: '+1 415 555 0134', date: -2, start: '08:00', end: '10:00', place: 'Grain Café', address: '70 Valencia St, San Francisco', notes: 'Menu shoot.', clientNotes: '', price: 520, prepay: 260, crew: [] },
-      { client: 'Victoria Moore', phone: '+1 415 555 0145', date: 1, start: '18:00', end: '19:30', place: 'Light Studio', address: '100 Market St, San Francisco', notes: '', clientNotes: '', price: 350, prepay: 120, crew: [['Ava Kim', 'makeup_artist', 'confirmed']] },
+      { client: 'Tanya & Max', phone: '+1 415 555 0112', date: -7, start: '15:00', end: '20:00', place: 'The Terrace', address: '9 Embarcadero, San Francisco', notes: 'Intimate wedding.', clientNotes: '', currency: 'EUR', price: 1300, prepay: 1300, crew: [['Noah Hayes', 'videographer', 'confirmed']] },
+      { client: 'Grain Café', phone: '+1 415 555 0134', date: -2, start: '08:00', end: '10:00', place: 'Grain Café', address: '70 Valencia St, San Francisco', notes: 'Menu shoot.', clientNotes: '', price: 520, prepay: 260, dueIn: 1, crew: [] },
+      { client: 'Victoria Moore', phone: '+1 415 555 0145', date: 1, start: '18:00', end: '19:30', place: 'Light Studio', address: '100 Market St, San Francisco', notes: '', clientNotes: '', price: 350, prepay: 350, crew: [['Ava Kim', 'makeup_artist', 'confirmed']] },
       { client: 'The Peterson Family', phone: '+1 415 555 0156', date: 8, start: '11:00', end: '13:00', place: 'Alamo Square', address: 'Steiner St & Hayes St, San Francisco', notes: 'Family session, two kids.', clientNotes: '', price: 450, prepay: 0, crew: [] },
       { client: 'Daniel Shaw', phone: '+1 415 555 0167', date: 15, start: '14:00', end: '16:00', place: 'Studio KULT', address: '41 Folsom St, San Francisco', notes: 'Actor portfolio.', clientNotes: '', price: 380, prepay: 150, crew: [['Liam Brooks', 'gaffer', 'pending']] },
       { client: 'Irene Walsh', phone: '+1 415 555 0178', date: 19, start: '10:00', end: '12:00', place: 'Artel Loft', address: '13 Mission St, San Francisco', notes: '', clientNotes: '', price: 350, prepay: 0, crew: [] },
@@ -106,6 +107,17 @@ for (const [language, d] of Object.entries(DATA)) {
   const app = createClient(process.env.SB_URL, process.env.SB_ANON, { auth: { persistSession: false } })
   await app.auth.signInWithPassword({ email: d.email, password: PASSWORD })
 
+  // Everyone on a crew is also a saved contact, with one phone for both, so
+  // «Контакти» and «Мої контакти» are full (`US-064`).
+  const crewPhone = new Map()
+  for (const [name, role] of d.shoots.flatMap((s) => s.crew)) {
+    if (crewPhone.has(name)) continue
+    const n = String(1000 + crewPhone.size * 37).padStart(4, '0')
+    const phone = language === 'uk' ? `+380 67 410 ${n.slice(0, 2)} ${n.slice(2)}` : `+1 415 555 ${n}`
+    crewPhone.set(name, phone)
+    await app.from('contacts').insert({ creator_id: userId, name, role, phone })
+  }
+
   let imageIndex = 0
   for (const s of d.shoots) {
     const client = (await app.from('clients').insert({ creator_id: userId, name: s.client, phone: s.phone }).select('id').single()).data
@@ -123,13 +135,16 @@ for (const [language, d] of Object.entries(DATA)) {
           notes: s.notes || null,
           client_notes: s.clientNotes || null,
           price: s.price ?? d.price,
+          // `US-070` — one shoot abroad, so «Статистика» shows two currencies (`US-071`).
+          ...(s.currency && { currency: s.currency }),
           prepayment: s.prepay || null,
-          delivery_due: s.due ? day(s.date + 10) : null,
+          // `dueIn` — days after the shoot; Grain Café's was yesterday, so «Прострочено» has one (`US-063`).
+          delivery_due: s.dueIn !== undefined ? day(s.date + s.dueIn) : s.due ? day(s.date + 10) : null,
           delivered_at: s.delivered ? new Date().toISOString() : null,
-          // A shoot with a deadline has its files somewhere: an empty row
-          // reads «В розробці», which looks unfinished on a screenshot.
-          raw_files_url: s.due ? `https://drive.google.com/drive/folders/raw-${s.date + 20}` : null,
-          finished_photos_url: s.due ? `https://drive.google.com/drive/folders/edit-${s.date + 20}` : null,
+          // A shoot with a deadline has its files somewhere, and so has today's —
+          // an empty row reads «В розробці», which looks unfinished on a screenshot.
+          raw_files_url: s.due || s.dueIn !== undefined || s.date === 0 ? `https://drive.google.com/drive/folders/raw-${s.date + 20}` : null,
+          finished_photos_url: s.due || s.dueIn !== undefined || s.date === 0 ? `https://drive.google.com/drive/folders/edit-${s.date + 20}` : null,
         })
         .select('id')
         .single()
@@ -139,7 +154,7 @@ for (const [language, d] of Object.entries(DATA)) {
     for (const [name, role, response] of s.crew) {
       const { data: member } = await app
         .from('crew_members')
-        .insert({ shoot_id: shoot.id, name, role, phone: `+380 ${Math.floor(100000000 + Math.random() * 899999999)}` })
+        .insert({ shoot_id: shoot.id, name, role, phone: crewPhone.get(name) })
         .select('id')
         .single()
       // The answer is the crew member's, written by the link gateway; here the
@@ -155,7 +170,9 @@ for (const [language, d] of Object.entries(DATA)) {
         const body = fs.readFileSync(path.join(folder, file))
         const { error: upErr } = await app.storage.from('shoot-media').upload(objectPath, body, { contentType: 'image/jpeg' })
         if (upErr) throw new Error(`upload: ${upErr.message}`)
-        await app.from('shoot_references').insert({ shoot_id: shoot.id, kind: 'image', url_or_path: objectPath, category: ['light', 'poses', 'style', 'poses'][i] })
+        // `US-068` — today's shoot is on set: its first two photos are «Знято».
+        const shotAt = s.date === 0 && i < 2 ? new Date(Date.now() - (2 - i) * 600000).toISOString() : null
+        await app.from('shoot_references').insert({ shoot_id: shoot.id, kind: 'image', url_or_path: objectPath, category: ['light', 'poses', 'style', 'poses'][i], shot_at: shotAt })
       }
       await app.from('shoot_references').insert({ shoot_id: shoot.id, kind: 'link', url_or_path: 'https://pinterest.com/lunashoots/autumn', category: 'style' })
     }

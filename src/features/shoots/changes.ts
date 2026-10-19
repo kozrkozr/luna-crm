@@ -1,6 +1,7 @@
 /**
  * "The creator's shoots just changed" — raised by `./api.ts` after a create,
- * edit or delete, heard by whoever needs to react (`US-041`'s reminders).
+ * edit or delete, and after a delivery deadline or its delivered mark changes
+ * (`US-066`), heard by whoever needs to react (`US-041`'s reminders).
  *
  * A listener list rather than a direct call so `api.ts` does not import the
  * reminders, which import `api.ts` for `listShoots` — a require cycle Metro

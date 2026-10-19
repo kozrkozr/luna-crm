@@ -1,3 +1,4 @@
 {
-  "NSPhotoLibraryUsageDescription": "Luna Shoots потребує доступу до фото, щоб додати референс до зйомки."
+  "NSPhotoLibraryUsageDescription": "Luna Shoots потребує доступу до фото, щоб додати референс до зйомки.",
+  "NSContactsUsageDescription": "Luna Shoots потребує доступу до контактів, щоб заповнити імʼя й телефон людини, яку ви вибрали."
 }

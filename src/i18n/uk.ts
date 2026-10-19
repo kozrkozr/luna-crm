@@ -84,7 +84,13 @@ export const uk = {
   currencyTitle: 'Валюта',
   /** In `CURRENCIES` order: UAH, USD, EUR, PLN, CZK. */
   currencyNames: ['Гривня', 'Долар США', 'Євро', 'Польський злотий', 'Чеська крона'],
-  currencyHint: 'Суми не перераховуються — змінюється лише символ.',
+  /** `US-070` — the account's currency is only what a new shoot starts in (`ADR-027`). */
+  currencyHint:
+    'Нові зйомки створюються в цій валюті — у кожній її можна змінити в «Оплаті». Створені раніше зйомки зберігають свою.',
+  /** `US-070` AC-3 — the button at the end of «Ціна», and the sheet it opens. */
+  changeCurrencyLabel: 'Змінити валюту',
+  shootCurrencySubtitle: 'Для ціни, передплати й залишку',
+  shootCurrencyNote: 'Нові зйомки створюються у валюті з профілю. Змінити її можна в профілі → «Валюта».',
   contactSupport: 'Написати в підтримку',
   /** «LUNA CRM · версія 0.1.0» — the number comes from `expo-constants`. */
   versionTemplate: 'LUNA CRM · версія {version}',
@@ -435,7 +441,17 @@ export const uk = {
    */
   locationNameLabel: 'Назва',
   locationNamePlaceholder: 'Наприклад, Студія KULT',
-  locationAddressPlaceholder: 'Вулиця, будинок, місто',
+  /*
+   * `US-067` — the address field on the iPhone and its search screen (owner,
+   * 2026-10-17, from his screenshot of the location picker). The hint names no
+   * service on purpose; the attribution under Apple's suggestions does.
+   */
+  addressSearchPlaceholder: 'Місце, адреса або будь-який текст',
+  addressSearchHint:
+    'Виберіть місце зі списку або просто напишіть текст — наприклад, «У клієнтки вдома» чи «Біля фонтану на Контрактовій».',
+  yourLocations: 'Ваші локації',
+  noAddress: 'Без адреси',
+  appleMapsAttribution: 'Дані: Apple Maps',
   locationDetails: 'Деталі',
   locationDetailsPlaceholder: 'Поверх, код домофону, вхід, паркування',
   notesSection: 'Нотатки',
@@ -470,8 +486,13 @@ export const uk = {
   removeClientNotesLabel: 'Прибрати нотатки для клієнта',
   /** `US-043` — the references section's × on the new-shoot form. */
   removeReferencesLabel: 'Прибрати референси',
+  /** `US-064` AC-9 — the «Команда» section's ×, and a row's «−». */
+  removeCrewLabel: 'Прибрати команду',
+  removeCrewMemberTemplate: 'Прибрати {name}',
   /** `US-043` AC-6 — the CTA while a new shoot's references upload. */
   savingReferences: 'Зберігаємо референси…',
+  /** `US-064` AC-6 — before the references, while the crew is saved. */
+  savingCrew: 'Зберігаємо команду…',
   /**
    * The confirmation before a × clears a section that holds something (owner,
    * 2026-09-05 — the artboards clear it outright, with no step in between).
@@ -854,6 +875,14 @@ export const uk = {
   saveContact: 'Зберегти контакт',
   editContactHint: 'Зміни застосуються всюди, де цей контакт уже додано.',
   contactAddedTemplate: '{name} додано до контактів',
+  /** `US-065` — the card at the top of both «Новий контакт» forms. */
+  phoneContactChoose: 'Вибрати з контактів телефону',
+  phoneContactHint: 'Імʼя й телефон заповняться самі',
+  phoneContactOrByHand: 'або заповніть вручну',
+  /** Followed by the contact's name, set in a heavier weight. */
+  phoneContactFilledFrom: 'Заповнено з контакту',
+  phoneContactAnother: 'Інший',
+  phoneContactAlreadySavedTemplate: '{name} уже є у ваших контактах',
   contactDeletedTemplate: '{name} видалено з контактів',
   deleteContactAction: 'Видалити контакт',
   deleteContactQuestion: 'Видалити контакт «{name}»?',
@@ -870,12 +899,11 @@ export const uk = {
   /** «Зйомка з Марією Литвин · 3 години» — the link view's meta line. */
   shootWithTemplate: 'Зйомка з {name}',
   /*
-   * The three copy confirmations. All PAST tense: a toast reports what
+   * The copy confirmations. All PAST tense: a toast reports what
    * happened, and the button that caused it already said what it would do.
    * Verbatim from `Shoot Detail v3.dc.html`, which gets this right throughout.
    */
   linkCopied: 'Посилання скопійовано',
-  addressCopied: 'Адресу скопійовано',
   // Shown when EXPO_PUBLIC_LINK_BASE_URL is unset, which is a misconfiguration
   // rather than a user error. Placeholder; see docs/open-questions.md item 22.
   linkNotConfigured: 'Адресу для посилань не налаштовано.',
@@ -1133,11 +1161,15 @@ export const uk = {
   timeLabel: 'Час',
   /** «2 з 4 підтвердили», on the shoot card's Команда row and the People tab. */
   confirmedOfTemplate: '{done} з {total} підтвердили',
+  /** `US-005` AC-3 — the «Команда» tab with nobody on it, `Shoot Detail v3.dc.html`. */
+  emptyCrewTitle: 'У команді поки нікого',
+  emptyCrewText: 'Тут буде список усіх, хто працює на цій зйомці, з їхніми ролями й контактами.',
 
   /*
-   * The location card's two buttons. «Маршрут» is a **stub** — see the note in
-   * app/(app)/shoot/[id]/index.tsx. The word ships; nothing is behind it yet.
+   * `US-034` AC-4 — the route button's accessibility label, an icon with no
+   * visible text (AC-1). On the creator's location card and in both link views.
    */
+  route: 'Маршрут',
   /*
    * The bare verb, for controls whose subject is obvious from where they sit —
    * the ✕ on the location attachment's thumbnail. Same word as
@@ -1152,7 +1184,6 @@ export const uk = {
    * the three confirmations in the app read alike. Logged.
    */
   confirmRemoveReference: 'Видалити цей референс? Це незворотньо.',
-  copyAddress: 'Копіювати адресу',
   /**
    * The access-details block inside the location card. Same word as the first
    * tab and a different thing, which is why it is a key of its own rather than
@@ -1193,6 +1224,33 @@ export const uk = {
   newReferenceLink: 'Нове посилання',
   newReferenceLinkPlaceholder: 'pinterest.com/…',
   addReferenceLinkAction: 'Додати',
+  /*
+   * ── `US-068` — «Матеріали»: photos and links apart, photos marked «Знято» ──
+   *
+   * `Materials-Refs.dc.html` and `Materials-Empty.dc.html` (owner, 2026-10-18).
+   * The English is Claude's, awaiting the owner's review (US-068 AC-12).
+   */
+  shotMark: 'Знято',
+  shotSectionTemplate: 'Знято · {n}',
+  toShootTemplate: '{n} фото до зйомки',
+  allShot: 'усе знято',
+  shotHint: 'Тапніть «Знято» ще раз, щоб повернути нагору.',
+  linksSection: 'Посилання',
+  addLink: 'Додати посилання',
+  addLinkHint: 'Pinterest, Instagram, Notion, Google Диск…',
+  noReferencesTitle: 'Референсів поки немає',
+  noReferencesBody:
+    'Додайте фото, які треба повторити на зйомці. На знімальному майданчику відмічайте їх «Знято».',
+  addPhotos: 'Додати фото',
+  shotSaveFailed: 'Не вдалося зберегти відмітку. Спробуйте ще раз.',
+  /** Accessibility labels; « — {category}» is appended when there is one. */
+  markShotLabel: 'Відмітити «Знято»',
+  unmarkShotLabel: 'Повернути до зйомки',
+  /** `US-069` — the photo preview's title: «Світло · 3 з 6», or «3 з 6» on «Всі». */
+  viewerCounterTemplate: '{n} з {total}',
+  viewerMarkShot: 'Позначити як відзняте',
+  /** After the check icon — «✓ Відзнято». */
+  viewerShot: 'Відзнято',
   copyWord: 'Копіювати',
 
   /*
@@ -1327,10 +1385,41 @@ export const uk = {
   statsYearWord: 'рік',
   statsSincePrefix: 'З',
   statsIncome: 'Дохід',
-  statsShootsDone: 'Проведено зйомок',
-  statsAverage: 'Середній чек',
+  // US-061 (owner, 2026-10-17) — was «Проведено зйомок».
+  statsShootsDone: 'Проведено',
   statsUnpaid: 'Очікує оплати',
   statsHours: 'Годин на зйомках',
+  // US-061 (owner, 2026-10-17).
+  statsPlanned: 'Заплановано',
+  /** «Найближча 21 жовтня». */
+  statsNextTemplate: 'Найближча {date}',
+  statsNothingPlanned: 'Немає запланованих',
+  /** «2 зйомки без оплати» — {noun} from `shootCountForms`. */
+  statsAllPaid: 'Усі зйомки оплачені',
+  // US-062 (owner, 2026-10-17).
+  unpaidTitle: 'Без оплати',
+  // US-063 (owner, 2026-10-17).
+  statsEditing: 'В обробці',
+  // US-063 AC-4 — the empty lists, `Statistics Empty States.dc.html` (owner, 2026-10-17).
+  emptyDoneTitle: 'Тут з’являться відзняті зйомки',
+  emptyDoneBody: 'Щойно зйомка відбудеться, вона потрапить сюди разом із годинами й доходом.',
+  emptyPlannedTitle: 'Поки нічого не заплановано',
+  emptyPlannedBody: 'Додайте зйомку, і вона з’явиться тут і в календарі.',
+  emptyUnpaidTitle: 'Усі розрахувалися',
+  emptyUnpaidBody: 'Кожна зйомка оплачена. Нікому не треба нагадувати.',
+  emptyEditingTitle: 'Черга обробки порожня',
+  emptyEditingBody: 'Усі фото вже в клієнтів. Можна видихнути або взятися за нову зйомку.',
+  emptyDeliveredTitle: 'Ще нічого не передано',
+  emptyDeliveredBody: 'Коли надішлете клієнту готові файли, зйомка з’явиться тут.',
+  emptyOverdueTitle: 'Жодного зірваного дедлайну',
+  emptyOverdueBody: 'Усі файли клієнти отримали вчасно. Так тримати.',
+  statsPrevPeriod: 'Попередній період',
+  statsNextPeriod: 'Наступний період',
+  statsChoosePeriod: 'Обрати період',
+  statsChooseMonth: 'Оберіть місяць',
+  statsChooseYear: 'Оберіть рік',
+  statsThisMonth: 'Поточний місяць',
+  statsThisYear: 'Поточний рік',
 
   /* ── US-041 — shoot reminders. Copy approved by the owner, chat 2026-10-05. ── */
   notificationsRow: 'Сповіщення',
@@ -1374,6 +1463,35 @@ export const uk = {
   reminderHourForms: ['годину', 'години', 'годин'],
   reminderMore: 'і ще {count}',
   reminderAt: 'о {time}',
+  /* ── US-066 — delivery deadline reminders. Copy approved by the owner, chat 2026-10-17. ── */
+  reminderDeadlineToggle: 'Дедлайн здачі',
+  reminderDeadlineCaption:
+    'Нагадування за день до дедлайну, і ще раз, якщо файли не передано вчасно',
+  /** AC-1 — the day before; one of three, picked at random, by one shoot or several. */
+  deadlineReminderSoonTitles1: [
+    'Завтра здача ⏳ Фінальний ривок',
+    'Ще день — і файли мають бути в клієнта 📤',
+    'Завтра дедлайн. Дотискаємо 💪',
+  ],
+  deadlineReminderSoonTitlesMany: [
+    'Завтра кілька здач. Тримаємо темп 🔥',
+    'Дедлайни на горизонті 🏁',
+    'Завтра день здачі. Поїхали 📤',
+  ],
+  /** AC-2 — the day after a missed deadline. */
+  deadlineReminderLateTitles1: [
+    'Ой, здача прострочена 😬',
+    'Клієнт ще чекає на файли 👀',
+    'Дедлайн учора минув 🫠',
+  ],
+  deadlineReminderLateTitlesMany: [
+    'Кілька здач прострочено 😬',
+    'Клієнти чекають на файли 👀',
+    'Дедлайни вчора пролетіли 🫠',
+  ],
+  /** AC-3 — `{date}` is `formatDayMonth`, the shoot's own date. */
+  deadlineReminderLine: '{client}, зйомка {date}',
+  deadlineReminderLineNoClient: 'Зйомка {date}',
   /* ── US-042 — delivery deadline. Copy from `Shoot Detail v3.dc.html`. ── */
   deadlineAdd: 'Додати дедлайн здачі',
   deadlineAddCaption: "Необов'язково · з'явиться в календарі після зйомки",
@@ -1389,6 +1507,11 @@ export const uk = {
   /** AC-5, in order. */
   deadlineSteps: ['Знято', 'Обробка', 'Передано'],
   deadlineMarkDelivered: 'Позначити як передано клієнту',
+  // US-060 (owner, 2026-10-16).
+  markPaid: 'Оплату отримано',
+  markedPaid: 'Позначено як оплачено',
+  paidValue: 'Оплачено',
+  notPaidLabel: 'Не оплачено',
   deadlineEditorTitle: 'Дедлайн здачі файлів',
   deadlineEditorCaption:
     "Відлік від дня зйомки. Дата з'явиться на картці завершеної зйомки в календарі.",

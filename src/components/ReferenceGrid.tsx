@@ -42,6 +42,9 @@ export function ReferenceGrid({
   trailing,
   onRemove,
   resolveImage = signedImage,
+  footer,
+  dimmed = false,
+  onOpen,
 }: {
   references: Reference[]
   /**
@@ -70,6 +73,15 @@ export function ReferenceGrid({
    * picked file's own URI instead (`US-043`).
    */
   resolveImage?: (reference: Reference) => Promise<string | null>
+  /** Something under each tile — `US-068`'s «Знято» button on «Матеріали». */
+  footer?: (reference: Reference) => React.ReactNode
+  /** Draw the images faded with a green edge — `US-068`'s «Знято» section. */
+  dimmed?: boolean
+  /**
+   * Open an image tile somewhere else instead of the plain full-screen viewer —
+   * `US-069`'s swipeable preview on «Матеріали».
+   */
+  onOpen?: (reference: Reference) => void
 }) {
   const [viewing, setViewing] = useState<string | null>(null)
 
@@ -95,7 +107,10 @@ export function ReferenceGrid({
               onOpenImage={setViewing}
               onRemove={onRemove}
               resolveImage={resolveImage}
+              dimmed={dimmed}
+              onOpen={onOpen}
             />
+            {footer ? <View className="mt-1.5">{footer(reference)}</View> : null}
           </View>
         ))}
         {trailing ? <View className="w-1/3 p-1">{trailing}</View> : null}
@@ -118,11 +133,15 @@ function ReferenceThumb({
   onOpenImage,
   onRemove,
   resolveImage,
+  dimmed,
+  onOpen,
 }: {
   reference: Reference
   onOpenImage: (uri: string) => void
   onRemove?: (reference: Reference) => void
   resolveImage: (reference: Reference) => Promise<string | null>
+  dimmed: boolean
+  onOpen?: (reference: Reference) => void
 }) {
   const t = useStrings()
   const [uri, setUri] = useState<string | null>(null)
@@ -144,18 +163,26 @@ function ReferenceThumb({
   const tile =
     reference.kind === 'image' ? (
       <Pressable
-        className="bg-muted aspect-square w-full overflow-hidden rounded-[10px] active:opacity-70"
+        className={`bg-muted aspect-square w-full overflow-hidden rounded-[10px] active:opacity-70 ${
+          dimmed ? 'border-success/50 border' : ''
+        }`}
         // Not tappable until the URL is signed: there would be nothing to show,
         // and the thumbnail is blank at that point anyway.
         disabled={!uri}
-        onPress={() => uri && onOpenImage(uri)}
+        onPress={() => (onOpen ? onOpen(reference) : uri && onOpenImage(uri))}
         // Pressable alone renders an unlabelled div on web. RNR's own controls
         // set a role; these are hand-composed, and ADR-016 made the
         // accessibility of those this project's problem rather than a library's.
         role="button"
         accessibilityLabel={t.references}
       >
-        {uri ? <Image source={{ uri }} className="h-full w-full" resizeMode="cover" /> : null}
+        {uri ? (
+          <Image
+            source={{ uri }}
+            className={`h-full w-full ${dimmed ? 'opacity-50' : ''}`}
+            resizeMode="cover"
+          />
+        ) : null}
       </Pressable>
     ) : (
       <Pressable
@@ -214,7 +241,7 @@ function ReferenceThumb({
   )
 }
 
-function hostOf(url: string): string {
+export function hostOf(url: string): string {
   try {
     return new URL(url).host
   } catch {

@@ -129,9 +129,13 @@ export function ClientField({
         </View>
 
         {/*
-          AC-3's way into the profile. A stub screen for now — US-028 builds it.
+          AC-3's way into the profile — the contact profile «Контакти» opens,
+          not the old `client/[id]` stub.
         */}
-        <Link href={`/(app)/client/${value.id}`} asChild>
+        <Link
+          href={{ pathname: '/(app)/contact/[id]', params: { id: value.id, kind: 'client' } }}
+          asChild
+        >
           <Pressable className="bg-secondary mt-2 items-center rounded-xl py-3.5 active:scale-[0.98]">
             <Text className="text-body text-secondary-foreground font-semibold">{t.viewClientProfile}</Text>
           </Pressable>

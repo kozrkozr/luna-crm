@@ -404,7 +404,7 @@ export function ReferencesEditor({
   )
 }
 
-function FilterChip({
+export function FilterChip({
   label,
   active,
   onPress,

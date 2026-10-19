@@ -30,11 +30,17 @@ stay minimal, and location gets its own richer section (address + notes) when ed
 - **When** a required field (e.g., date) is left empty and they try to save
 - **Then** save is blocked, the missing field is indicated, and no shoot is created
 
+### AC-3 — A past date can be picked *(edge)* (owner, 2026-10-18)
+- **Given** a shoot creator filling in the creation form
+- **When** they pick a date before today
+- **Then** the date is accepted and the shoot is created with it — the same as editing a shoot's
+  date (`US-018`). The mockup drew past days as unpickable; the owner overrode that.
+
 ## Out of scope
 - Location — moved to `US-018` (edit a shoot).
 - Editing or deleting a shoot after creation — separate stories (`US-018`, `US-019`).
-- Attaching crew or files — separate stories (US-005). References *can* be attached on this form
-  since 2026-10-06 — `US-043`.
+- Attaching files — separate stories. References *can* be attached on this form since
+  2026-10-06 (`US-043`), and crew since 2026-10-17 (`US-064`).
 
 ## Dependencies
 US-001 — the creator must be a registered user.

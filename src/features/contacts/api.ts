@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase/client'
+import { digitsOf } from '../clients/api'
 
 /**
  * «Мої контакти» — the creator's own address book (`ADR-003`, migration
@@ -307,4 +308,35 @@ function normalise(input: ManualContactInput) {
     instagram: input.instagram?.trim() || null,
     note: input.note?.trim() || null,
   }
+}
+
+/**
+ * `US-065` AC-5 — the name of whoever in «Мої контакти» already has this phone,
+ * on either half: a `contacts` row or a `clients` row.
+ *
+ * "The same number whatever its spacing" is `digitsOf` on both sides and an
+ * exact match — not `findClientByPhone`'s "ends with", which the story does not
+ * ask for. Compared in JS for the reason that function gives: the stored numbers
+ * are free text in whatever shape they were typed.
+ *
+ * **Soft-deleted rows are filtered** (CLAUDE.md rule 3): `contacts` here, and
+ * `clients` by its SELECT policy, as `listClients` notes.
+ *
+ * A failed read answers null — the form fills, as if nobody matched. Refusing
+ * to fill because the check could not run would be the worse failure.
+ */
+export async function findSavedNameByPhone(phone: string): Promise<string | null> {
+  const digits = digitsOf(phone)
+  if (!digits) return null
+
+  const [contacts, clients] = await Promise.all([
+    supabase.from('contacts').select('name, phone').is('deleted_at', null).not('phone', 'is', null),
+    supabase.from('clients').select('name, phone').not('phone', 'is', null),
+  ])
+
+  const rows = [...(contacts.data ?? []), ...(clients.data ?? [])] as {
+    name: string
+    phone: string | null
+  }[]
+  return rows.find((row) => digitsOf(row.phone ?? '') === digits)?.name ?? null
 }
