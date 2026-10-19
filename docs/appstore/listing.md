@@ -1,6 +1,8 @@
 # App Store listing — draft
 
-Draft of 2026-10-10, for the owner to edit. The same story as the screenshots
+Draft of 2026-10-10, for the owner to edit; the description updated 2026-10-19 for the release
+after 1.0.1 (address suggestions, currencies, crew on the new-shoot form, «Знято», deadline
+reminders, paid shoots, statistics lists). The same story as the screenshots
 (`screenshots.md`): a photographer's shoots, payments and crew, without a complex CRM. Limits are
 App Store Connect's; counts are characters.
 
@@ -20,34 +22,34 @@ shoot's price, it takes no payments, and the word reads as a payments integratio
 anyway, so they are not repeated)
 фотограф,фотосесія,календар,бронювання,клієнти,передоплата,дедлайн,команда,візажист,весілля,планер
 
-**Description** (~1 800/4 000)
+**Description** (~2 450/4 000)
 ```
 Luna Shoots — простий облік зйомок для фотографа. Без воронок, без списків лідів і без функцій, які вам не потрібні. Лише ваші зйомки, клієнти, оплати й команда — в одному місці.
 
 ЗАЙНЯТІ Й ВІЛЬНІ ДНІ — З ПЕРШОГО ПОГЛЯДУ
-Календар на місяць показує, коли у вас зйомки, а коли ви вільні. Відкрили телефон — і за секунду зрозуміли, чи можна брати нове замовлення.
+Календар на місяць показує, коли у вас зйомки, коли ви вільні і хто з клієнтів уже заплатив. Відкрили телефон — і за секунду зрозуміли, чи можна брати нове замовлення.
 
 УСЯ ЗЙОМКА В ОДНОМУ ЗАПИСІ
 • клієнт і його контакти
 • дата, час і тривалість
-• локація з адресою
-• ціна, передоплата й залишок
+• локація з адресою — з підказками місць під час введення
+• ціна, передоплата й залишок — у гривнях, доларах, євро, злотих чи чеських кронах
 • нотатки для команди й окремо для клієнта
 
 КОМАНДА Й КЛІЄНТ — ЗА ПОСИЛАННЯМ
-Додайте візажиста, стиліста, асистента чи відеографа й надішліть кожному посилання. Вони відкривають зйомку в браузері — без застосунку й реєстрації — і підтверджують участь. Ви одразу бачите, хто підтвердив, а хто ні. Клієнт отримує своє посилання, без внутрішніх нотаток команди.
+Додайте візажиста, стиліста, асистента чи відеографа — одразу під час створення зйомки, зі збережених контактів або з контактів телефону — і надішліть кожному посилання. Вони відкривають зйомку в браузері — без застосунку й реєстрації, — підтверджують участь і одним торканням будують маршрут до локації. Ви одразу бачите, хто підтвердив, а хто ні. Клієнт отримує своє посилання, без внутрішніх нотаток команди.
 
 РЕФЕРЕНСИ
-Додавайте до зйомки фото й посилання з референсами — світло, пози, стиль, — щоб уся команда бачила, що знімаємо.
+Додавайте до зйомки фото й посилання з референсами — світло, пози, стиль, — щоб уся команда бачила, що знімаємо. На зйомці гортайте фото на весь екран і відмічайте кожен кадр «Знято» — одразу видно, що ще лишилось.
 
 ДЕДЛАЙНИ НА ВИДАЧУ
-Ставте термін передачі готових фото, бачте етап — «Знято», «Обробка», «Передано» — і позначайте, коли все віддали клієнту.
+Ставте термін передачі готових фото, бачте етап — «Знято», «Обробка», «Передано» — і позначайте, коли все віддали клієнту. Прострочені здачі видно одразу.
 
 НАГАДУВАННЯ
-Увечері — про завтрашні зйомки, і за 1–3 години до початку кожної. Нічого не забудете.
+Увечері — про завтрашні зйомки, і за 1–3 години до початку кожної. А ще — за день до дедлайну здачі і наступного дня, якщо файли не передано вчасно. Нічого не забудете.
 
 ДОХІД І ОПЛАТИ
-Статистика за місяць, рік і весь час: скільки заробили, скільки зйомок провели, середній чек і хто ще не доплатив.
+Позначайте зйомку оплаченою в одне торкання — у календарі видно, хто вже розрахувався. Статистика за будь-який місяць, рік і весь час: скільки заробили (окремо в кожній валюті), скільки зйомок проведено й заплановано, що ще в обробці і хто не доплатив. Кожна цифра відкриває список зйомок за нею.
 
 ПІДПИСКА
 Luna Shoots працює за щомісячною підпискою з 14-денним безкоштовним пробним періодом. Оплата списується з вашого Apple ID після пробного періоду й далі щомісяця, доки ви не скасуєте підписку в налаштуваннях Apple (не пізніше ніж за 24 години до кінця поточного періоду). Без підписки ви бачите все, що створили, а надіслані посилання продовжують працювати.
@@ -70,34 +72,34 @@ Your shoot calendar, clients, crew and references in one app. Reminders before e
 **Keywords** (93/100)
 photographer,photoshoot,booking,calendar,client,deposit,deadline,crew,makeup,wedding,schedule
 
-**Description** (~1 800/4 000)
+**Description** (~2 450/4 000)
 ```
 Luna Shoots is simple shoot tracking for photographers. No sales funnels, no lead lists, no features you'll never use. Just your shoots, clients, payments and crew — in one place.
 
 BOOKED AND FREE DAYS AT A GLANCE
-The month calendar shows when you're shooting and when you're free. Open your phone and know in a second whether you can take the next job.
+The month calendar shows when you're shooting, when you're free and which clients have already paid. Open your phone and know in a second whether you can take the next job.
 
 EVERY SHOOT IN ONE RECORD
 • the client and their contacts
 • date, time and length
-• location and address
-• price, deposit and balance
+• location and address — with place suggestions as you type
+• price, deposit and balance — in dollars, euros, hryvnias, złoty or Czech koruna
 • notes for the crew, and separate ones for the client
 
 CREW AND CLIENT — BY LINK
-Add a makeup artist, stylist, assistant or videographer and send each of them a link. They open the shoot in a browser — no app, no sign-up — and confirm. You see straight away who's in and who hasn't answered. Your client gets their own link, without the crew's internal notes.
+Add a makeup artist, stylist, assistant or videographer — right while creating the shoot, from your saved contacts or your phone's — and send each of them a link. They open the shoot in a browser — no app, no sign-up — confirm, and get directions to the location in one tap. You see straight away who's in and who hasn't answered. Your client gets their own link, without the crew's internal notes.
 
 REFERENCES
-Attach reference photos and links to a shoot — light, poses, style — so the whole crew knows what you're going for.
+Attach reference photos and links to a shoot — light, poses, style — so the whole crew knows what you're going for. On set, swipe through the photos full-screen and mark each frame Shot — you see at once what's left.
 
 DELIVERY DEADLINES
-Set when the finished photos are due, see the stage — Shot, Editing, Delivered — and mark when everything is with the client.
+Set when the finished photos are due, see the stage — Shot, Editing, Delivered — and mark when everything is with the client. Overdue deliveries stand out.
 
 REMINDERS
-In the evening for tomorrow's shoots, and 1–3 hours before each one. Nothing slips.
+In the evening for tomorrow's shoots, and 1–3 hours before each one. Plus the day before a delivery deadline, and the day after if the files are late. Nothing slips.
 
 INCOME AND PAYMENTS
-Statistics for the month, the year and all time: what you've earned, how many shoots you've done, your average shoot and who still owes you.
+Mark a shoot as paid in one tap — the calendar shows who has settled up. Statistics for any month, year or all time: what you've earned (per currency), how many shoots are done and planned, what's still being edited and who still owes you. Every figure opens the shoots behind it.
 
 SUBSCRIPTION
 Luna Shoots is a monthly subscription with a 14-day free trial. Payment is charged to your Apple ID after the trial and every month after that until you cancel in your Apple settings (at least 24 hours before the end of the current period). Without a subscription you still see everything you've created, and the links you've sent keep working.
