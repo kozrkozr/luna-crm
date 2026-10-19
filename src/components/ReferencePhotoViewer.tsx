@@ -235,7 +235,13 @@ export function ReferencePhotoViewer({
         */}
         {current ? (
           <Animated.View style={chromeStyle}>
-            <View className="gap-3 px-4 pt-3" style={{ paddingBottom: insets.bottom + 16 }}>
+            {/* At most 720 wide — the draft canvas's preview (`US-057`), so a
+                desktop window does not stretch them edge to edge. A phone is
+                narrower, so nothing changes there. */}
+            <View
+              className="w-full max-w-[720px] gap-3 self-center px-4 pt-3"
+              style={{ paddingBottom: insets.bottom + 16 }}
+            >
               {error ? <Text className="text-destructive text-center text-sm">{error}</Text> : null}
               <Pressable
                 className={`h-12 flex-row items-center justify-center gap-2 rounded-full active:opacity-80 ${
