@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto'
+import { randomUuid } from '../../lib/uuid'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase/client'
 import { clearReminders } from '../reminders/sync'
@@ -103,7 +103,7 @@ export async function uploadAvatar(
     return null
   }
 
-  const path = `${userId}/${Crypto.randomUUID()}.${extension}`
+  const path = `${userId}/${randomUuid()}.${extension}`
   const { error } = await supabase.storage.from(BUCKET).upload(path, body, {
     contentType: mimeType,
   })

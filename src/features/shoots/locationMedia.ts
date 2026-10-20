@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto'
+import { randomUuid } from '../../lib/uuid'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase/client'
 
@@ -59,7 +59,7 @@ export async function uploadLocationAttachment(
     return null
   }
 
-  const path = `${shootId}/location/${Crypto.randomUUID()}.${mapping.ext}`
+  const path = `${shootId}/location/${randomUuid()}.${mapping.ext}`
   const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType: mimeType })
   if (error) return null
 
