@@ -166,7 +166,9 @@ site_url = "http://127.0.0.1:3000"
 # the email never being triggered. The hosted project needs the same entry under
 # Authentication → URL Configuration; this file only covers local development.
 # `lunashoots-dev://` is the Luna Dev app (APP_VARIANT=development, app.config.ts).
-additional_redirect_urls = ["https://127.0.0.1:3000", "lunashoots://reset", "lunashoots://confirm", "lunashoots-dev://reset", "lunashoots-dev://confirm"]
+# The local web app (`npx expo start --web --port 8097`) — where a confirmation or
+# recovery email asked for in the browser sends its reader back (`appRedirectUrl`).
+additional_redirect_urls = ["https://127.0.0.1:3000", "lunashoots://reset", "lunashoots://confirm", "lunashoots-dev://reset", "lunashoots-dev://confirm", "http://localhost:8097/confirm", "http://localhost:8097/reset"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
