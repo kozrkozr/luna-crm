@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { FormScrollView } from '../../src/components/ui/form-scroll-view'
 import { Input } from '../../src/components/ui/input'
@@ -30,7 +30,14 @@ export default function ResetPasswordScreen() {
   // `US-057` — a 420 px column in the middle of the window, no card (owner).
   const desktop = useDesktop()
   const router = useRouter()
-  const ready = useLinkSession('recovery')
+  /*
+    `US-058` AC-3 — `?via=code` when the code on «Перевірте пошту» has already
+    signed the reader in for recovery: there is no link to read, and the form
+    is ready at once.
+  */
+  const viaCode = useLocalSearchParams<{ via?: string }>().via === 'code'
+  const linkState = useLinkSession('recovery', !viaCode)
+  const ready = viaCode ? 'ok' : linkState
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)

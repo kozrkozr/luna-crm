@@ -25,9 +25,10 @@ import { privacyUrl, termsUrl } from '../../lib/legalUrls'
 import { useLanguage, useStrings } from '../../i18n/LanguageProvider'
 import { phoneExample } from '../../i18n/device'
 import { OTHER_ROLE, ROLE_KEYS, roleWithEmoji } from '../../i18n/vocabulary'
-import { selected } from '../../lib/haptics'
+import { failed, selected, succeeded } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
+import { verifyEmailCode } from './authLink'
 import { RESEND_COOLDOWN_SECONDS, resendConfirmation } from './emailConfirmation'
 import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
@@ -1044,6 +1045,7 @@ function ResetSent({
   onBack: () => void
   onChangeAddress: () => void
 }) {
+  const router = useRouter()
   // `US-057` — centred in the window on a desktop, so no top padding of its own.
   const desktop = useDesktop()
   const t = useStrings()
@@ -1066,6 +1068,14 @@ function ResetSent({
       <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
         {t.resetSentTemplate.replace('{email}', email.trim())}
       </Text>
+      {/* `US-058` AC-3 — the code opens the new-password form, as the link does. */}
+      <EmailCodeEntry
+        onSubmit={async (code) => {
+          if (!(await verifyEmailCode('recovery', email, code))) return false
+          router.push({ pathname: '/(auth)/reset', params: { via: 'code' } })
+          return true
+        }}
+      />
 
       <Button size="cta" className="mt-6 w-full" onPress={onBack}>
         <Text className="text-subtitle font-semibold">{t.returnToLogin}</Text>
@@ -1113,6 +1123,7 @@ function ResetSent({
  * and Supabase would refuse a second one inside its interval.
  */
 function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
+  const router = useRouter()
   // `US-057` — centred in the window on a desktop, so no top padding of its own.
   const desktop = useDesktop()
   const t = useStrings()
@@ -1143,6 +1154,15 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
       <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
         {t.confirmSentTemplate.replace('{email}', email)}
       </Text>
+      {/* `US-058` AC-2 — the code confirms the address and signs in, as the link
+          does; the app's own first entry (the paywall on iOS) follows. */}
+      <EmailCodeEntry
+        onSubmit={async (code) => {
+          if (!(await verifyEmailCode('email', email, code))) return false
+          router.replace('/(app)/(tabs)')
+          return true
+        }}
+      />
 
       <Button
         size="cta"
@@ -1167,6 +1187,70 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
       </Pressable>
 
       <Toast message={toast} onDone={() => setToast(null)} />
+    </View>
+  )
+}
+
+/** The code's length — `otp_length` in `supabase/config.toml`, and «6 цифр». */
+const EMAIL_CODE_LENGTH = 6
+
+/**
+ * `US-058` — «Код із листа» on a «Перевірте пошту» screen: the hint, the field
+ * and «Підтвердити». Digits only, and the button waits for all six.
+ *
+ * `onSubmit` verifies and moves on; `false` means the code was wrong, used or
+ * expired, which is one message (AC-4) — the screen's own «send again» stays
+ * below, so the way out is already there.
+ */
+function EmailCodeEntry({ onSubmit }: { onSubmit: (code: string) => Promise<boolean> }) {
+  const t = useStrings()
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const complete = code.length === EMAIL_CODE_LENGTH
+
+  const submit = async () => {
+    if (!complete || busy) return
+    setBusy(true)
+    const ok = await onSubmit(code)
+    setBusy(false)
+    if (ok) return succeeded()
+    failed()
+    setError(t.emailCodeInvalid)
+  }
+
+  return (
+    <View className="mt-5 w-full gap-2">
+      <Text className="text-body-sm text-muted-foreground mb-2 text-center leading-5">
+        {t.emailCodeHint}
+      </Text>
+      <Label htmlFor="email-code">{t.emailCodeLabel}</Label>
+      <Input
+        id="email-code"
+        value={code}
+        onChangeText={(value) => {
+          setCode(value.replace(/\D/g, '').slice(0, EMAIL_CODE_LENGTH))
+          setError(null)
+        }}
+        keyboardType="number-pad"
+        autoComplete="one-time-code"
+        textContentType="oneTimeCode"
+        maxLength={EMAIL_CODE_LENGTH}
+        placeholder={t.emailCodePlaceholder}
+        onSubmitEditing={() => void submit()}
+      />
+      <FieldError message={error} />
+      <Button
+        variant={complete ? 'cta' : 'secondary'}
+        size="cta"
+        className="mt-1"
+        disabled={!complete || busy}
+        onPress={() => void submit()}
+      >
+        <Text className={complete ? 'text-subtitle font-semibold' : 'text-subtitle text-muted-foreground font-semibold'}>
+          {t.emailCodeConfirm}
+        </Text>
+      </Button>
     </View>
   )
 }

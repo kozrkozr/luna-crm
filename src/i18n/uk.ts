@@ -258,6 +258,13 @@ export const uk = {
   resendInTemplate: 'Надіслати ще раз через {seconds} с',
   changeAddress: 'Змінити адресу',
   resentToast: 'Лист надіслано ще раз',
+  /* ── `US-058` — the code from the email, on both «Перевірте пошту» screens.
+     Approved by the owner 2026-10-16 («тексти ок»), the table in the story. ── */
+  emailCodeHint: 'Відкрийте посилання з листа або введіть код із нього.',
+  emailCodeLabel: 'Код із листа',
+  emailCodePlaceholder: '6 цифр',
+  emailCodeConfirm: 'Підтвердити',
+  emailCodeInvalid: 'Код невірний або застарів. Спробуйте ще раз або надішліть лист повторно.',
 
   /* ── Signup confirmation, `ADR-019` / `US-001` AC-1, AC-3, AC-4. Approved by
      the owner in chat, 2026-09-29, recorded in the source repo's

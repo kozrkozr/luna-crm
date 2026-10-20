@@ -153,6 +153,12 @@ export const en: Strings = {
   resendInTemplate: 'Send again in {seconds} s',
   changeAddress: 'Change the address',
   resentToast: 'Email sent again',
+  // `US-058`, approved with the Ukrainian (2026-10-16).
+  emailCodeHint: 'Open the link in the email or enter the code from it.',
+  emailCodeLabel: 'Code from the email',
+  emailCodePlaceholder: '6 digits',
+  emailCodeConfirm: 'Confirm',
+  emailCodeInvalid: 'The code is wrong or has expired. Try again or send the email again.',
   // ADR-019. Translations of the owner-approved Ukrainian (2026-09-29), not
   // approved English — and unreachable today: the (auth) group is Ukrainian by
   // construction. Here because `Strings` requires every key.
