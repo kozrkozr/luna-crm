@@ -249,9 +249,9 @@ export const uk = {
   sendResetLink: 'Надіслати посилання',
   sendingResetLink: 'Надсилаємо…',
   checkYourMail: 'Перевірте пошту',
-  /** «Ми надіслали посилання для відновлення на {email}. Воно дійсне 30 хвилин.» */
+  /** `US-058` (owner, 2026-10-20) — names the code as well as the link. */
   resetSentTemplate:
-    'Ми надіслали посилання для відновлення на {email}. Воно дійсне 30 хвилин.',
+    'Ми надіслали лист для відновлення на {email}. Відкрийте посилання або введіть код — вони дійсні 30 хвилин.',
   returnToLogin: 'Повернутись до входу',
   resendLink: 'Надіслати ще раз',
   /** «Надіслати ще раз через 24 с» */
@@ -260,7 +260,6 @@ export const uk = {
   resentToast: 'Лист надіслано ще раз',
   /* ── `US-058` — the code from the email, on both «Перевірте пошту» screens.
      Approved by the owner 2026-10-16 («тексти ок»), the table in the story. ── */
-  emailCodeHint: 'Відкрийте посилання з листа або введіть код із нього.',
   emailCodeLabel: 'Код із листа',
   emailCodePlaceholder: '6 цифр',
   emailCodeConfirm: 'Підтвердити',
@@ -270,9 +269,9 @@ export const uk = {
      the owner in chat, 2026-09-29, recorded in the source repo's
      `02-product/reviews/r06-2026-09-29/notes.md`. The screen reuses
      `checkYourMail`, `resentToast`, `returnToLogin` and `resendInTemplate`. ── */
-  /** «Ми надіслали лист на {email}. Відкрийте посилання в ньому, щоб підтвердити реєстрацію.» */
+  /** `US-058` (owner, 2026-10-20) — names the code as well as the link. */
   confirmSentTemplate:
-    'Ми надіслали лист на {email}. Відкрийте посилання в ньому, щоб підтвердити реєстрацію.',
+    'Ми надіслали лист на {email}. Відкрийте посилання в ньому або введіть код із листа, щоб підтвердити реєстрацію.',
   resendConfirmation: 'Надіслати лист ще раз',
   emailNotConfirmed:
     'Пошту ще не підтверджено. Відкрийте посилання з листа або надішліть його ще раз.',

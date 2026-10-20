@@ -1195,8 +1195,10 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
 const EMAIL_CODE_LENGTH = 6
 
 /**
- * `US-058` — «Код із листа» on a «Перевірте пошту» screen: the hint, the field
- * and «Підтвердити». Digits only, and the button waits for all six.
+ * `US-058` — «Код із листа» on a «Перевірте пошту» screen: the field and
+ * «Підтвердити». The screen's own line above already names the code (owner,
+ * 2026-10-20), so there is no hint of its own. Digits only, and the button
+ * waits for all six.
  *
  * `onSubmit` verifies and moves on; `false` means the code was wrong, used or
  * expired, which is one message (AC-4) — the screen's own «send again» stays
@@ -1221,9 +1223,6 @@ function EmailCodeEntry({ onSubmit }: { onSubmit: (code: string) => Promise<bool
 
   return (
     <View className="mt-5 w-full gap-2">
-      <Text className="text-body-sm text-muted-foreground mb-2 text-center leading-5">
-        {t.emailCodeHint}
-      </Text>
       <Label htmlFor="email-code">{t.emailCodeLabel}</Label>
       <Input
         id="email-code"

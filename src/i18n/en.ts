@@ -147,14 +147,14 @@ export const en: Strings = {
   sendResetLink: 'Send the link',
   sendingResetLink: 'Sending…',
   checkYourMail: 'Check your email',
-  resetSentTemplate: 'We sent a recovery link to {email}. It is valid for 30 minutes.',
+  resetSentTemplate:
+    'We sent a recovery email to {email}. Open the link or enter the code — both are valid for 30 minutes.',
   returnToLogin: 'Back to sign in',
   resendLink: 'Send again',
   resendInTemplate: 'Send again in {seconds} s',
   changeAddress: 'Change the address',
   resentToast: 'Email sent again',
   // `US-058`, approved with the Ukrainian (2026-10-16).
-  emailCodeHint: 'Open the link in the email or enter the code from it.',
   emailCodeLabel: 'Code from the email',
   emailCodePlaceholder: '6 digits',
   emailCodeConfirm: 'Confirm',
@@ -162,7 +162,8 @@ export const en: Strings = {
   // ADR-019. Translations of the owner-approved Ukrainian (2026-09-29), not
   // approved English — and unreachable today: the (auth) group is Ukrainian by
   // construction. Here because `Strings` requires every key.
-  confirmSentTemplate: 'We sent an email to {email}. Open the link in it to confirm your registration.',
+  confirmSentTemplate:
+    'We sent an email to {email}. Open the link in it or enter the code from it to confirm your registration.',
   resendConfirmation: 'Send the email again',
   emailNotConfirmed: 'Your email is not confirmed yet. Open the link from the email or send it again.',
   confirmLinkInvalid: 'The confirmation link is invalid or expired. Sign in to send a new one.',
