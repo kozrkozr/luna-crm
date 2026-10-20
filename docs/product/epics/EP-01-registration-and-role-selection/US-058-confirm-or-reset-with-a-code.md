@@ -49,12 +49,17 @@ login screen — and is covered here for the code only.
 ## Copy *(owner, 2026-10-16: "тексти ок")*
 | Where | Українська | English |
 |---|---|---|
-| Hint on «Перевірте пошту» | Відкрийте посилання з листа або введіть код із нього. | Open the link in the email or enter the code from it. |
+| Line under «Перевірте пошту», after registering *(replaces `ADR-019`'s, owner 2026-10-20)* | Ми надіслали лист на {email}. Відкрийте посилання в ньому або введіть код із листа, щоб підтвердити реєстрацію. | We sent an email to {email}. Open the link in it or enter the code from it to confirm your registration. |
+| Line under «Перевірте пошту», after «Забули пароль?» *(replaces the old one, owner 2026-10-20)* | Ми надіслали лист для відновлення на {email}. Відкрийте посилання або введіть код — вони дійсні 30 хвилин. | We sent a recovery email to {email}. Open the link or enter the code — both are valid for 30 minutes. |
 | Field label | Код із листа | Code from the email |
 | Placeholder | 6 цифр | 6 digits |
 | Button | Підтвердити | Confirm |
 | AC-4 message | Код невірний або застарів. Спробуйте ще раз або надішліть лист повторно. | The code is wrong or has expired. Try again or send the email again. |
 | Line in each email, under its button | Або введіть цей код у застосунку: {code} | Or enter this code in the app: {code} |
+
+*Amended 2026-10-20 (owner, after testing locally):* the separate hint «Відкрийте посилання з листа
+або введіть код із нього» is gone — the screen's own line under its heading now says it, so the two
+did not repeat each other.
 
 **Lifetime:** a code and a link live **30 minutes** (owner, 2026-10-16) — what the recovery screen
 already tells the reader. Today the local setting is an hour (`otp_expiry = 3600`); the build
