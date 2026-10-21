@@ -89,4 +89,5 @@ Option C.
    later" (2026-10-15). Blocks the web app's public launch, not the start of the build.
    The same answer decides what **any** account without access sees on the web (owner,
    2026-10-16); until then `US-040` AC-6's interim: «Режим перегляду» alone, and guarded actions
-   do nothing.
+   do nothing. *Answered 2026-10-21 by `ADR-028`:* registration only in the iOS app; the web
+   points newcomers and accounts without access to the App Store (`US-072`).

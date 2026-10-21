@@ -61,7 +61,9 @@ decision 3, owner 2026-10-15).
   shown (`ADR-024` decision 4)
 - **And** the view-mode banner reads «Режим перегляду» alone — no «Оформити підписку», nothing to
   press — and a create, edit or delete without access does nothing. *Interim*, until open
-  question 1 decides what an account without access sees on the web (owner, 2026-10-16)
+  question 1 decides what an account without access sees on the web (owner, 2026-10-16).
+  *Replaced 2026-10-21 by `US-072` (`ADR-028`):* the banner points to the App Store, and a
+  guarded action opens «Потрібна підписка»
 - **And** on a trial, the home banner still shows the days left, but opens nothing (owner,
   2026-10-16: "показувати без переходу")
 
