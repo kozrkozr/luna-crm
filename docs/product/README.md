@@ -5,14 +5,43 @@
 This is a point-in-time copy of the handoff package produced by the discovery pipeline in
 `my-ai-agency/clients/001-luna-crm/`. It is the specification this repository implements.
 
-- **Frozen:** 2026-10-08 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05 and 2026-10-06)*
+- **Frozen:** 2026-10-15 *(first freeze 2026-08-25; re-frozen five times on 2026-08-26, then 2026-09-29, 2026-10-03, 2026-10-04, 2026-10-05, 2026-10-06 and 2026-10-08)*
 - **Source:** `~/WebstormProjects/my-ai-agency/clients/001-luna-crm/`
-- **Source commit:** `a8b15ad` — *docs(US-055): picked beta testers keep access for a year from the launch, not 3 months*.
+- **Source commit:** `28b4bdf` — *docs(US-040): Safari and Firefox are checked after the desktop redesign*.
   Diff this folder against that commit to see any drift since the last freeze.
 - **Gate:** 05-handoff returned `go` on 2026-08-25. DoD verified with 2 deliberate failures —
   see `HANDOFF.md`. Neither 2026-08-26 re-freeze reopened that gate: scope, cost and
   buildability did not move (`04-tech/reviews/r01-2026-08-26/`, `r02-2026-08-26/` in the source
   repo).
+
+## What moved in the 2026-10-16 re-freeze (`ADR-025`)
+**The confirmation and recovery emails carry a code as well as the link.** `ADR-025`, `US-058`:
+
+- A photographer who asks for the email on the iPhone and opens it on a computer could not use
+  its link (`lunashoots://` opens nothing there). The code works in the iOS app and on the web,
+  whichever device opened the email. The link is unchanged.
+- **Meets `US-040` AC-3** without Universal Links, so it no longer waits for the deploy.
+- Copy confirmed (`US-058`, Copy); a code and a link live **30 minutes** — the build sets
+  `otp_expiry = 1800`, the owner the same in the production dashboard. Templates are pasted again.
+- `US-040`: Safari and Firefox are checked after `US-057`'s redesign; Chrome and Edge are done.
+
+## What moved in the 2026-10-15 re-freeze (`ADR-024`)
+**The photographer's web app is built now, on its own.** `ADR-024` and the new `EP-10`:
+
+- **Out of `EP-07`.** `US-040` moves to `EP-10` and comes before file hosting and spike `S-6`.
+- **Part of the Luna Shoots subscription, not PRO** — amends `ADR-023` decision 7. Access on the
+  web is the same as on iOS: full with a subscription, trial or beta access, view mode without.
+- **No subscription on the web:** no paywall, no «Підписка» screen, no subscription row; nothing
+  buys, restores or manages one. **No notification settings** either — reminders are iOS-only.
+- **A desktop layout** (`US-057`, amends `ADR-021` answer 1): from **1024 px** a sidebar replaces
+  the tab bar and every screen follows the owner's draft canvas (claude.ai artifact
+  `PBUnw11JVevphXWDeKQ2tj`); below 1024 px the phone layout. The iOS app is unchanged.
+- **`app.lunashoots.com`**, as `ADR-021` already answered.
+- **Open:** what a newcomer who registers on the web sees — blocks the public web launch, not the
+  build.
+- **2026-10-16:** without access the web shows «Режим перегляду» alone and guarded actions do
+  nothing (interim, `US-040` AC-6); the trial banner opens nothing. The date under «Головна»'s
+  greeting is not a `US-057` addition — iOS has it.
 
 ## What moved in the 2026-10-08 re-freeze (`ADR-023`)
 **The public App Store release is paid.** `ADR-023` and the new `EP-09`:

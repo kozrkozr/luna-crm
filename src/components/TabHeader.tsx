@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from './ui/text'
+import { useDesktop } from '../lib/desktop'
 
 /**
  * The header every tab root draws — one component, because the four artboards
@@ -67,10 +68,14 @@ export function TabHeader({
   children?: ReactNode
 }) {
   const insets = useSafeAreaInsets()
+  // `US-057` — on a desktop browser, level with the content's 40 px gutter.
+  const desktop = useDesktop()
 
   return (
     <View className="bg-background border-border border-b" style={{ paddingTop: insets.top }}>
-      <View className="flex-row items-center gap-1.5 px-3.5 pb-2 pt-1">
+      <View
+        className={`flex-row items-center gap-1.5 pb-2 ${desktop ? 'px-10 pt-8' : 'px-3.5 pt-1'}`}
+      >
         <View className="min-w-0 flex-1">
           <Text className="text-title-sm text-foreground font-semibold" numberOfLines={1}>
             {title}

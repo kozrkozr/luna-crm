@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native'
 import { Link, Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 // Deep per-icon import — see the note in src/components/ui/select.tsx.
@@ -26,6 +26,7 @@ import {
 import { Starfield } from '../../../src/components/Starfield'
 import { TabHeader } from '../../../src/components/TabHeader'
 import { useGuard } from '../../../src/features/subscription/access'
+import { useDesktop } from '../../../src/lib/desktop'
 
 type State =
   | { status: 'loading' }
@@ -184,6 +185,27 @@ export default function ShootListScreen() {
   const inPeriod = all.filter((row) => withinPeriod(row.date, mode, focus))
   const shown = visible(all, selectedDate, toIsoDate(new Date()))
 
+  /*
+    `US-057` — on a desktop browser, the draft canvas's «Календар»: the month
+    and the agenda side by side (3 : 2, wrapping one under the other where they
+    do not fit at 520 and 340), the mode switch in the header, each day cell
+    listing its shoots (AC-3), and no pinned button — the sidebar holds it.
+    Always false on iOS.
+  */
+  const desktop = useDesktop()
+
+  const modeTabs = (
+    <Tabs
+      items={[
+        { value: 'month', label: t.calModeMonth },
+        { value: 'week', label: t.calModeWeek },
+      ]}
+      value={mode}
+      onChange={setMode}
+      className={desktop ? 'w-[220px]' : undefined}
+    />
+  )
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -199,6 +221,7 @@ export default function ShootListScreen() {
           header can hold — the same reason the shoot's screens draw theirs.
         */}
         <CalendarHeader
+          right={desktop ? modeTabs : undefined}
           meta={`${mode === 'month' ? t.months[focus.getMonth()] : t.calModeWeek} · ${
             inPeriod.length
           } ${plural(inPeriod.length, t.shootCountForms)}`}
@@ -209,21 +232,16 @@ export default function ShootListScreen() {
           bar the navigator now reserves. It clears the pinned CTA below (68px)
           with the artboard's own breathing room left over.
         */}
-        <ScrollView contentContainerStyle={{ paddingBottom: 91 }}>
-          <View className="gap-3 px-4 pt-3">
+        <ScrollView contentContainerStyle={{ paddingBottom: desktop ? 48 : 91 }}>
+          <View
+            className={desktop ? 'flex-row flex-wrap items-start gap-6 px-10 pt-7' : 'gap-3 px-4 pt-3'}
+          >
             {/*
               The mode switch, now ABOVE the card and drawn by the shared `Tabs`
               rather than this screen's own segmented control — one control, one
               implementation, as on the shoot detail and the add-crew screens.
             */}
-            <Tabs
-              items={[
-                { value: 'month', label: t.calModeMonth },
-                { value: 'week', label: t.calModeWeek },
-              ]}
-              value={mode}
-              onChange={setMode}
-            />
+            {desktop ? null : modeTabs}
 
             {/*
               AC-1 places the calendar first. It is fed the loaded shoots' dates,
@@ -234,7 +252,9 @@ export default function ShootListScreen() {
               are the whole reason they would open this screen, and a calendar that
               ignored them would show an empty month to someone booked all week.
             */}
+            <View className={desktop ? 'min-w-[520px] flex-[3] basis-[520px]' : undefined}>
             <ShootCalendar
+              labels={desktop ? dayLabels(all) : undefined}
               shootDates={all.map((r) => r.date)}
               selected={selectedDate}
               mode={mode}
@@ -245,6 +265,10 @@ export default function ShootListScreen() {
               // people try anyway, and it costs nothing to honour.
               onSelect={(iso) => setSelectedDate((current) => (current === iso ? null : iso))}
             />
+            </View>
+
+            {/* Desktop: the agenda's column, beside the calendar. */}
+            <View className={desktop ? 'min-w-[340px] flex-[2] basis-[340px] gap-3' : 'gap-3'}>
 
             {/*
               AC-4's way back to the full list. A full-width bar on `secondary`
@@ -339,6 +363,7 @@ export default function ShootListScreen() {
                 t={t}
               />
             )}
+            </View>
           </View>
         </ScrollView>
 
@@ -353,11 +378,13 @@ export default function ShootListScreen() {
           indicator. Adding `insets.bottom` here would push the CTA 34pt up into
           the list. `py-2.5` is the artboard's own `padding:10px`.
         */}
+        {desktop ? null : (
         <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
           <Button variant="cta" size="cta" onPress={guard(() => router.push('/(app)/new-shoot'))}>
             <Text className="text-subtitle font-semibold">{`+ ${t.newShootTitle}`}</Text>
           </Button>
         </View>
+        )}
       </SwipeDismissBoundary>
 
       {deleteDialog}
@@ -386,10 +413,26 @@ export default function ShootListScreen() {
  * went was ours — and a sideways route to a tab already one tap away was the
  * weakest reading of a drawing that has since changed its mind.
  */
-function CalendarHeader({ meta }: { meta: string }) {
+function CalendarHeader({ meta, right }: { meta: string; right?: ReactNode }) {
   const t = useStrings()
 
-  return <TabHeader title={t.calendarTitle} meta={meta} />
+  return <TabHeader title={t.calendarTitle} meta={meta} right={right} />
+}
+
+/**
+ * `US-057` AC-3 — each day's lines for the desktop grid: «17:00 Марія
+ * Литвин», in the agenda's order. A shoot without a start time shows the name
+ * alone. `US-009` commitments have neither, so they add no line — the day is
+ * still marked by `shootDates`.
+ */
+function dayLabels(rows: Row[]): Record<string, string[]> {
+  const labels: Record<string, string[]> = {}
+  for (const row of rows) {
+    if (row.kind !== 'created') continue
+    const line = [row.shoot.startTime, row.shoot.clientName].filter(Boolean).join(' ')
+    ;(labels[row.date] ??= []).push(line)
+  }
+  return labels
 }
 
 /** Whether a date falls in the month, or the week, currently on screen. */

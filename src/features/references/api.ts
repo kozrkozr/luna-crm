@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto'
+import { randomUuid } from '../../lib/uuid'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase/client'
 
@@ -191,11 +191,12 @@ export async function addImageReference(
   // The bucket policy derives ownership from the first path segment being the
   // shoot id — see the bucket migration. Changing this shape breaks the policy.
   //
-  // expo-crypto, not the global `crypto`. Expo's winter runtime polyfills URL,
+  // `randomUuid`, not the global `crypto`. Expo's winter runtime polyfills URL,
   // FormData and TextDecoder on native but NOT crypto, so `crypto.randomUUID()`
   // is undefined on a device while working fine in a browser — the same
-  // web-passes/native-fails shape the README warns about.
-  const path = `${shootId}/references/${Crypto.randomUUID()}.${EXTENSION_BY_TYPE[mimeType]}`
+  // web-passes/native-fails shape the README warns about. And in a browser it
+  // is undefined outside a secure context — see src/lib/uuid.ts.
+  const path = `${shootId}/references/${randomUuid()}.${EXTENSION_BY_TYPE[mimeType]}`
 
   const { error: uploadError } = await supabase.storage
     .from(BUCKET)

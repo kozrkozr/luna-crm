@@ -34,6 +34,23 @@ const RENAMES = [
   ['s/[token].html', 's/link.html'],
   ['s/[token]/references.html', 's/link-references.html'],
   ['s/[token]/crew/[crewId].html', 's/link-crew.html'],
+  /*
+    `US-040` — the photographer's screens with an id in the path. Same problem,
+    same fix: without these a reload or a pasted address on `/shoot/<id>` is a
+    404 on Pages. `contact/new` is static, but `/contact/:id` in `_redirects`
+    would catch it (Pages applies rules before files), so it gets a copy and a
+    rule of its own.
+  */
+  ['shoot/[id].html', 'app-routes/shoot.html'],
+  ['shoot/[id]/edit.html', 'app-routes/shoot-edit.html'],
+  ['shoot/[id]/references.html', 'app-routes/shoot-references.html'],
+  ['shoot/[id]/crew/add.html', 'app-routes/shoot-crew-add.html'],
+  ['contact/new.html', 'app-routes/contact-new.html'],
+  ['contact/[id].html', 'app-routes/contact.html'],
+  ['contact/[id]/edit.html', 'app-routes/contact-edit.html'],
+  ['crew/[id].html', 'app-routes/crew.html'],
+  ['crew/[id]/member/[crewId].html', 'app-routes/crew-member.html'],
+  ['client/[id].html', 'app-routes/client.html'],
 ]
 
 let renamed = 0
@@ -55,5 +72,9 @@ for (const [from, to] of RENAMES) {
 // self-redirecting URLs live on the site, which is a confusing thing to find.
 fs.rmSync(path.join(DIST, 's/[token]'), { recursive: true, force: true })
 fs.rmSync(path.join(DIST, 's/[token].html'), { force: true })
+for (const route of ['shoot', 'contact', 'crew', 'client']) {
+  fs.rmSync(path.join(DIST, route, '[id]'), { recursive: true, force: true })
+  fs.rmSync(path.join(DIST, route, '[id].html'), { force: true })
+}
 
 console.log(`  ${renamed} link route(s) renamed`)

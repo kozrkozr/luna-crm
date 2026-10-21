@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, type RefObject } from 'react'
 import { ActivityIndicator, Keyboard, Pressable, View } from 'react-native'
 import { Stack, useFocusEffect, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -71,6 +71,7 @@ import {
   prepaymentChip,
 } from './money'
 import { Starfield } from '../../components/Starfield'
+import { useDesktop } from '../../lib/desktop'
 import type { ImagePickerAsset } from 'expo-image-picker'
 import { ReferencesEditor } from '../../components/ReferencesEditor'
 import { useCurrency } from '../account/currency'
@@ -268,6 +269,16 @@ export function ShootForm(props: ShootFormMode) {
   const accountCurrency = useCurrency()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's form: the header holds
+    «Скасувати» and the save beside the title instead of a pinned button, and
+    the fields sit in two columns — the client, the location and the optional
+    sections left, «Дата й час» right. Always false on iOS. Up here with the
+    other hooks: the edit mode returns early while the shoot loads.
+  */
+  const desktop = useDesktop()
+  // `US-057` — where the currency popover opens on a desktop browser.
+  const priceField = useRef<View>(null)
   const isEdit = props.mode === 'edit'
   const shootId = props.mode === 'edit' ? props.id : null
 
@@ -838,6 +849,35 @@ export function ShootForm(props: ShootFormMode) {
     )
   }
 
+  const ctaLabel = savingCrew
+    ? t.savingCrew
+    : savingReferences
+      ? t.savingReferences
+      : valid
+        ? isEdit
+          ? t.saveChanges
+          : t.createShootCta
+        : t.fillClientAndTime
+  const whenFields = (
+    <ShootWhenFields
+      date={date}
+      onDateChange={(picked) => {
+        setDate(picked)
+        setErrors((current) => ({ ...current, date: false }))
+      }}
+      dateInvalid={!!errors.date}
+      start={start}
+      end={end}
+      onRangeChange={(nextStart, nextEnd) => {
+        setStart(nextStart)
+        setEnd(nextEnd)
+        setErrors((current) => ({ ...current, time: false }))
+      }}
+      timeInvalid={!!errors.time}
+      clashes={clashes}
+    />
+  )
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -849,51 +889,85 @@ export function ShootForm(props: ShootFormMode) {
         the edit screen, and drawn for the same reason — a native `headerRight`
         cannot restyle itself per keystroke.
       */}
-      <View
-        className="bg-background border-border flex-row items-center border-b px-4 pb-2.5"
-        style={{ paddingTop: insets.top }}
-      >
-        <Pressable
-          className="w-24 active:opacity-60"
-          hitSlop={10}
-          onPress={() => {
-            tapped()
-            askLeave()
-          }}
-          role="button"
-        >
-          <Text className="text-body text-muted-foreground" numberOfLines={1}>
-            {t.cancel}
+      {desktop ? (
+        <View className="bg-background border-border flex-row flex-wrap items-center justify-between gap-4 border-b px-10 pb-4 pt-7">
+          <Text className="text-title-sm text-foreground font-semibold">
+            {isEdit ? t.editTitle : t.newShootTitle}
           </Text>
-        </Pressable>
-        <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
-          {isEdit ? t.editTitle : t.newShootTitle}
-        </Text>
-        <Pressable
-          className="w-24 active:opacity-60"
-          hitSlop={10}
-          disabled={submitting}
-          onPress={() => {
-            tapped()
-            void submit()
-          }}
-          role="button"
+          <View className="flex-row items-center gap-3">
+            <Button
+              variant="outline"
+              className="h-11 rounded-full px-5"
+              onPress={() => {
+                tapped()
+                askLeave()
+              }}
+            >
+              <Text className="text-body-sm">{t.cancel}</Text>
+            </Button>
+            <Button
+              variant={valid ? 'cta' : 'secondary'}
+              className="h-11 rounded-full px-6"
+              disabled={submitting}
+              onPress={() => void submit()}
+            >
+              <Text className={`text-body-sm font-semibold ${valid ? '' : 'text-muted-foreground'}`}>
+                {ctaLabel}
+              </Text>
+            </Button>
+          </View>
+        </View>
+      ) : (
+        <View
+          className="bg-background border-border flex-row items-center border-b px-4 pb-2.5"
+          style={{ paddingTop: insets.top }}
         >
-          <Text
-            className={`text-body text-right font-semibold ${
-              valid ? 'text-foreground' : 'text-muted-foreground/50'
-            }`}
-            numberOfLines={1}
+          <Pressable
+            className="w-24 active:opacity-60"
+            hitSlop={10}
+            onPress={() => {
+              tapped()
+              askLeave()
+            }}
+            role="button"
           >
-            {t.save}
+            <Text className="text-body text-muted-foreground" numberOfLines={1}>
+              {t.cancel}
+            </Text>
+          </Pressable>
+          <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
+            {isEdit ? t.editTitle : t.newShootTitle}
           </Text>
-        </Pressable>
-      </View>
+          <Pressable
+            className="w-24 active:opacity-60"
+            hitSlop={10}
+            disabled={submitting}
+            onPress={() => {
+              tapped()
+              void submit()
+            }}
+            role="button"
+          >
+            <Text
+              className={`text-body text-right font-semibold ${
+                valid ? 'text-foreground' : 'text-muted-foreground/50'
+              }`}
+              numberOfLines={1}
+            >
+              {t.save}
+            </Text>
+          </Pressable>
+        </View>
+      )}
 
       <FormScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 108 }}
+        contentContainerStyle={{ paddingBottom: desktop ? 48 : insets.bottom + 108 }}
       >
-        <View className="gap-5 p-4">
+        <View className={desktop ? 'flex-row flex-wrap items-start gap-6 px-10 pt-7' : ''}>
+        <View
+          className={desktop ? 'flex-1 gap-5' : 'gap-5 p-4'}
+          style={desktop ? { flexBasis: 400, minWidth: 400 } : undefined}
+        >
           {/* ── Клієнт ── */}
           <View className="gap-3.5">
             <SectionLabel label={t.clientField} />
@@ -976,23 +1050,7 @@ export function ShootForm(props: ShootFormMode) {
           </View>
 
           {/* ── Дата й час ── Shared with the edit screen (owner, 2026-08-30). */}
-          <ShootWhenFields
-            date={date}
-            onDateChange={(picked) => {
-              setDate(picked)
-              setErrors((current) => ({ ...current, date: false }))
-            }}
-            dateInvalid={!!errors.date}
-            start={start}
-            end={end}
-            onRangeChange={(nextStart, nextEnd) => {
-              setStart(nextStart)
-              setEnd(nextEnd)
-              setErrors((current) => ({ ...current, time: false }))
-            }}
-            timeInvalid={!!errors.time}
-            clashes={clashes}
-          />
+          {desktop ? null : whenFields}
 
           {/* ── Локація ── «Назва» · «Адреса» · «Деталі», shared with edit. */}
           <ShootLocationFields
@@ -1038,6 +1096,7 @@ export function ShootForm(props: ShootFormMode) {
                   currency={currency}
                   label={t.priceLabel}
                   value={price}
+                  anchorRef={priceField}
                   onChooseCurrency={() => {
                     tapped()
                     setChoosingCurrency(true)
@@ -1271,32 +1330,30 @@ export function ShootForm(props: ShootFormMode) {
 
           {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
         </View>
+        {desktop ? (
+          <View className="flex-1 gap-5" style={{ flexBasis: 400, minWidth: 400 }}>
+            {whenFields}
+          </View>
+        ) : null}
+        </View>
       </FormScrollView>
 
       {/* The sticky CTA, in the design's two states. */}
-      <View
-        className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-3"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        <Button
-          variant={valid ? 'cta' : 'secondary'}
-          size="cta"
-          disabled={submitting}
-          onPress={() => void submit()}
+      {desktop ? null : (
+        <View
+          className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-3"
+          style={{ paddingBottom: insets.bottom + 12 }}
         >
-          <Text className={valid ? undefined : 'text-muted-foreground'}>
-            {savingCrew
-              ? t.savingCrew
-              : savingReferences
-              ? t.savingReferences
-              : valid
-                ? isEdit
-                  ? t.saveChanges
-                  : t.createShootCta
-                : t.fillClientAndTime}
-          </Text>
-        </Button>
-      </View>
+          <Button
+            variant={valid ? 'cta' : 'secondary'}
+            size="cta"
+            disabled={submitting}
+            onPress={() => void submit()}
+          >
+            <Text className={valid ? undefined : 'text-muted-foreground'}>{ctaLabel}</Text>
+          </Button>
+        </View>
+      )}
 
       {/* `US-029` AC-4/AC-5 — the phone matched an existing client. Unchanged. */}
       <AlertDialog open={!!phoneMatch} onOpenChange={(open) => !open && setPhoneMatch(null)}>
@@ -1358,6 +1415,7 @@ export function ShootForm(props: ShootFormMode) {
       {discardDialog}
 
       <CurrencySheet
+        anchor={priceField}
         open={choosingCurrency}
         current={currency}
         onPick={(next) => {
@@ -1390,7 +1448,9 @@ function CurrencySheet({
   current,
   onPick,
   onClose,
+  anchor,
 }: {
+  anchor?: RefObject<View | null>
   open: boolean
   current: Currency
   onPick: (next: Currency) => void
@@ -1398,7 +1458,7 @@ function CurrencySheet({
 }) {
   const t = useStrings()
   return (
-    <Sheet open={open} onClose={onClose} className="px-2">
+    <Sheet open={open} onClose={onClose} anchor={anchor} className="px-2">
       <View className="flex-row items-center pb-1.5 pl-2.5">
         <View className="flex-1">
           <Text className="text-subtitle text-foreground font-semibold">{t.currencyTitle}</Text>
@@ -1472,7 +1532,10 @@ function AmountField({
   onChangeText,
   onChooseCurrency,
   invalid = false,
+  anchorRef,
 }: {
+  /** `US-057` — the field the currency popover opens under on a desktop browser. */
+  anchorRef?: RefObject<View | null>
   /** `US-047` — whose symbol is pinned, and on which side (AC-6). */
   currency: Currency
   label: string
@@ -1491,7 +1554,7 @@ function AmountField({
     return (
       <View className="min-w-0 flex-1 gap-[7px]">
         <Text className="text-body-sm text-foreground font-medium">{label}</Text>
-        <View className="justify-center">
+        <View ref={anchorRef} className="justify-center">
           <Input
             value={value}
             onChangeText={onChangeText}

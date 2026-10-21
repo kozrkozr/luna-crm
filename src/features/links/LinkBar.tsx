@@ -1,5 +1,6 @@
 import { Pressable, View } from 'react-native'
 import { Text } from '../../components/ui/text'
+import { LogoMark } from '../../components/LogoMark'
 import { useLanguageSwitch, useStrings } from '../../i18n/LanguageProvider'
 import type { Language } from '../../i18n'
 import { selected } from '../../lib/haptics'
@@ -26,9 +27,7 @@ export function LinkBar() {
 
   return (
     <View className="bg-background border-border flex-row items-center gap-2.5 border-b px-4 py-3">
-      <View className="bg-secondary h-[26px] w-[26px] items-center justify-center rounded-md">
-        <Text className="text-caption text-foreground font-semibold">{t.appName.slice(0, 1)}</Text>
-      </View>
+      <LogoMark size={24} />
       <Text className="text-body text-foreground flex-1 font-semibold">{t.appName}</Text>
       {languageSwitch ? (
         /*

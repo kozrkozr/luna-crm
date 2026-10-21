@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ActivityIndicator, View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Button } from '../../src/components/ui/button'
 import { FormScrollView } from '../../src/components/ui/form-scroll-view'
 import { Input } from '../../src/components/ui/input'
@@ -12,6 +12,7 @@ import { MIN_PASSWORD_LENGTH, withMinLength } from '../../src/features/auth/pass
 import { setNewPassword } from '../../src/features/auth/passwordReset'
 import { useLinkSession } from '../../src/features/auth/authLink'
 import { Starfield } from '../../src/components/Starfield'
+import { useDesktop } from '../../src/lib/desktop'
 
 /**
  * Where the recovery email lands — `lunashoots://reset` on a device, `/reset` on
@@ -26,8 +27,17 @@ import { Starfield } from '../../src/components/Starfield'
  */
 export default function ResetPasswordScreen() {
   const t = useStrings()
+  // `US-057` — a 420 px column in the middle of the window, no card (owner).
+  const desktop = useDesktop()
   const router = useRouter()
-  const ready = useLinkSession('recovery')
+  /*
+    `US-058` AC-3 — `?via=code` when the code on «Перевірте пошту» has already
+    signed the reader in for recovery: there is no link to read, and the form
+    is ready at once.
+  */
+  const viaCode = useLocalSearchParams<{ via?: string }>().via === 'code'
+  const linkState = useLinkSession('recovery', !viaCode)
+  const ready = viaCode ? 'ok' : linkState
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -75,8 +85,11 @@ export default function ResetPasswordScreen() {
       <Starfield />
       <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={
+          desktop ? { flexGrow: 1, justifyContent: 'center', padding: 16 } : undefined
+        }
       >
-        <View className="gap-2 p-4 pt-8">
+        <View className={desktop ? 'gap-2 w-full max-w-[420px] self-center px-4' : 'gap-2 p-4 pt-8'}>
           <Text className="text-title text-foreground font-semibold">{t.newPasswordTitle}</Text>
 
           {ready === 'invalid' ? (

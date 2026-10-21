@@ -78,7 +78,7 @@ AC-3 stays unbuilt either way (`open-questions.md` item 14).
 | Order | Work | Story | Why here |
 |---|---|---|---|
 | 1 | **Spike S-6** — a multi-GB file from a desktop browser to B2 by presigned multipart upload (CORS, a closed tab, a sleeping laptop, resuming), then downloaded by a logged-out phone browser. *Retargeted 2026-10-04 from iOS by `ADR-021`* | none | The one thing that can invalidate the upload path — cheap only before anything sits on top of it |
-| 2 | The photographer's app in a desktop browser | `US-040` | `ADR-021`: uploads happen there, so it comes before them |
+| 2 | ~~The photographer's app in a desktop browser~~ | ~~`US-040`~~ | Moved to `EP-10` by `ADR-024` — built before this epic |
 | 3 | Upload | `US-036` | Everything else needs files to exist |
 | 4 | Client sees and downloads | `US-024` → `US-025` | Rewritten for hosted files; reuses the gateway |
 | 5 | Deletion date, early delete | `US-037` → `US-038` | `US-037` brings the scheduled job |
@@ -86,6 +86,16 @@ AC-3 stays unbuilt either way (`open-questions.md` item 14).
 
 `EP-07`'s open questions (10, listed in `EP-07.md`) — #1, #2 and #5 bear on `US-036`'s schema
 and should be answered before step 2.
+
+## EP-10 The photographer's web app — *added 2026-10-15, `ADR-024`*
+Now, after the 1.0.1 release; before `EP-07`, which builds on it.
+
+| # | Step | Stories | Why here |
+|---|---|---|---|
+| 1 | Everything works in the browser, phone layout | `US-040` | The web app at all — auth, every creator screen, access as on iOS |
+| 2 | Desktop layout | `US-057` | Needs the approved design; changes layout only, so it sits on a working app |
+| 3 | A code in the auth emails | `US-058` | `ADR-025`: `US-040` AC-3 rests on it; needs its copy confirmed and an iOS build |
+| 4 | The way to the iOS app | `US-072` | `ADR-028`: blocks the public launch; web only, on the desktop layout |
 
 ## EP-09 Subscription — *added 2026-10-08, `ADR-023`*
 Before the public App Store release; independent of the paused `EP-07`.

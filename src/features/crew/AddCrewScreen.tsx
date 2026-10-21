@@ -38,6 +38,7 @@ import {
 } from './api'
 import { Starfield } from '../../components/Starfield'
 import { PhoneContactCard, type PhoneContactFill } from '../contacts/PhoneContactCard'
+import { useDesktop } from '../../lib/desktop'
 
 type AddMode = 'contacts' | 'new'
 
@@ -102,6 +103,8 @@ export function AddCrewScreen({
   const t = useStrings()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  // `US-057` — the desktop column; see the render. Always false on iOS.
+  const desktop = useDesktop()
 
   const [mode, setMode] = useState<AddMode>('contacts')
   const [busy, setBusy] = useState(false)
@@ -272,6 +275,40 @@ export function AddCrewScreen({
   const newReady = name.trim().length > 1 && !!resolvedRole
   const contacts = filterContacts(past ?? [], query, onShoot, t)
 
+  const tabs = (
+    <Tabs
+      items={[
+        { value: 'contacts', label: t.addCrewTabContacts },
+        { value: 'new', label: t.addCrewTabNew },
+      ]}
+      value={mode}
+      onChange={setMode}
+      className={desktop ? 'w-[320px]' : undefined}
+    />
+  )
+  const ready = mode === 'contacts' ? picked.size > 0 : newReady
+  const cta = (
+    <Button
+      variant={ready ? 'cta' : 'secondary'}
+      size={desktop ? undefined : 'cta'}
+      className={desktop ? 'h-11 rounded-full px-6' : undefined}
+      disabled={busy}
+      onPress={() =>
+        mode === 'contacts' ? picked.size > 0 && void addPicked() : void saveNew()
+      }
+    >
+      <Text className={ready ? undefined : 'text-muted-foreground'}>
+        {mode === 'contacts'
+          ? picked.size > 0
+            ? t.addToCrewTemplate.replace('{count}', String(picked.size))
+            : t.pickCrewMembers
+          : newReady
+            ? t.saveAndAdd
+            : t.save}
+      </Text>
+    </Button>
+  )
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -282,47 +319,68 @@ export function AddCrewScreen({
         «Скасувати» · centred title · a spacer where a right action would be.
         The design draws no right action — both CTAs are pinned to the bottom.
       */}
-      <View
-        className="bg-background border-border flex-row items-center border-b px-4 pb-2.5"
-        style={{ paddingTop: insets.top }}
-      >
-        <Pressable
-          className="w-24 active:opacity-60"
-          hitSlop={10}
-          onPress={() => {
-            tapped()
-            askLeave()
-          }}
-          role="button"
+      {desktop ? null : (
+        <View
+          className="bg-background border-border flex-row items-center border-b px-4 pb-2.5"
+          style={{ paddingTop: insets.top }}
         >
-          {/* `numberOfLines`: «Скасувати» is 9 characters and was wrapping its
-              last letter onto a second line at the old 64pt width. The width is
-              the fix; this is the guard, so a longer translation ellipsizes
-              instead of silently growing the header. */}
-          <Text className="text-body text-muted-foreground" numberOfLines={1}>
-            {t.cancel}
+          <Pressable
+            className="w-24 active:opacity-60"
+            hitSlop={10}
+            onPress={() => {
+              tapped()
+              askLeave()
+            }}
+            role="button"
+          >
+            {/* `numberOfLines`: «Скасувати» is 9 characters and was wrapping its
+                last letter onto a second line at the old 64pt width. The width is
+                the fix; this is the guard, so a longer translation ellipsizes
+                instead of silently growing the header. */}
+            <Text className="text-body text-muted-foreground" numberOfLines={1}>
+              {t.cancel}
+            </Text>
+          </Pressable>
+          <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
+            {t.addCrewMember}
           </Text>
-        </Pressable>
-        <Text className="text-title-sm text-foreground flex-1 text-center font-semibold">
-          {t.addCrewMember}
-        </Text>
-        {/* Matches the control opposite, so the title is centred on the screen
-            rather than on what is left of it. */}
-        <View className="w-24" />
-      </View>
+          {/* Matches the control opposite, so the title is centred on the screen
+              rather than on what is left of it. */}
+          <View className="w-24" />
+        </View>
+      )}
 
       <FormScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 108 }}
+        contentContainerStyle={{ paddingBottom: desktop ? 48 : insets.bottom + 108 }}
       >
-        <View className="gap-3.5 p-4">
-          <Tabs
-            items={[
-              { value: 'contacts', label: t.addCrewTabContacts },
-              { value: 'new', label: t.addCrewTabNew },
-            ]}
-            value={mode}
-            onChange={setMode}
-          />
+        {/*
+          `US-057` — on a desktop browser, the draft canvas's 640 px column:
+          «Скасувати» over the title, the tabs at the right, and the action
+          after the list instead of pinned at the foot.
+        */}
+        <View
+          className={desktop ? 'w-full max-w-[640px] gap-3.5 self-center px-10 pt-7' : 'gap-3.5 p-4'}
+        >
+          {desktop ? (
+            <View className="mb-1 flex-row flex-wrap items-end justify-between gap-3">
+              <View className="gap-1.5">
+                <Pressable
+                  className="active:opacity-60"
+                  onPress={() => {
+                    tapped()
+                    askLeave()
+                  }}
+                  role="button"
+                >
+                  <Text className="text-body-sm text-muted-foreground">{t.cancel}</Text>
+                </Pressable>
+                <Text className="text-title-sm text-foreground font-semibold">{t.addCrewMember}</Text>
+              </View>
+              {tabs}
+            </View>
+          ) : (
+            tabs
+          )}
 
           {mode === 'contacts' ? (
             <ContactsTab
@@ -372,6 +430,7 @@ export function AddCrewScreen({
           )}
 
           {formError ? <Text className="text-destructive text-sm">{formError}</Text> : null}
+          {desktop ? <View className="flex-row justify-end">{cta}</View> : null}
         </View>
       </FormScrollView>
 
@@ -380,36 +439,14 @@ export function AddCrewScreen({
         (white) when the action would do something, flat `secondary` when it
         would not — the same pair the edit screen's save uses.
       */}
-      <View
-        className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-3"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        {mode === 'contacts' ? (
-          <Button
-            variant={picked.size > 0 ? 'cta' : 'secondary'}
-            size="cta"
-            disabled={busy}
-            onPress={() => picked.size > 0 && void addPicked()}
-          >
-            <Text className={picked.size > 0 ? undefined : 'text-muted-foreground'}>
-              {picked.size > 0
-                ? t.addToCrewTemplate.replace('{count}', String(picked.size))
-                : t.pickCrewMembers}
-            </Text>
-          </Button>
-        ) : (
-          <Button
-            variant={newReady ? 'cta' : 'secondary'}
-            size="cta"
-            disabled={busy}
-            onPress={() => void saveNew()}
-          >
-            <Text className={newReady ? undefined : 'text-muted-foreground'}>
-              {newReady ? t.saveAndAdd : t.save}
-            </Text>
-          </Button>
-        )}
-      </View>
+      {desktop ? null : (
+        <View
+          className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-3"
+          style={{ paddingBottom: insets.bottom + 12 }}
+        >
+          {cta}
+        </View>
+      )}
 
       {discardDialog}
     </View>

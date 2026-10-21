@@ -32,6 +32,7 @@ import {
 import { Starfield } from '../../../src/components/Starfield'
 import { TabHeader } from '../../../src/components/TabHeader'
 import { useGuard } from '../../../src/features/subscription/access'
+import { useDesktop } from '../../../src/lib/desktop'
 
 type State =
   | { status: 'loading' }
@@ -62,6 +63,12 @@ export default function ContactsScreen() {
   const guard = useGuard()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  /*
+    `US-057` — on a desktop browser, the draft canvas's «Мої контакти»:
+    «+ Новий контакт» in the header instead of pinned, the search and the
+    filter on one row, and clients and crew side by side. Always false on iOS.
+  */
+  const desktop = useDesktop()
 
   const [state, setState] = useState<State>({ status: 'loading' })
   const [query, setQuery] = useState('')
@@ -137,6 +144,8 @@ export default function ContactsScreen() {
         onQuery={setQuery}
         filter={filter}
         onFilter={setFilter}
+        desktop={desktop}
+        onNew={guard(() => router.push('/(app)/contact/new'))}
       />
 
       {/*
@@ -144,8 +153,10 @@ export default function ContactsScreen() {
         the navigator reserves. It clears the pinned CTA (68px) with the
         artboard's own breathing room left over.
       */}
-      <FormScrollView contentContainerStyle={{ paddingBottom: 103 }}>
-        <View className="gap-[18px] px-4 pt-3">
+      <FormScrollView contentContainerStyle={{ paddingBottom: desktop ? 48 : 103 }}>
+        <View
+          className={desktop ? 'flex-row flex-wrap items-start gap-6 px-10 pt-7' : 'gap-[18px] px-4 pt-3'}
+        >
           {state.status === 'loading' ? (
             <View className="items-center py-8">
               <ActivityIndicator size="large" />
@@ -171,7 +182,11 @@ export default function ContactsScreen() {
             </Card>
           ) : (
             groups.map((group) => (
-              <View key={group.kind}>
+              <View
+                key={group.kind}
+                className={desktop ? 'flex-1' : undefined}
+                style={desktop ? { flexBasis: 360, minWidth: 360 } : undefined}
+              >
                 <View className="mb-2 flex-row items-baseline justify-between px-0.5">
                   <SectionLabel
                     label={group.kind === 'client' ? t.contactsGroupClients : t.crew}
@@ -197,17 +212,19 @@ export default function ContactsScreen() {
         its own. Same treatment as the calendar's CTA; the artboard's gradient
         fade is still not built (C-10), so it keeps the hairline.
       */}
-      <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
-        <Button variant="cta" size="cta" onPress={guard(() => router.push('/(app)/contact/new'))}>
-          <Text className="text-subtitle font-semibold">{`+ ${t.newContactTitle}`}</Text>
-        </Button>
-      </View>
+      {desktop ? null : (
+        <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 py-2.5">
+          <Button variant="cta" size="cta" onPress={guard(() => router.push('/(app)/contact/new'))}>
+            <Text className="text-subtitle font-semibold">{`+ ${t.newContactTitle}`}</Text>
+          </Button>
+        </View>
+      )}
 
       {/* Raised clear of the bottom bar — see the note on the profile's toast. */}
       <Toast
         message={toast}
         onDone={() => setToast(null)}
-        bottom={bottomNavHeight(insets.bottom) + 21}
+        bottom={desktop ? 24 : bottomNavHeight(insets.bottom) + 21}
       />
     </View>
   )
@@ -280,7 +297,12 @@ function ContactsHeader({
   onQuery,
   filter,
   onFilter,
+  desktop,
+  onNew,
 }: {
+  /** `US-057` — the button in the header, the search and chips on one row. */
+  desktop: boolean
+  onNew: () => void
   shown: number
   total: number
   query: string
@@ -302,12 +324,24 @@ function ContactsHeader({
       meta={t.contactsCountTemplate
         .replace('{shown}', String(shown))
         .replace('{total}', String(total))}
+      right={
+        desktop ? (
+          <Button variant="cta" className="h-11 rounded-full px-5" onPress={onNew}>
+            <Text className="text-body-sm font-semibold">{`+ ${t.newContactTitle}`}</Text>
+          </Button>
+        ) : undefined
+      }
     >
-      <View className="gap-2.5 px-3 pb-2.5">
+      <View
+        className={desktop ? 'flex-row flex-wrap items-center gap-3 px-10 pb-4 pt-2' : 'gap-2.5 px-3 pb-2.5'}
+      >
         {/* The search field, with the artboard's leading magnifier. `pl-9`
             leaves room for it; the icon is positioned rather than wrapped so the
             Input keeps its own height and focus ring. */}
-        <View className="relative justify-center">
+        <View
+          className="relative justify-center"
+          style={desktop ? { flexGrow: 1, flexBasis: 320 } : undefined}
+        >
           <View className="absolute left-3 z-10">
             <Icon as={Search} size={16} strokeWidth={1.9} className="text-muted-foreground" />
           </View>
@@ -322,13 +356,14 @@ function ContactsHeader({
           />
         </View>
 
-        <View className="flex-row gap-1.5">
+        <View className={desktop ? 'flex-row gap-2' : 'flex-row gap-1.5'}>
           {chips.map((chip) => (
             <FilterChip
               key={chip.value}
               label={chip.label}
               active={chip.value === filter}
               onPress={() => onFilter(chip.value)}
+              hug={desktop}
             />
           ))}
         </View>
@@ -349,14 +384,17 @@ function FilterChip({
   label,
   active,
   onPress,
+  hug,
 }: {
   label: string
   active: boolean
   onPress: () => void
+  /** `US-057` — as wide as the word on the desktop row, not a third of it. */
+  hug?: boolean
 }) {
   return (
     <Pressable
-      className={`min-h-9 flex-1 items-center justify-center rounded-lg border ${
+      className={`min-h-9 ${hug ? 'px-[18px]' : 'flex-1'} items-center justify-center rounded-lg border ${
         active ? 'bg-primary border-primary' : 'bg-background border-border active:bg-secondary'
       }`}
       onPress={() => {

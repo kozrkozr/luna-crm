@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AppState } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import { supabase } from '../../lib/supabase/client'
 import { onPurchasesChanged } from './purchases'
@@ -48,6 +48,12 @@ type AccessValue = {
    * the paywall (AC-3).
    */
   syncNow: () => Promise<void>
+  /**
+   * `US-072` AC-4 — web only: «Потрібна підписка» is open. Set by `useGuard`,
+   * shown by `SubscriptionNeeded` in `AppShell.web`.
+   */
+  subscriptionNeeded: boolean
+  setSubscriptionNeeded: (open: boolean) => void
 }
 
 const AccessContext = createContext<AccessValue>({
@@ -55,6 +61,8 @@ const AccessContext = createContext<AccessValue>({
   hasAccess: null,
   refresh: async () => {},
   syncNow: async () => {},
+  subscriptionNeeded: false,
+  setSubscriptionNeeded: () => {},
 })
 
 /** How long, and how often, to look for the webhook's row after a purchase. */
@@ -65,6 +73,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null)
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null)
   const [expiresAt, setExpiresAt] = useState<number | null>(null)
+  const [subscriptionNeeded, setSubscriptionNeeded] = useState(false)
   const hasAccessRef = useRef<boolean | null>(null)
 
   const refresh = useCallback(async () => {
@@ -139,7 +148,13 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh, syncNow])
 
-  return <AccessContext.Provider value={{ subscription, hasAccess, refresh, syncNow }}>{children}</AccessContext.Provider>
+  return (
+    <AccessContext.Provider
+      value={{ subscription, hasAccess, refresh, syncNow, subscriptionNeeded, setSubscriptionNeeded }}
+    >
+      {children}
+    </AccessContext.Provider>
+  )
 }
 
 export function useAccess(): AccessValue {
@@ -148,21 +163,25 @@ export function useAccess(): AccessValue {
 
 /**
  * `US-052` AC-2 — wraps a create, edit or delete action: with access it runs,
- * without it the paywall opens instead and nothing is changed.
+ * without it the paywall opens instead and nothing is changed. On the web there
+ * is no paywall (`ADR-024` decision 4): «Потрібна підписка» opens instead,
+ * pointing to the iOS app (`US-072` AC-4).
  *
  *   const guard = useGuard()
  *   <Button onPress={guard(() => router.push('/(app)/new-shoot'))} />
  */
 export function useGuard() {
-  const { hasAccess } = useAccess()
+  const { hasAccess, setSubscriptionNeeded } = useAccess()
   const router = useRouter()
   return useCallback(
     <A extends unknown[]>(action: (...args: A) => void) =>
       (...args: A) => {
-        if (hasAccess === false) router.push('/(app)/paywall')
-        else action(...args)
+        if (hasAccess === false) {
+          if (Platform.OS === 'web') setSubscriptionNeeded(true)
+          else router.push('/(app)/paywall')
+        } else action(...args)
       },
-    [hasAccess, router]
+    [hasAccess, router, setSubscriptionNeeded]
   )
 }
 

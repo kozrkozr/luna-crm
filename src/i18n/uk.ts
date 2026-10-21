@@ -226,8 +226,7 @@ export const uk = {
    * unrelated app in the same Business category (docs/release-appstore.md,
    * step 4), so the listing needed a different name and the product followed it.
    *
-   * The logo mark takes `appName.slice(0, 1)` — still «L», so the design is
-   * unaffected. **docs/product/ still says «Luna CRM» and is read-only**
+   * **docs/product/ still says «Luna CRM» and is read-only**
    * (CLAUDE.md rule 1); the discovery repo is what reconciles it.
    */
   appName: 'Luna Shoots',
@@ -249,23 +248,29 @@ export const uk = {
   sendResetLink: 'Надіслати посилання',
   sendingResetLink: 'Надсилаємо…',
   checkYourMail: 'Перевірте пошту',
-  /** «Ми надіслали посилання для відновлення на {email}. Воно дійсне 30 хвилин.» */
+  /** `US-058` (owner, 2026-10-20) — names the code as well as the link. */
   resetSentTemplate:
-    'Ми надіслали посилання для відновлення на {email}. Воно дійсне 30 хвилин.',
+    'Ми надіслали лист для відновлення на {email}. Відкрийте посилання або введіть код — вони дійсні 30 хвилин.',
   returnToLogin: 'Повернутись до входу',
   resendLink: 'Надіслати ще раз',
   /** «Надіслати ще раз через 24 с» */
   resendInTemplate: 'Надіслати ще раз через {seconds} с',
   changeAddress: 'Змінити адресу',
   resentToast: 'Лист надіслано ще раз',
+  /* ── `US-058` — the code from the email, on both «Перевірте пошту» screens.
+     Approved by the owner 2026-10-16 («тексти ок»), the table in the story. ── */
+  emailCodeLabel: 'Код із листа',
+  emailCodePlaceholder: '6 цифр',
+  emailCodeConfirm: 'Підтвердити',
+  emailCodeInvalid: 'Код невірний або застарів. Спробуйте ще раз або надішліть лист повторно.',
 
   /* ── Signup confirmation, `ADR-019` / `US-001` AC-1, AC-3, AC-4. Approved by
      the owner in chat, 2026-09-29, recorded in the source repo's
      `02-product/reviews/r06-2026-09-29/notes.md`. The screen reuses
      `checkYourMail`, `resentToast`, `returnToLogin` and `resendInTemplate`. ── */
-  /** «Ми надіслали лист на {email}. Відкрийте посилання в ньому, щоб підтвердити реєстрацію.» */
+  /** `US-058` (owner, 2026-10-20) — names the code as well as the link. */
   confirmSentTemplate:
-    'Ми надіслали лист на {email}. Відкрийте посилання в ньому, щоб підтвердити реєстрацію.',
+    'Ми надіслали лист на {email}. Відкрийте посилання в ньому або введіть код із листа, щоб підтвердити реєстрацію.',
   resendConfirmation: 'Надіслати лист ще раз',
   emailNotConfirmed:
     'Пошту ще не підтверджено. Відкрийте посилання з листа або надішліть його ще раз.',
@@ -1528,6 +1533,26 @@ export const uk = {
   /** AC-9 — the home banner: «Режим перегляду · Оформити підписку». */
   viewModeBanner: 'Режим перегляду',
   viewModeSubscribe: 'Оформити підписку',
+
+  // ── US-072 — the web sends newcomers to the iOS app ────────────────────────
+  // The owner's boards, 2026-10-21 (`ADR-028`). Web only.
+  webNewcomerTitle: 'Новий у Luna Shoots?',
+  webNewcomerLine: 'Створіть акаунт у застосунку для iPhone — там же оформлюється підписка.',
+  webRegisterTitle: 'Реєстрація — у застосунку для iPhone',
+  webRegisterLine: 'Створіть акаунт у застосунку Luna Shoots для iPhone — там же оформлюється підписка.',
+  /** Followed by `loginBtn` as the link: «Вже маєте акаунт? Увійти». */
+  webHaveAccount: 'Вже маєте акаунт?',
+  appStoreScan: 'Наведіть камеру iPhone',
+  appStoreQrA11y: 'QR-код на сторінку Luna Shoots в App Store',
+  appStoreBadgeA11y: 'Завантажити в App Store',
+  /** AC-3 — bold, before `viewModeWebLine`. */
+  viewModeWebLead: 'Режим перегляду.',
+  viewModeWebLine: 'Щоб створювати й редагувати зйомки, оформіть підписку в застосунку для iPhone.',
+  viewModeOpenAppStore: 'Відкрити App Store',
+  subscriptionNeededTitle: 'Потрібна підписка',
+  subscriptionNeededLine:
+    'Підписку можна оформити в застосунку Luna Shoots для iPhone. Після оплати тут усе відкриється автоматично.',
+  subscriptionNeededClose: 'Закрити',
 
   // ── US-051 — the paywall ───────────────────────────────────────────────────
   // Owner-confirmed copy (US-051 Copy, 2026-10-08/10). `{price}` is Apple's own

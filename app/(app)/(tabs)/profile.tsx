@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Pressable, View, Linking } from 'react-native'
+import { ActivityIndicator, Image, Pressable, View, Linking, Platform } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Constants from 'expo-constants'
@@ -63,6 +63,7 @@ import {
   AlertDialogTitle,
 } from '../../../src/components/ui/alert-dialog'
 import { SUPPORT_EMAIL } from '../../../src/lib/support'
+import { useDesktop } from '../../../src/lib/desktop'
 
 /** The editable half of the profile — everything the save button writes. */
 type Draft = {
@@ -125,6 +126,8 @@ export default function ProfileScreen() {
   const currency = useCurrency()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  // `US-057` — the desktop header and columns; see the render. False on iOS.
+  const desktop = useDesktop()
   const state = useProfile()
 
   const [saved, setSaved] = useState<Draft | null>(null)
@@ -440,6 +443,495 @@ export default function ProfileScreen() {
     )
   }
 
+  const identityCard = (
+    <>
+      {/* ── Identity ── */}
+      <Card variant="flat" className="items-center px-4 pb-4 pt-5">
+        <Pressable
+          className="mb-3 active:opacity-70"
+          disabled={busy}
+          onPress={openAvatarSheet}
+          role="button"
+          accessibilityLabel={t.changePhoto}
+        >
+          {/*
+            A photo the account holder uploaded of themselves — which is why
+            this does not contradict redesign-log F-4. That objection was to
+            GENERATING a likeness by hashing a name; crew and clients still
+            get initials, because nobody uploaded anything for them.
+          */}
+          {/*
+            The three states of `users_avatar_one_of`, resolved once by
+            `resolveAvatar` so this screen cannot invent a fourth. `emoji`
+            needs no signed URL and so has no loading state — it renders on
+            the frame the draft changes, which is why applying one feels
+            immediate where a photo does not.
+          */}
+          {avatar.kind === 'photo' && avatarUri ? (
+            <Image
+              source={{ uri: avatarUri }}
+              className="h-[72px] w-[72px] rounded-full"
+              resizeMode="cover"
+            />
+          ) : avatar.kind === 'emoji' ? (
+            <Avatar
+              name={draft.name || state.profile.email}
+              size={72}
+              emoji={{ char: avatar.emoji, tint: avatar.tint }}
+            />
+          ) : (
+            <Avatar name={draft.name || state.profile.email} size={72} />
+          )}
+          <View className="bg-primary border-background absolute -bottom-0.5 -right-0.5 h-[26px] w-[26px] items-center justify-center rounded-full border-2">
+            <Icon as={Pencil} size={12} strokeWidth={2} className="text-primary-foreground" />
+          </View>
+        </Pressable>
+
+        <Text className="text-title-sm text-foreground font-semibold" numberOfLines={1}>
+          {draft.name.trim() || state.profile.email}
+        </Text>
+        {/* Role alone — the design appends « · KULT Studio», and there is
+            no studio column to append (P-3). */}
+        <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
+          {roleLabel(resolvedRole, t)}
+        </Text>
+
+        {/*
+          «Переглянути публічний профіль», as `Edit Profile.dc.html` draws
+          it — the way into the public view now that the form is the tab
+          root again (owner, 2026-09-07).
+
+          It **switches mode rather than pushing a route**, which is the one
+          difference from the pill this replaces: that one opened
+          `app/(app)/public-profile.tsx`, deleted on 2026-09-06, and a route
+          recreated for one button would be a second URL onto a view this
+          screen already renders.
+        */}
+        <Pressable
+          className="border-border active:bg-secondary mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5"
+          onPress={() => {
+            tapped()
+            setEditing(false)
+          }}
+          role="button"
+        >
+          <Icon as={Eye} size={15} strokeWidth={1.7} className="text-muted-foreground" />
+          <Text className="text-body-sm text-foreground font-medium">
+            {t.viewPublicProfile}
+          </Text>
+        </Pressable>
+
+        {/* «Переглянути публічний профіль» stood here, pushing a route that
+            showed what others see. Both are gone (owner, 2026-09-06): the
+            tab now OPENS as that view, so the button would have led from a
+            thing to itself. */}
+      </Card>
+    </>
+  )
+
+  const subscriptionSection = (
+    <>
+      {/* ── Підписка ── `US-053`: the status on the right, the screen behind
+          it (`Subscription.dc.html`, «Рядок у профілі»). Not on the web —
+          nothing there shows or manages a subscription (`US-040` AC-6). */}
+      {Platform.OS === 'web' ? null : (
+        <View className="gap-2">
+          <SectionLabel label={t.subscriptionSection} />
+          <Card variant="flat" className="gap-0 p-0">
+            <Pressable
+              className="active:bg-secondary min-h-14 flex-row items-center gap-3 px-4"
+              onPress={() => {
+                tapped()
+                router.push('/(app)/subscription')
+              }}
+              role="button"
+            >
+              <Text className="text-body-sm text-muted-foreground flex-1">
+                {t.subscriptionTitle}
+              </Text>
+              {subscription ? (
+                <View className="flex-row items-center gap-[7px]">
+                  <View
+                    className={`h-[7px] w-[7px] rounded-full ${
+                      subscription.kind === 'trial'
+                        ? 'bg-link'
+                        : subscription.kind === 'active'
+                          ? 'bg-success'
+                          : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
+                            ? 'bg-warn'
+                            : 'bg-muted-foreground'
+                    }`}
+                  />
+                  <Text className="text-body-sm text-foreground">
+                    {subscription.kind === 'trial'
+                      ? t.subscriptionStatusTrial
+                      : subscription.kind === 'active'
+                        ? t.subscriptionStatusActive
+                        : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
+                          ? t.subscriptionStatusWontRenew
+                          : t.subscriptionStatusNone}
+                  </Text>
+                </View>
+              ) : null}
+              <Icon
+                as={ChevronRight}
+                size={15}
+                strokeWidth={2}
+                className="text-muted-foreground shrink-0"
+              />
+            </Pressable>
+          </Card>
+        </View>
+      )}
+    </>
+  )
+
+  const accountSection = (
+    <>
+      {/* ── Акаунт ── */}
+      <View className="gap-2">
+        <View className="flex-row items-baseline justify-between px-0.5">
+          <SectionLabel label={t.accountSection} />
+          {dirty ? (
+            <Text className="text-caption text-muted-foreground">
+              {t.unsavedCountTemplate.replace('{count}', String(changed.length))}
+            </Text>
+          ) : null}
+        </View>
+
+        <Card variant="flat" className="gap-0 p-0">
+          <ProfileRow
+            icon={User}
+            label={t.name}
+            value={draft.name}
+            onChangeText={(value) => {
+              set('name', value)
+              setErrors((e) => ({ ...e, name: undefined }))
+            }}
+            placeholder={t.namePlaceholder}
+            autoCapitalize="words"
+            changed={draft.name.trim() !== saved.name}
+            error={errors.name}
+          />
+
+          {/*
+            Read-only (owner, 2026-08-31, reaffirmed 2026-09-02). Changing
+            the login is `auth.updateUser` with a double confirmation, and
+            `public.users.email` is the crew-matching key — see the note on
+            this screen and on `updateProfile`.
+          */}
+          <ProfileRow
+            icon={Mail}
+            label={t.email}
+            value={state.profile.email}
+            readOnly
+            divided
+          />
+
+          <ProfileRow
+            icon={Smartphone}
+            label={t.phone}
+            value={draft.phone}
+            onChangeText={(value) => {
+              set('phone', value)
+              setErrors((e) => ({ ...e, phone: undefined }))
+            }}
+            placeholder={phoneExample()}
+            keyboardType="phone-pad"
+            changed={draft.phone.trim() !== saved.phone}
+            error={errors.phone}
+            divided
+          />
+
+          {/* «Пароль — Змінити ›». `US-013` covers login, not changing a
+              password; built at the owner's request. */}
+          <Pressable
+            className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+            onPress={() => {
+              tapped()
+              router.push('/(app)/password')
+            }}
+            role="button"
+          >
+            <View className="w-[18px] shrink-0 items-center">
+              <Icon as={Lock} size={17} strokeWidth={1.7} className="text-muted-foreground" />
+            </View>
+            <Text className="text-body-sm text-muted-foreground flex-1">{t.password}</Text>
+            <Text className="text-body-sm text-foreground">{t.changePassword}</Text>
+            <Icon
+              as={ChevronRight}
+              size={15}
+              strokeWidth={2}
+              className="text-muted-foreground shrink-0"
+            />
+          </Pressable>
+        </Card>
+      </View>
+    </>
+  )
+
+  const roleSection = (
+    <>
+      {/* ── Ваша роль ── */}
+      <View className="gap-2">
+        <SectionLabel label={t.yourRoleSection} />
+        <View className="flex-row flex-wrap gap-1.5">
+          {[...ROLE_KEYS, OTHER_ROLE].map((option) => {
+            const active = draft.role === option
+            return (
+              <Pressable
+                key={option}
+                className={`min-h-[38px] justify-center rounded-lg border px-3 ${
+                  active
+                    ? 'bg-primary border-primary'
+                    : 'bg-background border-border active:bg-secondary'
+                }`}
+                onPress={() => {
+                  tickSelection()
+                  set('role', option)
+                  setErrors((e) => ({ ...e, role: undefined }))
+                }}
+                role="radio"
+                accessibilityState={{ selected: active }}
+              >
+                {/* Label only — `set('role', option)` above stores the
+                    bare key, which is what `roleKeyOf` reads back. */}
+                <Text
+                  className={`text-body-sm font-medium ${
+                    active ? 'text-primary-foreground' : 'text-foreground/85'
+                  }`}
+                >
+                  {roleWithEmoji(option, t)}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
+        {draft.role === OTHER_ROLE ? (
+          <Input
+            value={draft.customRole}
+            onChangeText={(value) => {
+              set('customRole', value)
+              setErrors((e) => ({ ...e, role: undefined }))
+            }}
+            placeholder={t.otherRolePlaceholder}
+          />
+        ) : null}
+        {errors.role ? (
+          <Text className="text-label text-destructive">{errors.role}</Text>
+        ) : null}
+      </View>
+    </>
+  )
+
+  const socialSection = (
+    <>
+      {/* ── Соцмережі ── */}
+      <View className="gap-2">
+        <SectionLabel label={t.socialSection} />
+        <Card variant="flat" className="gap-0 p-0">
+          <ProfileRow
+            icon={InstagramIcon}
+            label={t.instagramLabel}
+            value={draft.instagram}
+            onChangeText={(value) => set('instagram', value)}
+            placeholder={t.crewInstagramPlaceholder}
+            autoCapitalize="none"
+            changed={draft.instagram.trim() !== saved.instagram}
+          />
+          <ProfileRow
+            icon={Send}
+            label={t.telegramLabel}
+            value={draft.telegram}
+            onChangeText={(value) => set('telegram', value)}
+            placeholder={t.telegramPlaceholder}
+            autoCapitalize="none"
+            changed={draft.telegram.trim() !== saved.telegram}
+            divided
+          />
+        </Card>
+        {/*
+          Kept, though the second pass drops it: it is the only place the UI
+          says who sees these handles, which is an ADR-013 fact rather than
+          decoration.
+
+          **The sentence is now wrong and the copy has not been changed.**
+          «Команда бачить ці контакти» was true until 2026-09-03, when the
+          organizer card reached the client link (owner) — a client receives
+          the same name, role, phone and handles a crew member does. Saying
+          «Команда» to the photographer under-reports who sees them, which is
+          the wrong direction for a visibility label to be wrong in.
+
+          Not reworded here because the replacement is a copy decision:
+          «Команда й клієнт бачать…» reads differently from the promise this
+          made. **Needs the owner** — logged in docs/redesign-log.md.
+        */}
+        <Text className="text-label text-muted-foreground px-0.5">{t.socialSeenByCrew}</Text>
+      </View>
+    </>
+  )
+
+  const settingsSection = (
+    <>
+      {/* ── Налаштування ── */}
+      <View className="gap-2">
+        <SectionLabel label={t.settingsSection} />
+        <Card variant="flat" className="gap-0 p-0">
+          {/*
+            «Мова застосунку» — NOT in the first artboard, and moved here by
+            the second. `US-015`'s switcher lives ONLY on this screen, so it
+            survives wherever the design puts it: dropping it would make
+            English unreachable, which is a story regression rather than a
+            restyle (P-2).
+          */}
+          <View className="min-h-14 flex-row items-center gap-3 py-2 pl-4 pr-3">
+            <View className="flex-1">
+              <Text className="text-body-sm text-muted-foreground">{t.appLanguage}</Text>
+              <Text className="text-caption text-muted-foreground/70 mt-0.5">
+                {languageSample}
+              </Text>
+            </View>
+            <LanguageSwitcher />
+          </View>
+
+          {/* `US-047` AC-4 — «Валюта», right under the language, drawn
+              like «Сповіщення» with the current currency on the right. */}
+          <Pressable
+            className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+            onPress={() => {
+              tapped()
+              router.push('/(app)/currency')
+            }}
+            role="button"
+          >
+            <Text className="text-body-sm text-muted-foreground flex-1">{t.currencyTitle}</Text>
+            <Text className="text-body-sm text-muted-foreground">
+              {`${currencySymbol(currency)} ${currency}`}
+            </Text>
+            <Icon
+              as={ChevronRight}
+              size={15}
+              strokeWidth={2}
+              className="text-muted-foreground shrink-0"
+            />
+          </Pressable>
+
+          {/* US-041 AC-9 — «Сповіщення», between the language and support,
+              drawn like the support row (owner, 2026-10-05). The canvas's
+              own «Сповіщення» section in `Edit Profile.dc.html` is not
+              built: the owner kept this screen as it is. Not on the web:
+              reminders are the iOS app's (`US-040` AC-7). */}
+          {Platform.OS === 'web' ? null : (
+            <Pressable
+              className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+              onPress={() => {
+                tapped()
+                router.push('/(app)/notifications')
+              }}
+              role="button"
+            >
+              <Text className="text-body-sm text-muted-foreground flex-1">
+                {t.notificationsRow}
+              </Text>
+              <Icon
+                as={ChevronRight}
+                size={15}
+                strokeWidth={2}
+                className="text-muted-foreground shrink-0"
+              />
+            </Pressable>
+          )}
+
+          {/* «Написати в підтримку» — a new email to support@lunashoots.com
+              (owner, 2026-10-10), the address the support page and the legal
+              pages give. A stub since 2026-09-02, when no address existed. */}
+          <Pressable
+            className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+            onPress={() => {
+              tapped()
+              void Linking.openURL(`mailto:${SUPPORT_EMAIL}`).catch(() => {
+                // No mail account on the phone: nothing is specified, and the
+                // address is on the support page for anyone who looks.
+              })
+            }}
+            role="button"
+          >
+            <Text className="text-body-sm text-muted-foreground flex-1">
+              {t.contactSupport}
+            </Text>
+            <Icon
+              as={ChevronRight}
+              size={15}
+              strokeWidth={2}
+              className="text-muted-foreground shrink-0"
+            />
+          </Pressable>
+
+          {/*
+            The one irreversible action, moved into this card by the second
+            pass. Only the trigger changed — the confirmation is the same
+            one `US-019` and `US-022` use, and the question names what goes.
+          */}
+          <Pressable
+            className="active:bg-destructive/10 border-border min-h-14 flex-row items-center gap-3 border-t px-4"
+            onPress={() => {
+              tapped()
+              /*
+                `US-053` AC-6 — a trial or subscription that will renew keeps
+                charging after the account is gone: Apple bills the Apple ID,
+                not Luna. Warn first; «Все одно видалити» goes on to the
+                usual confirmation (`Edit Profile.dc.html`).
+              */
+              if (subscription?.kind === 'trial' || subscription?.kind === 'active') {
+                setDeleteSubOpen(true)
+              } else askDelete(null)
+            }}
+            role="button"
+          >
+            <Text className="text-body-sm text-destructive flex-1">{t.deleteAccount}</Text>
+            <Icon
+              as={ChevronRight}
+              size={15}
+              strokeWidth={2}
+              className="text-destructive/60 shrink-0"
+            />
+          </Pressable>
+        </Card>
+      </View>
+    </>
+  )
+
+  const accountFooter = (
+    <>
+      {/* Muted, not destructive — the second pass makes delete the one red
+          thing on the screen, and two competing reds was the weaker read. */}
+      <Button
+        variant="ghost"
+        size="block"
+        onPress={() => {
+          void (async () => {
+            await signOut()
+            router.replace('/(auth)/login')
+          })()
+        }}
+      >
+        <Text className="text-body text-muted-foreground font-semibold">{t.logoutAction}</Text>
+      </Button>
+
+      {/*
+        The design says «версія 1.0»; `app.config.ts` says 0.1.0. Read from
+        `expo-constants` so the two cannot drift again — but the wordmark is
+        still unsettled (redesign-log A-6: the handoffs spell the product
+        five ways).
+      */}
+      {version ? (
+        <Text className="text-caption text-muted-foreground/70 text-center">
+          {t.versionTemplate.replace('{version}', version)}
+        </Text>
+      ) : null}
+    </>
+  )
+
   return (
     <View className="bg-background flex-1">
       <Starfield />
@@ -450,56 +942,84 @@ export default function ProfileScreen() {
         width so the title is centred on the SCREEN rather than on whatever is
         left between two labels of different lengths.
       */}
-      <View
-        className="bg-background border-border flex-row items-center border-b px-3 pb-2"
-        style={{ paddingTop: insets.top }}
-      >
-        {/* `sc-if isDirty` — the spacer stays when the control does not, so the
-            title is centred on the SCREEN either way. See `leave`. */}
-        {dirty ? (
+      {desktop ? (
+        <View className="bg-background border-border flex-row items-center justify-between gap-4 border-b px-10 pb-4 pt-8">
+          <Text className="text-title-sm text-foreground font-semibold">{t.myProfileTitle}</Text>
+          <View className="flex-row items-center gap-3">
+            {dirty ? (
+              <Button
+                variant="outline"
+                className="h-11 rounded-full px-5"
+                onPress={() => {
+                  tapped()
+                  leave()
+                }}
+              >
+                <Text className="text-body-sm">{t.cancel}</Text>
+              </Button>
+            ) : null}
+            <Button
+              variant="cta"
+              className={`h-11 rounded-full px-6 ${dirty && !busy ? '' : 'opacity-50'}`}
+              disabled={!dirty || busy}
+              onPress={() => void save()}
+            >
+              <Text className="text-body-sm font-semibold">{busy ? t.savingProfile : t.save}</Text>
+            </Button>
+          </View>
+        </View>
+      ) : (
+        <View
+          className="bg-background border-border flex-row items-center border-b px-3 pb-2"
+          style={{ paddingTop: insets.top }}
+        >
+          {/* `sc-if isDirty` — the spacer stays when the control does not, so the
+              title is centred on the SCREEN either way. See `leave`. */}
+          {dirty ? (
+            <Pressable
+              className="active:bg-secondary min-h-11 w-[92px] shrink-0 justify-center rounded-lg px-2"
+              onPress={() => {
+                tapped()
+                leave()
+              }}
+              role="button"
+            >
+              <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
+                {t.cancel}
+              </Text>
+            </Pressable>
+          ) : (
+            <View className="min-h-11 w-[92px] shrink-0" />
+          )}
+
+          <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
+            {t.myProfileTitle}
+          </Text>
+
+          {/*
+            P-5 — save lives here now. It keeps the design's own three labels
+            («Зберегти» / «Зберігаємо…»), dimmed rather than relabelled when
+            there is nothing to save: «Немає змін» reads as a button in a bar, not
+            as a word in a header.
+          */}
           <Pressable
-            className="active:bg-secondary min-h-11 w-[92px] shrink-0 justify-center rounded-lg px-2"
-            onPress={() => {
-              tapped()
-              leave()
-            }}
+            className="active:bg-secondary min-h-11 w-[92px] shrink-0 items-end justify-center rounded-lg px-2"
+            disabled={!dirty || busy}
+            onPress={() => void save()}
             role="button"
+            accessibilityState={{ disabled: !dirty || busy }}
           >
-            <Text className="text-body-sm text-muted-foreground font-medium" numberOfLines={1}>
-              {t.cancel}
+            <Text
+              className={`text-body-sm font-semibold ${
+                dirty && !busy ? 'text-foreground' : 'text-muted-foreground/50'
+              }`}
+              numberOfLines={1}
+            >
+              {busy ? t.savingProfile : t.save}
             </Text>
           </Pressable>
-        ) : (
-          <View className="min-h-11 w-[92px] shrink-0" />
-        )}
-
-        <Text className="text-subtitle text-foreground flex-1 text-center font-semibold">
-          {t.myProfileTitle}
-        </Text>
-
-        {/*
-          P-5 — save lives here now. It keeps the design's own three labels
-          («Зберегти» / «Зберігаємо…»), dimmed rather than relabelled when
-          there is nothing to save: «Немає змін» reads as a button in a bar, not
-          as a word in a header.
-        */}
-        <Pressable
-          className="active:bg-secondary min-h-11 w-[92px] shrink-0 items-end justify-center rounded-lg px-2"
-          disabled={!dirty || busy}
-          onPress={() => void save()}
-          role="button"
-          accessibilityState={{ disabled: !dirty || busy }}
-        >
-          <Text
-            className={`text-body-sm font-semibold ${
-              dirty && !busy ? 'text-foreground' : 'text-muted-foreground/50'
-            }`}
-            numberOfLines={1}
-          >
-            {busy ? t.savingProfile : t.save}
-          </Text>
-        </Pressable>
-      </View>
+        </View>
+      )}
 
       {/*
         40, and **no bottom inset** (2026-09-04): the artboard's `padding-bottom:114`
@@ -507,465 +1027,37 @@ export default function ProfileScreen() {
         now — `insets.bottom` here would add 34pt of dead space above it.
       */}
       <FormScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: desktop ? 48 : 40 }}
       >
-        <View className="gap-5 p-4">
-          {/* ── Identity ── */}
-          <Card variant="flat" className="items-center px-4 pb-4 pt-5">
-            <Pressable
-              className="mb-3 active:opacity-70"
-              disabled={busy}
-              onPress={openAvatarSheet}
-              role="button"
-              accessibilityLabel={t.changePhoto}
-            >
-              {/*
-                A photo the account holder uploaded of themselves — which is why
-                this does not contradict redesign-log F-4. That objection was to
-                GENERATING a likeness by hashing a name; crew and clients still
-                get initials, because nobody uploaded anything for them.
-              */}
-              {/*
-                The three states of `users_avatar_one_of`, resolved once by
-                `resolveAvatar` so this screen cannot invent a fourth. `emoji`
-                needs no signed URL and so has no loading state — it renders on
-                the frame the draft changes, which is why applying one feels
-                immediate where a photo does not.
-              */}
-              {avatar.kind === 'photo' && avatarUri ? (
-                <Image
-                  source={{ uri: avatarUri }}
-                  className="h-[72px] w-[72px] rounded-full"
-                  resizeMode="cover"
-                />
-              ) : avatar.kind === 'emoji' ? (
-                <Avatar
-                  name={draft.name || state.profile.email}
-                  size={72}
-                  emoji={{ char: avatar.emoji, tint: avatar.tint }}
-                />
-              ) : (
-                <Avatar name={draft.name || state.profile.email} size={72} />
-              )}
-              <View className="bg-primary border-background absolute -bottom-0.5 -right-0.5 h-[26px] w-[26px] items-center justify-center rounded-full border-2">
-                <Icon as={Pencil} size={12} strokeWidth={2} className="text-primary-foreground" />
-              </View>
-            </Pressable>
-
-            <Text className="text-title-sm text-foreground font-semibold" numberOfLines={1}>
-              {draft.name.trim() || state.profile.email}
-            </Text>
-            {/* Role alone — the design appends « · KULT Studio», and there is
-                no studio column to append (P-3). */}
-            <Text className="text-label text-muted-foreground mt-1" numberOfLines={1}>
-              {roleLabel(resolvedRole, t)}
-            </Text>
-
-            {/*
-              «Переглянути публічний профіль», as `Edit Profile.dc.html` draws
-              it — the way into the public view now that the form is the tab
-              root again (owner, 2026-09-07).
-
-              It **switches mode rather than pushing a route**, which is the one
-              difference from the pill this replaces: that one opened
-              `app/(app)/public-profile.tsx`, deleted on 2026-09-06, and a route
-              recreated for one button would be a second URL onto a view this
-              screen already renders.
-            */}
-            <Pressable
-              className="border-border active:bg-secondary mt-3.5 min-h-10 flex-row items-center justify-center gap-[7px] rounded-lg border px-3.5"
-              onPress={() => {
-                tapped()
-                setEditing(false)
-              }}
-              role="button"
-            >
-              <Icon as={Eye} size={15} strokeWidth={1.7} className="text-muted-foreground" />
-              <Text className="text-body-sm text-foreground font-medium">
-                {t.viewPublicProfile}
-              </Text>
-            </Pressable>
-
-            {/* «Переглянути публічний профіль» stood here, pushing a route that
-                showed what others see. Both are gone (owner, 2026-09-06): the
-                tab now OPENS as that view, so the button would have led from a
-                thing to itself. */}
-          </Card>
-
-          {/* ── Підписка ── `US-053`: the status on the right, the screen behind
-              it (`Subscription.dc.html`, «Рядок у профілі»). */}
-          <View className="gap-2">
-            <SectionLabel label={t.subscriptionSection} />
-            <Card variant="flat" className="gap-0 p-0">
-              <Pressable
-                className="active:bg-secondary min-h-14 flex-row items-center gap-3 px-4"
-                onPress={() => {
-                  tapped()
-                  router.push('/(app)/subscription')
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-muted-foreground flex-1">
-                  {t.subscriptionTitle}
-                </Text>
-                {subscription ? (
-                  <View className="flex-row items-center gap-[7px]">
-                    <View
-                      className={`h-[7px] w-[7px] rounded-full ${
-                        subscription.kind === 'trial'
-                          ? 'bg-link'
-                          : subscription.kind === 'active'
-                            ? 'bg-success'
-                            : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
-                              ? 'bg-warn'
-                              : 'bg-muted-foreground'
-                      }`}
-                    />
-                    <Text className="text-body-sm text-foreground">
-                      {subscription.kind === 'trial'
-                        ? t.subscriptionStatusTrial
-                        : subscription.kind === 'active'
-                          ? t.subscriptionStatusActive
-                          : subscription.kind === 'wontRenew' || subscription.kind === 'beta'
-                            ? t.subscriptionStatusWontRenew
-                            : t.subscriptionStatusNone}
-                    </Text>
-                  </View>
-                ) : null}
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
-            </Card>
-          </View>
-
-          {/* ── Акаунт ── */}
-          <View className="gap-2">
-            <View className="flex-row items-baseline justify-between px-0.5">
-              <SectionLabel label={t.accountSection} />
-              {dirty ? (
-                <Text className="text-caption text-muted-foreground">
-                  {t.unsavedCountTemplate.replace('{count}', String(changed.length))}
-                </Text>
-              ) : null}
+        {desktop ? (
+          /*
+            `US-057` — the draft canvas's two columns: who you are and the
+            settings left, the account, your role and your links right.
+          */
+          <View className="flex-row flex-wrap items-start gap-6 px-10 pt-7">
+            <View className="flex-1 gap-5" style={{ flexBasis: 380, minWidth: 380 }}>
+              {identityCard}
+              {subscriptionSection}
+              {settingsSection}
+              {accountFooter}
             </View>
-
-            <Card variant="flat" className="gap-0 p-0">
-              <ProfileRow
-                icon={User}
-                label={t.name}
-                value={draft.name}
-                onChangeText={(value) => {
-                  set('name', value)
-                  setErrors((e) => ({ ...e, name: undefined }))
-                }}
-                placeholder={t.namePlaceholder}
-                autoCapitalize="words"
-                changed={draft.name.trim() !== saved.name}
-                error={errors.name}
-              />
-
-              {/*
-                Read-only (owner, 2026-08-31, reaffirmed 2026-09-02). Changing
-                the login is `auth.updateUser` with a double confirmation, and
-                `public.users.email` is the crew-matching key — see the note on
-                this screen and on `updateProfile`.
-              */}
-              <ProfileRow
-                icon={Mail}
-                label={t.email}
-                value={state.profile.email}
-                readOnly
-                divided
-              />
-
-              <ProfileRow
-                icon={Smartphone}
-                label={t.phone}
-                value={draft.phone}
-                onChangeText={(value) => {
-                  set('phone', value)
-                  setErrors((e) => ({ ...e, phone: undefined }))
-                }}
-                placeholder={phoneExample()}
-                keyboardType="phone-pad"
-                changed={draft.phone.trim() !== saved.phone}
-                error={errors.phone}
-                divided
-              />
-
-              {/* «Пароль — Змінити ›». `US-013` covers login, not changing a
-                  password; built at the owner's request. */}
-              <Pressable
-                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                onPress={() => {
-                  tapped()
-                  router.push('/(app)/password')
-                }}
-                role="button"
-              >
-                <View className="w-[18px] shrink-0 items-center">
-                  <Icon as={Lock} size={17} strokeWidth={1.7} className="text-muted-foreground" />
-                </View>
-                <Text className="text-body-sm text-muted-foreground flex-1">{t.password}</Text>
-                <Text className="text-body-sm text-foreground">{t.changePassword}</Text>
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
-            </Card>
-          </View>
-
-          {/* ── Ваша роль ── */}
-          <View className="gap-2">
-            <SectionLabel label={t.yourRoleSection} />
-            <View className="flex-row flex-wrap gap-1.5">
-              {[...ROLE_KEYS, OTHER_ROLE].map((option) => {
-                const active = draft.role === option
-                return (
-                  <Pressable
-                    key={option}
-                    className={`min-h-[38px] justify-center rounded-lg border px-3 ${
-                      active
-                        ? 'bg-primary border-primary'
-                        : 'bg-background border-border active:bg-secondary'
-                    }`}
-                    onPress={() => {
-                      tickSelection()
-                      set('role', option)
-                      setErrors((e) => ({ ...e, role: undefined }))
-                    }}
-                    role="radio"
-                    accessibilityState={{ selected: active }}
-                  >
-                    {/* Label only — `set('role', option)` above stores the
-                        bare key, which is what `roleKeyOf` reads back. */}
-                    <Text
-                      className={`text-body-sm font-medium ${
-                        active ? 'text-primary-foreground' : 'text-foreground/85'
-                      }`}
-                    >
-                      {roleWithEmoji(option, t)}
-                    </Text>
-                  </Pressable>
-                )
-              })}
+            <View className="flex-1 gap-5" style={{ flexBasis: 380, minWidth: 380 }}>
+              {accountSection}
+              {roleSection}
+              {socialSection}
             </View>
-            {draft.role === OTHER_ROLE ? (
-              <Input
-                value={draft.customRole}
-                onChangeText={(value) => {
-                  set('customRole', value)
-                  setErrors((e) => ({ ...e, role: undefined }))
-                }}
-                placeholder={t.otherRolePlaceholder}
-              />
-            ) : null}
-            {errors.role ? (
-              <Text className="text-label text-destructive">{errors.role}</Text>
-            ) : null}
           </View>
-
-          {/* ── Соцмережі ── */}
-          <View className="gap-2">
-            <SectionLabel label={t.socialSection} />
-            <Card variant="flat" className="gap-0 p-0">
-              <ProfileRow
-                icon={InstagramIcon}
-                label={t.instagramLabel}
-                value={draft.instagram}
-                onChangeText={(value) => set('instagram', value)}
-                placeholder={t.crewInstagramPlaceholder}
-                autoCapitalize="none"
-                changed={draft.instagram.trim() !== saved.instagram}
-              />
-              <ProfileRow
-                icon={Send}
-                label={t.telegramLabel}
-                value={draft.telegram}
-                onChangeText={(value) => set('telegram', value)}
-                placeholder={t.telegramPlaceholder}
-                autoCapitalize="none"
-                changed={draft.telegram.trim() !== saved.telegram}
-                divided
-              />
-            </Card>
-            {/*
-              Kept, though the second pass drops it: it is the only place the UI
-              says who sees these handles, which is an ADR-013 fact rather than
-              decoration.
-
-              **The sentence is now wrong and the copy has not been changed.**
-              «Команда бачить ці контакти» was true until 2026-09-03, when the
-              organizer card reached the client link (owner) — a client receives
-              the same name, role, phone and handles a crew member does. Saying
-              «Команда» to the photographer under-reports who sees them, which is
-              the wrong direction for a visibility label to be wrong in.
-
-              Not reworded here because the replacement is a copy decision:
-              «Команда й клієнт бачать…» reads differently from the promise this
-              made. **Needs the owner** — logged in docs/redesign-log.md.
-            */}
-            <Text className="text-label text-muted-foreground px-0.5">{t.socialSeenByCrew}</Text>
+        ) : (
+          <View className="gap-5 p-4">
+            {identityCard}
+            {subscriptionSection}
+            {accountSection}
+            {roleSection}
+            {socialSection}
+            {settingsSection}
+            {accountFooter}
           </View>
-
-
-          {/* ── Налаштування ── */}
-          <View className="gap-2">
-            <SectionLabel label={t.settingsSection} />
-            <Card variant="flat" className="gap-0 p-0">
-              {/*
-                «Мова застосунку» — NOT in the first artboard, and moved here by
-                the second. `US-015`'s switcher lives ONLY on this screen, so it
-                survives wherever the design puts it: dropping it would make
-                English unreachable, which is a story regression rather than a
-                restyle (P-2).
-              */}
-              <View className="min-h-14 flex-row items-center gap-3 py-2 pl-4 pr-3">
-                <View className="flex-1">
-                  <Text className="text-body-sm text-muted-foreground">{t.appLanguage}</Text>
-                  <Text className="text-caption text-muted-foreground/70 mt-0.5">
-                    {languageSample}
-                  </Text>
-                </View>
-                <LanguageSwitcher />
-              </View>
-
-              {/* `US-047` AC-4 — «Валюта», right under the language, drawn
-                  like «Сповіщення» with the current currency on the right. */}
-              <Pressable
-                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                onPress={() => {
-                  tapped()
-                  router.push('/(app)/currency')
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-muted-foreground flex-1">{t.currencyTitle}</Text>
-                <Text className="text-body-sm text-muted-foreground">
-                  {`${currencySymbol(currency)} ${currency}`}
-                </Text>
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
-
-              {/* US-041 AC-9 — «Сповіщення», between the language and support,
-                  drawn like the support row (owner, 2026-10-05). The canvas's
-                  own «Сповіщення» section in `Edit Profile.dc.html` is not
-                  built: the owner kept this screen as it is. */}
-              <Pressable
-                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                onPress={() => {
-                  tapped()
-                  router.push('/(app)/notifications')
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-muted-foreground flex-1">
-                  {t.notificationsRow}
-                </Text>
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
-
-              {/* «Написати в підтримку» — a new email to support@lunashoots.com
-                  (owner, 2026-10-10), the address the support page and the legal
-                  pages give. A stub since 2026-09-02, when no address existed. */}
-              <Pressable
-                className="active:bg-secondary border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                onPress={() => {
-                  tapped()
-                  void Linking.openURL(`mailto:${SUPPORT_EMAIL}`).catch(() => {
-                    // No mail account on the phone: nothing is specified, and the
-                    // address is on the support page for anyone who looks.
-                  })
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-muted-foreground flex-1">
-                  {t.contactSupport}
-                </Text>
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-muted-foreground shrink-0"
-                />
-              </Pressable>
-
-              {/*
-                The one irreversible action, moved into this card by the second
-                pass. Only the trigger changed — the confirmation is the same
-                one `US-019` and `US-022` use, and the question names what goes.
-              */}
-              <Pressable
-                className="active:bg-destructive/10 border-border min-h-14 flex-row items-center gap-3 border-t px-4"
-                onPress={() => {
-                  tapped()
-                  /*
-                    `US-053` AC-6 — a trial or subscription that will renew keeps
-                    charging after the account is gone: Apple bills the Apple ID,
-                    not Luna. Warn first; «Все одно видалити» goes on to the
-                    usual confirmation (`Edit Profile.dc.html`).
-                  */
-                  if (subscription?.kind === 'trial' || subscription?.kind === 'active') {
-                    setDeleteSubOpen(true)
-                  } else askDelete(null)
-                }}
-                role="button"
-              >
-                <Text className="text-body-sm text-destructive flex-1">{t.deleteAccount}</Text>
-                <Icon
-                  as={ChevronRight}
-                  size={15}
-                  strokeWidth={2}
-                  className="text-destructive/60 shrink-0"
-                />
-              </Pressable>
-            </Card>
-          </View>
-
-          {/* Muted, not destructive — the second pass makes delete the one red
-              thing on the screen, and two competing reds was the weaker read. */}
-          <Button
-            variant="ghost"
-            size="block"
-            onPress={() => {
-              void (async () => {
-                await signOut()
-                router.replace('/(auth)/login')
-              })()
-            }}
-          >
-            <Text className="text-body text-muted-foreground font-semibold">{t.logoutAction}</Text>
-          </Button>
-
-          {/*
-            The design says «версія 1.0»; `app.config.ts` says 0.1.0. Read from
-            `expo-constants` so the two cannot drift again — but the wordmark is
-            still unsettled (redesign-log A-6: the handoffs spell the product
-            five ways).
-          */}
-          {version ? (
-            <Text className="text-caption text-muted-foreground/70 text-center">
-              {t.versionTemplate.replace('{version}', version)}
-            </Text>
-          ) : null}
-        </View>
+        )}
       </FormScrollView>
 
       {/*

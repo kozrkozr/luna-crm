@@ -83,6 +83,25 @@ export async function establishLinkSession(
 }
 
 /**
+ * `US-058` — the code printed under the email's button, typed instead of the
+ * link opened: the same one-time token, so it signs in exactly as the link does
+ * (`ADR-025`). It works whichever device the email was read on, which is the
+ * whole point — the link only goes back to where the email was asked for.
+ *
+ * `false` for a wrong, used or expired code alike: Supabase answers all three
+ * the same way (AC-4), so there is nothing finer to report.
+ */
+export async function verifyEmailCode(
+  type: 'recovery' | 'email',
+  email: string,
+  code: string
+): Promise<boolean> {
+  const { error } = await supabase.auth.verifyOtp({ type, email: email.trim(), token: code })
+  if (error && __DEV__) console.warn(`[${type}] code failed:`, error.code, error.message)
+  return !error
+}
+
+/**
  * Read the link that opened this screen and establish its session.
  *
  * Supabase puts the tokens in the **fragment** for the implicit flow
@@ -92,7 +111,11 @@ export async function establishLinkSession(
  * `useLocalSearchParams`, which is exactly why this looks like two mechanisms
  * for one thing.
  */
-export function useLinkSession(type: 'recovery' | 'email'): 'checking' | 'ok' | 'invalid' {
+export function useLinkSession(
+  type: 'recovery' | 'email',
+  /** False when the session is already there — `US-058`'s code, not a link. */
+  enabled = true
+): 'checking' | 'ok' | 'invalid' {
   const params = useLocalSearchParams<{ token_hash?: string; access_token?: string }>()
   const [state, setState] = useState<'checking' | 'ok' | 'invalid'>('checking')
 
@@ -117,6 +140,7 @@ export function useLinkSession(type: 'recovery' | 'email'): 'checking' | 'ok' | 
   const attempted = useRef<string | null>(null)
 
   useEffect(() => {
+    if (!enabled) return
     const key = url ?? 'none'
     if (attempted.current === key) return
 
@@ -142,7 +166,7 @@ export function useLinkSession(type: 'recovery' | 'email'): 'checking' | 'ok' | 
     return () => {
       active = false
     }
-  }, [url, params.token_hash, params.access_token, type])
+  }, [url, params.token_hash, params.access_token, type, enabled])
 
   return state
 }

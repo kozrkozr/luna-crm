@@ -147,16 +147,23 @@ export const en: Strings = {
   sendResetLink: 'Send the link',
   sendingResetLink: 'Sending…',
   checkYourMail: 'Check your email',
-  resetSentTemplate: 'We sent a recovery link to {email}. It is valid for 30 minutes.',
+  resetSentTemplate:
+    'We sent a recovery email to {email}. Open the link or enter the code — both are valid for 30 minutes.',
   returnToLogin: 'Back to sign in',
   resendLink: 'Send again',
   resendInTemplate: 'Send again in {seconds} s',
   changeAddress: 'Change the address',
   resentToast: 'Email sent again',
+  // `US-058`, approved with the Ukrainian (2026-10-16).
+  emailCodeLabel: 'Code from the email',
+  emailCodePlaceholder: '6 digits',
+  emailCodeConfirm: 'Confirm',
+  emailCodeInvalid: 'The code is wrong or has expired. Try again or send the email again.',
   // ADR-019. Translations of the owner-approved Ukrainian (2026-09-29), not
   // approved English — and unreachable today: the (auth) group is Ukrainian by
   // construction. Here because `Strings` requires every key.
-  confirmSentTemplate: 'We sent an email to {email}. Open the link in it to confirm your registration.',
+  confirmSentTemplate:
+    'We sent an email to {email}. Open the link in it or enter the code from it to confirm your registration.',
   resendConfirmation: 'Send the email again',
   emailNotConfirmed: 'Your email is not confirmed yet. Open the link from the email or send it again.',
   confirmLinkInvalid: 'The confirmation link is invalid or expired. Sign in to send a new one.',
@@ -760,6 +767,24 @@ export const en: Strings = {
   /** AC-9 — the home banner: «Режим перегляду · Оформити підписку». */
   viewModeBanner: 'View mode',
   viewModeSubscribe: 'Subscribe',
+
+  // ── US-072 — the web sends newcomers to the iOS app ────────────────────────
+  // Agent's draft, owner-confirmed 2026-10-21 (US-072 Copy).
+  webNewcomerTitle: 'New to Luna Shoots?',
+  webNewcomerLine: "Create your account in the iPhone app — that's where you subscribe, too.",
+  webRegisterTitle: 'Sign up in the iPhone app',
+  webRegisterLine: "Create your account in the Luna Shoots iPhone app — that's where you subscribe, too.",
+  webHaveAccount: 'Already have an account?',
+  appStoreScan: 'Scan with your iPhone camera',
+  appStoreQrA11y: 'QR code for Luna Shoots on the App Store',
+  appStoreBadgeA11y: 'Download on the App Store',
+  viewModeWebLead: 'View mode.',
+  viewModeWebLine: 'To create and edit shoots, subscribe in the iPhone app.',
+  viewModeOpenAppStore: 'Open the App Store',
+  subscriptionNeededTitle: 'Subscription required',
+  subscriptionNeededLine:
+    "You can subscribe in the Luna Shoots iPhone app. Once you've paid, everything here opens up automatically.",
+  subscriptionNeededClose: 'Close',
 
   // ── US-051 — the paywall ───────────────────────────────────────────────────
   paywallRestore: 'Restore',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Alert, Platform, Pressable, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import Check from 'lucide-react-native/icons/check'
@@ -35,6 +35,13 @@ type Props = {
   onRemoved: (id: string) => void
   /** A reference came back changed — `US-068`'s «Знято» mark. */
   onChanged: (reference: Reference) => void
+  /**
+   * `US-057` — given on a desktop browser: the tab's «Файли» block, drawn
+   * above «Посилання» in the left column while the chips, «Референси» and
+   * «Знято» take the right, four photos to a row (the draft canvas). Absent,
+   * one column, as on the phone.
+   */
+  leading?: ReactNode
 }
 
 /**
@@ -50,7 +57,15 @@ type Props = {
  * The category chips filter all three sections at once (AC-1); what is added is
  * filed under the active chip, as before.
  */
-export function MaterialsReferences({ shootId, references, onAdded, onRemoved, onChanged }: Props) {
+export function MaterialsReferences({
+  shootId,
+  references,
+  onAdded,
+  onRemoved,
+  onChanged,
+  leading,
+}: Props) {
+  const desktop = leading !== undefined
   const t = useStrings()
   const guard = useGuard()
   const [category, setCategory] = useState<string | null>(null)
@@ -252,7 +267,7 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
     )
   }
 
-  return (
+  const chips = (
     <>
       {/* AC-1 — the chips, unchanged; they count every reference in the group. */}
       <View className="flex-row flex-wrap gap-2">
@@ -272,7 +287,10 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
           />
         ))}
       </View>
-
+    </>
+  )
+  const photoSection = (
+    <>
       {/*
         ── «Референси» — the photos still to shoot (AC-2, AC-6, AC-9) ──
 
@@ -303,6 +321,7 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
             onRemove={guard(askToRemove)}
             onOpen={openViewer}
             footer={shotButton}
+            columns={desktop ? 4 : 3}
             trailing={
               <Pressable
                 className="border-border-strong aspect-square w-full items-center justify-center rounded-[10px] border border-dashed active:bg-secondary"
@@ -320,7 +339,10 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
           />
         )}
       </View>
-
+    </>
+  )
+  const linkSection = (
+    <>
       {/* ── «Посилання» (AC-7, AC-9) ── */}
       <View className="gap-2.5">
         <SectionHeader label={t.linksSection} counter={String(links.length)} />
@@ -436,10 +458,16 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
           </View>
         ) : null}
       </View>
-
+    </>
+  )
+  const errorLine = (
+    <>
       {/* `US-003` AC-2, `US-068` AC-10 — one line, the list left as it was. */}
       {error ? <Text className="text-destructive text-sm">{error}</Text> : null}
-
+    </>
+  )
+  const shotSection = (
+    <>
       {/* ── «Знято» — the marked photos, in the order they were marked (AC-4) ── */}
       {shot.length > 0 ? (
         <View className="gap-2.5">
@@ -456,11 +484,39 @@ export function MaterialsReferences({ shootId, references, onAdded, onRemoved, o
             onRemove={guard(askToRemove)}
             onOpen={openViewer}
             footer={shotButton}
+            columns={desktop ? 4 : 3}
             dimmed
           />
           <Text className="text-muted-foreground text-xs">{t.shotHint}</Text>
         </View>
       ) : null}
+    </>
+  )
+
+  return (
+    <>
+      {desktop ? (
+        <View className="flex-row flex-wrap items-start gap-6">
+          <View className="flex-1 gap-6" style={{ flexBasis: 380, minWidth: 380 }}>
+            {leading}
+            {linkSection}
+          </View>
+          <View className="flex-1 gap-3" style={{ flexBasis: 380, minWidth: 380 }}>
+            {chips}
+            {photoSection}
+            {errorLine}
+            {shotSection}
+          </View>
+        </View>
+      ) : (
+        <>
+          {chips}
+          {photoSection}
+          {linkSection}
+          {errorLine}
+          {shotSection}
+        </>
+      )}
 
       <ReferencePhotoViewer
         photos={viewerPhotos}

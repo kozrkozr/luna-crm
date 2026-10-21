@@ -2,7 +2,9 @@ import { NativeOnlyAnimatedView } from '@/components/ui/native-only-animated-vie
 import { cn } from '@/lib/utils'
 import { elevation } from '@/theme/elevation'
 import { Portal } from '@rn-primitives/portal'
-import { Pressable, View } from 'react-native'
+import { useDesktopShell } from '@/lib/desktop'
+import { useEffect, useState, type RefObject } from 'react'
+import { Pressable, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FadeIn, FadeOut, ReduceMotion, SlideInDown, SlideOutDown } from 'react-native-reanimated'
 
@@ -37,15 +39,33 @@ export function Sheet({
   onClose,
   children,
   className,
+  anchor,
+  width,
 }: {
   open: boolean
   onClose: () => void
   children: React.ReactNode
   className?: string
+  /** On a desktop browser, the popover's or dialog's width; 380 by default. */
+  width?: number
+  /**
+   * `US-057` — in the creator's app on a desktop browser, the control the sheet belongs to: it
+   * opens as a 380 px popover under it, as the draft canvas draws «Валюта»
+   * and the statistics period. Without one, a dialog in the middle. Ignored
+   * on the phone.
+   */
+  anchor?: RefObject<View | null>
 }) {
   const insets = useSafeAreaInsets()
+  const desktop = useDesktopShell()
 
   if (!open) return null
+  if (desktop)
+    return (
+      <DesktopPopover anchor={anchor} onClose={onClose} className={className} width={width}>
+        {children}
+      </DesktopPopover>
+    )
 
   return (
     <Portal name="sheet">
@@ -89,6 +109,71 @@ export function Sheet({
             {children}
           </View>
         </NativeOnlyAnimatedView>
+      </View>
+    </Portal>
+  )
+}
+
+const POPOVER_WIDTH = 380
+const EDGE = 16
+
+/**
+ * `US-057` — a sheet on a desktop browser. Under its anchor's left edge, kept
+ * inside the window, and above the anchor when there is no room below; with no
+ * anchor, centred over a dimmed page. A click outside closes it, as the
+ * overlay does on the phone. No grabber and no slide: nothing here is a sheet
+ * any more.
+ */
+function DesktopPopover({
+  anchor,
+  onClose,
+  className,
+  children,
+  width = POPOVER_WIDTH,
+}: {
+  anchor?: RefObject<View | null>
+  onClose: () => void
+  className?: string
+  children: React.ReactNode
+  width?: number
+}) {
+  const window = useWindowDimensions()
+  const [spot, setSpot] = useState<{ x: number; y: number; height: number } | null>(null)
+  const [panelHeight, setPanelHeight] = useState(0)
+
+  useEffect(() => {
+    anchor?.current?.measureInWindow((x, y, _width, height) => setSpot({ x, y, height }))
+  }, [anchor, window.width, window.height])
+
+  const place = () => {
+    if (!spot) return { opacity: 0 }
+    const left = Math.max(EDGE, Math.min(spot.x, window.width - width - EDGE))
+    const below = spot.y + spot.height + 8
+    const fitsBelow = below + panelHeight <= window.height - EDGE
+    const top = fitsBelow ? below : Math.max(EDGE, spot.y - 8 - panelHeight)
+    return { left, top, opacity: panelHeight ? 1 : 0 }
+  }
+
+  return (
+    <Portal name="sheet">
+      <View className={cn('absolute inset-0', anchor ? '' : 'items-center justify-center')}>
+        <Pressable
+          className={cn('absolute inset-0', anchor ? '' : 'bg-black/65')}
+          onPress={onClose}
+          role="button"
+          accessibilityLabel="Закрити"
+        />
+        <View
+          className={cn(
+            'bg-accent border-border-strong rounded-2xl border p-2',
+            anchor ? 'absolute' : '',
+            className
+          )}
+          style={[elevation.overlay, { width }, anchor ? place() : null]}
+          onLayout={(event) => setPanelHeight(event.nativeEvent.layout.height)}
+        >
+          {children}
+        </View>
       </View>
     </Portal>
   )

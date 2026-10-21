@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { SectionLabel } from '../../../../src/components/ShootFormFields'
 import { ActivityIndicator, Image, Pressable, View } from 'react-native'
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
@@ -75,6 +75,7 @@ import {
 } from '../../../../src/features/shoots/locationMedia'
 import { Starfield } from '../../../../src/components/Starfield'
 import { useGuard } from '../../../../src/features/subscription/access'
+import { useDesktop } from '../../../../src/lib/desktop'
 import { MoneyBurst } from '../../../../src/components/MoneyBurst'
 
 type State =
@@ -120,6 +121,12 @@ export default function ShootDetailScreen() {
 
   const [state, setState] = useState<State>({ status: 'loading' })
   // `US-066` AC-7 — a deadline reminder opens the shoot on «Матеріали».
+  /*
+    `US-057` — on a desktop browser, the draft canvas's shoot: the header in one
+    row with «Редагувати» and the bin beside the tabs (owner, 2026-10-19), the
+    tabs in columns, and nothing pinned at the foot. Always false on iOS.
+  */
+  const desktop = useDesktop()
   const [tab, setTab] = useState<DetailTab>(openOn === 'materials' ? 'materials' : 'details')
   const [headerHeight, setHeaderHeight] = useState(0)
   const [toast, setToast] = useState<ToastState>(null)
@@ -350,6 +357,27 @@ export default function ShootDetailScreen() {
           materials: String(references.length + fileCount),
         }}
         onHeight={setHeaderHeight}
+        actions={
+          !desktop ? undefined : tab === 'details' ? (
+            <DetailsActions
+              compact
+              onEdit={guard(() => router.push(`/(app)/shoot/${shoot.id}/edit`))}
+              onCancelShoot={guard(() => askCancelShoot(null))}
+            />
+          ) : tab === 'people' ? (
+            /* Where «Редагувати зйомку» is on «Деталі» (owner, 2026-10-19). */
+            <Button
+              variant="cta"
+              className="h-10 rounded-full px-5"
+              onPress={guard(() => {
+                tapped()
+                router.push(`/(app)/shoot/${shoot.id}/crew/add`)
+              })}
+            >
+              <Text className="text-body-sm font-semibold">{`+ ${t.addCrewMember}`}</Text>
+            </Button>
+          ) : undefined
+        }
       />
 
       <FormScrollView
@@ -362,12 +390,13 @@ export default function ShootDetailScreen() {
             when «Матеріали» had a CTA of its own, and left behind when that was
             removed earlier today.
           */
-          paddingBottom: insets.bottom + (tab === 'materials' ? 24 : 96),
+          paddingBottom: desktop ? 48 : insets.bottom + (tab === 'materials' ? 24 : 96),
         }}
       >
-        <View className="gap-3 p-4">
+        <View className={desktop ? 'gap-3 px-10 pt-6' : 'gap-3 p-4'}>
           {tab === 'details' ? (
             <DetailsTab
+              desktop={desktop}
               shoot={shoot}
               countdown={countdown}
               crew={crew}
@@ -396,6 +425,7 @@ export default function ShootDetailScreen() {
 
           {tab === 'people' ? (
             <PeopleTab
+              desktop={desktop}
               crew={crew}
               onCopyLink={(person) => void copyLinkFor(person)}
               onRemove={removePerson}
@@ -404,6 +434,7 @@ export default function ShootDetailScreen() {
 
           {tab === 'materials' ? (
             <MaterialsTab
+              desktop={desktop}
               shoot={shoot}
               references={references}
               onAdded={(reference) =>
@@ -473,7 +504,7 @@ export default function ShootDetailScreen() {
         96pt of blank scroll under a tab with nothing pinned to it is what the
         old constant did, and it did it on every tab.
       */}
-      {tab === 'details' || tab === 'people' ? (
+      {!desktop && (tab === 'details' || tab === 'people') ? (
         <View
           className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pt-2.5"
           style={{ paddingBottom: insets.bottom + 10 }}
@@ -555,6 +586,7 @@ function byOriginalOrder(original: CrewMember[]) {
  *   buttons at the foot of the tab, as v3 draws them.
  */
 function DetailsTab({
+  desktop,
   shoot,
   countdown,
   crew,
@@ -568,6 +600,8 @@ function DetailsTab({
   onCopyClientLink: () => void
   onToast: (message: string, undo?: () => void) => void
   onPaymentChanged: (prepayment: number | null) => void
+  /** `US-057` — two columns: the client and the location, then money and notes. */
+  desktop: boolean
 }) {
   const t = useStrings()
   const duration = formatDuration(shoot.startTime, shoot.endTime, {
@@ -616,7 +650,7 @@ function DetailsTab({
   ]
   const contacts = clientRows.filter((row): row is ClientRow => row !== null)
 
-  return (
+  const left = (
     <>
       {/*
         The shoot card. `flat` — background, a border, no lift: the handoff's
@@ -735,6 +769,10 @@ function DetailsTab({
 
       <LocationCard shoot={shoot} />
 
+    </>
+  )
+  const right = (
+    <>
       <PaymentCard shoot={shoot} onToast={onToast} onChanged={onPaymentChanged} />
 
       {/*
@@ -789,6 +827,8 @@ function DetailsTab({
 
     </>
   )
+
+  return <TabColumns desktop={desktop} left={left} right={right} minWidth={360} />
 }
 
 /**
@@ -829,15 +869,20 @@ function DetailsTab({
 function DetailsActions({
   onEdit,
   onCancelShoot,
+  compact,
 }: {
   onEdit: () => void
   onCancelShoot: () => void
+  /** `US-057` — in the desktop header: the pill takes its own width, not the row's. */
+  compact?: boolean
 }) {
   const t = useStrings()
   return (
     <View className="flex-row items-center gap-2.5">
       <Pressable
-        className="bg-primary active:bg-primary/90 h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full"
+        className={`bg-primary active:bg-primary/90 flex-row items-center justify-center gap-2 rounded-full ${
+          compact ? 'h-10 px-5' : 'h-12 flex-1'
+        }`}
         onPress={() => {
           tapped()
           onEdit()
@@ -851,7 +896,9 @@ function DetailsActions({
       </Pressable>
 
       <Pressable
-        className="border-danger-border bg-danger-bg h-12 w-12 shrink-0 items-center justify-center rounded-full border active:opacity-80"
+        className={`border-danger-border bg-danger-bg shrink-0 items-center justify-center rounded-full border active:opacity-80 ${
+          compact ? 'h-10 w-10' : 'h-12 w-12'
+        }`}
         onPress={() => {
           tapped()
           onCancelShoot()
@@ -1263,7 +1310,10 @@ function PeopleTab({
   crew,
   onCopyLink,
   onRemove,
+  desktop,
 }: {
+  /** `US-057` — the canvas's 820 px column, so a row is not a screen wide. */
+  desktop: boolean
   crew: CrewMember[]
   onCopyLink: (person: SheetPerson) => void
   onRemove: (person: SheetPerson) => void
@@ -1306,17 +1356,20 @@ function PeopleTab({
       }),
   })
 
+  const count =
+    crew.length > 0 ? (
+      <Text className="text-label text-muted-foreground">
+        {t.confirmedOfTemplate
+          .replace('{done}', String(confirmed))
+          .replace('{total}', String(crew.length))}
+      </Text>
+    ) : null
+
   return (
-    <View className="gap-2">
+    <View className={desktop ? 'w-full max-w-[820px] gap-2' : 'gap-2'}>
       <View className="flex-row items-baseline justify-between px-0.5">
         <SectionLabel label={t.crew} />
-        {crew.length > 0 ? (
-          <Text className="text-label text-muted-foreground">
-            {t.confirmedOfTemplate
-              .replace('{done}', String(confirmed))
-              .replace('{total}', String(crew.length))}
-          </Text>
-        ) : null}
+        {count}
       </View>
 
       {/*
@@ -1602,6 +1655,7 @@ function PersonRow({
 }
 
 function MaterialsTab({
+  desktop,
   shoot,
   references,
   onAdded,
@@ -1625,6 +1679,8 @@ function MaterialsTab({
   onDeadlineChanged: (patch: DeadlinePatch) => void
   /** One of the two file links was written — see `updateShootLink`. */
   onLinkSaved: (field: ShootLinkField, url: string | null) => void
+  /** `US-057` — «Файли» and «Посилання» left, the photos right. */
+  desktop: boolean
 }) {
   const t = useStrings()
   const guard = useGuard()
@@ -1648,7 +1704,7 @@ function MaterialsTab({
   ]
   const setLinks = files.filter((file) => file.url).length
 
-  return (
+  const filesSection = (
     <>
       {/*
         ── «Файли» (`US-024`, `US-025`), and why it is first ──────────────────
@@ -1699,6 +1755,12 @@ function MaterialsTab({
         </Card>
       </View>
 
+    </>
+  )
+
+  return (
+    <>
+      {desktop ? null : filesSection}
       {/*
         ── «Референси» and «Посилання» — `US-068` ──
 
@@ -1712,6 +1774,7 @@ function MaterialsTab({
         onAdded={onAdded}
         onRemoved={onRemoved}
         onChanged={onChanged}
+        leading={desktop ? filesSection : undefined}
       />
     </>
   )
@@ -1911,4 +1974,40 @@ function FileRow({
  */
 function displayLink(url: string): string {
   return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+}
+
+/**
+ * `US-057` — a tab's two columns on a desktop browser, as the draft canvas
+ * lays out «Деталі» and «Матеріали»: side by side where both fit at
+ * `minWidth`, one under the other where they do not (its `auto-fit` grid).
+ * On the phone, the two halves one after the other, as before.
+ */
+function TabColumns({
+  desktop,
+  left,
+  right,
+  minWidth,
+}: {
+  desktop: boolean
+  left: ReactNode
+  right: ReactNode
+  minWidth: number
+}) {
+  if (!desktop)
+    return (
+      <>
+        {left}
+        {right}
+      </>
+    )
+  return (
+    <View className="flex-row flex-wrap items-start gap-5">
+      <View className="flex-1 gap-3" style={{ flexBasis: minWidth, minWidth }}>
+        {left}
+      </View>
+      <View className="flex-1 gap-3" style={{ flexBasis: minWidth, minWidth }}>
+        {right}
+      </View>
+    </View>
+  )
 }

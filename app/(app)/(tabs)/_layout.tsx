@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router/js-tabs'
 import { BottomNav } from '../../../src/components/BottomNav'
 import { BACKGROUND } from '../../../src/theme/palette'
+import { useDesktop } from '../../../src/lib/desktop'
 
 /**
  * The four-tab shell the artboards grew on 2026-09-03, built on 2026-09-04.
@@ -29,9 +30,12 @@ import { BACKGROUND } from '../../../src/theme/palette'
  * against each other.
  */
 export default function TabsLayout() {
+  // `US-057` AC-1 — on a desktop browser the sidebar holds these four, so no
+  // bar. Always false on iOS (`useDesktop`).
+  const desktop = useDesktop()
   return (
     <Tabs
-      tabBar={(props) => <BottomNav {...props} />}
+      tabBar={(props) => (desktop ? null : <BottomNav {...props} />)}
       screenOptions={{
         /*
           All three draw their own header — the greeting on `index`, the meta

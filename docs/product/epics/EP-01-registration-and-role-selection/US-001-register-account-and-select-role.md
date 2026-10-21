@@ -28,7 +28,7 @@ from Ilona's second review round (`03-design/reviews/r02-2026-08-23/notes.md`).
 - **Then** their account is created with that role (and social field, if given), a
   confirmation email is sent to the address they gave, and they see a screen telling them to
   check their mail, naming that address, with a way to send the email again
-- **And when** they open the link in that email
+- **And when** they open the link in that email — or type its code (`US-058`, `ADR-025`)
 - **Then** their email is confirmed and they land on their (empty) shoot list
 
 *Until 2026-09-29 this criterion ended at "they land on their (empty) shoot list", with no
@@ -51,7 +51,7 @@ else's crew rows.*
 - **Given** a confirmation link that is expired or has already been used
 - **When** the user opens it
 - **Then** they are told the link is invalid or expired and are sent to log in, from where
-  AC-3 lets them request a new one
+  AC-3 lets them request a new one. A wrong or expired code: `US-058` AC-4 (`ADR-025`).
 
 ## Out of scope
 - The list of available roles beyond what's already named (photographer, stylist, gaffer,

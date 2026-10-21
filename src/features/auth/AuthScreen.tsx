@@ -25,14 +25,18 @@ import { privacyUrl, termsUrl } from '../../lib/legalUrls'
 import { useLanguage, useStrings } from '../../i18n/LanguageProvider'
 import { phoneExample } from '../../i18n/device'
 import { OTHER_ROLE, ROLE_KEYS, roleWithEmoji } from '../../i18n/vocabulary'
-import { selected } from '../../lib/haptics'
+import { failed, selected, succeeded } from '../../lib/haptics'
 import { login } from './login'
 import { requestPasswordReset } from './passwordReset'
+import { verifyEmailCode } from './authLink'
 import { RESEND_COOLDOWN_SECONDS, resendConfirmation } from './emailConfirmation'
 import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
+import { LogoMark } from '../../components/LogoMark'
+import { AppStoreGet } from '../subscription/AppStoreGet'
 import { Starfield } from '../../components/Starfield'
 import { FormScrollView } from '../../components/ui/form-scroll-view'
+import { useDesktop } from '../../lib/desktop'
 
 /**
  * `login` and `register` are the two the routes map onto; `forgot` and `sent`
@@ -98,6 +102,20 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
   const [recoveryEmail, setRecoveryEmail] = useState('')
   /** The address the confirmation email went to — named on the screen (AC-1). */
   const [confirmEmail, setConfirmEmail] = useState('')
+  /*
+    `US-057` — on a desktop browser, the draft canvas's sign-in: the intro over
+    the form, 420 px wide (520 for the longer registration) and centred in the
+    window — on the page, without the canvas's card (owner, 2026-10-19) — and
+    the registration's paired fields side by side. Always false on iOS.
+  */
+  const desktop = useDesktop()
+  const width = mode === 'register' ? 520 : 420
+  /*
+    `US-072` — the web registers nobody (`ADR-028`): no «Увійти · Реєстрація»
+    tabs, and under the form the way to the iOS app. Its `/register` is a
+    screen of its own (`register.web.tsx`), so `register` never opens here.
+  */
+  const web = Platform.OS === 'web'
 
   return (
     /*
@@ -111,13 +129,27 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
       <Starfield />
       <FormScrollView
         contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={
+          desktop
+            ? { flexGrow: 1, justifyContent: mode === 'register' ? 'flex-start' : 'center', paddingVertical: 48 }
+            : undefined
+        }
       >
-        <View className="px-4 pb-16">
+        <View
+          className={desktop ? 'w-full self-center px-4' : 'px-4 pb-16'}
+          style={desktop ? { maxWidth: width + 32 } : undefined}
+        >
           {/* The intro and the tabs belong to the two AUTH modes. The recovery
               screens replace them with their own heading, as drawn. */}
           {mode === 'login' || mode === 'register' ? (
             <>
               <Intro />
+            </>
+          ) : null}
+
+          <View>
+          {(mode === 'login' || mode === 'register') && !web ? (
+            <>
               <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
                 <SegmentTab
                   label={t.loginBtn}
@@ -141,8 +173,10 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
               }}
             />
           ) : null}
+          {mode === 'login' && web ? <Newcomer desktop={desktop} /> : null}
           {mode === 'register' ? (
             <RegisterForm
+              desktop={desktop}
               onNeedsConfirmation={(email) => {
                 setConfirmEmail(email)
                 setMode('confirmSent')
@@ -168,6 +202,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
           {mode === 'confirmSent' ? (
             <ConfirmSent email={confirmEmail} onBack={() => setMode('login')} />
           ) : null}
+          </View>
 
           {/* «Потрібна допомога? Напишіть нам» — on the auth modes only. */}
           {mode === 'login' || mode === 'register' ? (
@@ -188,26 +223,13 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
 
 /**
  * The logo mark, product name and tagline.
- *
- * The mark is the first letter of the name rather than a hardcoded «З», so the
- * two cannot drift apart — and so it is still right if the product is renamed
- * (see the note on `appName` in the dictionary).
  */
 function Intro() {
   const t = useStrings()
   return (
     <View className="items-center px-2.5 pb-6 pt-8">
-      <View className="bg-secondary mb-4 h-14 w-14 items-center justify-center rounded-2xl">
-        {/*
-          lineHeight pinned to the font size: without it Android adds leading
-          and the letter sits low in the square — the same trap Avatar documents.
-        */}
-        <Text
-          className="text-foreground font-bold"
-          style={{ fontSize: 24, lineHeight: 24 }}
-        >
-          {t.appName.slice(0, 1)}
-        </Text>
+      <View className="mb-4">
+        <LogoMark size={56} />
       </View>
       <Text className="text-numeric-xl text-foreground font-bold">{t.appName}</Text>
       <Text
@@ -216,6 +238,29 @@ function Intro() {
       >
         {t.appTagline}
       </Text>
+    </View>
+  )
+}
+
+/**
+ * `US-072` AC-1 — under the web's sign-in form: «Новий у Luna Shoots?», its
+ * line and the way to the iOS app. Left-aligned on a desktop, as drawn;
+ * centred on a phone.
+ */
+function Newcomer({ desktop }: { desktop: boolean }) {
+  const t = useStrings()
+  return (
+    <View className={`border-border mt-7 gap-3 border-t pt-7 ${desktop ? '' : 'items-center'}`}>
+      <Text className="text-title-sm text-foreground font-semibold">{t.webNewcomerTitle}</Text>
+      <Text
+        className={`text-body text-muted-foreground ${desktop ? '' : 'text-center'}`}
+        style={{ lineHeight: 22 }}
+      >
+        {t.webNewcomerLine}
+      </Text>
+      <View className="pt-1">
+        <AppStoreGet />
+      </View>
     </View>
   )
 }
@@ -446,7 +491,14 @@ function LoginForm({ onForgot }: { onForgot: (email: string) => void }) {
 }
 
 /** `US-001` — register an account and select a professional role. */
-function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: string) => void }) {
+function RegisterForm({
+  onNeedsConfirmation,
+  desktop,
+}: {
+  onNeedsConfirmation: (email: string) => void
+  /** `US-057` — email beside phone, Instagram beside Telegram. */
+  desktop: boolean
+}) {
   const t = useStrings()
   const language = useLanguage()
   const router = useRouter()
@@ -553,7 +605,8 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
         <FieldError message={errors.name ?? null} />
       </View>
 
-      <View className="gap-2">
+      <View className={desktop ? 'flex-row flex-wrap gap-3' : 'gap-3.5'}>
+      <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
         {/* «Email», not «Email або телефон» — see the note on the login form. */}
         <Label htmlFor="email">{t.email}</Label>
         <Input
@@ -571,7 +624,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
         <FieldError message={errors.email ?? null} />
       </View>
 
-      <View className="gap-2">
+      <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
         {/*
           **Optional, and the only field here that is not for its owner to read
           back.** `users.phone` is the second crew-matching key
@@ -607,6 +660,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
           placeholder={phoneExample()}
         />
         <FieldError message={errors.phone ?? null} />
+      </View>
       </View>
 
       <View className="gap-2">
@@ -664,7 +718,8 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             {` ${t.optionalSuffix}`}
           </Text>
         </Text>
-        <View className="gap-2">
+        <View className={desktop ? 'flex-row flex-wrap gap-3' : 'gap-2.5'}>
+        <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
           <Text className="text-label text-muted-foreground">{t.instagramLabel}</Text>
           <Input
             value={instagram}
@@ -676,7 +731,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
         </View>
         {/* Telegram is new — `users.telegram`, migration 20260831100000. No
             story defines it; the design draws it. */}
-        <View className="gap-2">
+        <View className={desktop ? 'min-w-[200px] flex-1 gap-2' : 'gap-2'}>
           <Text className="text-label text-muted-foreground">{t.telegramLabel}</Text>
           <Input
             value={telegram}
@@ -685,6 +740,7 @@ function RegisterForm({ onNeedsConfirmation }: { onNeedsConfirmation: (email: st
             autoCorrect={false}
             placeholder={t.telegramPlaceholder}
           />
+        </View>
         </View>
         <Text className="text-label text-muted-foreground">{t.socialHint}</Text>
       </View>
@@ -925,6 +981,8 @@ function ForgotForm({
   onBack: () => void
   onSent: () => void
 }) {
+  // `US-057` — centred in the window on a desktop, so no top padding of its own.
+  const desktop = useDesktop()
   const t = useStrings()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -948,7 +1006,7 @@ function ForgotForm({
   }
 
   return (
-    <View className="pt-6">
+    <View className={desktop ? undefined : 'pt-6'}>
       <Pressable
         className="active:bg-secondary -ml-2 mb-3.5 min-h-11 flex-row items-center gap-2 self-start rounded-lg px-2"
         onPress={onBack}
@@ -1006,6 +1064,9 @@ function ResetSent({
   onBack: () => void
   onChangeAddress: () => void
 }) {
+  const router = useRouter()
+  // `US-057` — centred in the window on a desktop, so no top padding of its own.
+  const desktop = useDesktop()
   const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(30)
   const [toast, setToast] = useState<string | null>(null)
@@ -1017,7 +1078,7 @@ function ResetSent({
   }, [secondsLeft])
 
   return (
-    <View className="items-center pt-12">
+    <View className={desktop ? 'items-center' : 'items-center pt-12'}>
       <View className="border-border-strong bg-secondary mb-5 h-14 w-14 items-center justify-center rounded-full">
         <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
       </View>
@@ -1026,6 +1087,14 @@ function ResetSent({
       <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
         {t.resetSentTemplate.replace('{email}', email.trim())}
       </Text>
+      {/* `US-058` AC-3 — the code opens the new-password form, as the link does. */}
+      <EmailCodeEntry
+        onSubmit={async (code) => {
+          if (!(await verifyEmailCode('recovery', email, code))) return false
+          router.push({ pathname: '/(auth)/reset', params: { via: 'code' } })
+          return true
+        }}
+      />
 
       <Button size="cta" className="mt-6 w-full" onPress={onBack}>
         <Text className="text-subtitle font-semibold">{t.returnToLogin}</Text>
@@ -1073,6 +1142,9 @@ function ResetSent({
  * and Supabase would refuse a second one inside its interval.
  */
 function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
+  const router = useRouter()
+  // `US-057` — centred in the window on a desktop, so no top padding of its own.
+  const desktop = useDesktop()
   const t = useStrings()
   const [secondsLeft, setSecondsLeft] = useState(RESEND_COOLDOWN_SECONDS)
   const [toast, setToast] = useState<string | null>(null)
@@ -1092,7 +1164,7 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
   }
 
   return (
-    <View className="items-center pt-12">
+    <View className={desktop ? 'items-center' : 'items-center pt-12'}>
       <View className="border-border-strong bg-secondary mb-5 h-14 w-14 items-center justify-center rounded-full">
         <Icon as={Check} size={22} strokeWidth={2.2} className="text-foreground" />
       </View>
@@ -1101,6 +1173,15 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
       <Text className="text-body-sm text-muted-foreground mt-2.5 text-center leading-6">
         {t.confirmSentTemplate.replace('{email}', email)}
       </Text>
+      {/* `US-058` AC-2 — the code confirms the address and signs in, as the link
+          does; the app's own first entry (the paywall on iOS) follows. */}
+      <EmailCodeEntry
+        onSubmit={async (code) => {
+          if (!(await verifyEmailCode('email', email, code))) return false
+          router.replace('/(app)/(tabs)')
+          return true
+        }}
+      />
 
       <Button
         size="cta"
@@ -1125,6 +1206,69 @@ function ConfirmSent({ email, onBack }: { email: string; onBack: () => void }) {
       </Pressable>
 
       <Toast message={toast} onDone={() => setToast(null)} />
+    </View>
+  )
+}
+
+/** The code's length — `otp_length` in `supabase/config.toml`, and «6 цифр». */
+const EMAIL_CODE_LENGTH = 6
+
+/**
+ * `US-058` — «Код із листа» on a «Перевірте пошту» screen: the field and
+ * «Підтвердити». The screen's own line above already names the code (owner,
+ * 2026-10-20), so there is no hint of its own. Digits only, and the button
+ * waits for all six.
+ *
+ * `onSubmit` verifies and moves on; `false` means the code was wrong, used or
+ * expired, which is one message (AC-4) — the screen's own «send again» stays
+ * below, so the way out is already there.
+ */
+function EmailCodeEntry({ onSubmit }: { onSubmit: (code: string) => Promise<boolean> }) {
+  const t = useStrings()
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const complete = code.length === EMAIL_CODE_LENGTH
+
+  const submit = async () => {
+    if (!complete || busy) return
+    setBusy(true)
+    const ok = await onSubmit(code)
+    setBusy(false)
+    if (ok) return succeeded()
+    failed()
+    setError(t.emailCodeInvalid)
+  }
+
+  return (
+    <View className="mt-5 w-full gap-2">
+      <Label htmlFor="email-code">{t.emailCodeLabel}</Label>
+      <Input
+        id="email-code"
+        value={code}
+        onChangeText={(value) => {
+          setCode(value.replace(/\D/g, '').slice(0, EMAIL_CODE_LENGTH))
+          setError(null)
+        }}
+        keyboardType="number-pad"
+        autoComplete="one-time-code"
+        textContentType="oneTimeCode"
+        maxLength={EMAIL_CODE_LENGTH}
+        placeholder={t.emailCodePlaceholder}
+        onSubmitEditing={() => void submit()}
+      />
+      <FieldError message={error} />
+      <Button
+        variant={complete ? 'cta' : 'secondary'}
+        size="cta"
+        className="mt-1"
+        disabled={!complete || busy}
+        onPress={() => void submit()}
+      >
+        <Text className={complete ? 'text-subtitle font-semibold' : 'text-subtitle text-muted-foreground font-semibold'}>
+          {t.emailCodeConfirm}
+        </Text>
+      </Button>
     </View>
   )
 }

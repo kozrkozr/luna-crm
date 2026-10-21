@@ -1,4 +1,4 @@
-import * as Crypto from 'expo-crypto'
+import { randomUuid } from '../../lib/uuid'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase/client'
 import { listContacts, upsertContact } from '../contacts/api'
@@ -214,7 +214,7 @@ export async function uploadCrewNoteImage(
     return null
   }
 
-  const path = `${shootId}/crew/${Crypto.randomUUID()}.${ext}`
+  const path = `${shootId}/crew/${randomUuid()}.${ext}`
   const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType: mimeType })
   return error ? null : path
 }
