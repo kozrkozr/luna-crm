@@ -769,7 +769,7 @@ export const en: Strings = {
   viewModeSubscribe: 'Subscribe',
 
   // ── US-072 — the web sends newcomers to the iOS app ────────────────────────
-  // Agent's draft, awaiting the owner (US-072 Copy).
+  // Agent's draft, owner-confirmed 2026-10-21 (US-072 Copy).
   webNewcomerTitle: 'New to Luna Shoots?',
   webNewcomerLine: "Create your account in the iPhone app — that's where you subscribe, too.",
   webRegisterTitle: 'Sign up in the iPhone app',

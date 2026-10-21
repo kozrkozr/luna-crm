@@ -58,7 +58,7 @@ page (owner, 2026-10-21).
 
 ## Copy
 Ukrainian: the owner's boards, 2026-10-21 (the dialog's line from the board, not `US-052`'s —
-owner, 2026-10-21). English: agent's draft — **awaiting the owner**.
+owner, 2026-10-21). English: agent's draft, confirmed by the owner 2026-10-21.
 
 | Ukrainian | English |
 |---|---|
