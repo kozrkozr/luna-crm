@@ -4,6 +4,7 @@ import { LogoMark } from '../../components/LogoMark'
 import { useLanguageSwitch, useStrings } from '../../i18n/LanguageProvider'
 import type { Language } from '../../i18n'
 import { selected } from '../../lib/haptics'
+import { useLinkColumn } from './linkColumn'
 
 /** `US-046` AC-2 — the two segments, in this order. Codes, so not translated. */
 const OPTIONS: { language: Language; label: string }[] = [
@@ -24,44 +25,48 @@ const OPTIONS: { language: Language; label: string }[] = [
 export function LinkBar() {
   const t = useStrings()
   const languageSwitch = useLanguageSwitch()
+  const column = useLinkColumn()
 
   return (
-    <View className="bg-background border-border flex-row items-center gap-2.5 border-b px-4 py-3">
-      <LogoMark size={24} />
-      <Text className="text-body text-foreground flex-1 font-semibold">{t.appName}</Text>
-      {languageSwitch ? (
-        /*
-          The sign-in screen's segmented control, small: a `secondary` track and
-          the page colour showing through under the current segment.
-        */
-        <View className="bg-secondary border-border flex-row rounded-lg border p-[3px]">
-          {OPTIONS.map(({ language, label }) => {
-            const active = languageSwitch.language === language
-            return (
-              <Pressable
-                key={language}
-                className={`items-center rounded-sm px-2.5 py-1 ${active ? 'bg-background' : ''}`}
-                onPress={() => {
-                  if (active) return
-                  selected()
-                  void languageSwitch.setLanguage(language)
-                }}
-                role="radio"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={language === 'uk' ? 'Українська' : 'English'}
-              >
-                <Text
-                  className={`text-caption font-semibold ${
-                    active ? 'text-card-foreground' : 'text-muted-foreground'
-                  }`}
+    // The bar spans the window; its row keeps to the pages' column (`US-057` AC-6).
+    <View className="bg-background border-border border-b">
+      <View className="flex-row items-center gap-2.5 px-4 py-3" style={column}>
+        <LogoMark size={24} />
+        <Text className="text-body text-foreground flex-1 font-semibold">{t.appName}</Text>
+        {languageSwitch ? (
+          /*
+            The sign-in screen's segmented control, small: a `secondary` track and
+            the page colour showing through under the current segment.
+          */
+          <View className="bg-secondary border-border flex-row rounded-lg border p-[3px]">
+            {OPTIONS.map(({ language, label }) => {
+              const active = languageSwitch.language === language
+              return (
+                <Pressable
+                  key={language}
+                  className={`items-center rounded-sm px-2.5 py-1 ${active ? 'bg-background' : ''}`}
+                  onPress={() => {
+                    if (active) return
+                    selected()
+                    void languageSwitch.setLanguage(language)
+                  }}
+                  role="radio"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={language === 'uk' ? 'Українська' : 'English'}
                 >
-                  {label}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </View>
-      ) : null}
+                  <Text
+                    className={`text-caption font-semibold ${
+                      active ? 'text-card-foreground' : 'text-muted-foreground'
+                    }`}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        ) : null}
+      </View>
     </View>
   )
 }

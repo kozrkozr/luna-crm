@@ -14,6 +14,7 @@ import {
 } from './gateway'
 import { resolveCrewShoot } from './crewView'
 import { Starfield } from '../../components/Starfield'
+import { useLinkColumn } from './linkColumn'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { handleLabel, handleUrl } from '../../lib/socialHandle'
 
@@ -65,6 +66,7 @@ export function CrewMemberView({
   crewId?: string
 }) {
   const t = useStrings()
+  const column = useLinkColumn()
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
   const [viewingImage, setViewingImage] = useState<string | null>(null)
 
@@ -126,7 +128,7 @@ export function CrewMemberView({
   return (
     <View className="bg-background flex-1">
       <Starfield />
-      <ScrollView contentInsetAdjustmentBehavior="automatic">
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={column}>
         <View className="gap-3 p-4">
           {/*
             One title for both audiences, as in the prototype: the client is not

@@ -49,6 +49,7 @@ import {
 } from './gateway'
 import { resolveCrewShoot, respondAsCrew } from './crewView'
 import { Starfield } from '../../components/Starfield'
+import { useLinkColumn } from './linkColumn'
 
 type Resolution =
   | { phase: 'resolving' }
@@ -90,6 +91,9 @@ type Resolution =
  */
 export function ShootLinkView({ token, shootId }: { token?: string; shootId?: string }) {
   const t = useStrings()
+  const column = useLinkColumn()
+  /** The sheets match the column on a link page (`US-057` AC-6). */
+  const sheetClass = column ? 'w-full max-w-[640px] self-center' : undefined
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
   const [toast, setToast] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -199,7 +203,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
         (`US-046`). The in-app entrance never had one — see that layout.
       */}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: isCrew && !answered ? 168 : 40 }}>
+      <ScrollView contentContainerStyle={[{ paddingBottom: isCrew && !answered ? 168 : 40 }, column]}>
         <View className="gap-5 p-4">
           {/* Who the reader is, and why they got this. */}
           <View className="gap-2.5">
@@ -702,21 +706,23 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
 
       {/* `US-008` — the answer, pinned, while there is one to give. */}
       {isCrew && !answered ? (
-        <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t px-4 pb-8 pt-3">
-          <Button variant="cta" size="cta" disabled={busy} onPress={() => void answer('confirmed', null)}>
-            <Text>{t.confirmParticipation}</Text>
-          </Button>
-          <Pressable
-            className="mt-1 min-h-11 items-center justify-center"
-            onPress={() => setDeclineOpen(true)}
-            role="button"
-          >
-            <Text className="text-body-sm text-muted-foreground font-medium">{t.cannotCome}</Text>
-          </Pressable>
+        <View className="bg-background border-border absolute inset-x-0 bottom-0 border-t pb-8 pt-3">
+          <View className="px-4" style={column}>
+            <Button variant="cta" size="cta" disabled={busy} onPress={() => void answer('confirmed', null)}>
+              <Text>{t.confirmParticipation}</Text>
+            </Button>
+            <Pressable
+              className="mt-1 min-h-11 items-center justify-center"
+              onPress={() => setDeclineOpen(true)}
+              role="button"
+            >
+              <Text className="text-body-sm text-muted-foreground font-medium">{t.cannotCome}</Text>
+            </Pressable>
+          </View>
         </View>
       ) : null}
 
-      <Sheet open={calendarOpen} onClose={() => setCalendarOpen(false)}>
+      <Sheet open={calendarOpen} onClose={() => setCalendarOpen(false)} className={sheetClass}>
         <View className="gap-2 pb-2">
           <Text className="text-subtitle text-foreground mb-2 font-semibold">
             {t.addToCalendar}
@@ -746,7 +752,7 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
         </View>
       </Sheet>
 
-      <Sheet open={declineOpen} onClose={() => setDeclineOpen(false)}>
+      <Sheet open={declineOpen} onClose={() => setDeclineOpen(false)} className={sheetClass}>
         <View className="gap-2 pb-2">
           <Text className="text-title-sm text-foreground font-semibold">{t.cannotComeTitle}</Text>
           <Text className="text-body-sm text-muted-foreground leading-5">{t.cannotComeBody}</Text>

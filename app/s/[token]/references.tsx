@@ -7,6 +7,7 @@ import { useStrings } from '../../../src/i18n/LanguageProvider'
 import { resolveLink, type LinkReference } from '../../../src/features/links/gateway'
 import { useMediaReload } from '../../../src/features/links/useMediaReload'
 import { Starfield } from '../../../src/components/Starfield'
+import { useLinkColumn } from '../../../src/features/links/linkColumn'
 
 /**
  * US-021 on the anonymous surface — every reference on the shoot, reached from
@@ -24,6 +25,7 @@ type Resolution =
 
 export default function LinkAllReferencesScreen() {
   const t = useStrings()
+  const column = useLinkColumn()
   const { token } = useLocalSearchParams<{ token?: string }>()
   const [resolution, setResolution] = useState<Resolution>({ phase: 'resolving' })
 
@@ -70,7 +72,7 @@ export default function LinkAllReferencesScreen() {
   return (
     <View className="bg-background flex-1">
       <Starfield />
-      <ScrollView contentInsetAdjustmentBehavior="automatic">
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={column}>
         <View className="gap-3 p-4">
           <Text className="text-title text-foreground font-semibold">{t.allReferencesTitle}</Text>
           <LinkReferenceGrid references={resolution.references} onMediaError={onMediaError} />
