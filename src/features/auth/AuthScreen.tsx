@@ -33,6 +33,7 @@ import { RESEND_COOLDOWN_SECONDS, resendConfirmation } from './emailConfirmation
 import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
 import { LogoMark } from '../../components/LogoMark'
+import { AppStoreGet } from '../subscription/AppStoreGet'
 import { Starfield } from '../../components/Starfield'
 import { FormScrollView } from '../../components/ui/form-scroll-view'
 import { useDesktop } from '../../lib/desktop'
@@ -109,6 +110,12 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
   */
   const desktop = useDesktop()
   const width = mode === 'register' ? 520 : 420
+  /*
+    `US-072` — the web registers nobody (`ADR-028`): no «Увійти · Реєстрація»
+    tabs, and under the form the way to the iOS app. Its `/register` is a
+    screen of its own (`register.web.tsx`), so `register` never opens here.
+  */
+  const web = Platform.OS === 'web'
 
   return (
     /*
@@ -141,7 +148,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
           ) : null}
 
           <View>
-          {mode === 'login' || mode === 'register' ? (
+          {(mode === 'login' || mode === 'register') && !web ? (
             <>
               <View className="bg-secondary border-border mb-5 flex-row rounded-lg border p-[3px]">
                 <SegmentTab
@@ -166,6 +173,7 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
               }}
             />
           ) : null}
+          {mode === 'login' && web ? <Newcomer desktop={desktop} /> : null}
           {mode === 'register' ? (
             <RegisterForm
               desktop={desktop}
@@ -230,6 +238,29 @@ function Intro() {
       >
         {t.appTagline}
       </Text>
+    </View>
+  )
+}
+
+/**
+ * `US-072` AC-1 — under the web's sign-in form: «Новий у Luna Shoots?», its
+ * line and the way to the iOS app. Left-aligned on a desktop, as drawn;
+ * centred on a phone.
+ */
+function Newcomer({ desktop }: { desktop: boolean }) {
+  const t = useStrings()
+  return (
+    <View className={`border-border mt-7 gap-3 border-t pt-7 ${desktop ? '' : 'items-center'}`}>
+      <Text className="text-title-sm text-foreground font-semibold">{t.webNewcomerTitle}</Text>
+      <Text
+        className={`text-body text-muted-foreground ${desktop ? '' : 'text-center'}`}
+        style={{ lineHeight: 22 }}
+      >
+        {t.webNewcomerLine}
+      </Text>
+      <View className="pt-1">
+        <AppStoreGet />
+      </View>
     </View>
   )
 }

@@ -768,6 +768,24 @@ export const en: Strings = {
   viewModeBanner: 'View mode',
   viewModeSubscribe: 'Subscribe',
 
+  // ── US-072 — the web sends newcomers to the iOS app ────────────────────────
+  // Agent's draft, awaiting the owner (US-072 Copy).
+  webNewcomerTitle: 'New to Luna Shoots?',
+  webNewcomerLine: "Create your account in the iPhone app — that's where you subscribe, too.",
+  webRegisterTitle: 'Sign up in the iPhone app',
+  webRegisterLine: "Create your account in the Luna Shoots iPhone app — that's where you subscribe, too.",
+  webHaveAccount: 'Already have an account?',
+  appStoreScan: 'Scan with your iPhone camera',
+  appStoreQrA11y: 'QR code for Luna Shoots on the App Store',
+  appStoreBadgeA11y: 'Download on the App Store',
+  viewModeWebLead: 'View mode.',
+  viewModeWebLine: 'To create and edit shoots, subscribe in the iPhone app.',
+  viewModeOpenAppStore: 'Open the App Store',
+  subscriptionNeededTitle: 'Subscription required',
+  subscriptionNeededLine:
+    "You can subscribe in the Luna Shoots iPhone app. Once you've paid, everything here opens up automatically.",
+  subscriptionNeededClose: 'Close',
+
   // ── US-051 — the paywall ───────────────────────────────────────────────────
   paywallRestore: 'Restore',
   paywallClose: 'Close',

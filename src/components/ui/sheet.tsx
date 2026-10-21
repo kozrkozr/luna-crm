@@ -40,11 +40,14 @@ export function Sheet({
   children,
   className,
   anchor,
+  width,
 }: {
   open: boolean
   onClose: () => void
   children: React.ReactNode
   className?: string
+  /** On a desktop browser, the popover's or dialog's width; 380 by default. */
+  width?: number
   /**
    * `US-057` — in the creator's app on a desktop browser, the control the sheet belongs to: it
    * opens as a 380 px popover under it, as the draft canvas draws «Валюта»
@@ -59,7 +62,7 @@ export function Sheet({
   if (!open) return null
   if (desktop)
     return (
-      <DesktopPopover anchor={anchor} onClose={onClose} className={className}>
+      <DesktopPopover anchor={anchor} onClose={onClose} className={className} width={width}>
         {children}
       </DesktopPopover>
     )
@@ -126,11 +129,13 @@ function DesktopPopover({
   onClose,
   className,
   children,
+  width = POPOVER_WIDTH,
 }: {
   anchor?: RefObject<View | null>
   onClose: () => void
   className?: string
   children: React.ReactNode
+  width?: number
 }) {
   const window = useWindowDimensions()
   const [spot, setSpot] = useState<{ x: number; y: number; height: number } | null>(null)
@@ -142,7 +147,7 @@ function DesktopPopover({
 
   const place = () => {
     if (!spot) return { opacity: 0 }
-    const left = Math.max(EDGE, Math.min(spot.x, window.width - POPOVER_WIDTH - EDGE))
+    const left = Math.max(EDGE, Math.min(spot.x, window.width - width - EDGE))
     const below = spot.y + spot.height + 8
     const fitsBelow = below + panelHeight <= window.height - EDGE
     const top = fitsBelow ? below : Math.max(EDGE, spot.y - 8 - panelHeight)
@@ -164,7 +169,7 @@ function DesktopPopover({
             anchor ? 'absolute' : '',
             className
           )}
-          style={[elevation.overlay, { width: POPOVER_WIDTH }, anchor ? place() : null]}
+          style={[elevation.overlay, { width }, anchor ? place() : null]}
           onLayout={(event) => setPanelHeight(event.nativeEvent.layout.height)}
         >
           {children}

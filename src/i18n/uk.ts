@@ -1534,6 +1534,26 @@ export const uk = {
   viewModeBanner: 'Режим перегляду',
   viewModeSubscribe: 'Оформити підписку',
 
+  // ── US-072 — the web sends newcomers to the iOS app ────────────────────────
+  // The owner's boards, 2026-10-21 (`ADR-028`). Web only.
+  webNewcomerTitle: 'Новий у Luna Shoots?',
+  webNewcomerLine: 'Створіть акаунт у застосунку для iPhone — там же оформлюється підписка.',
+  webRegisterTitle: 'Реєстрація — у застосунку для iPhone',
+  webRegisterLine: 'Створіть акаунт у застосунку Luna Shoots для iPhone — там же оформлюється підписка.',
+  /** Followed by `loginBtn` as the link: «Вже маєте акаунт? Увійти». */
+  webHaveAccount: 'Вже маєте акаунт?',
+  appStoreScan: 'Наведіть камеру iPhone',
+  appStoreQrA11y: 'QR-код на сторінку Luna Shoots в App Store',
+  appStoreBadgeA11y: 'Завантажити в App Store',
+  /** AC-3 — bold, before `viewModeWebLine`. */
+  viewModeWebLead: 'Режим перегляду.',
+  viewModeWebLine: 'Щоб створювати й редагувати зйомки, оформіть підписку в застосунку для iPhone.',
+  viewModeOpenAppStore: 'Відкрити App Store',
+  subscriptionNeededTitle: 'Потрібна підписка',
+  subscriptionNeededLine:
+    'Підписку можна оформити в застосунку Luna Shoots для iPhone. Після оплати тут усе відкриється автоматично.',
+  subscriptionNeededClose: 'Закрити',
+
   // ── US-051 — the paywall ───────────────────────────────────────────────────
   // Owner-confirmed copy (US-051 Copy, 2026-10-08/10). `{price}` is Apple's own
   // localized price — never a hard-coded amount (Guideline 3.1.2).
