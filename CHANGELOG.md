@@ -12,7 +12,7 @@ What changed in each build that went to TestFlight or the App Store. Newest firs
 ## 1.1.0 (build 6) — a big update from the photographers' feedback
 
 Checklist: [`docs/releases/1.1.0-build-5.md`](docs/releases/1.1.0-build-5.md).
-Since build 4 (`v1.0.1-build.4`). Build 5 went to TestFlight only; build 6 adds the paid mark on
+Since build 4 (`v1.0.1-build.4`). Released on the App Store 2026-10-20. Build 5 went to TestFlight only; build 6 adds the paid mark on
 the home screen, found while checking build 5. Two prod migrations went first (`shot_at`, `currency`,
 2026-10-19), and the link surface was deployed before the build; new native code (`expo-contacts`,
 `modules/address-search`).
