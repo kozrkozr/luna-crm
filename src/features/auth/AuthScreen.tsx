@@ -32,6 +32,7 @@ import { verifyEmailCode } from './authLink'
 import { RESEND_COOLDOWN_SECONDS, resendConfirmation } from './emailConfirmation'
 import { register } from './register'
 import { MIN_PASSWORD_LENGTH, withMinLength } from './passwordRules'
+import { LogoMark } from '../../components/LogoMark'
 import { Starfield } from '../../components/Starfield'
 import { FormScrollView } from '../../components/ui/form-scroll-view'
 import { useDesktop } from '../../lib/desktop'
@@ -214,26 +215,13 @@ export function AuthScreen({ initialMode }: { initialMode: AuthMode }) {
 
 /**
  * The logo mark, product name and tagline.
- *
- * The mark is the first letter of the name rather than a hardcoded «З», so the
- * two cannot drift apart — and so it is still right if the product is renamed
- * (see the note on `appName` in the dictionary).
  */
 function Intro() {
   const t = useStrings()
   return (
     <View className="items-center px-2.5 pb-6 pt-8">
-      <View className="bg-secondary mb-4 h-14 w-14 items-center justify-center rounded-2xl">
-        {/*
-          lineHeight pinned to the font size: without it Android adds leading
-          and the letter sits low in the square — the same trap Avatar documents.
-        */}
-        <Text
-          className="text-foreground font-bold"
-          style={{ fontSize: 24, lineHeight: 24 }}
-        >
-          {t.appName.slice(0, 1)}
-        </Text>
+      <View className="mb-4">
+        <LogoMark size={56} />
       </View>
       <Text className="text-numeric-xl text-foreground font-bold">{t.appName}</Text>
       <Text

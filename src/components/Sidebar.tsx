@@ -8,6 +8,7 @@ import ChartColumn from 'lucide-react-native/icons/chart-column'
 import House from 'lucide-react-native/icons/house'
 import Users from 'lucide-react-native/icons/users'
 import { Avatar } from './Avatar'
+import { LogoMark } from './LogoMark'
 import { Button } from './ui/button'
 import { Icon } from './ui/icon'
 import { Text } from './ui/text'
@@ -58,13 +59,9 @@ export function Sidebar() {
 
   return (
     <View className="border-border w-[260px] shrink-0 gap-6 border-r px-4 py-6">
-      {/* The sign-in screen's «L» mark (`AuthScreen`'s Intro), at sidebar size. */}
+      {/* The sign-in screen's logo (`AuthScreen`'s Intro), at sidebar size. */}
       <View className="flex-row items-center gap-2.5 px-2">
-        <View className="bg-secondary h-8 w-8 items-center justify-center rounded-[9px]">
-          <Text className="text-foreground font-bold" style={{ fontSize: 15, lineHeight: 15 }}>
-            {t.appName.slice(0, 1)}
-          </Text>
-        </View>
+        <LogoMark size={28} />
         <Text className="text-body text-foreground font-semibold">{t.appName}</Text>
       </View>
 

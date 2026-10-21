@@ -226,8 +226,7 @@ export const uk = {
    * unrelated app in the same Business category (docs/release-appstore.md,
    * step 4), so the listing needed a different name and the product followed it.
    *
-   * The logo mark takes `appName.slice(0, 1)` — still «L», so the design is
-   * unaffected. **docs/product/ still says «Luna CRM» and is read-only**
+   * **docs/product/ still says «Luna CRM» and is read-only**
    * (CLAUDE.md rule 1); the discovery repo is what reconciles it.
    */
   appName: 'Luna Shoots',
