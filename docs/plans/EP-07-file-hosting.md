@@ -1,22 +1,25 @@
 # EP-07 — file hosting: implementation plan
 
 - **Spec:** `docs/product/decisions/ADR-020-*.md`, `ADR-021-*.md` (uploads from the
-  photographer's app in a desktop browser; iOS upload deferred), `docs/product/epics/EP-07-file-hosting/`,
-  `US-024`/`US-025` in `EP-04`
-- **Date:** 2026-10-03, revised 2026-10-04 for `ADR-021`
-- **Status:** **paused 2026-10-04** — see the next section
+  photographer's app in a desktop browser; iOS upload deferred), `ADR-023` decision 7 and
+  `ADR-024` (file storage is the planned PRO tier; the web app moved to `EP-10`),
+  `docs/product/epics/EP-07-file-hosting/`, `US-024`/`US-025` in `EP-04`
+- **Date:** 2026-10-03, revised 2026-10-04 for `ADR-021`, 2026-10-21 for `ADR-023`/`ADR-024`
+  and the code as it stands after `EP-10`
+- **Status:** **paused 2026-10-04; resume started 2026-10-21** — see the next section
 - **Effort figures are assumptions**, not measurements.
 
 ## ⏸ Paused 2026-10-04 — resume here
 Paused by the owner to ship tester fixes and an App Store release first. Nothing of EP-07 is
 built yet. To resume:
 
-1. **Bring this branch up to date** — rebase `docs/refreeze-adr-020` on `main`. If `main`
-   re-froze `docs/product` meanwhile, resolve `docs/product/README.md` by hand: keep both
-   "What moved" sections, newest first, and the newest source commit.
-2. **Check `fix/us-010-media-reload`** (`fix(US-010)`, `fix(US-021)`) — merged into `main` before
-   the release, or still open?
+1. ~~**Bring this branch up to date**~~ — done 2026-10-21: rebased on `main` (1.1.0 build 6).
+   `main` already carried both re-freezes, so only the plan commits were kept.
+2. ~~**Check `fix/us-010-media-reload`**~~ — merged into `main` 2026-10-04.
 3. **Ask the owner** for what blocks the next step:
+   - **the PRO tier** (Phase 0, #11) — `ADR-023` decision 7 puts file storage in a planned PRO
+     tier that has no price, product or entitlement yet. Who may upload decides `US-036`'s
+     server check, so this blocks `US-036`, not the spike;
    - a Backblaze account and two B2 buckets in EU Central (`dev`, `prod`), a key for each — blocks
      spike S-6;
    - the file types (proposed in Phase 0: raw = any file; finished = JPEG, PNG, HEIC, TIFF, WebP;
@@ -24,35 +27,49 @@ built yet. To resume:
    - the product decisions the design needs: where the quota shows; previews or a list for the
      client; copy for the after-date block and the delete confirmation; a section with no files
      and no link; whole folders; a push pre-prompt or not.
-4. **Then:** spike S-6 (Phase 1) → foundation → `US-040` → `US-036` … (Phase 3).
+4. **Then:** spike S-6 (Phase 1) → foundation → `US-036` … (Phase 3). `US-040` is no longer a
+   step here: `ADR-024` moved it to `EP-10`, which is live on `app.lunashoots.com` since
+   2026-10-21.
 
 Agreed approach (owner, 2026-10-04): build on the existing components, logic kept apart from
 presentation; the owner's design is applied afterwards; Ilona sees it only once designed.
 The design list (screens and states) was given in chat on 2026-10-04 and is mirrored in
 "Screens that need design" below.
 
-**Spec state:** discovery repo at `4877af2` (`ADR-020`, `ADR-021`, `EP-07`, `US-036`–`US-040`),
-frozen into `docs/product` on this branch. `ADR-021` open question 1 (whole folders) is still
-open.
+**Spec state:** `docs/product` on `main`, frozen 2026-10-16 from discovery `28b4bdf`. `EP-07`
+and `US-036`–`US-039` are unchanged since the 2026-10-04 freeze; `ADR-023` and `ADR-024` came
+after and bear on it (PRO tier; `US-040` gone). `ADR-021` open question 1 (whole folders) is
+still open.
 
 ## Where the code is today
-What this plan builds on (surveyed 2026-10-03):
+What this plan builds on (surveyed 2026-10-03, re-surveyed 2026-10-21 on `main` after `EP-10`):
 
-- **Uploads read the whole file into memory** — `fetch(asset.uri).arrayBuffer()` then
-  `supabase.storage…upload` (`src/features/references/api.ts:160`, `crew/api.ts:203`,
-  `shoots/locationMedia.ts:49`). Fine for a photo; impossible for a 40 GB raw set.
-- **Only `expo-image-picker`.** No `expo-document-picker`, `expo-file-system`,
-  `expo-notifications`, and no S3 library.
-- **No storage abstraction** — each feature declares its own `BUCKET` and signed-URL TTL.
-- **One Edge Function**, `link-gateway`. It reads only the two auto-injected secrets; B2 keys
-  will be the first custom secrets. `clientPayload` already returns `rawFilesUrl` /
-  `finishedPhotosUrl` (`index.ts:546`, `:633`), and the crew payload carries no file links.
-- **No `pg_cron`, `pg_net`, no scheduled anything.** v1 grants no `DELETE` anywhere
+- **Uploads read the whole file into memory** — `fetch(asset.uri)` then `arrayBuffer()` and
+  `supabase.storage…upload` (`src/features/references/api.ts:186`, `crew/api.ts:212`,
+  `shoots/locationMedia.ts:57`, and since `US-033` `auth/profile.ts:101`). Fine for a photo;
+  impossible for a 40 GB raw set.
+- **Pickers:** only `expo-image-picker`. No `expo-document-picker`, `expo-file-system`, and no S3
+  library. On the web the upload needs neither — a plain `<input type="file">` and drop zone in
+  a `.web.tsx` file, sliced with `File.slice`.
+- **No storage abstraction** — each feature declares its own `BUCKET` (`shoot-media`, `avatars`)
+  and signed-URL TTL.
+- **Edge Functions:** `link-gateway`, `revenuecat-sync`, `revenuecat-webhook`, `_shared`. Custom
+  secrets already exist (`REVENUECAT_SECRET_KEY`, `REVENUECAT_WEBHOOK_AUTH`), so the B2 keys
+  follow a known path. `clientPayload` returns `rawFilesUrl` / `finishedPhotosUrl`
+  (`link-gateway/index.ts:633`, `:635`); the crew payload carries no file links.
+- **Access is per entitlement** — `account_access` has one row per (user, entitlement), built so
+  PRO is "a second entitlement, not a rewrite" (`20261009120000_account_access.sql`).
+  `has_access()` today counts any entitlement (`20261010120000_view_mode.sql`), so a PRO check
+  is a new function beside it, not a change to it.
+- **Web app is live** (`EP-10`): `app.lunashoots.com`, desktop layout (`US-057`), web-only code in
+  `.web.tsx` files (`AppShell.web.tsx`, `DateField.web.tsx`, …). `US-040`'s work is done.
+- **`expo-notifications` is installed** (`US-041`, `US-066` — local notifications only). `US-039`
+  still needs server push: an APNs key, push tokens, and removing
+  `plugins/withoutPushEntitlement.js`, which strips `aps-environment`.
+- **No `pg_cron`, `pg_net`, no scheduled job.** v1 grants no `DELETE` anywhere
   (`20260825140000_grants.sql`).
 - ~~**Existing gap:** the link view did not re-request the payload on a media error~~ — fixed
-  2026-10-04 in `fix(US-010)` and `fix(US-021)`, branch `fix/us-010-media-reload`.
-- **The creator's app already exports to the web** (build `open-questions.md` #26) but was never
-  designed or tested there. `ADR-021` makes it a supported surface.
+  2026-10-04 in `fix(US-010)` and `fix(US-021)`.
 - **Tests** are end-to-end acceptance suites against local Supabase (`tests/acceptance/`), with a
   guard that refuses hosted projects. B2 cannot be reached from them as-is.
 
@@ -71,6 +88,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 8 | Where a tap on the push leads | `US-039` | open |
 | 9 | `{назва}` in the push copy — the shoot has no title | `US-039` | open |
 | 10 | Section with no files ever and no link — what the client sees | `US-024`/`025` | open |
+| 11 | **PRO tier** (`ADR-023` decision 7): may only a PRO subscriber upload? Its price, product ID (`com.lunashoots.ios.pro.monthly`?), what a base subscriber sees in the Files section, what happens to stored files when PRO lapses. *Added 2026-10-21 — the EP-07 spec predates `ADR-023`* | `US-036`, `US-024`/`025` | open — discovery first (ADR) |
 
 ### Proposed file types (#1)
 **Raw files section — accept any file.** Raw formats are per manufacturer and per camera
@@ -126,14 +144,14 @@ Each story: migration → Edge Function → app → acceptance suite → commit 
 | Order | Story | Main work | Assumed |
 |---|---|---|---|
 | ~~0~~ | ~~fix: link view re-requests on media error~~ | done 2026-10-04 | — |
-| 1 | **US-040** the app in a desktop browser | phone layout centred; `app.lunashoots.com` on Pages (its own deploy of the creator's routes); auth emails as universal links — the iOS app on a phone, the web app on a computer; a pass over every creator screen in four browsers | 4–6 days |
-| 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile`), `shoots.files_delete_at`, per-account usage function; Edge Function `files` (start: quota + date check, sign parts; complete; abort); web: file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
+| ~~1~~ | ~~**US-040** the app in a desktop browser~~ | moved to `EP-10` by `ADR-024`; live 2026-10-21 | — |
+| 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile`), `shoots.files_delete_at`, per-account usage function, a PRO access check (#11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
 | 3 | **US-024 → US-025** client sees and downloads | gateway `clientPayload` adds files with presigned GETs; crew payload unchanged (AC-7, tested); link view: list/previews, single download, download all, date, deleted placeholder | 3–4 days |
 | 4 | **US-037** deletion date | date in both sections; enable `pg_cron` + `pg_net`; daily job → Edge Function `files-sweeper` deletes objects and rows past `files_delete_at` | 2 days |
 | 5 | **US-038** early delete | Edge Function delete (one / all), creator-only; confirmation | 1–2 days |
-| 6 | **US-039** push warning | `expo-notifications`, `push_tokens` table, permission flow; `files-sweeper` sends the 3-day warning via Expo's push API. **Needs from the owner:** an APNs key in the Apple Developer account | 3 days |
+| 6 | **US-039** push warning | `expo-notifications` (installed) gets server push: drop `withoutPushEntitlement.js`, Push capability on the App ID, `push_tokens` table, permission flow; `files-sweeper` sends the 3-day warning via Expo's push API. **Needs from the owner:** an APNs key in the Apple Developer account | 3 days |
 
-**Total, assumed:** ~5 weeks including the spike and `US-040`.
+**Total, assumed:** ~4 weeks including the spike (was ~5 with `US-040`).
 
 ## Screens that need design
 The list given to the owner on 2026-10-04. Built first on existing components; the owner's
@@ -149,7 +167,8 @@ design is applied afterwards.
    decision 2), raw files as a list with per-file download, «Завантажити все», the date, the link
    beside. States: files; files + link; after deletion — the link, or «Файли видалено. Зверніться
    до фотографа, якщо вони ще потрібні.»; no files and no link.
-4. **Web frame** — the phone layout centred on a desktop screen: what surrounds the column.
+4. ~~**Web frame**~~ — done by `US-057` (desktop layout). The Files section is designed into
+   that layout instead.
 
 ### New screens and components
 Creator, web:
@@ -178,3 +197,4 @@ Creator, iOS:
 4. A section with no files and no link — what the client sees (item 3, last state).
 5. Whole folders — can one be picked or dropped?
 6. Push — a pre-prompt (item 14), or the system dialog only?
+7. A base (non-PRO) subscriber — what the Files section shows them (#11).
