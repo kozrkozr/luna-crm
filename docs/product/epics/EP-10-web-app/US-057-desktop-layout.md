@@ -34,9 +34,12 @@ order; components, icons, type and spacing come from the app as built.
 - **Given** the web app at the desktop width
 - **When** the calendar, «Головна» or the sidebar is shown
 - **Then** a calendar day cell shows its shoots' start time and client name, and the sidebar shows
-  the «L» mark the sign-in screen already uses — neither of which the iOS app has (owner,
+  the logo the sign-in screen uses — neither of which the iOS app has (owner,
   2026-10-15: "хай залишаються твої пропозиції"). *Corrected 2026-10-16:* the date under the
   greeting on «Головна» was listed here as a third addition; the iOS app already shows it.
+  *Changed 2026-10-21:* the logo is the App Store icon's moon (the paywall's white mark), not
+  the «L» letter — on the sidebar, the sign-in screen (iOS and web) and the link views' bar
+  (owner: "логотип перевикористаємо ж, той що і для App Store додатка у нас?").
 
 ### AC-4 — A narrow window gets the phone layout *(edge)*
 - **Given** the web app in a window narrower than 1024 px — a phone's browser, or a narrow
