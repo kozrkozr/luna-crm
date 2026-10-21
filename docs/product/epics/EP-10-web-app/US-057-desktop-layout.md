@@ -52,6 +52,14 @@ order; components, icons, type and spacing come from the app as built.
 - **When** any screen is shown
 - **Then** it looks and behaves as before this story
 
+### AC-6 — Link pages keep a readable width
+- **Given** a crew or client link page (`lunashoots.com/s/…`) in a window wider than 640 px
+- **When** it is shown — the shoot, a crew member, all references, the broken-link message
+- **Then** its content sits in a 640 px column in the middle; the bar across the top still spans
+  the window, its logo and UA / EN switch aligned to that column; its sheets are as wide as the
+  column (owner, 2026-10-21, after seeing a link page stretched across a desktop window)
+- **And** below 640 px nothing changes
+
 ## Out of scope
 - Everything working in the browser — `US-040`.
 - New desktop-only features (bulk actions, keyboard shortcuts, a full-screen calendar) — not asked
