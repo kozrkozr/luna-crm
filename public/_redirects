@@ -25,3 +25,16 @@
 /s/:token/crew/:crewId /s/link-crew 200
 /s/:token/references /s/link-references 200
 /s/:token /s/link 200
+
+# `US-040` — the photographer's screens with an id in the path, renamed by the
+# same script. `/contact/new` before `/contact/:id`, which would catch it.
+/shoot/:id/crew/add /app-routes/shoot-crew-add 200
+/shoot/:id/edit /app-routes/shoot-edit 200
+/shoot/:id/references /app-routes/shoot-references 200
+/shoot/:id /app-routes/shoot 200
+/contact/new /app-routes/contact-new 200
+/contact/:id/edit /app-routes/contact-edit 200
+/contact/:id /app-routes/contact 200
+/crew/:id/member/:crewId /app-routes/crew-member 200
+/crew/:id /app-routes/crew 200
+/client/:id /app-routes/client 200
