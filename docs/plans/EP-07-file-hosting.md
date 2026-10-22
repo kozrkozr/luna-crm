@@ -31,7 +31,9 @@ built yet. To resume:
    after. The PRO tier (#11) is deferred: until its ADR, `can_host_files()` grants hosting to any
    account with base access (`has_access()`). **EP-07 does not reach prod before the PRO ADR.**
    Only the `dev` bucket is needed now; `prod` comes with the release.
-5. **Then:** spike S-6 (Phase 1) → foundation → `US-036` … (Phase 3). `US-040` is no longer a
+5. ~~**Spike S-6**~~ — done 2026-10-22, holds: `docs/spikes/S-6-large-upload-to-b2.md`.
+   Owner: stay on B2, keep R2 a configuration change, watch storage use.
+6. **Then:** foundation → `US-036` … (Phase 3). `US-040` is no longer a
    step here: `ADR-024` moved it to `EP-10`, which is live on `app.lunashoots.com` since
    2026-10-21.
 
@@ -87,7 +89,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | open |
 | 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | open |
 | 5 | Delete confirmation and its copy (`US-038`) | `US-038` | open |
-| 6 | Interrupted upload — resumed or restarted | `US-036` | depends on S-6 |
+| 6 | Interrupted upload — resumed or restarted | `US-036` | **resumed** — S-6 F-2, F-3, F-7: by picking the same file again after a closed tab |
 | 7 | When to ask for push permission; what if refused | `US-039` | open |
 | 8 | Where a tap on the push leads | `US-039` | open |
 | 9 | `{назва}` in the push copy — the shoot has no title | `US-039` | open |
@@ -110,7 +112,7 @@ Owner to decide.
 **What a browser can preview:** JPEG, PNG, WebP everywhere; HEIC in Safari only; TIFF and raw
 formats nowhere. Anything else is shown as a file row with a download — which is #3.
 
-## Phase 1 — spike S-6 *(assumed 2–3 days)*
+## Phase 1 — spike S-6 *(done 2026-10-22 — see the spike write-up)*
 **Retires:** the assumption that a browser can upload a raw set to B2 directly (`ADR-021`).
 Written up as `docs/spikes/S-6-large-upload-to-b2.md`, in the S-1/S-2 format.
 
@@ -207,3 +209,7 @@ Creator, iOS:
 5. Whole folders — can one be picked or dropped?
 6. Push — a pre-prompt (item 14), or the system dialog only?
 7. A base (non-PRO) subscriber — what the Files section shows them (#11).
+8. «Завантажити все» on a phone — iPhone Safari asks once per file (S-6 F-8); what it means
+   for a raw set of hundreds of files.
+9. States S-6 added to item 6: «B2 відповідає повільно, продовжуємо…» (F-3) and «Завантаження
+   перервано — виберіть файл знову, щоб продовжити» (F-7). Copy not chosen.
