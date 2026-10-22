@@ -27,7 +27,11 @@ built yet. To resume:
    - the product decisions the design needs: where the quota shows; previews or a list for the
      client; copy for the after-date block and the delete confirmation; a section with no files
      and no link; whole folders; a push pre-prompt or not.
-4. **Then:** spike S-6 (Phase 1) → foundation → `US-036` … (Phase 3). `US-040` is no longer a
+4. **Decided 2026-10-22 (owner):** build and test on `dev` first, settle the open questions
+   after. The PRO tier (#11) is deferred: until its ADR, `can_host_files()` grants hosting to any
+   account with base access (`has_access()`). **EP-07 does not reach prod before the PRO ADR.**
+   Only the `dev` bucket is needed now; `prod` comes with the release.
+5. **Then:** spike S-6 (Phase 1) → foundation → `US-036` … (Phase 3). `US-040` is no longer a
    step here: `ADR-024` moved it to `EP-10`, which is live on `app.lunashoots.com` since
    2026-10-21.
 
@@ -88,7 +92,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 8 | Where a tap on the push leads | `US-039` | open |
 | 9 | `{назва}` in the push copy — the shoot has no title | `US-039` | open |
 | 10 | Section with no files ever and no link — what the client sees | `US-024`/`025` | open |
-| 11 | **PRO tier** (`ADR-023` decision 7): may only a PRO subscriber upload? Its price, product ID (`com.lunashoots.ios.pro.monthly`?), what a base subscriber sees in the Files section, what happens to stored files when PRO lapses. *Added 2026-10-21 — the EP-07 spec predates `ADR-023`* | `US-036`, `US-024`/`025` | open — discovery first (ADR) |
+| 11 | **PRO tier** (`ADR-023` decision 7): may only a PRO subscriber upload? Its price, product ID (`com.lunashoots.ios.pro.monthly`?), what a base subscriber sees in the Files section, what happens to stored files when PRO lapses. *Added 2026-10-21 — the EP-07 spec predates `ADR-023`* | `US-036`, `US-024`/`025` | **deferred** (owner, 2026-10-22) — temporary rule: base access; ADR before prod |
 
 ### Proposed file types (#1)
 **Raw files section — accept any file.** Raw formats are per manufacturer and per camera
@@ -122,8 +126,8 @@ Questions, each pass/fail:
    `response-content-disposition`), or does the browser block or prompt each one?
 5. **Edge runtime:** can a Supabase Edge Function sign S3 requests for B2 (e.g. `aws4fetch`)?
 
-**Needed from the owner before the spike:** a Backblaze account, and two B2 buckets in EU
-Central (`dev`, `prod`) with an application key scoped to each.
+**Needed from the owner before the spike:** a Backblaze account and a `dev` B2 bucket in EU
+Central with an application key scoped to it. The `prod` bucket waits for the release.
 
 ## Phase 2 — foundation *(assumed 3–4 days; no story ID → `chore`)*
 - **B2 buckets:** private, EU Central; CORS for `app.lunashoots.com` (uploads) and the link
@@ -133,6 +137,11 @@ Central (`dev`, `prod`) with an application key scoped to each.
   `abortUpload`, `signDownload`, `deleteObject`, over the S3 API. B2 is the only implementation;
   R2 later is a config change. The small-image paths (`shoot-media`) stay on Supabase Storage
   for now but go through the same shape so they can move (`ADR-020`, "revisit when").
+- **Provider per file:** each `ShootFile` row records its `provider` (`b2`), so a move to R2 can
+  send new uploads there while B2 files run out their 30 days — no migration of objects.
+- **Retention in one place:** retention days (30), warning days (3) and quota (200 GB) are
+  server-side settings; UI copy reads the numbers from them. `shoots.files_delete_at` is fixed at
+  the first upload (`ADR-020`), so a changed setting applies to new shoots only.
 - **Secrets:** `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_BUCKET`, `B2_ENDPOINT` via
   `supabase secrets set`; documented in `docs/deploy-dev.md`.
 - **Tests:** a local S3 (MinIO in Docker) behind the same interface, so acceptance suites stay
@@ -145,7 +154,7 @@ Each story: migration → Edge Function → app → acceptance suite → commit 
 |---|---|---|---|
 | ~~0~~ | ~~fix: link view re-requests on media error~~ | done 2026-10-04 | — |
 | ~~1~~ | ~~**US-040** the app in a desktop browser~~ | moved to `EP-10` by `ADR-024`; live 2026-10-21 | — |
-| 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile`), `shoots.files_delete_at`, per-account usage function, a PRO access check (#11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
+| 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile`), `shoots.files_delete_at`, per-account usage function, `can_host_files()` (base access until the PRO ADR, #11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
 | 3 | **US-024 → US-025** client sees and downloads | gateway `clientPayload` adds files with presigned GETs; crew payload unchanged (AC-7, tested); link view: list/previews, single download, download all, date, deleted placeholder | 3–4 days |
 | 4 | **US-037** deletion date | date in both sections; enable `pg_cron` + `pg_net`; daily job → Edge Function `files-sweeper` deletes objects and rows past `files_delete_at` | 2 days |
 | 5 | **US-038** early delete | Edge Function delete (one / all), creator-only; confirmation | 1–2 days |
