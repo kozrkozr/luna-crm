@@ -36,6 +36,8 @@ export type ReminderData =
   | { kind: 'trial' }
   /** `US-055` — a picked beta tester's access ends in two days. */
   | { kind: 'beta' }
+  /** `US-039` — a shoot's hosted files are deleted soon; opens its «Матеріали» (plan #8). */
+  | { kind: 'files'; shootId: string }
 
 /**
  * iOS keeps at most 64 pending local notifications per app and silently drops
@@ -247,6 +249,48 @@ function place(shoot: Shoot): string | null {
 
 
 /** Local wall-clock — the same assumption `../shoots/status.ts` makes. */
+/** `US-039` — a shoot whose hosted files go at `deleteAt` (`shoots.files_delete_at`). */
+export type FileDeadline = { shootId: string; deleteAt: string }
+
+/**
+ * `US-039` AC-1 — one warning per shoot, `warningDays` before the deletion day,
+ * at its own hour from the settings (owner, 2026-10-23: not the upload's
+ * minute, which can be 2 a.m.). Only shoots that still have files reach here (AC-2:
+ * files deleted early, nothing to warn about), and only live shoots — deleted
+ * ones are not in `shoots` (`listShoots`, `ADR-014`).
+ *
+ * «{name}» is the client and the shoot's date — a shoot has no title (plan #9).
+ * No title line: the story gives one sentence, and it is the body.
+ */
+export function planFileWarnings(
+  deadlines: readonly FileDeadline[],
+  shoots: readonly Shoot[],
+  time: string,
+  warningDays: number,
+  now: Date,
+  t: Strings
+): PlannedReminder[] {
+  const planned: PlannedReminder[] = []
+  for (const { shootId, deleteAt } of deadlines) {
+    const shoot = shoots.find((s) => s.id === shootId)
+    if (!shoot) continue
+    const deleteDay = toIsoDate(new Date(deleteAt))
+    const at = atLocal(addDaysIso(deleteDay, -warningDays), time)
+    if (at.getTime() <= now.getTime() || Date.parse(deleteAt) <= now.getTime()) continue
+    const day = formatDayMonth(shoot.date, t.monthsGenitive)
+    planned.push({
+      id: `files-${shootId}`,
+      at,
+      title: '',
+      body: t.filesWarningBody
+        .replace('{name}', shoot.clientName ? `${shoot.clientName}, ${day}` : day)
+        .replace('{date}', formatDayMonth(deleteDay, t.monthsGenitive)),
+      data: { kind: 'files', shootId },
+    })
+  }
+  return planned
+}
+
 function atLocal(isoDate: string, time: string): Date {
   const [year, month, day] = isoDate.split('-').map(Number)
   const [hours, minutes] = time.split(':').map(Number)

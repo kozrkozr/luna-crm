@@ -1510,6 +1510,17 @@ export const uk = {
   reminderAt: 'о {time}',
   /* ── US-066 — delivery deadline reminders. Copy approved by the owner, chat 2026-10-17. ── */
   reminderDeadlineToggle: 'Дедлайн здачі',
+  /*
+   * `US-039` — the warning before a shoot's hosted files are deleted. The body
+   * is the story's AC-1; the toggle, its caption and the turn-off question are
+   * the owner's (2026-10-23). {name} is «Оля, 25 листопада» (plan #9), {date}
+   * the deletion day, {days} «3 дні» through `dayForms`.
+   */
+  filesWarningBody: 'Файли зйомки «{name}» буде видалено {date}. Завантажте їх, якщо вони ще потрібні.',
+  filesWarningToggle: 'Видалення файлів',
+  filesWarningCaption: 'Попередження за {days} до того, як файли зйомки буде видалено',
+  filesWarningOffQuestion: 'Ви впевнені, що бажаєте вимкнути попередження про видалення файлів? Файли видаляються назавжди.',
+  filesWarningTurnOff: 'Вимкнути',
   reminderDeadlineCaption:
     'Нагадування за день до дедлайну, і ще раз, якщо файли не передано вчасно',
   /** AC-1 — the day before; one of three, picked at random, by one shoot or several. */

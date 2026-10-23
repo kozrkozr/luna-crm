@@ -84,6 +84,9 @@ export function RemindersHost() {
       router.push(`/(app)/shoot/${data.shootId}`)
     } else if (data?.kind === 'digest' && typeof data.date === 'string') {
       router.navigate({ pathname: '/(app)/(tabs)/shoots', params: { date: data.date } })
+    } else if (data?.kind === 'files' && typeof data.shootId === 'string') {
+      // `US-039` — the shoot's «Матеріали», where its files are (plan #8).
+      router.push({ pathname: '/(app)/shoot/[id]', params: { id: data.shootId, tab: 'materials' } })
     } else if (data?.kind === 'deadline') {
       // `US-066` AC-7 — one shoot opens on «Матеріали», several open their
       // `US-063` list over all time, with no period named.

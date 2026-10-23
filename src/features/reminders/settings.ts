@@ -26,6 +26,10 @@ export type ReminderSettings = {
   deadlineOn: boolean
   /** Their local wall-clock time, `HH:MM` — one for both (AC-6). */
   deadlineTime: string
+  /** `US-039` — the warning before a shoot's files are deleted. */
+  filesWarningOn: boolean
+  /** `US-039` — its own hour (owner, 2026-10-23), defaulting to the deadline reminders'. */
+  filesWarningTime: string
 }
 
 /** AC-2 — both on, the digest at 20:00, N = 2; `US-066` AC-6 — deadlines on, at 11:00. */
@@ -36,6 +40,8 @@ export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   beforeHours: 2,
   deadlineOn: true,
   deadlineTime: '11:00',
+  filesWarningOn: true,
+  filesWarningTime: '11:00',
 }
 
 /** AC-9 — the three values N can take. */
@@ -84,6 +90,8 @@ function parse(raw: string): ReminderSettings {
       : d.beforeHours,
     deadlineOn: typeof value.deadlineOn === 'boolean' ? value.deadlineOn : d.deadlineOn,
     deadlineTime: isTime(value.deadlineTime) ? value.deadlineTime : d.deadlineTime,
+    filesWarningOn: typeof value.filesWarningOn === 'boolean' ? value.filesWarningOn : d.filesWarningOn,
+    filesWarningTime: isTime(value.filesWarningTime) ? value.filesWarningTime : d.filesWarningTime,
   }
 }
 

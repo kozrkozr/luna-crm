@@ -736,6 +736,11 @@ export const en: Strings = {
   reminderAt: 'at {time}',
   // US-066 — owner, 2026-10-17.
   reminderDeadlineToggle: 'Delivery deadline',
+  filesWarningBody: 'The files of the shoot “{name}” will be deleted on {date}. Download them if you still need them.',
+  filesWarningToggle: 'File deletion',
+  filesWarningCaption: "A warning {days} before a shoot's files are deleted",
+  filesWarningOffQuestion: 'Are you sure you want to turn off file deletion warnings? Files are deleted for good.',
+  filesWarningTurnOff: 'Turn off',
   reminderDeadlineCaption: 'A reminder the day before, and again if the files are late',
   deadlineReminderSoonTitles1: [
     "Delivery's tomorrow ⏳ Final push",

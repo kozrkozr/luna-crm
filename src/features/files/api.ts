@@ -102,3 +102,18 @@ export async function callFiles<T>(action: string, args: Record<string, unknown>
     return { ok: false, reason: 'network' }
   }
 }
+
+/**
+ * `US-039` — live shoots whose hosted files are still there and still to be
+ * deleted: when. RLS gives the creator their own shoots only.
+ */
+export async function listFileDeadlines(): Promise<{ shootId: string; deleteAt: string }[] | null> {
+  const { data, error } = await supabase
+    .from('shoots')
+    .select('id, files_delete_at, shoot_files!inner(id)')
+    .is('deleted_at', null)
+    .gt('files_delete_at', new Date().toISOString())
+    .eq('shoot_files.status', 'complete')
+  if (error || !data) return null
+  return data.map((row) => ({ shootId: row.id as string, deleteAt: row.files_delete_at as string }))
+}

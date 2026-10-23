@@ -26,6 +26,9 @@ import {
   type ReminderPermission,
 } from '../../src/features/reminders/permission'
 import { syncReminders } from '../../src/features/reminders/sync'
+import { useDestructiveConfirm } from '../../src/components/DestructiveAction'
+import { hostingLimits } from '../../src/features/files/api'
+import { plural } from '../../src/features/shoots/home'
 
 /** Matches `Notifications.dc.html`'s 200px wheel. */
 const PICKER_HEIGHT = 200
@@ -50,10 +53,14 @@ export default function NotificationsScreen() {
   const [settings, setSettings] = useState<ReminderSettings | null>(null)
   const [permission, setPermission] = useState<ReminderPermission | null>(null)
   /** Which time wheel is open — at most one at a time. */
-  const [pickerOpen, setPickerOpen] = useState<'digest' | 'deadline' | null>(null)
+  const [pickerOpen, setPickerOpen] = useState<'digest' | 'deadline' | 'files' | null>(null)
+
+  /** `US-039` — «за 3 дні», from the server's settings rather than a literal. */
+  const [warningDays, setWarningDays] = useState<number | null>(null)
 
   useEffect(() => {
     void loadReminderSettings().then(setSettings)
+    void hostingLimits().then((limits) => setWarningDays(limits?.warningDays ?? null))
   }, [])
 
   const readPermission = useCallback(() => {
@@ -75,6 +82,19 @@ export default function NotificationsScreen() {
     setSettings(next)
     void saveReminderSettings(next).then(() => syncReminders())
   }
+
+  /*
+    `US-039` — turning the files warning off asks first (owner, 2026-10-23):
+    the files are deleted for good. Turning it on does not.
+
+    **Above the early returns**, like every hook here — see `shoot/[id]`'s
+    note on «Rendered more hooks than during the previous render».
+  */
+  const { ask: askFilesWarningOff, dialog: filesWarningDialog } = useDestructiveConfirm<null>({
+    label: t.filesWarningTurnOff,
+    question: t.filesWarningOffQuestion,
+    onConfirm: () => update({ filesWarningOn: false }),
+  })
 
   const enable = async () => {
     tapped()
@@ -227,6 +247,34 @@ export default function NotificationsScreen() {
                 />
               ) : null}
             </View>
+
+            {/* ── Видалення файлів — `US-039`, the deadline block repeated ── */}
+            <View className="bg-card border-border overflow-hidden rounded-xl border">
+              <ToggleRow
+                title={t.filesWarningToggle}
+                caption={
+                  warningDays === null
+                    ? ''
+                    : t.filesWarningCaption.replace('{days}', `${warningDays} ${plural(warningDays, t.dayForms)}`)
+                }
+                checked={settings.filesWarningOn}
+                onChange={(on) => {
+                  setPickerOpen(null)
+                  if (on) update({ filesWarningOn: true })
+                  else askFilesWarningOff(null)
+                }}
+              />
+              {settings.filesWarningOn ? (
+                <TimeRow
+                  label={t.reminderTimeLabel}
+                  value={settings.filesWarningTime}
+                  open={pickerOpen === 'files'}
+                  onToggle={() => setPickerOpen((open) => (open === 'files' ? null : 'files'))}
+                  onChange={(filesWarningTime) => update({ filesWarningTime })}
+                />
+              ) : null}
+            </View>
+            {filesWarningDialog}
           </View>
         ) : null}
       </ScrollView>

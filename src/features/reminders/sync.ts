@@ -3,7 +3,8 @@ import * as Notifications from 'expo-notifications'
 import { supabase } from '../../lib/supabase/client'
 import { DEFAULT_LANGUAGE, stringsFor, type Language } from '../../i18n'
 import { listShoots } from '../shoots/api'
-import { MAX_PENDING, planReminders } from './plan'
+import { MAX_PENDING, planFileWarnings, planReminders } from './plan'
+import { hostingLimits, listFileDeadlines } from '../files/api'
 import {
   planBetaReminder,
   planTrialReminder,
@@ -86,9 +87,13 @@ async function run(): Promise<void> {
       : TRIAL_REMINDER_BEFORE_MS
     const trialReminder = planTrialReminder(await readTrial(), await readPrice(), now, t, beforeMs)
     const betaReminder = planBetaReminder(await readBetaUntil(), now, t)
+    // `US-039` — files about to be deleted, right after the access warnings:
+    // losing files is the other thing a reminder must not drop at the 64 cut.
+    const fileWarnings = settings.filesWarningOn ? await readFileWarnings(shoots, settings.filesWarningTime, now, t) : []
     const plan = [
       ...(trialReminder ? [trialReminder] : []),
       ...(betaReminder ? [betaReminder] : []),
+      ...fileWarnings,
       ...planReminders(shoots, settings, now, t),
     ].slice(0, MAX_PENDING)
 
@@ -104,6 +109,21 @@ async function run(): Promise<void> {
     // A reminder is a convenience; failing to schedule one must never surface
     // as a failed save. The next sync tries again.
   }
+}
+
+/**
+ * `US-039` — the hosted files' warnings. A failed read plans none this pass;
+ * the next sync tries again.
+ */
+async function readFileWarnings(
+  shoots: Parameters<typeof planFileWarnings>[1],
+  time: string,
+  now: Date,
+  t: ReturnType<typeof stringsFor>
+) {
+  const [deadlines, limits] = await Promise.all([listFileDeadlines(), hostingLimits()])
+  if (!deadlines || !limits) return []
+  return planFileWarnings(deadlines, shoots, time, limits.warningDays, now, t)
 }
 
 /**
