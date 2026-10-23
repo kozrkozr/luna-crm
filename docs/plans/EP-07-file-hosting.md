@@ -97,7 +97,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 7 | When to ask for push permission; what if refused | `US-039` | open |
 | 8 | Where a tap on the push leads | `US-039` | open |
 | 9 | `{назва}` in the push copy — the shoot has no title | `US-039` | open |
-| 10 | Section with no files ever and no link — what the client sees | `US-024`/`025` | open |
+| 10 | Section with no files ever and no link — what the client sees | `US-024`/`025` | **decided** (owner, 2026-10-23): nothing — the section is not shown, as before `US-036` |
 | 12 | A deleted shoot's files | `US-036`, `US-038` | **decided** (owner, 2026-10-23): deleted with the shoot; their space leaves the quota at once, the sweeper removes the bytes. Deleting a shoot that has files warns first — copy below. Not in any story yet: note in discovery |
 | 13 | Abandoned uploads | `US-037` | **decided** (owner, 2026-10-23): an upload untouched for **7 days** is aborted by the sweeper, its space freed. A setting, like retention |
 | 11 | **PRO tier** (`ADR-023` decision 7): may only a PRO subscriber upload? Its price, product ID (`com.lunashoots.ios.pro.monthly`?), what a base subscriber sees in the Files section, what happens to stored files when PRO lapses. *Added 2026-10-21 — the EP-07 spec predates `ADR-023`* | `US-036`, `US-024`/`025` | **deferred** (owner, 2026-10-22) — temporary rule: base access; ADR before prod |
