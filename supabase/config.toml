@@ -456,3 +456,7 @@ verify_jwt = false
 # S-7 — RevenueCat calls it with its own Authorization header, not a Supabase JWT.
 [functions.revenuecat-webhook]
 verify_jwt = false
+
+# US-037 — called by pg_cron with its own secret (`x-sweeper-secret`), not a JWT.
+[functions.files-sweeper]
+verify_jwt = false

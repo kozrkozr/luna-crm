@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native'
 import { Button } from '../../components/ui/button'
 import { Text } from '../../components/ui/text'
 import { useStrings } from '../../i18n/LanguageProvider'
-import { formatDayMonthYear } from '../shoots/date'
+import { formatDayMonthYear, toIsoDate } from '../shoots/date'
 import {
   callFiles,
   filesUsage,
@@ -86,7 +86,7 @@ export function HostedFiles({ shootId, kind }: { shootId: string; kind: FileKind
       case 'quota':
         return fill(t.filesQuotaFull, { quota: quotaBytes ? formatGigabytes(quotaBytes, t.decimalSeparator) : '' })
       case 'expired':
-        return fill(t.filesExpired, { date: deleteAt ? formatDayMonthYear(deleteAt.slice(0, 10), t.monthsGenitive) : '' })
+        return fill(t.filesExpired, { date: deleteAt ? formatDayMonthYear(toIsoDate(new Date(deleteAt)), t.monthsGenitive) : '' })
       case 'not_a_photo':
         return fill(t.filesNotAPhoto, { name, finished: t.finishedFilesSection, raw: t.sourceFilesSection })
       default:
@@ -109,6 +109,12 @@ export function HostedFiles({ shootId, kind }: { shootId: string; kind: FileKind
       style={{ borderRadius: 12, outline: dragging ? '2px dashed currentColor' : 'none', outlineOffset: -4 }}
     >
       <View className="gap-2 px-3.5 pb-3.5">
+        {/* `US-037` AC-1 / AC-2 — the date, once the section has files; the client sees the same. */}
+        {stored.length > 0 && deleteAt && new Date(deleteAt) > new Date() ? (
+          <Text className="text-label text-muted-foreground">
+            {fill(t.filesAvailableUntil, { date: formatDayMonthYear(toIsoDate(new Date(deleteAt)), t.monthsGenitive) })}
+          </Text>
+        ) : null}
         {stored.map((file) => (
           <View key={file.id} className="flex-row items-center justify-between gap-3">
             <Text className="text-body-sm text-foreground min-w-0 flex-1" numberOfLines={1}>{file.name}</Text>

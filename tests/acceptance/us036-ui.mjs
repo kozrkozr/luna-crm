@@ -60,6 +60,7 @@ await waitFor(`document.querySelectorAll('input[type=file]').length === 4`, { la
 
 let body = await B.text()
 ok('the quota line shows on the shoot (owner, 2026-10-23)', body.includes('Використано 0 Б з 200 ГБ'), body.match(/Використано[^\n]*/)?.[0])
+ok('US-037 AC-2 no deletion date before any file', !body.includes('Файли доступні до'))
 ok('each section offers files and a folder', (body.match(/Додати файли/g) ?? []).length === 2 && (body.match(/Додати папку/g) ?? []).length === 2)
 
 // ---------- AC-1 — picked, uploaded, listed ----------
@@ -68,6 +69,7 @@ await waitFor(`document.body.innerText.includes('1,5 МБ') && !document.body.in
 const stored = (await seed.from('shoot_files').select('name, kind, status').eq('shoot_id', SHOOT)).data
 ok('AC-1 the picked file is stored in raw files, complete', stored?.length === 1 && stored[0].kind === 'raw' && stored[0].status === 'complete', JSON.stringify(stored))
 ok('AC-1 it lists with its size', (await B.text()).includes('IMG_0001.CR3'))
+ok('US-037 AC-1 the creator sees «Файли доступні до {дата}» once a file is there', /Файли доступні до \d{1,2} [а-яї]+/.test(await B.text()), (await B.text()).match(/Файли доступні[^\n]*/)?.[0])
 
 // ---------- finished photos are photos ----------
 await pick(2, [video])

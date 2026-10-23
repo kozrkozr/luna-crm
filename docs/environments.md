@@ -108,6 +108,27 @@ The bucket itself — private, SSE-B2, CORS, no lifecycle rules — is set by a 
 
 **Never point the acceptance suites at B2.** `files-storage` refuses any endpoint but localhost.
 
+### The daily sweep (`US-037`)
+`pg_cron` calls the `files-sweeper` function at 03:15 UTC to delete files past their date, files
+of deleted shoots, and uploads unfinished after `abandoned_upload_days` (7). It needs, **once per
+project**, its address and a shared secret — in Vault for the schedule, as a function secret for
+the function. Without them the job runs and does nothing.
+
+```bash
+# a long random secret, the same in both places
+SECRET=$(openssl rand -hex 32)
+npx supabase secrets set FILES_SWEEPER_SECRET=$SECRET
+```
+
+```sql
+-- SQL Editor of the same project
+select vault.create_secret('https://<ref>.supabase.co/functions/v1/files-sweeper', 'files_sweeper_url');
+select vault.create_secret('<the same secret>', 'files_sweeper_secret');
+```
+
+To run it now instead of at 03:15: `select public.request_files_sweep();` — the answer lands in
+`net._http_response`. Locally the suite calls the function directly (`us037-fn`).
+
 ### Before EP-07 reaches prod
 From `docs/spikes/S-6-large-upload-to-b2.md`:
 1. A `prod` bucket in the same EU Central account, private; a key restricted to it with
@@ -118,4 +139,5 @@ From `docs/spikes/S-6-large-upload-to-b2.md`:
    above the expected use of all accounts with a margin, not at "200 GB × accounts"; alerts at
    75 % / 100 % go to the owner. A reached cap stops uploads for **everyone** (S-6 F-4).
 4. The settings row (`file_hosting_settings`) checked on prod: retention, warning, quota, URL
-   lifetime.
+   lifetime, abandoned-upload days.
+5. The daily sweep set up on prod (above): `FILES_SWEEPER_SECRET` and the two Vault secrets.
