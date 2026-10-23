@@ -49,6 +49,7 @@ Eight suites need no browser at all:
 | `us036-ui` | as `us036-fn`, plus the app on :8098 (browser-driving) |
 | `us024-fn` | as `us036-fn` (the gateway signs downloads with the same settings) |
 | `us024-ui` | as `us024-fn`, plus the link surface on :8099 exported against local Supabase |
+| `us037-fn` | as `us036-fn` (calls `files-sweeper` with the local secret from `local-s3.env`) |
 
 Everything else needs all four.
 
