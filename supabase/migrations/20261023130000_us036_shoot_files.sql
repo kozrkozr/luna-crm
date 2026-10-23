@@ -79,9 +79,10 @@ $$;
 revoke all on function public.can_host_files() from public, anon;
 grant execute on function public.can_host_files() to authenticated;
 
--- Bytes an account holds: every file row of every shoot it created, uploading
--- ones included (their space is reserved). A soft-deleted shoot's files count
--- too — the bytes stay in the store until they are deleted.
+-- Bytes an account holds against its quota: every file row of every live shoot
+-- it created, uploading ones included (their space is reserved). A deleted
+-- shoot's files leave the quota at once — they go with the shoot, and the
+-- sweeper removes the bytes (owner, 2026-10-23; plan #12).
 create function public.files_usage_bytes(p_user uuid)
 returns bigint
 language sql
@@ -92,7 +93,7 @@ as $$
   select coalesce(sum(f.size_bytes), 0)::bigint
     from public.shoot_files f
     join public.shoots s on s.id = f.shoot_id
-   where s.creator_id = p_user;
+   where s.creator_id = p_user and s.deleted_at is null;
 $$;
 
 revoke all on function public.files_usage_bytes(uuid) from public, anon, authenticated;

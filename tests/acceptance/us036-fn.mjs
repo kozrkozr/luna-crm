@@ -162,3 +162,5 @@ r = await call(photo.jwt, 'signParts', { fileId: mine.body.fileId, partNumbers: 
 ok('ADR-014 an upload to a deleted shoot can no longer be signed', r.status === 404, JSON.stringify(r.body))
 rows = (await photo.client.from('shoot_files').select('id').eq('shoot_id', shoot)).data
 ok('ADR-014 a deleted shoot\'s files are hidden from the creator', rows?.length === 0, JSON.stringify(rows))
+const usageAfter = (await photo.client.rpc('my_files_usage')).data
+ok('a deleted shoot\'s files leave the quota at once (owner, 2026-10-23)', usageAfter === 0, String(usageAfter))
