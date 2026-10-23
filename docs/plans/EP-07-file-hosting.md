@@ -89,7 +89,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | # | Question | Blocks | Status |
 |---|---|---|---|
 | 1 | File types | `US-036` | **decided** (owner, 2026-10-23): raw files — any file, video included; finished photos — JPEG, PNG, HEIC, TIFF, WebP only, no video |
-| 2 | Quota shown to the creator | `US-036` | **yes** (owner, 2026-10-03) — where: from the design |
+| 2 | Quota shown to the creator | `US-036` | **yes** (owner, 2026-10-03) — in the shoot's Files section (owner, 2026-10-23); the design may add more places |
 | 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | open |
 | 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | **decided** (owner, 2026-10-23) — see "Approved copy" below |
 | 5 | Delete confirmation and its copy (`US-038`) | `US-038` | open |
@@ -221,12 +221,13 @@ Creator, iOS:
 14. **Push pre-prompt** before the system permission dialog — only if wanted.
 
 ### Decisions the design depends on
-1. Where the quota shows — the shoot, the profile, or both?
+1. ~~Where the quota shows~~ — the shoot's Files section (owner, 2026-10-23).
 2. What "view" means for the client — previews for finished photos and a list for raw, or a list
    for everything?
 3. Copy for items 9 and 10.
 4. A section with no files and no link — what the client sees (item 3, last state).
-5. Whole folders — can one be picked or dropped?
+5. ~~Whole folders~~ — yes; every file in it and its subfolders goes into one flat list (owner,
+   2026-10-23; `US-036` open question 5).
 6. Push — a pre-prompt (item 14), or the system dialog only?
 7. A base (non-PRO) subscriber — what the Files section shows them (#11).
 8. «Завантажити все» on a phone — iPhone Safari asks once per file (S-6 F-8); what it means
