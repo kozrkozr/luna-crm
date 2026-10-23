@@ -193,7 +193,7 @@ export function HostedFiles({ shootId, kind }: { shootId: string; kind: FileKind
   )
 }
 
-/** `US-036` — «Використано X з {квота} ГБ», refreshed when an upload finishes. */
+/** `US-036` — «Використано 7,3 МБ з 200 ГБ», refreshed when an upload finishes. */
 export function FilesQuota() {
   const t = useStrings()
   const [used, setUsed] = useState<number | null>(null)
@@ -210,8 +210,24 @@ export function FilesQuota() {
   return (
     <Text className="text-label text-muted-foreground">
       {t.filesQuotaUsed
-        .replace('{used}', formatGigabytes(used, t.decimalSeparator))
-        .replace('{quota}', formatGigabytes(quota, t.decimalSeparator))}
+        .replace('{used}', formatBytes(used, t.byteUnits, t.decimalSeparator))
+        .replace('{quota}', formatBytes(quota, t.byteUnits, t.decimalSeparator))}
     </Text>
   )
+}
+
+/**
+ * `US-036` — the shoot's complete hosted files, both sections: counted with the
+ * links in «Файли» and on the «Матеріали» tab (owner, 2026-10-23).
+ */
+export function useHostedFileCount(shootId: string) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!shootId) return
+    const load = () =>
+      void listShootFiles(shootId).then((files) => files && setCount(files.filter((f) => f.status === 'complete').length))
+    load()
+    return uploads.onDone((id) => id === shootId && load())
+  }, [shootId])
+  return count
 }

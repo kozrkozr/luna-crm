@@ -59,7 +59,7 @@ await B.navigate(`${APP_URL}/shoot/${SHOOT}?tab=materials`)
 await waitFor(`document.querySelectorAll('input[type=file]').length === 4`, { label: 'the two sections\' pickers' })
 
 let body = await B.text()
-ok('the quota line shows on the shoot (owner, 2026-10-23)', body.includes('Використано 0 з 200 ГБ'), body.match(/Використано[^\n]*/)?.[0])
+ok('the quota line shows on the shoot (owner, 2026-10-23)', body.includes('Використано 0 Б з 200 ГБ'), body.match(/Використано[^\n]*/)?.[0])
 ok('each section offers files and a folder', (body.match(/Додати файли/g) ?? []).length === 2 && (body.match(/Додати папку/g) ?? []).length === 2)
 
 // ---------- AC-1 — picked, uploaded, listed ----------
@@ -97,7 +97,9 @@ ok('S-6 F-7 picking the same file again finishes the same upload — one row, co
   all?.length === 2 && all[1].name === 'big.bin' && all[1].status === 'complete' && all[1].size_bytes === 220_200_960, JSON.stringify(all))
 
 body = await B.text()
-ok('the quota line follows the uploads', body.includes('Використано 0,2 з 200 ГБ'), body.match(/Використано[^\n]*/)?.[0])
+ok('the quota line follows the uploads, in its own unit (owner, 2026-10-23)', body.includes('Використано 221,7 МБ з 200 ГБ'), body.match(/Використано[^\n]*/)?.[0])
+ok('«Файли» counts the hosted files beside the links', body.includes('2 файли · 0 посилань'), body.match(/\d+ файл[^\n]*/)?.[0])
+ok('an empty link slot no longer says «В розробці»', !body.includes('В розробці'))
 
 fs.rmSync(dir, { recursive: true, force: true })
 B.close()

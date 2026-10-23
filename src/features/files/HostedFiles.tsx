@@ -13,3 +13,8 @@ export function HostedFiles(_: { shootId: string; kind: FileKind }) {
 export function FilesQuota() {
   return null
 }
+
+/** `US-036` — how many hosted files the shoot has. Native: 0, as above. */
+export function useHostedFileCount(_shootId: string) {
+  return 0
+}

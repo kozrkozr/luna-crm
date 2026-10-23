@@ -67,7 +67,7 @@ import {
   type ShootLinkField,
 } from '../../../../src/features/shoots/api'
 import { listReferences, type Reference } from '../../../../src/features/references/api'
-import { FilesQuota, HostedFiles } from '../../../../src/features/files/HostedFiles'
+import { FilesQuota, HostedFiles, useHostedFileCount } from '../../../../src/features/files/HostedFiles'
 import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
 import { clientLinkToken, crewLinkToken, linkUrl } from '../../../../src/features/crew/links'
 import {
@@ -117,6 +117,8 @@ export default function ShootDetailScreen() {
   // without access. Copying a link is not one of them (AC-4).
   const guard = useGuard()
   const { id, tab: openOn } = useLocalSearchParams<{ id: string; tab?: string }>()
+  // `US-036` — hosted files count as materials too (owner, 2026-10-23). Web only.
+  const hostedCount = useHostedFileCount(id)
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
@@ -355,7 +357,7 @@ export default function ShootDetailScreen() {
           // tab showed the client too; v3 moved the client onto «Деталі», so
           // counting them here would promise a person who is not in the list.
           people: String(crew.length),
-          materials: String(references.length + fileCount),
+          materials: String(references.length + fileCount + hostedCount),
         }}
         onHeight={setHeaderHeight}
         actions={
@@ -437,6 +439,7 @@ export default function ShootDetailScreen() {
             <MaterialsTab
               desktop={desktop}
               shoot={shoot}
+              hostedCount={hostedCount}
               references={references}
               onAdded={(reference) =>
                 setState((current) =>
@@ -1666,8 +1669,11 @@ function MaterialsTab({
   onToast,
   onDeadlineChanged,
   onLinkSaved,
+  hostedCount,
 }: {
   shoot: Shoot
+  /** `US-036` — complete hosted files, both sections; 0 on iOS. */
+  hostedCount: number
   references: Reference[]
   onAdded: (reference: Reference) => void
   onRemoved: (id: string) => void
@@ -1726,7 +1732,9 @@ function MaterialsTab({
         <View className="flex-row items-baseline justify-between">
           <SectionLabel label={t.editFilesTitle} />
           <Text className="text-label text-muted-foreground">
-            {`${setLinks} ${plural(setLinks, t.linkForms)}`}
+            {hostedCount > 0
+              ? `${hostedCount} ${plural(hostedCount, t.fileForms)} · ${setLinks} ${plural(setLinks, t.linkForms)}`
+              : `${setLinks} ${plural(setLinks, t.linkForms)}`}
           </Text>
         </View>
         {/* `US-036` — the account's quota, where files are added (owner, 2026-10-23). Web only. */}
@@ -1795,10 +1803,9 @@ function MaterialsTab({
  *
  * - **A link is set** — the host leads, the row opens it, and «Копіювати» puts
  *   it on the clipboard. That is what a creator sends to a client.
- * - **Nothing is set** — «В розробці», the string `FileSection` has always used
- *   for this exact case, and the row leads to the edit screen where the field
- *   is. No new copy: the chevron says the row goes somewhere, and the screen it
- *   goes to is the one that already owns both inputs.
+ * - **Nothing is set** — the title alone, and the row leads to the editor.
+ *   It said «В розробці» until `US-036` put the upload right under it (owner,
+ *   2026-10-23: the files are no longer "in development").
  *
  * The empty row is NOT a dead label. Hiding it (which this did until it was
  * pointed out) leaves the creator with nothing on this screen saying the slots
@@ -1877,9 +1884,11 @@ function FileRow({
           </Text>
           {/* The link itself is the editor's business while it is open — v3
               hides this line behind `f.idle` for exactly that reason. */}
-          {!editing ? (
+          {/* No «В розробці» under an empty slot any more: the files are
+              uploaded right here (`US-036`; owner, 2026-10-23). */}
+          {!editing && url ? (
             <Text className="text-label text-muted-foreground" numberOfLines={1}>
-              {url ? displayLink(url) : t.inDevelopment}
+              {displayLink(url)}
             </Text>
           ) : null}
         </Pressable>

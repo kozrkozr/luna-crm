@@ -620,7 +620,10 @@ export const uk = {
    * come in as {raw}/{finished} so the message says what the screen says.
    * {quota} is `file_hosting_settings`' number, never a literal 200.
    */
-  filesQuotaUsed: 'Використано {used} з {quota} ГБ',
+  /** Each in its own unit — «Використано 7,3 МБ з 200 ГБ» (owner, 2026-10-23). */
+  filesQuotaUsed: 'Використано {used} з {quota}',
+  /** файл / файли / файлів */
+  fileForms: ['файл', 'файли', 'файлів'],
   filesQuotaFull: 'Сховище заповнене ({quota} ГБ). Видаліть файли інших зйомок, щоб завантажити нові.',
   filesExpired: 'Термін зберігання файлів цієї зйомки минув {date}. Завантажити нові файли вже не можна.',
   filesSlow: 'Сховище відповідає повільно — завантаження триває.',
