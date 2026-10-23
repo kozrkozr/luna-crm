@@ -7,7 +7,7 @@ import { Text } from '../../components/ui/text'
 import { useStrings } from '../../i18n/LanguageProvider'
 import { openExternalUrl } from '../../lib/openExternalUrl'
 import { formatBytes } from '../files/format'
-import { formatDayMonthYear } from '../shoots/date'
+import { formatDayMonthYear, toIsoDate } from '../shoots/date'
 import type { LinkHostedFile, LinkHostedFiles } from './gateway'
 
 /**
@@ -51,7 +51,7 @@ export function LinkFiles({
 
   const until =
     hosted.deleteAt && !hosted.deleted
-      ? t.filesAvailableUntil.replace('{date}', formatDayMonthYear(hosted.deleteAt.slice(0, 10), t.monthsGenitive))
+      ? t.filesAvailableUntil.replace('{date}', formatDayMonthYear(toIsoDate(new Date(hosted.deleteAt)), t.monthsGenitive))
       : null
 
   return (
