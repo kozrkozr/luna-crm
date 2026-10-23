@@ -92,7 +92,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 2 | Quota shown to the creator | `US-036` | **yes** (owner, 2026-10-03) — in the shoot's Files section (owner, 2026-10-23); the design may add more places |
 | 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | **decided** (owner, 2026-10-23): a list for both, for now. Finished photos are planned to become **galleries** — their own page where the creator uploads and styles them, with a gallery link for the client. A future epic: to discovery first (story/ADR), not built here |
 | 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | **decided** (owner, 2026-10-23) — see "Approved copy" below |
-| 5 | Delete confirmation and its copy (`US-038`) | `US-038` | open |
+| 5 | Delete confirmation and its copy (`US-038`) | `US-038` | **decided** (owner, 2026-10-23): asked, with the approved copy (`uk.ts` `filesDeleteOneQuestion`, `filesDeleteAllQuestion`) |
 | 6 | Interrupted upload — resumed or restarted | `US-036` | **resumed** — S-6 F-2, F-3, F-7: by picking the same file again after a closed tab |
 | 7 | When to ask for push permission; what if refused | `US-039` | open |
 | 8 | Where a tap on the push leads | `US-039` | open |
@@ -197,7 +197,7 @@ Each story: migration → Edge Function → app → acceptance suite → commit 
 | ~~2~~ | **US-036** upload — *built 2026-10-23, tested on dev* | migration: `shoot_files` table (`ShootFile` + technical columns `provider`, `status`, `upload_id`, `relative_path` — not in `data-model.md`; owner agreed 2026-10-23, note it in discovery at the next re-freeze), `shoots.files_delete_at`, per-account usage function, `can_host_files()` (base access until the PRO ADR, #11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
 | ~~3~~ | **US-024 → US-025** client sees and downloads — *built 2026-10-23 (one code path for both sections), on dev* | gateway `clientPayload` adds files with presigned GETs; crew payload unchanged (AC-7, tested); link view: list/previews, single download, download all, date, deleted placeholder | 3–4 days |
 | ~~4~~ | **US-037** deletion date — *built 2026-10-23, on dev; the dev sweep set up in Vault and run (200, nothing due)* | date in both sections; enable `pg_cron` + `pg_net`; daily job → Edge Function `files-sweeper` deletes objects and rows past `files_delete_at`, files of deleted shoots (#12), and uploads untouched for `abandoned_upload_days` = 7 (#13, a new settings column) | 2 days |
-| 5 | **US-038** early delete | Edge Function delete (one / all), creator-only; confirmation | 1–2 days |
+| ~~5~~ | **US-038** early delete — *built 2026-10-23, on dev; with plan #12's delete-shoot question* | Edge Function delete (one / all), creator-only; confirmation | 1–2 days |
 | 6 | **US-039** push warning | `expo-notifications` (installed) gets server push: drop `withoutPushEntitlement.js`, Push capability on the App ID, `push_tokens` table, permission flow; `files-sweeper` sends the 3-day warning via Expo's push API. **Needs from the owner:** an APNs key in the Apple Developer account | 3 days |
 
 **Total, assumed:** ~4 weeks including the spike (was ~5 with `US-040`).
