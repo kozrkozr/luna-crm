@@ -47,6 +47,8 @@ Eight suites need no browser at all:
 | `files-storage` | Deno (`brew install deno`) + the local S3 — no Supabase |
 | `us036-fn` | Supabase + the local S3 + `functions serve --env-file supabase/functions/local-s3.env` |
 | `us036-ui` | as `us036-fn`, plus the app on :8098 (browser-driving) |
+| `us024-fn` | as `us036-fn` (the gateway signs downloads with the same settings) |
+| `us024-ui` | as `us024-fn`, plus the link surface on :8099 exported against local Supabase |
 
 Everything else needs all four.
 

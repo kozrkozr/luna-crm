@@ -25,6 +25,7 @@
  * `US-008` gave it its one write.
  */
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { configFromEnv, createStorage, type Storage } from '../_shared/storage.ts'
 
 /**
  * The link surface is a static site on another origin (`ADR-012`), so every
@@ -156,6 +157,8 @@ type ShootRow = {
    * takes it back out of a payload that has shipped.
    */
   client_notes: string | null
+  /** `US-036` AC-2 — when the shoot's hosted files go; null until the first upload. */
+  files_delete_at: string | null
   /**
    * `20260903120000`. **On the link surface since 2026-09-03** (owner): the
    * artboard puts the venue above the address, and a reader who has never been
@@ -525,6 +528,77 @@ function filesLink(value: string | null): string | null {
   }
 }
 
+/*
+  ── Hosted files (`US-024`, `US-025`; `ADR-020`) ──────────────────────────────
+
+  The store is created on first use, not at load: a gateway served without the
+  B2 settings (most local suites) must keep answering every link, and a shoot
+  with no hosted files never needs it.
+*/
+let storage: Storage | null | undefined
+function fileStore(): Storage | null {
+  if (storage === undefined) {
+    try {
+      storage = createStorage(configFromEnv())
+    } catch (e) {
+      console.error(`hosted files: no store — ${e instanceof Error ? e.message : e}`)
+      storage = null
+    }
+  }
+  return storage
+}
+
+type LinkHostedFile = { id: string; name: string; size: number; url: string }
+
+/**
+ * The client's view of the shoot's hosted files: each complete file with a
+ * download URL that saves under its name, and the deletion date.
+ *
+ * `deleted` is AC-5's case — the shoot had hosted files and has none now
+ * (their date passed, or the creator deleted them, `US-037`/`US-038`). It is
+ * per shoot, not per section: once a file is gone nothing records which
+ * section it was in.
+ *
+ * Uploads still in progress are not the client's to see.
+ */
+async function hostedFiles(supabase: Supabase, row: ShootRow) {
+  const none = { deleteAt: row.files_delete_at, deleted: false, raw: [] as LinkHostedFile[], finished: [] as LinkHostedFile[] }
+  if (!row.files_delete_at) return none
+
+  const { data } = await supabase
+    .from('shoot_files')
+    .select('id, kind, name, object_key, size_bytes')
+    .eq('shoot_id', row.id)
+    .eq('status', 'complete')
+    .order('created_at', { ascending: true })
+  const files = data as { id: string; kind: string; name: string; object_key: string; size_bytes: number }[] | null
+  const expired = new Date(row.files_delete_at) <= new Date()
+  if (!files?.length || expired) return { ...none, deleted: true }
+
+  const store = fileStore()
+  if (!store) return none
+  const { data: settings } = await supabase.from('file_hosting_settings').select('download_url_seconds').maybeSingle()
+  const seconds = (settings as { download_url_seconds: number } | null)?.download_url_seconds ?? 3600
+
+  const signedFiles = await Promise.all(
+    files.map(async (f) => ({
+      kind: f.kind as 'raw' | 'finished',
+      file: {
+        id: f.id,
+        name: f.name,
+        size: Number(f.size_bytes),
+        url: await store.signDownload(f.object_key, f.name, seconds),
+      },
+    }))
+  )
+  return {
+    deleteAt: row.files_delete_at,
+    deleted: false,
+    raw: signedFiles.filter((f) => f.kind === 'raw').map((f) => f.file),
+    finished: signedFiles.filter((f) => f.kind === 'finished').map((f) => f.file),
+  }
+}
+
 async function clientPayload(supabase: Supabase, shootId: string) {
   const { data: shoot } = await supabase
     .from('shoots')
@@ -543,7 +617,7 @@ async function clientPayload(supabase: Supabase, shootId: string) {
       whole word before editing either list.
     */
     .select(
-      'id, date, start_time, end_time, creator_id, location_name, location_address, location_note, location_attachment, client_notes, raw_files_url, finished_photos_url, clients(name, instagram)'
+      'id, date, start_time, end_time, creator_id, location_name, location_address, location_note, location_attachment, client_notes, raw_files_url, finished_photos_url, files_delete_at, clients(name, instagram)'
     )
     .eq('id', shootId)
     .is('deleted_at', null)
@@ -633,6 +707,10 @@ async function clientPayload(supabase: Supabase, shootId: string) {
     rawFilesUrl: filesLink(row.raw_files_url),
     // US-025 — same rule, same fallback.
     finishedPhotosUrl: filesLink(row.finished_photos_url),
+    // US-024 / US-025 — the hosted files themselves. **Client payload only**:
+    // `crewPayload` has no such field, and AC-7 of both stories is that it
+    // never gets one (owner, 2026-10-03).
+    files: await hostedFiles(supabase, row),
     references: await Promise.all(
       (references ?? []).map(async (reference) => ({
         id: reference.id,

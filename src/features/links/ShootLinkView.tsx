@@ -27,6 +27,7 @@ import { roleWithEmoji } from '../../i18n/vocabulary'
 import { useStrings } from '../../i18n/LanguageProvider'
 import type { Strings } from '../../i18n'
 import { openExternalUrl } from '../../lib/openExternalUrl'
+import { LinkFiles, useFreshFiles } from './LinkFiles'
 import { routeUrl } from '../../lib/routeUrl'
 import {
   formatDayMonthWeekday,
@@ -111,6 +112,11 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
     setResolution(payload ? { phase: 'ready', payload } : { phase: 'invalid' })
   }, [token, shootId])
   const onMediaError = useMediaReload(load)
+  // `US-024` / `US-025` — download URLs lapse, the link does not.
+  const linkPayload = resolution.phase === 'ready' ? resolution.payload : null
+  const hasFiles = !!linkPayload && 'files' in linkPayload &&
+    (linkPayload.files.raw.length > 0 || linkPayload.files.finished.length > 0)
+  useFreshFiles(load, hasFiles)
 
   useEffect(() => {
     if (token === undefined && shootId === undefined) return
@@ -648,45 +654,14 @@ export function ShootLinkView({ token, shootId }: { token?: string; shootId?: st
             </View>
           ) : null}
 
-          {/* `US-024` / `US-025` — the client's two file links. The crew payload
-              carries none, which is why this is inside the client branch. */}
-          {!isCrew && (payload.rawFilesUrl || payload.finishedPhotosUrl) ? (
-            <View className="gap-2">
-              <SectionLabel label={t.filesAndLinks} />
-              <Card variant="flat" className="gap-0 p-0">
-                {(
-                  [
-                    { title: t.sourceFilesSection as string, url: payload.rawFilesUrl },
-                    { title: t.finishedFilesSection as string, url: payload.finishedPhotosUrl },
-                  ] as { title: string; url: string | null }[]
-                )
-                  .filter((file): file is { title: string; url: string } => !!file.url)
-                  .map((file, index) => (
-                    <View
-                      key={file.title}
-                      className={`min-h-[60px] flex-row items-center gap-3 p-3.5 ${
-                        index > 0 ? 'border-border border-t' : ''
-                      }`}
-                    >
-                      <View className="min-w-0 flex-1">
-                        <Text className="text-body-sm text-foreground font-semibold">
-                          {file.title}
-                        </Text>
-                        <Text className="text-label text-muted-foreground mt-0.5" numberOfLines={1}>
-                          {file.url.replace(/^https?:\/\//, '')}
-                        </Text>
-                      </View>
-                      <Button
-                        variant="outline"
-                        className="h-9 shrink-0 px-3"
-                        onPress={() => void openExternalUrl(file.url)}
-                      >
-                        <Text className="text-label font-medium">{t.openWord}</Text>
-                      </Button>
-                    </View>
-                  ))}
-              </Card>
-            </View>
+          {/* `US-024` / `US-025` — hosted files and the pasted links. The crew
+              payload carries neither, which is why this is inside the client branch. */}
+          {!isCrew ? (
+            <LinkFiles
+              rawFilesUrl={payload.rawFilesUrl}
+              finishedPhotosUrl={payload.finishedPhotosUrl}
+              files={payload.files}
+            />
           ) : null}
 
           {payload.organizer ? <OrganizerCard organizer={payload.organizer} t={t} /> : null}

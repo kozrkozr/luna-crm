@@ -152,8 +152,25 @@ export type ClientLinkPayload = {
   rawFilesUrl: string | null
   /** `US-025` — the same, for finished photos. */
   finishedPhotosUrl: string | null
+  /**
+   * `US-024` / `US-025` — the hosted files (`ADR-020`). **Client only**: the
+   * crew payload has no such field (AC-7 of both stories).
+   */
+  files: LinkHostedFiles
   references: LinkReference[]
   crew: LinkClientCrewMember[]
+}
+
+/** One hosted file; `url` downloads it under `name` and lapses (re-request the payload). */
+export type LinkHostedFile = { id: string; name: string; size: number; url: string }
+
+export type LinkHostedFiles = {
+  /** «Файли доступні до {дата}» (`US-024` AC-3); null before the first upload. */
+  deleteAt: string | null
+  /** The shoot had hosted files and they are gone (AC-5). */
+  deleted: boolean
+  raw: LinkHostedFile[]
+  finished: LinkHostedFile[]
 }
 
 /**

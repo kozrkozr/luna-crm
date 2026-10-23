@@ -973,6 +973,15 @@ export const uk = {
   organizerNotes: 'Нотатки від організатора',
   filesAndLinks: 'Файли та посилання',
   openWord: 'Відкрити',
+  /*
+   * `US-024` / `US-025` — hosted files on the client's link. `filesAvailableUntil`
+   * and `filesDeletedNotice` are the stories' own copy (AC-3, AC-5);
+   * «Завантажити все» is the design list's (plan, item 3).
+   */
+  filesAvailableUntil: 'Файли доступні до {date}',
+  filesDeletedNotice: 'Файли видалено. Зверніться до фотографа, якщо вони ще потрібні.',
+  downloadWord: 'Завантажити',
+  downloadAll: 'Завантажити все',
   organizerSection: 'Організатор',
   callOrganizer: 'Подзвонити',
   privateLinkWarning: 'Приватне посилання — не публікуйте його.',
