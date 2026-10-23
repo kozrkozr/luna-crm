@@ -18,6 +18,8 @@
  *   complete   { fileId }                 → { filesDeleteAt }
  *   abort      { fileId }                 → {}
  *   check      { fileId }                 → {}   — "may this upload go on?" (S-6 F-5)
+ *   delete     { fileId }                 → {}   — `US-038`: one stored file
+ *   deleteAll  { shootId }                → { deleted } — `US-038`: every file of the shoot
  *
  * A refusal is { error: reason } with a stable reason the app maps to its copy:
  *   unauthorized, not_found, no_access, expired, quota, not_a_photo,
@@ -93,6 +95,16 @@ async function ownUpload(userId: string, fileId: unknown): Promise<FileRow | nul
     .is('shoots.deleted_at', null)
     .maybeSingle()
   return (data as FileRow | null) ?? null
+}
+
+/** Store first, then the row — see `delete`. An upload in progress is aborted. */
+async function removeFile(file: { id: string; object_key: string; status: string; upload_id: string | null }) {
+  if (file.status === 'uploading' && file.upload_id) {
+    await storage.abortUpload(file.object_key, file.upload_id).catch(() => {})
+  }
+  await storage.deleteObject(file.object_key)
+  const { error } = await db.from('shoot_files').delete().eq('id', file.id)
+  if (error) throw new Error(error.message)
 }
 
 Deno.serve(async (req) => {
@@ -219,6 +231,46 @@ Deno.serve(async (req) => {
         // The parts list proves the store still has the upload and answers.
         await storage.listParts(file.object_key, file.upload_id!)
         return json({})
+      }
+
+      /*
+        `US-038` — the creator deletes before the date. The object goes first,
+        then the row: the row is what the quota counts (AC-1), and one left
+        behind by a failed store call is still listed, so the creator can try
+        again. The shoot's date stays as it is (AC-3).
+      */
+      case 'delete': {
+        if (typeof body.fileId !== 'string') return refuse('bad_request', 400)
+        const { data } = await db
+          .from('shoot_files')
+          .select('id, object_key, status, upload_id, shoots!inner(creator_id, deleted_at)')
+          .eq('id', body.fileId)
+          .eq('shoots.creator_id', userId)
+          .is('shoots.deleted_at', null)
+          .maybeSingle()
+        const file = data as { id: string; object_key: string; status: string; upload_id: string | null } | null
+        if (!file) return refuse('not_found', 404)
+        await removeFile(file)
+        return json({})
+      }
+
+      case 'deleteAll': {
+        if (typeof body.shootId !== 'string') return refuse('bad_request', 400)
+        const { data: shoot } = await db
+          .from('shoots')
+          .select('id')
+          .eq('id', body.shootId)
+          .eq('creator_id', userId)
+          .is('deleted_at', null)
+          .maybeSingle()
+        if (!shoot) return refuse('not_found', 404)
+        const { data } = await db
+          .from('shoot_files')
+          .select('id, object_key, status, upload_id')
+          .eq('shoot_id', body.shootId)
+        const files = (data ?? []) as { id: string; object_key: string; status: string; upload_id: string | null }[]
+        for (const file of files) await removeFile(file)
+        return json({ deleted: files.length })
       }
 
       default:
