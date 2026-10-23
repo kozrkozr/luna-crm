@@ -90,7 +90,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 |---|---|---|---|
 | 1 | File types | `US-036` | **decided** (owner, 2026-10-23): raw files — any file, video included; finished photos — JPEG, PNG, HEIC, TIFF, WebP only, no video |
 | 2 | Quota shown to the creator | `US-036` | **yes** (owner, 2026-10-03) — in the shoot's Files section (owner, 2026-10-23); the design may add more places |
-| 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | open |
+| 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | **decided** (owner, 2026-10-23): a list for both, for now. Finished photos are planned to become **galleries** — their own page where the creator uploads and styles them, with a gallery link for the client. A future epic: to discovery first (story/ADR), not built here |
 | 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | **decided** (owner, 2026-10-23) — see "Approved copy" below |
 | 5 | Delete confirmation and its copy (`US-038`) | `US-038` | open |
 | 6 | Interrupted upload — resumed or restarted | `US-036` | **resumed** — S-6 F-2, F-3, F-7: by picking the same file again after a closed tab |
