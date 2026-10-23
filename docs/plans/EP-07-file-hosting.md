@@ -123,6 +123,10 @@ screen does («Вихідні файли», «Готові файли»); «До
 файли або папки» approved; system files (`.DS_Store`, `Thumbs.db`, `desktop.ini`, `._*`) are
 skipped in folders; closing the tab mid-upload asks first (the browser's own wording).
 
+Owner, 2026-10-23, after the first dev look: the quota line gives each number its own unit
+(«Використано 7,3 МБ з 200 ГБ»); «В розробці» is gone from the creator's empty link slot; hosted
+files are counted beside the links («3 файли · 0 посилань») and in the «Матеріали» tab badge.
+
 Deleting a shoot that has files (#12), shown only when it has some — on `confirmDeleteShoot`'s
 pattern, the question then the cost:
 
