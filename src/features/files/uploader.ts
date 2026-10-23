@@ -350,3 +350,22 @@ const range = (n: number) => Array.from({ length: n }, (_, i) => i + 1)
 
 /** One queue per tab: uploads go on while the photographer moves between shoots. */
 export const uploads = new UploadQueue()
+
+/*
+ * Closing or reloading the tab mid-upload asks first (owner, 2026-10-23). The
+ * browser shows its own wording — a page cannot set the text any more — so
+ * there is no copy here. Moving between screens inside the app does not ask:
+ * the queue lives on.
+ */
+let running = false
+uploads.subscribe((all) => {
+  running = all.some((u) => u.phase !== 'done' && u.phase !== 'failed')
+})
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', (event) => {
+    if (!running) return
+    event.preventDefault()
+    // Older Chrome and Safari still want this set.
+    event.returnValue = ''
+  })
+}

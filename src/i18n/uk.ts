@@ -616,8 +616,7 @@ export const uk = {
   finishedFilesSection: 'Готові файли',
   /*
    * `US-036` — uploading hosted files, in the photographer's browser. Copy
-   * approved by the owner 2026-10-23 (plan "Approved copy"), except `filesAdd`,
-   * `filesAddFolder` and `filesDropHint`, which wait for approval. Section names
+   * approved by the owner 2026-10-23 (plan "Approved copy"). Section names
    * come in as {raw}/{finished} so the message says what the screen says.
    * {quota} is `file_hosting_settings`' number, never a literal 200.
    */
