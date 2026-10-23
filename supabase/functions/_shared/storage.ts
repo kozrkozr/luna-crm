@@ -19,6 +19,13 @@ export type StorageConfig = {
   bucket: string
   keyId: string
   secret: string
+  /**
+   * Where a browser reaches the store, when that differs from where this
+   * function does. Local only: functions run in Docker and reach the local S3
+   * at `host.docker.internal`, a browser or a suite at `127.0.0.1`. A presigned
+   * URL is bound to its host, so it must be signed for the browser's.
+   */
+  publicEndpoint?: string
 }
 
 export type UploadedPart = { partNumber: number; etag: string; size: number }
@@ -37,6 +44,7 @@ export function configFromEnv(): StorageConfig {
     bucket: get('B2_BUCKET'),
     keyId: get('B2_KEY_ID'),
     secret: get('B2_APPLICATION_KEY'),
+    publicEndpoint: Deno.env.get('B2_PUBLIC_ENDPOINT')?.replace(/\/+$/, '') || undefined,
   }
 }
 
@@ -48,8 +56,9 @@ export function createStorage(config: StorageConfig) {
     region: config.region,
   })
 
-  const objectUrl = (key: string) =>
-    `${config.endpoint}/${config.bucket}/${key.split('/').map(encodeURIComponent).join('/')}`
+  const path = (key: string) => `${config.bucket}/${key.split('/').map(encodeURIComponent).join('/')}`
+  const objectUrl = (key: string) => `${config.endpoint}/${path(key)}`
+  const publicObjectUrl = (key: string) => `${config.publicEndpoint ?? config.endpoint}/${path(key)}`
 
   async function call(url: string, init: RequestInit = {}): Promise<string> {
     const res = await aws.fetch(url, init)
@@ -79,7 +88,7 @@ export function createStorage(config: StorageConfig) {
 
     /** A URL the browser can PUT one part to, without our credentials. */
     signPart(key: string, uploadId: string, partNumber: number, expiresSeconds: number) {
-      const u = new URL(objectUrl(key))
+      const u = new URL(publicObjectUrl(key))
       u.searchParams.set('partNumber', String(partNumber))
       u.searchParams.set('uploadId', uploadId)
       return presign(u.toString(), 'PUT', expiresSeconds)
@@ -128,7 +137,7 @@ export function createStorage(config: StorageConfig) {
 
     /** A download URL that saves under `fileName` instead of opening in the tab. */
     signDownload(key: string, fileName: string, expiresSeconds: number) {
-      const u = new URL(objectUrl(key))
+      const u = new URL(publicObjectUrl(key))
       u.searchParams.set('response-content-disposition', contentDisposition(fileName))
       return presign(u.toString(), 'GET', expiresSeconds)
     },
@@ -168,6 +177,11 @@ export function createStorage(config: StorageConfig) {
         .filter((v) => xmlValue(v, 'Key') === key)
         .map((v) => xmlValue(v, 'VersionId'))
         .filter((id): id is string => !!id)
+      // A store that keeps no versions lists none; there a plain DELETE is final.
+      if (versions.length === 0) {
+        await call(objectUrl(key), { method: 'DELETE' })
+        return
+      }
       for (const versionId of versions) {
         const v = new URL(objectUrl(key))
         v.searchParams.set('versionId', versionId)
@@ -198,6 +212,10 @@ function escapeXml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+/** Named and numeric entities — B2 writes an ETag's quotes as `&quot;`, others as `&#34;`. */
 function unescapeXml(s: string) {
-  return s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 }

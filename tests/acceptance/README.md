@@ -43,8 +43,15 @@ Eight suites need no browser at all:
 |---|---|
 | `softdelete-fn` `us003-check` `us005-media` `us009-db` `us018-media` `us042-db` `us052-db` | Supabase only |
 | `us006-gateway` `us009-app` | Supabase + `functions serve link-gateway` |
+| `files-settings-db` | Supabase only |
+| `files-storage` | Deno (`brew install deno`) + the local S3 — no Supabase |
 
 Everything else needs all four.
+
+**File hosting (EP-07) never runs against Backblaze B2.** Its suites use a local S3 store
+(SeaweedFS in Docker): `bash scripts/local-s3.sh start`. Functions that touch files are served with
+its settings: `npx supabase functions serve --env-file supabase/functions/local-s3.env`.
+`files-storage` refuses any endpoint but localhost.
 
 ## Running them
 

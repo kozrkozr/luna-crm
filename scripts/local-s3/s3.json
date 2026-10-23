@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "luna-local",
+      "credentials": [{ "accessKey": "luna-local-key", "secretKey": "luna-local-secret" }],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}
