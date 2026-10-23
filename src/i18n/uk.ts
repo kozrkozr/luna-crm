@@ -614,6 +614,27 @@ export const uk = {
    */
   sourceFilesSection: 'Вихідні файли',
   finishedFilesSection: 'Готові файли',
+  /*
+   * `US-036` — uploading hosted files, in the photographer's browser. Copy
+   * approved by the owner 2026-10-23 (plan "Approved copy"), except `filesAdd`,
+   * `filesAddFolder` and `filesDropHint`, which wait for approval. Section names
+   * come in as {raw}/{finished} so the message says what the screen says.
+   * {quota} is `file_hosting_settings`' number, never a literal 200.
+   */
+  filesQuotaUsed: 'Використано {used} з {quota} ГБ',
+  filesQuotaFull: 'Сховище заповнене ({quota} ГБ). Видаліть файли інших зйомок, щоб завантажити нові.',
+  filesExpired: 'Термін зберігання файлів цієї зйомки минув {date}. Завантажити нові файли вже не можна.',
+  filesSlow: 'Сховище відповідає повільно — завантаження триває.',
+  filesOffline: "Немає з'єднання. Завантаження продовжиться, щойно з'явиться мережа.",
+  filesInterrupted: 'Завантаження «{name}» перервано. Виберіть цей файл ще раз, щоб продовжити з того ж місця.',
+  filesNotAPhoto: '«{name}» — не фото. У «{finished}» можна завантажити JPEG, PNG, HEIC, TIFF або WebP. Відео та інші файли додавайте у «{raw}».',
+  filesFailed: 'Не вдалося завантажити «{name}». Спробуйте ще раз.',
+  filesAdd: 'Додати файли',
+  filesAddFolder: 'Додати папку',
+  filesDropHint: 'Перетягніть сюди файли або папки',
+  /** Decimal (1 ГБ = 1000 МБ), as B2 bills and Finder shows. */
+  byteUnits: ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'],
+  decimalSeparator: ',',
   locationPhotoLabel: 'Фото локації',
   /** учасник / учасники / учасників */
   participantForms: ['учасник', 'учасники', 'учасників'],

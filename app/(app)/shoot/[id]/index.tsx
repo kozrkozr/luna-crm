@@ -67,6 +67,7 @@ import {
   type ShootLinkField,
 } from '../../../../src/features/shoots/api'
 import { listReferences, type Reference } from '../../../../src/features/references/api'
+import { FilesQuota, HostedFiles } from '../../../../src/features/files/HostedFiles'
 import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
 import { clientLinkToken, crewLinkToken, linkUrl } from '../../../../src/features/crew/links'
 import {
@@ -1698,9 +1699,9 @@ function MaterialsTab({
     present but empty so a reader can tell "not ready" from "this app does not do
     that".)
   */
-  const files: { field: ShootLinkField; title: string; url: string | null }[] = [
-    { field: 'rawFilesUrl', title: t.sourceFilesSection, url: shoot.rawFilesUrl },
-    { field: 'finishedPhotosUrl', title: t.finishedFilesSection, url: shoot.finishedPhotosUrl },
+  const files: { field: ShootLinkField; kind: 'raw' | 'finished'; title: string; url: string | null }[] = [
+    { field: 'rawFilesUrl', kind: 'raw', title: t.sourceFilesSection, url: shoot.rawFilesUrl },
+    { field: 'finishedPhotosUrl', kind: 'finished', title: t.finishedFilesSection, url: shoot.finishedPhotosUrl },
   ]
   const setLinks = files.filter((file) => file.url).length
 
@@ -1728,29 +1729,34 @@ function MaterialsTab({
             {`${setLinks} ${plural(setLinks, t.linkForms)}`}
           </Text>
         </View>
+        {/* `US-036` — the account's quota, where files are added (owner, 2026-10-23). Web only. */}
+        <FilesQuota />
         {/* `US-042` — above the two links, where the artboard puts it. */}
         <DeliveryDeadline shoot={shoot} onChanged={onDeadlineChanged} onToast={onToast} />
         <Card variant="flat" className="gap-0 p-0">
           {files.map((file, index) => (
-            <FileRow
-              key={file.field}
-              title={file.title}
-              url={file.url}
-              divided={index > 0}
-              editing={editingLink === file.field}
-              onStartEdit={guard(() => setEditingLink(file.field))}
-              onCancelEdit={() => setEditingLink(null)}
-              onSave={async (value) => {
-                const ok = await updateShootLink(shoot.id, file.field, value)
-                if (!ok) return false
-                // The row reads from `shoot`, so the screen has to hear about
-                // it — a refetch would work too and would blink the whole tab.
-                onLinkSaved(file.field, value.trim() || null)
-                setEditingLink(null)
-                return true
-              }}
-              onCopied={onCopied}
-            />
+            <View key={file.field}>
+              <FileRow
+                title={file.title}
+                url={file.url}
+                divided={index > 0}
+                editing={editingLink === file.field}
+                onStartEdit={guard(() => setEditingLink(file.field))}
+                onCancelEdit={() => setEditingLink(null)}
+                onSave={async (value) => {
+                  const ok = await updateShootLink(shoot.id, file.field, value)
+                  if (!ok) return false
+                  // The row reads from `shoot`, so the screen has to hear about
+                  // it — a refetch would work too and would blink the whole tab.
+                  onLinkSaved(file.field, value.trim() || null)
+                  setEditingLink(null)
+                  return true
+                }}
+                onCopied={onCopied}
+              />
+              {/* `US-036` — hosted files beside the pasted link (AC-5). Web only (`ADR-021`). */}
+              <HostedFiles shootId={shoot.id} kind={file.kind} />
+            </View>
           ))}
         </Card>
       </View>
