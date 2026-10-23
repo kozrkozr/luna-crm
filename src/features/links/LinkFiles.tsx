@@ -47,6 +47,7 @@ export function LinkFiles({
   ].filter((s) => s.items.length > 0 || s.url || hosted.deleted)
 
   if (sections.length === 0) return null
+  const hasHostedFiles = hosted.raw.length > 0 || hosted.finished.length > 0
 
   const until =
     hosted.deleteAt && !hosted.deleted
@@ -91,8 +92,22 @@ export function LinkFiles({
           </View>
         ))}
       </Card>
+      {hasHostedFiles && onAppleMobile() ? (
+        <Text className="text-label text-muted-foreground">{t.filesOpenInSafari}</Text>
+      ) : null}
     </View>
   )
+}
+
+/**
+ * iPhone or iPad, in a browser. An app's built-in browser (Telegram, Mail,
+ * Instagram…) shows a file instead of saving it, and cannot be told apart from
+ * Safari, so every Apple mobile reader is told where downloads work (owner,
+ * 2026-10-23). iPadOS reports a Mac; its touch points give it away.
+ */
+function onAppleMobile() {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined') return false
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 }
 
 function FileLine({ file }: { file: LinkHostedFile }) {

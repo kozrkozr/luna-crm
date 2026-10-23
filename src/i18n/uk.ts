@@ -982,6 +982,8 @@ export const uk = {
   filesDeletedNotice: 'Файли видалено. Зверніться до фотографа, якщо вони ще потрібні.',
   downloadWord: 'Завантажити',
   downloadAll: 'Завантажити все',
+  /** iPhone/iPad only: an app's built-in browser shows a file instead of saving it (owner, 2026-10-23). */
+  filesOpenInSafari: 'Щоб завантажити файли на iPhone, відкрийте це посилання в Safari.',
   organizerSection: 'Організатор',
   callOrganizer: 'Подзвонити',
   privateLinkWarning: 'Приватне посилання — не публікуйте його.',

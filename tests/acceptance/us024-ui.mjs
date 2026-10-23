@@ -90,6 +90,18 @@ await B.ev(`(() => { const b = [...document.querySelectorAll('div[role=button],b
 await sleep(5500)
 ok('AC-2 «Завантажити все» downloads every file of the section', downloads.length === 2 && downloads.includes('IMG_0002.CR3'), JSON.stringify(downloads))
 
+ok('a desktop browser is not told to open Safari', !body.includes('відкрийте це посилання в Safari'))
+
+// ---------- iPhone: where downloads work (owner, 2026-10-23) ----------
+await B.send('Network.setUserAgentOverride', {
+  userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  acceptLanguage: 'uk-UA',
+})
+await B.navigate(`${SITE_URL}/s/${withFiles.clientToken}`)
+await B.waitFor(`document.body.innerText.includes('IMG_0002.CR3')`, { label: 'the hosted files on an iPhone' })
+ok('an iPhone reader is told to open the link in Safari', (await B.text()).includes('Щоб завантажити файли на iPhone, відкрийте це посилання в Safari.'))
+await B.send('Network.setUserAgentOverride', { userAgent: ua.value, acceptLanguage: 'uk-UA' })
+
 // ---------- AC-5 ----------
 await B.navigate(`${SITE_URL}/s/${gone.clientToken}`)
 await B.waitFor(`document.body.innerText.includes('Файли видалено')`, { label: 'the deleted notice' })

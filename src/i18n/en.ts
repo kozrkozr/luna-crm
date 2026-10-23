@@ -479,6 +479,7 @@ export const en: Strings = {
   filesDeletedNotice: 'The files have been deleted. Contact the photographer if you still need them.',
   downloadWord: 'Download',
   downloadAll: 'Download all',
+  filesOpenInSafari: 'To download files on iPhone, open this link in Safari.',
   organizerSection: 'Organiser',
   callOrganizer: 'Call',
   privateLinkWarning: 'A private link — please do not publish it.',
