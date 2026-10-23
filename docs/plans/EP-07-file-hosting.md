@@ -91,7 +91,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 1 | File types | `US-036` | **decided** (owner, 2026-10-23): raw files — any file, video included; finished photos — JPEG, PNG, HEIC, TIFF, WebP only, no video |
 | 2 | Quota shown to the creator | `US-036` | **yes** (owner, 2026-10-03) — where: from the design |
 | 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | open |
-| 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | open |
+| 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | **decided** (owner, 2026-10-23) — see "Approved copy" below |
 | 5 | Delete confirmation and its copy (`US-038`) | `US-038` | open |
 | 6 | Interrupted upload — resumed or restarted | `US-036` | **resumed** — S-6 F-2, F-3, F-7: by picking the same file again after a closed tab |
 | 7 | When to ask for push permission; what if refused | `US-039` | open |
@@ -99,6 +99,22 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 9 | `{назва}` in the push copy — the shoot has no title | `US-039` | open |
 | 10 | Section with no files ever and no link — what the client sees | `US-024`/`025` | open |
 | 11 | **PRO tier** (`ADR-023` decision 7): may only a PRO subscriber upload? Its price, product ID (`com.lunashoots.ios.pro.monthly`?), what a base subscriber sees in the Files section, what happens to stored files when PRO lapses. *Added 2026-10-21 — the EP-07 spec predates `ADR-023`* | `US-036`, `US-024`/`025` | **deferred** (owner, 2026-10-22) — temporary rule: base access; ADR before prod |
+
+### Approved copy for `US-036` (owner, 2026-10-23)
+`{quota}` comes from `file_hosting_settings`, never a literal 200.
+
+| State | uk | en |
+|---|---|---|
+| Upload blocked after the deletion date (AC-7) | Термін зберігання файлів цієї зйомки минув {дата}. Завантажити нові файли вже не можна. | File storage for this shoot ended on {date}. New files can no longer be uploaded. |
+| Quota full, or the new files would pass it (AC-3) | Сховище заповнене ({квота} ГБ). Видаліть файли інших зйомок, щоб завантажити нові. | Storage is full ({quota} GB). Delete files from other shoots to upload new ones. |
+| Quota indicator | Використано {X} з {квота} ГБ | {X} of {quota} GB used |
+| B2 slow, retrying (S-6 F-3) | Сховище відповідає повільно — завантаження триває. | Storage is responding slowly — still uploading. |
+| Offline | Немає з'єднання. Завантаження продовжиться, щойно з'явиться мережа. | No connection. The upload will continue once you're back online. |
+| Interrupted, file must be picked again (S-6 F-7) | Завантаження «{назва}» перервано. Виберіть цей файл ще раз, щоб продовжити з того ж місця. | The upload of “{name}” was interrupted. Choose this file again to continue where it stopped. |
+| Not a photo, in finished photos | «{назва}» — не фото. У «Готові фото» можна завантажити JPEG, PNG, HEIC, TIFF або WebP. Відео та інші файли додавайте у «Вихідники». | “{name}” is not a photo. Finished photos accept JPEG, PNG, HEIC, TIFF or WebP. Add videos and other files to Raw files. |
+| Failed for another reason | Не вдалося завантажити «{назва}». Спробуйте ще раз. | Couldn't upload “{name}”. Please try again. |
+
+English section names: use the app's existing ones if it has them.
 
 ### Proposed file types (#1)
 **Raw files section — accept any file.** Raw formats are per manufacturer and per camera
