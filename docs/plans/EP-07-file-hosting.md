@@ -118,6 +118,11 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 
 English section names: use the app's existing ones if it has them.
 
+Owner, 2026-10-23, after the build: the not-a-photo message names the sections as the creator's
+screen does («Вихідні файли», «Готові файли»); «Додати файли», «Додати папку», «Перетягніть сюди
+файли або папки» approved; system files (`.DS_Store`, `Thumbs.db`, `desktop.ini`, `._*`) are
+skipped in folders; closing the tab mid-upload asks first (the browser's own wording).
+
 Deleting a shoot that has files (#12), shown only when it has some — on `confirmDeleteShoot`'s
 pattern, the question then the cost:
 
