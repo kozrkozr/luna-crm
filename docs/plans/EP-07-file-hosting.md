@@ -223,7 +223,9 @@ design is applied afterwards.
 Creator, web:
 5. **Drop zone** and its drag-over state.
 6. **Upload progress panel** — several files, per-file and total progress, cancel, failure and
-   retry, "interrupted — resume" (depends on S-6).
+   retry, "interrupted — resume" (depends on S-6). **Seen from every screen** (owner,
+   2026-10-23): uploads go on while the photographer moves between screens, but today the
+   progress shows only on that shoot — e.g. a small indicator in the sidebar.
 7. **Quota indicator** — «Використано X з 200 ГБ»; nearly full; full.
 8. **Quota full message** — «Сховище заповнене (200 ГБ). Видаліть файли інших зйомок, щоб
    завантажити нові.»
