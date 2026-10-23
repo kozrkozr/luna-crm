@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
+// Deep per-icon import — see the note in src/components/ui/select.tsx.
+import Trash from 'lucide-react-native/icons/trash'
+import { useDestructiveConfirm } from '../../components/DestructiveAction'
+import { Icon } from '../../components/ui/icon'
 import { Button } from '../../components/ui/button'
 import { Text } from '../../components/ui/text'
 import { useStrings } from '../../i18n/LanguageProvider'
@@ -15,6 +19,7 @@ import {
   type ShootFile,
 } from './api'
 import { fromDrop, fromInput } from './collect'
+import { fillSummary, shootFilesSummary, type FileSummary } from './summary'
 import { formatBytes, formatGigabytes } from './format'
 import { uploads, type Upload } from './uploader'
 
@@ -59,6 +64,15 @@ export function HostedFiles({ shootId, kind }: { shootId: string; kind: FileKind
       unDone()
     }
   }, [shootId, kind, refresh])
+
+  // `US-038` AC-2 — one file, after the approved question; final, so asked first.
+  const { ask: askDelete, dialog: deleteDialog } = useDestructiveConfirm<ShootFile>({
+    label: t.remove,
+    question: (file) => t.filesDeleteOneQuestion.replace('{name}', file.name),
+    onConfirm: (file) => {
+      void callFiles('delete', { fileId: file.id }).then(() => uploads.changed(shootId))
+    },
+  })
 
   const add = (picked: ReturnType<typeof fromInput>) => {
     if (picked.length) uploads.add(shootId, kind, picked)
@@ -119,6 +133,13 @@ export function HostedFiles({ shootId, kind }: { shootId: string; kind: FileKind
           <View key={file.id} className="flex-row items-center justify-between gap-3">
             <Text className="text-body-sm text-foreground min-w-0 flex-1" numberOfLines={1}>{file.name}</Text>
             <Text className="text-label text-muted-foreground">{size(file.sizeBytes)}</Text>
+            <Pressable
+              onPress={() => askDelete(file)}
+              accessibilityLabel={t.remove}
+              className="active:opacity-60"
+            >
+              <Icon as={Trash} size={14} className="text-muted-foreground" />
+            </Pressable>
           </View>
         ))}
 
@@ -195,7 +216,37 @@ export function HostedFiles({ shootId, kind }: { shootId: string; kind: FileKind
           e.target.value = ''
         }}
       />
+      {deleteDialog}
     </div>
+  )
+}
+
+/**
+ * `US-038` AC-2 — «Видалити всі файли»: every file of the shoot, both sections,
+ * uploads in progress too, after the approved question with the count and the
+ * size. Shown once the shoot has files.
+ */
+export function DeleteAllFiles({ shootId, count }: { shootId: string; count: number }) {
+  const t = useStrings()
+  const { ask, dialog } = useDestructiveConfirm<FileSummary>({
+    label: t.remove,
+    question: (summary) => fillSummary(t.filesDeleteAllQuestion, summary, t),
+    onConfirm: () => {
+      void callFiles('deleteAll', { shootId }).then(() => uploads.changed(shootId))
+    },
+  })
+  if (count === 0) return null
+  return (
+    <>
+      <Button
+        variant="outline"
+        className="h-9 self-start"
+        onPress={() => void shootFilesSummary(shootId).then((summary) => summary && ask(summary))}
+      >
+        <Text className="text-body-sm font-semibold">{t.filesDeleteAll}</Text>
+      </Button>
+      {dialog}
+    </>
   )
 }
 

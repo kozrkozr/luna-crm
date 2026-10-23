@@ -74,7 +74,11 @@ export function useDestructiveConfirm<T>({
   label,
   onConfirm,
 }: {
-  question: string
+  /**
+   * The question, or a function of what is asked about — `US-038` names the
+   * file and counts the files, which only the subject knows.
+   */
+  question: string | ((subject: T) => string)
   /**
    * The sentence under the question — what the reader needs before answering.
    *
@@ -90,9 +94,11 @@ export function useDestructiveConfirm<T>({
   const t = useStrings()
   const [pending, setPending] = useState<{ subject: T } | null>(null)
 
+  const questionFor = (subject: T) => (typeof question === 'function' ? question(subject) : question)
+
   const ask = (subject: T) => {
     if (Platform.OS !== 'web') {
-      Alert.alert(question, message, [
+      Alert.alert(questionFor(subject), message, [
         // `cancel` and `destructive` are what make iOS lay the buttons out the
         // way people already expect: cancel is the safe default, the red one is
         // the one that acts.
@@ -114,7 +120,7 @@ export function useDestructiveConfirm<T>({
       <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{question}</AlertDialogTitle>
+            <AlertDialogTitle>{pending ? questionFor(pending.subject) : ''}</AlertDialogTitle>
             {message ? (
               <Text className="text-body-sm text-muted-foreground leading-5">{message}</Text>
             ) : null}

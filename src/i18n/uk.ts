@@ -631,6 +631,12 @@ export const uk = {
   filesInterrupted: 'Завантаження «{name}» перервано. Виберіть цей файл ще раз, щоб продовжити з того ж місця.',
   filesNotAPhoto: '«{name}» — не фото. У «{finished}» можна завантажити JPEG, PNG, HEIC, TIFF або WebP. Відео та інші файли додавайте у «{raw}».',
   filesFailed: 'Не вдалося завантажити «{name}». Спробуйте ще раз.',
+  /** `US-038` — copy approved by the owner 2026-10-23. {count} is «3 файли», {size} «37,4 ГБ». */
+  filesDeleteOneQuestion: 'Видалити «{name}»? Файл буде видалено назавжди, і клієнт більше не зможе його завантажити.',
+  filesDeleteAllQuestion: 'Видалити всі файли зйомки ({count}, {size})? Їх буде видалено назавжди, і клієнт більше не зможе їх завантажити.',
+  filesDeleteAll: 'Видалити всі файли',
+  /** Plan #12 — deleting a shoot that has files says so (owner, 2026-10-23). */
+  confirmDeleteShootWithFiles: 'Видалити цю зйомку разом із файлами ({count}, {size})? Файли буде видалено назавжди, і клієнт більше не зможе їх завантажити.',
   filesAdd: 'Додати файли',
   filesAddFolder: 'Додати папку',
   filesDropHint: 'Перетягніть сюди файли або папки',

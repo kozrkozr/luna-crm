@@ -33,6 +33,7 @@ import { resolveAvatar } from '../../../src/features/auth/avatar'
 import { signedAvatarUrl } from '../../../src/features/auth/profile'
 import { failed, tapped } from '../../../src/lib/haptics'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
+import { deleteShootQuestion, shootFilesSummary, type FileSummary } from '../../../src/features/files/summary'
 import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
 import { deleteShoot, listShoots, type Shoot } from '../../../src/features/shoots/api'
 import { hasPrice, payment } from '../../../src/features/shoots/money'
@@ -218,10 +219,11 @@ export default function HomeScreen() {
     the way to the confirm — the alternative is a second piece of state that can
     drift from what the alert is asking about.
   */
-  const { ask: askDeleteUnguarded, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
+  const { ask: askDeleteUnguarded, dialog: deleteDialog } = useDestructiveConfirm<{ shoot: Shoot; files: FileSummary | null }>({
     label: t.deleteShoot,
-    question: t.confirmDeleteShoot,
-    onConfirm: (shoot) => {
+    // Plan #12 — a shoot with files says it takes them along.
+    question: ({ files }) => deleteShootQuestion(files, t),
+    onConfirm: ({ shoot }) => {
       void (async () => {
         if (!(await deleteShoot(shoot.id))) {
           /*
@@ -270,7 +272,9 @@ export default function HomeScreen() {
   })
   // `US-052` AC-2 — without access, a swipe's «Видалити» opens the paywall.
   const guard = useGuard()
-  const askDelete = guard(askDeleteUnguarded)
+  const askDelete = guard((shoot: Shoot) =>
+    void shootFilesSummary(shoot.id).then((files) => askDeleteUnguarded({ shoot, files }))
+  )
   /*
     `US-057` — on a desktop browser the sidebar holds «+ Нова зйомка» and the
     profile, so the pinned button and the header avatar go, and the next shoot

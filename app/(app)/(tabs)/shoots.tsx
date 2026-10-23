@@ -15,6 +15,7 @@ import { listCrewShoots, type CrewShoot } from '../../../src/features/shoots/cre
 import { listCrewNamesForShoots } from '../../../src/features/crew/api'
 import { failed, tapped } from '../../../src/lib/haptics'
 import { useDestructiveConfirm } from '../../../src/components/DestructiveAction'
+import { deleteShootQuestion, shootFilesSummary, type FileSummary } from '../../../src/features/files/summary'
 import { SwipeDismissBoundary, SwipeToDelete } from '../../../src/components/SwipeToDelete'
 import { AgendaRow } from '../../../src/components/ShootAgendaRow'
 import { Card } from '../../../src/components/ui/card'
@@ -131,10 +132,11 @@ export default function ShootListScreen() {
     **Created rows only.** `US-009`'s crew rows are somebody else's shoot; they
     are not wrapped, so there is nothing to swipe on them.
   */
-  const { ask: askDeleteUnguarded, dialog: deleteDialog } = useDestructiveConfirm<Shoot>({
+  const { ask: askDeleteUnguarded, dialog: deleteDialog } = useDestructiveConfirm<{ shoot: Shoot; files: FileSummary | null }>({
     label: t.deleteShoot,
-    question: t.confirmDeleteShoot,
-    onConfirm: (shoot) => {
+    // Plan #12 — a shoot with files says it takes them along.
+    question: ({ files }) => deleteShootQuestion(files, t),
+    onConfirm: ({ shoot }) => {
       void (async () => {
         // No message on failure, for the reasons the home screen's copy of this
         // handler records: nothing supplies one, and the boolean does not say
@@ -154,7 +156,9 @@ export default function ShootListScreen() {
   })
   // `US-052` AC-2 — without access, a swipe's «Видалити» opens the paywall.
   const guard = useGuard()
-  const askDelete = guard(askDeleteUnguarded)
+  const askDelete = guard((shoot: Shoot) =>
+    void shootFilesSummary(shoot.id).then((files) => askDeleteUnguarded({ shoot, files }))
+  )
 
   /*
     The calendar's position and grid, lifted out of `ShootCalendar` on

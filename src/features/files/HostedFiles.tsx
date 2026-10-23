@@ -18,3 +18,8 @@ export function FilesQuota() {
 export function useHostedFileCount(_shootId: string) {
   return 0
 }
+
+/** `US-038` — «Видалити всі файли». Native: nothing, as above. */
+export function DeleteAllFiles(_: { shootId: string; count: number }) {
+  return null
+}

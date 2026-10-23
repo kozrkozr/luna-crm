@@ -36,6 +36,7 @@ import { type SheetPerson } from '../../../../src/components/PersonSheet'
 import { handleLabel, handleUrl } from '../../../../src/lib/socialHandle'
 import { canMarkPaid, formatMoney, payment } from '../../../../src/features/shoots/money'
 import { useDestructiveConfirm } from '../../../../src/components/DestructiveAction'
+import { deleteShootQuestion, shootFilesSummary, type FileSummary } from '../../../../src/features/files/summary'
 import { isValidReferenceLink } from '../../../../src/features/references/api'
 import { MaterialsReferences } from '../../../../src/components/MaterialsReferences'
 import { ResponsePill } from '../../../../src/components/ResponsePill'
@@ -67,7 +68,7 @@ import {
   type ShootLinkField,
 } from '../../../../src/features/shoots/api'
 import { listReferences, type Reference } from '../../../../src/features/references/api'
-import { FilesQuota, HostedFiles, useHostedFileCount } from '../../../../src/features/files/HostedFiles'
+import { DeleteAllFiles, FilesQuota, HostedFiles, useHostedFileCount } from '../../../../src/features/files/HostedFiles'
 import { listCrew, removeCrewMember, type CrewMember } from '../../../../src/features/crew/api'
 import { clientLinkToken, crewLinkToken, linkUrl } from '../../../../src/features/crew/links'
 import {
@@ -251,9 +252,10 @@ export default function ShootDetailScreen() {
     a shoot finished loading: the first render returned early and never called
     it.
   */
-  const { ask: askCancelShoot, dialog: cancelShootDialog } = useDestructiveConfirm<null>({
+  const { ask: askCancelShoot, dialog: cancelShootDialog } = useDestructiveConfirm<FileSummary | null>({
     label: t.cancelShoot,
-    question: t.confirmDeleteShoot,
+    // Plan #12 — a shoot with files says it takes them along.
+    question: (files) => deleteShootQuestion(files, t),
     onConfirm: () => {
       void (async () => {
         if (!(await deleteShoot(id))) return
@@ -365,7 +367,7 @@ export default function ShootDetailScreen() {
             <DetailsActions
               compact
               onEdit={guard(() => router.push(`/(app)/shoot/${shoot.id}/edit`))}
-              onCancelShoot={guard(() => askCancelShoot(null))}
+              onCancelShoot={guard(() => void shootFilesSummary(id).then(askCancelShoot))}
             />
           ) : tab === 'people' ? (
             /* Where «Редагувати зйомку» is on «Деталі» (owner, 2026-10-19). */
@@ -516,7 +518,7 @@ export default function ShootDetailScreen() {
           {tab === 'details' ? (
             <DetailsActions
               onEdit={guard(() => router.push(`/(app)/shoot/${shoot.id}/edit`))}
-              onCancelShoot={guard(() => askCancelShoot(null))}
+              onCancelShoot={guard(() => void shootFilesSummary(id).then(askCancelShoot))}
             />
           ) : (
             /*
@@ -1767,6 +1769,8 @@ function MaterialsTab({
             </View>
           ))}
         </Card>
+        {/* `US-038` AC-2 — every file of the shoot at once. Web only, as the upload. */}
+        <DeleteAllFiles shootId={shoot.id} count={hostedCount} />
       </View>
 
     </>

@@ -177,6 +177,11 @@ class UploadQueue {
     }
   }
 
+  /** Files of a shoot changed outside the queue (`US-038`'s deletes): lists and quota refetch. */
+  changed(shootId: string) {
+    this.doneListeners.forEach((l) => l(shootId))
+  }
+
   /** Drops finished and failed rows of a shoot from the list. */
   clear(shootId: string) {
     this.tasks = this.tasks.filter((t) => t.shootId !== shootId || !['done', 'failed'].includes(t.phase))

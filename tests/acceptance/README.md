@@ -51,6 +51,7 @@ Eight suites need no browser at all:
 | `us024-ui` | as `us024-fn`, plus the link surface on :8099 exported against local Supabase |
 | `us037-fn` | as `us036-fn` (calls `files-sweeper` with the local secret from `local-s3.env`) |
 | `us038-fn` | as `us036-fn` |
+| `us038-ui` | as `us036-ui` |
 
 Everything else needs all four.
 
