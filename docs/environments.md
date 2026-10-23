@@ -83,3 +83,39 @@ push` still goes to whichever project the CLI is linked to**; check `env:status`
   (`appleTeamId` in `app.config.ts`) through Xcode's automatic signing.
 - **`.env.local`** — for `ios:local` / `start:local`: copy `.env.local-backup` and update the LAN
   address.
+
+## Hosted files: where each environment keeps them (EP-07, 2026-10-23)
+
+Raw files and finished photos go to an S3-compatible store, not Supabase Storage (`ADR-020`;
+the small images of `US-003`, `US-005`, `US-018` stay in Supabase Storage). The functions read
+five settings — `B2_ENDPOINT`, `B2_REGION`, `B2_BUCKET`, `B2_KEY_ID`, `B2_APPLICATION_KEY` — and
+nothing else names the provider, so a move to Cloudflare R2 is a change of these.
+
+| Target | Store | Settings |
+|---|---|---|
+| `local` | SeaweedFS in Docker — `bash scripts/local-s3.sh start` | `supabase/functions/local-s3.env` (fake keys, committed) |
+| `dev` | B2 bucket `luna-shoots-files-dev`, EU Central | function secrets on the dev project; a copy in `supabase/functions/.env.local` (git-ignored, mode 600) |
+| `prod` | **not set up yet** — EP-07 does not reach prod before the PRO tier ADR | — |
+
+Setting the dev secrets again (the CLI must be linked to dev):
+
+```bash
+npx supabase secrets set --env-file supabase/functions/.env.local
+```
+
+The bucket itself — private, SSE-B2, CORS, no lifecycle rules — is set by a script, not by hand:
+`node scripts/b2-bucket.mjs dev supabase/functions/.env.local`.
+
+**Never point the acceptance suites at B2.** `files-storage` refuses any endpoint but localhost.
+
+### Before EP-07 reaches prod
+From `docs/spikes/S-6-large-upload-to-b2.md`:
+1. A `prod` bucket in the same EU Central account, private; a key restricted to it with
+   writeBuckets; `node scripts/b2-bucket.mjs prod <file with that key>`.
+2. The key into the prod project: `supabase secrets set` with the CLI linked to prod, then relink
+   dev.
+3. **Caps & Alerts** — the caps are per account, so dev and prod share them. Set the storage cap
+   above the expected use of all accounts with a margin, not at "200 GB × accounts"; alerts at
+   75 % / 100 % go to the owner. A reached cap stops uploads for **everyone** (S-6 F-4).
+4. The settings row (`file_hosting_settings`) checked on prod: retention, warning, quota, URL
+   lifetime.
