@@ -33,7 +33,11 @@ built yet. To resume:
    Only the `dev` bucket is needed now; `prod` comes with the release.
 5. ~~**Spike S-6**~~ — done 2026-10-22, holds: `docs/spikes/S-6-large-upload-to-b2.md`.
    Owner: stay on B2, keep R2 a configuration change, watch storage use.
-6. **Then:** foundation → `US-036` … (Phase 3). `US-040` is no longer a
+6. ~~**Foundation**~~ — done 2026-10-23 (Phase 2): storage interface kept from S-6, settings row
+   `file_hosting_settings`, local S3 (SeaweedFS — MinIO ships no images any more), bucket
+   script `scripts/b2-bucket.mjs`, `docs/environments.md` "Hosted files". Settings migration
+   still to push to dev.
+7. **Then:** `US-036` … (Phase 3). `US-040` is no longer a
    step here: `ADR-024` moved it to `EP-10`, which is live on `app.lunashoots.com` since
    2026-10-21.
 
@@ -131,7 +135,7 @@ Questions, each pass/fail:
 **Needed from the owner before the spike:** a Backblaze account and a `dev` B2 bucket in EU
 Central with an application key scoped to it. The `prod` bucket waits for the release.
 
-## Phase 2 — foundation *(assumed 3–4 days; no story ID → `chore`)*
+## Phase 2 — foundation *(done 2026-10-23; no story ID → `chore`)*
 - **B2 buckets:** private, EU Central; CORS for `app.lunashoots.com` (uploads) and the link
   surface (downloads); no lifecycle rules (deletion
   is ours, `ADR-020` decision 3).
