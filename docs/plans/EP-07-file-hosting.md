@@ -98,6 +98,8 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | 8 | Where a tap on the push leads | `US-039` | open |
 | 9 | `{назва}` in the push copy — the shoot has no title | `US-039` | open |
 | 10 | Section with no files ever and no link — what the client sees | `US-024`/`025` | open |
+| 12 | A deleted shoot's files | `US-036`, `US-038` | **decided** (owner, 2026-10-23): deleted with the shoot; their space leaves the quota at once, the sweeper removes the bytes. Deleting a shoot that has files warns first — copy below. Not in any story yet: note in discovery |
+| 13 | Abandoned uploads | `US-037` | **decided** (owner, 2026-10-23): an upload untouched for **7 days** is aborted by the sweeper, its space freed. A setting, like retention |
 | 11 | **PRO tier** (`ADR-023` decision 7): may only a PRO subscriber upload? Its price, product ID (`com.lunashoots.ios.pro.monthly`?), what a base subscriber sees in the Files section, what happens to stored files when PRO lapses. *Added 2026-10-21 — the EP-07 spec predates `ADR-023`* | `US-036`, `US-024`/`025` | **deferred** (owner, 2026-10-22) — temporary rule: base access; ADR before prod |
 
 ### Approved copy for `US-036` (owner, 2026-10-23)
@@ -115,6 +117,13 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 | Failed for another reason | Не вдалося завантажити «{назва}». Спробуйте ще раз. | Couldn't upload “{name}”. Please try again. |
 
 English section names: use the app's existing ones if it has them.
+
+Deleting a shoot that has files (#12), shown only when it has some — on `confirmDeleteShoot`'s
+pattern, the question then the cost:
+
+| uk | en |
+|---|---|
+| Видалити цю зйомку разом із файлами ({кількість}, {розмір})? Файли буде видалено назавжди, і клієнт більше не зможе їх завантажити. | Delete this shoot along with its files ({count}, {size})? The files will be deleted for good, and the client will no longer be able to download them. |
 
 ### Proposed file types (#1)
 **Raw files section — accept any file.** Raw formats are per manufacturer and per camera
@@ -178,7 +187,7 @@ Each story: migration → Edge Function → app → acceptance suite → commit 
 | ~~1~~ | ~~**US-040** the app in a desktop browser~~ | moved to `EP-10` by `ADR-024`; live 2026-10-21 | — |
 | 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile` + technical columns `provider`, `status`, `upload_id`, `relative_path` — not in `data-model.md`; owner agreed 2026-10-23, note it in discovery at the next re-freeze), `shoots.files_delete_at`, per-account usage function, `can_host_files()` (base access until the PRO ADR, #11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
 | 3 | **US-024 → US-025** client sees and downloads | gateway `clientPayload` adds files with presigned GETs; crew payload unchanged (AC-7, tested); link view: list/previews, single download, download all, date, deleted placeholder | 3–4 days |
-| 4 | **US-037** deletion date | date in both sections; enable `pg_cron` + `pg_net`; daily job → Edge Function `files-sweeper` deletes objects and rows past `files_delete_at` | 2 days |
+| 4 | **US-037** deletion date | date in both sections; enable `pg_cron` + `pg_net`; daily job → Edge Function `files-sweeper` deletes objects and rows past `files_delete_at`, files of deleted shoots (#12), and uploads untouched for `abandoned_upload_days` = 7 (#13, a new settings column) | 2 days |
 | 5 | **US-038** early delete | Edge Function delete (one / all), creator-only; confirmation | 1–2 days |
 | 6 | **US-039** push warning | `expo-notifications` (installed) gets server push: drop `withoutPushEntitlement.js`, Push capability on the App ID, `push_tokens` table, permission flow; `files-sweeper` sends the 3-day warning via Expo's push API. **Needs from the owner:** an APNs key in the Apple Developer account | 3 days |
 
