@@ -176,7 +176,7 @@ Each story: migration → Edge Function → app → acceptance suite → commit 
 |---|---|---|---|
 | ~~0~~ | ~~fix: link view re-requests on media error~~ | done 2026-10-04 | — |
 | ~~1~~ | ~~**US-040** the app in a desktop browser~~ | moved to `EP-10` by `ADR-024`; live 2026-10-21 | — |
-| 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile` + technical columns `provider`, `status`, `upload_id` — not in `data-model.md`; owner agreed 2026-10-23, note it in discovery at the next re-freeze), `shoots.files_delete_at`, per-account usage function, `can_host_files()` (base access until the PRO ADR, #11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
+| 2 | **US-036** upload | migration: `shoot_files` table (`ShootFile` + technical columns `provider`, `status`, `upload_id`, `relative_path` — not in `data-model.md`; owner agreed 2026-10-23, note it in discovery at the next re-freeze), `shoots.files_delete_at`, per-account usage function, `can_host_files()` (base access until the PRO ADR, #11); Edge Function `files` (start: access + quota + date check, sign parts; complete; abort); web (`.web.tsx`): file picker + drag-and-drop, sliced upload queue, progress, quota display | 5–7 days |
 | 3 | **US-024 → US-025** client sees and downloads | gateway `clientPayload` adds files with presigned GETs; crew payload unchanged (AC-7, tested); link view: list/previews, single download, download all, date, deleted placeholder | 3–4 days |
 | 4 | **US-037** deletion date | date in both sections; enable `pg_cron` + `pg_net`; daily job → Edge Function `files-sweeper` deletes objects and rows past `files_delete_at` | 2 days |
 | 5 | **US-038** early delete | Edge Function delete (one / all), creator-only; confirmation | 1–2 days |
@@ -227,7 +227,10 @@ Creator, iOS:
 3. Copy for items 9 and 10.
 4. A section with no files and no link — what the client sees (item 3, last state).
 5. ~~Whole folders~~ — yes; every file in it and its subfolders goes into one flat list (owner,
-   2026-10-23; `US-036` open question 5).
+   2026-10-23; `US-036` open question 5). Same-named files from different subfolders are told
+   apart by the path in the name: `relative_path` is stored (`Card1/DCIM/IMG_0001.CR3`) and
+   shown, and downloaded, as `Card1 · DCIM · IMG_0001.CR3` — the dropped folder itself left out
+   (owner, 2026-10-23). A folder tree later is another view of the same column.
 6. Push — a pre-prompt (item 14), or the system dialog only?
 7. A base (non-PRO) subscriber — what the Files section shows them (#11).
 8. «Завантажити все» on a phone — iPhone Safari asks once per file (S-6 F-8); what it means
