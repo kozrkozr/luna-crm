@@ -88,7 +88,7 @@ Owner questions, from `EP-07.md`. Answered ones struck through.
 
 | # | Question | Blocks | Status |
 |---|---|---|---|
-| 1 | File types | `US-036` | **proposed below — awaiting owner** |
+| 1 | File types | `US-036` | **decided** (owner, 2026-10-23): raw files — any file, video included; finished photos — JPEG, PNG, HEIC, TIFF, WebP only, no video |
 | 2 | Quota shown to the creator | `US-036` | **yes** (owner, 2026-10-03) — where: from the design |
 | 3 | What "view" means for the client: previews for finished photos, a list for raw files? | `US-024`/`025` | open |
 | 4 | Copy: upload blocked after the deletion date (`US-036` AC-7) | `US-036` | open |
